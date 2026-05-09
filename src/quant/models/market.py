@@ -54,7 +54,7 @@ class PriceData(FrozenModel):
 
     @property
     def close(self) -> pd.Series:
-        close = cast(pd.Series, self.frame["close"]).copy()
+        close = self.frame["close"].copy()
         close.index = pd.to_datetime(self.frame["date"])
         close.name = self.symbol
-        return cast(pd.Series, close.sort_index())
+        return close.sort_index()
