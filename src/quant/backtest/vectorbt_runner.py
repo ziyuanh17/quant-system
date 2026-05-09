@@ -62,4 +62,4 @@ def _optional_metric(portfolio: Any, method_name: str) -> float | None:
 
 def _trade_count(portfolio: Any) -> int:
     records = portfolio.trades.records_readable
-    return int(len(records))
+    return len(records)
