@@ -1,0 +1,6 @@
+environment: dev
+initial_cash: 100000
+fees: 0.001
+frequency: 1D
+live_trading_enabled: false
+
