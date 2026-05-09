@@ -24,10 +24,35 @@ If you prefer `uv` later:
 uv sync --extra dev
 ```
 
+The repository includes `uv.lock` so dependency resolution is reproducible
+when using `uv`.
+
 ## First Backtest
 
 ```bash
 quant backtest --strategy momentum --data data/sample_prices.csv --symbol AAPL
+```
+
+The command writes durable artifacts by default:
+
+```text
+data/results/latest/summary.json
+data/results/latest/trades.csv
+```
+
+## Local Checks
+
+```bash
+make check
+```
+
+Or run the pieces separately:
+
+```bash
+make lint
+make typecheck
+make test
+make backtest
 ```
 
 ## Design Rule
@@ -41,4 +66,3 @@ Dictionaries are allowed at system edges. Core domain logic uses typed models:
 - orders and fills, when added later
 
 See [docs/code_style.md](docs/code_style.md).
-

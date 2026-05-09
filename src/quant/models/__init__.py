@@ -1,4 +1,5 @@
 from quant.models.backtest import (
+    BacktestArtifactPaths,
     BacktestConfig,
     BacktestResult,
     PerformanceMetrics,
@@ -8,6 +9,7 @@ from quant.models.signals import SignalFrame
 
 __all__ = [
     "BacktestConfig",
+    "BacktestArtifactPaths",
     "BacktestResult",
     "Bar",
     "PerformanceMetrics",

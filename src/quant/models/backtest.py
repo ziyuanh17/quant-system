@@ -22,3 +22,9 @@ class BacktestResult(FrozenModel):
     symbol: str
     config: BacktestConfig
     metrics: PerformanceMetrics
+
+
+class BacktestArtifactPaths(FrozenModel):
+    output_dir: str
+    summary_json: str
+    trades_csv: str

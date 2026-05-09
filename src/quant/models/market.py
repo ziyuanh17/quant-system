@@ -26,11 +26,6 @@ class Bar(FrozenModel):
     close: float = Field(gt=0)
     volume: int = Field(ge=0)
 
-    @field_validator("high")
-    @classmethod
-    def high_must_be_positive(cls, value: float) -> float:
-        return value
-
 
 class PriceData(FrozenModel):
     symbol: str
@@ -54,7 +49,7 @@ class PriceData(FrozenModel):
 
     @property
     def close(self) -> pd.Series:
-        close = self.frame["close"].copy()
+        close = cast(pd.Series, self.frame["close"]).copy()
         close.index = pd.to_datetime(self.frame["date"])
         close.name = self.symbol
-        return close.sort_index()
+        return cast(pd.Series, close.sort_index())

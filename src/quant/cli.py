@@ -4,6 +4,7 @@ from typing import Annotated
 import typer
 
 from quant.backtest import VectorBTBacktester
+from quant.backtest.artifacts import write_backtest_artifacts
 from quant.data import load_price_csv
 from quant.models.backtest import BacktestConfig
 from quant.strategies import MomentumStrategy
@@ -32,6 +33,10 @@ def backtest(
     fees: Annotated[
         float, typer.Option(help="Proportional fee per trade.")
     ] = 0.001,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where backtest artifacts are written."),
+    ] = Path("data/results/latest"),
 ) -> None:
     """Run a VectorBT-backed signal backtest."""
     if strategy != "momentum":
@@ -40,9 +45,10 @@ def backtest(
         )
 
     prices = load_price_csv(data, symbol)
-    result = VectorBTBacktester(
+    result, trades = VectorBTBacktester(
         BacktestConfig(initial_cash=initial_cash, fees=fees)
-    ).run(MomentumStrategy(), prices)
+    ).run_with_trades(MomentumStrategy(), prices)
+    artifacts = write_backtest_artifacts(result, trades, output_dir)
 
     metrics = result.metrics
     typer.echo(f"Strategy: {result.strategy_name}")
@@ -55,6 +61,8 @@ def backtest(
         f"Max drawdown: {_format_optional(metrics.max_drawdown, percent=True)}"
     )
     typer.echo(f"Trades: {metrics.total_trades}")
+    typer.echo(f"Summary: {artifacts.summary_json}")
+    typer.echo(f"Trades CSV: {artifacts.trades_csv}")
 
 
 def _format_optional(value: float | None, *, percent: bool = False) -> str:
