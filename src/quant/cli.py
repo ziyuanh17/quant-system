@@ -5,11 +5,18 @@ import typer
 
 from quant.backtest import VectorBTBacktester
 from quant.backtest.artifacts import write_backtest_artifacts
-from quant.data import load_price_csv
+from quant.data import (
+    YFinanceMarketBarProvider,
+    ingest_market_bars,
+    load_price_csv,
+)
 from quant.models.backtest import BacktestConfig
+from quant.models.ingestion import IngestRequest
 from quant.strategies import MomentumStrategy
 
 app = typer.Typer(no_args_is_help=True)
+data_app = typer.Typer(no_args_is_help=True)
+app.add_typer(data_app, name="data")
 
 
 @app.callback()
@@ -63,6 +70,46 @@ def backtest(
     typer.echo(f"Trades: {metrics.total_trades}")
     typer.echo(f"Summary: {artifacts.summary_json}")
     typer.echo(f"Trades CSV: {artifacts.trades_csv}")
+
+
+@data_app.command("ingest")
+def ingest_data(
+    symbol: Annotated[str, typer.Option(help="Symbol to ingest.")] = "AAPL",
+    start: Annotated[
+        str, typer.Option(help="Inclusive start date.")
+    ] = "2024-01-01",
+    end: Annotated[
+        str | None,
+        typer.Option(help="Exclusive end date. Omit to fetch through latest."),
+    ] = None,
+    provider: Annotated[
+        str,
+        typer.Option(help="Data provider name."),
+    ] = "yfinance",
+    raw_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for raw provider data."),
+    ] = Path("data/raw"),
+    normalized_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for normalized data."),
+    ] = Path("data/normalized"),
+) -> None:
+    """Ingest market bars through the data provider interface."""
+    if provider != "yfinance":
+        raise typer.BadParameter("Only yfinance is implemented right now.")
+
+    request = IngestRequest(symbols=(symbol,), start=start, end=end)
+    artifacts = ingest_market_bars(
+        YFinanceMarketBarProvider(),
+        request,
+        raw_root=raw_dir,
+        normalized_root=normalized_dir,
+    )
+
+    for artifact in artifacts:
+        typer.echo(f"Raw: {artifact.raw_path}")
+        typer.echo(f"Normalized: {artifact.normalized_path}")
 
 
 def _format_optional(value: float | None, *, percent: bool = False) -> str:

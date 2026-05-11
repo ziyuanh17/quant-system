@@ -10,6 +10,7 @@ dependencies = [
     "pydantic>=2.7",
     "typer>=0.12",
     "vectorbt>=0.28",
+    "yfinance>=0.2",
 ]
 
 [project.optional-dependencies]

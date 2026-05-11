@@ -13,6 +13,30 @@ CSV prices
   -> typed BacktestResult
 ```
 
+## Data Layer
+
+Raw ingestion is modality-agnostic. Normalization is modality-specific.
+
+```text
+provider
+  -> RawDataset
+  -> raw file under data/raw/
+  -> normalized modality dataset under data/normalized/
+  -> features/signals
+  -> backtest or execution
+```
+
+Supported modality contracts are intentionally broader than market bars:
+
+- `market_bars`
+- `news_article`
+- `filing`
+- `social_post`
+
+The first concrete provider is `yfinance` for market bars. Future providers
+for news, filings, social data, or embeddings should implement the same
+provider boundary and add modality-specific normalizers.
+
 ## Intended Growth
 
 ```text
@@ -45,4 +69,3 @@ VectorBT owns:
 - fast vectorized backtests
 - signal portfolio simulation
 - metrics and research visualization
-

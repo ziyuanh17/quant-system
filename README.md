@@ -40,6 +40,21 @@ data/results/latest/summary.json
 data/results/latest/trades.csv
 ```
 
+## Data Ingestion
+
+The ingestion layer separates raw provider data from normalized data:
+
+```bash
+quant data ingest --provider yfinance --symbol AAPL --start 2024-01-01 --end 2024-02-01
+```
+
+This writes:
+
+```text
+data/raw/provider=yfinance/modality=market_bars/symbol=AAPL/...
+data/normalized/market_bars/AAPL.csv
+```
+
 ## Local Checks
 
 ```bash

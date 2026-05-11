@@ -4,7 +4,14 @@ from quant.models.backtest import (
     BacktestResult,
     PerformanceMetrics,
 )
-from quant.models.market import Bar, PriceData
+from quant.models.ingestion import (
+    DataModality,
+    IngestArtifactPaths,
+    IngestRequest,
+    RawDataset,
+)
+from quant.models.market import Bar, MarketBar, PriceData
+from quant.models.news import NewsArticle, TextSentimentFeature
 from quant.models.signals import SignalFrame
 
 __all__ = [
@@ -12,7 +19,14 @@ __all__ = [
     "BacktestArtifactPaths",
     "BacktestResult",
     "Bar",
+    "DataModality",
+    "IngestArtifactPaths",
+    "IngestRequest",
+    "MarketBar",
+    "NewsArticle",
     "PerformanceMetrics",
     "PriceData",
+    "RawDataset",
     "SignalFrame",
+    "TextSentimentFeature",
 ]
