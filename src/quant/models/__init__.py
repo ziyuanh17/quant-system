@@ -13,6 +13,11 @@ from quant.models.ingestion import (
 from quant.models.market import Bar, MarketBar, PriceData
 from quant.models.news import NewsArticle, TextSentimentFeature
 from quant.models.signals import SignalFrame
+from quant.models.validation import (
+    ValidationIssue,
+    ValidationReport,
+    ValidationSeverity,
+)
 
 __all__ = [
     "BacktestConfig",
@@ -29,4 +34,7 @@ __all__ = [
     "RawDataset",
     "SignalFrame",
     "TextSentimentFeature",
+    "ValidationIssue",
+    "ValidationReport",
+    "ValidationSeverity",
 ]

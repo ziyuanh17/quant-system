@@ -1,4 +1,4 @@
-.PHONY: install test lint typecheck check backtest
+.PHONY: install test lint typecheck check backtest validate
 
 install:
 	python3 -m venv .venv
@@ -17,3 +17,6 @@ check: lint typecheck test
 
 backtest:
 	.venv/bin/quant backtest --strategy momentum --data data/sample_prices.csv --symbol AAPL
+
+validate:
+	.venv/bin/quant data validate --data data/sample_prices.csv --symbol AAPL --min-rows 2

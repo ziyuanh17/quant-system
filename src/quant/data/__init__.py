@@ -2,6 +2,7 @@ from quant.data.csv_loader import load_price_csv
 from quant.data.ingest import ingest_market_bars
 from quant.data.normalizers import normalize_market_bars
 from quant.data.providers import DataProvider, YFinanceMarketBarProvider
+from quant.data.validation import validate_market_bars_csv
 
 __all__ = [
     "DataProvider",
@@ -9,4 +10,5 @@ __all__ = [
     "ingest_market_bars",
     "load_price_csv",
     "normalize_market_bars",
+    "validate_market_bars_csv",
 ]

@@ -9,9 +9,11 @@ from quant.data import (
     YFinanceMarketBarProvider,
     ingest_market_bars,
     load_price_csv,
+    validate_market_bars_csv,
 )
 from quant.models.backtest import BacktestConfig
 from quant.models.ingestion import IngestRequest
+from quant.models.validation import ValidationReport
 from quant.strategies import MomentumStrategy
 
 app = typer.Typer(no_args_is_help=True)
@@ -110,6 +112,45 @@ def ingest_data(
     for artifact in artifacts:
         typer.echo(f"Raw: {artifact.raw_path}")
         typer.echo(f"Normalized: {artifact.normalized_path}")
+
+
+@data_app.command("validate")
+def validate_data(
+    data: Annotated[
+        Path,
+        typer.Option(help="Normalized market-bars CSV to validate."),
+    ],
+    symbol: Annotated[str, typer.Option(help="Expected symbol.")] = "AAPL",
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required for this dataset."),
+    ] = 1,
+) -> None:
+    """Validate normalized market-bar data before using it."""
+    report = validate_market_bars_csv(data, symbol, min_rows=min_rows)
+    _print_validation_report(report)
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+def _print_validation_report(report: ValidationReport) -> None:
+    status = "passed" if report.passed else "failed"
+    typer.echo(f"Dataset: {report.dataset}")
+    typer.echo(f"Symbol: {report.symbol}")
+    typer.echo(f"Rows: {report.rows}")
+    typer.echo(f"Status: {status}")
+    typer.echo(f"Issues: {report.issue_count}")
+
+    for issue in report.issues:
+        location = []
+        if issue.row is not None:
+            location.append(f"row={issue.row}")
+        if issue.field is not None:
+            location.append(f"field={issue.field}")
+        suffix = f" ({', '.join(location)})" if location else ""
+        typer.echo(
+            f"[{issue.severity}] {issue.code}: {issue.message}{suffix}"
+        )
 
 
 def _format_optional(value: float | None, *, percent: bool = False) -> str:

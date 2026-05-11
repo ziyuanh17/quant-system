@@ -18,6 +18,15 @@ The normalized file can then be used for a backtest:
 quant backtest --data data/normalized/market_bars/AAPL.csv --symbol AAPL
 ```
 
+## Validate Market Data
+
+```bash
+quant data validate --data data/normalized/market_bars/AAPL.csv --symbol AAPL
+```
+
+Validation failures return a nonzero exit code so scheduled jobs can stop
+before bad data reaches a strategy.
+
 ## When Something Fails
 
 1. Confirm the input data has the required columns:

@@ -55,6 +55,12 @@ data/raw/provider=yfinance/modality=market_bars/symbol=AAPL/...
 data/normalized/market_bars/AAPL.csv
 ```
 
+Validate normalized data before backtesting it:
+
+```bash
+quant data validate --data data/normalized/market_bars/AAPL.csv --symbol AAPL
+```
+
 ## Local Checks
 
 ```bash
