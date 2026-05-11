@@ -1,6 +1,6 @@
 """yfinance market bar provider implementation."""
 
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -47,7 +47,7 @@ def _frame_to_records(frame: pd.DataFrame, symbol: str) -> list[dict[str, Any]]:
 
     raw = _flatten_columns(frame).reset_index()
     raw["symbol"] = symbol
-    return raw.to_dict(orient="records")
+    return cast(list[dict[str, Any]], raw.to_dict(orient="records"))
 
 
 def _flatten_columns(frame: pd.DataFrame) -> pd.DataFrame:
