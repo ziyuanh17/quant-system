@@ -9,6 +9,7 @@ from quant.data.normalizers import (
     raw_records_for_csv,
 )
 from quant.data.providers.base import DataProvider
+from quant.data.stores import CsvMarketBarStore, MarketBarStore
 from quant.data.validation import validate_market_bars_csv
 from quant.models.ingestion import (
     DatasetMetadata,
@@ -22,17 +23,19 @@ def ingest_market_bars(
     request: IngestRequest,
     raw_root: Path,
     normalized_root: Path,
+    store: MarketBarStore | None = None,
     validation_root: Path | None = None,
     metadata_root: Path | None = None,
     validate: bool = True,
     min_rows: int = 1,
 ) -> list[IngestArtifactPaths]:
     raw = provider.fetch(request)
+    market_bar_store = store or CsvMarketBarStore(normalized_root)
     artifacts: list[IngestArtifactPaths] = []
 
     for symbol in request.symbols:
         raw_path = _market_bar_path(raw_root, raw.provider, symbol, request)
-        normalized_path = normalized_root / "market_bars" / f"{symbol}.csv"
+        normalized_path = market_bar_store.path_for(symbol)
         validation_report_path = (
             _lineage_path(validation_root, "market_bars", symbol)
             if validation_root is not None
@@ -49,7 +52,7 @@ def ingest_market_bars(
 
         raw_records_for_csv(raw, symbol).to_csv(raw_path, index=False)
         normalized = normalize_market_bars(raw, symbol)
-        normalized.frame.to_csv(normalized_path, index=False)
+        normalized_path = market_bar_store.write(normalized)
 
         validation_passed: bool | None = None
         validation_issue_count: int | None = None

@@ -37,6 +37,16 @@ The first concrete provider is `yfinance` for market bars. Future providers
 for news, filings, social data, or embeddings should implement the same
 provider boundary and add modality-specific normalizers.
 
+Normalized market bars are written through a store boundary:
+
+```text
+MarketBarStore
+  -> CsvMarketBarStore
+  -> future ParquetMarketBarStore
+```
+
+This keeps ingestion from depending directly on CSV path construction.
+
 ## Intended Growth
 
 ```text

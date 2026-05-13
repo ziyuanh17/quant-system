@@ -5,6 +5,7 @@ import pandas as pd
 from quant.data.ingest import ingest_market_bars
 from quant.data.normalizers import normalize_market_bars
 from quant.data.providers.yfinance_provider import _frame_to_records
+from quant.data.stores import CsvMarketBarStore
 from quant.models.ingestion import DataModality, IngestRequest, RawDataset
 
 
@@ -82,6 +83,25 @@ def test_ingest_market_bars_writes_raw_and_normalized_files(tmp_path) -> None:
     )
     assert report["passed"] is True
     assert report["issues"] == []
+
+
+def test_ingest_market_bars_accepts_market_bar_store(tmp_path) -> None:
+    request = IngestRequest(symbols=("AAPL",), start="2024-01-01")
+    provider = FakeMarketBarProvider()
+    store = CsvMarketBarStore(tmp_path / "custom")
+
+    artifacts = ingest_market_bars(
+        provider,
+        request,
+        raw_root=tmp_path / "raw",
+        normalized_root=tmp_path / "unused",
+        store=store,
+    )
+
+    assert artifacts[0].normalized_path == str(
+        tmp_path / "custom" / "market_bars" / "AAPL.csv"
+    )
+    assert store.read("AAPL").frame["close"].tolist() == [105.0]
 
 
 def test_ingest_market_bars_records_failed_validation(tmp_path) -> None:
