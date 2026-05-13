@@ -8,4 +8,6 @@ __pycache__/
 *.pyc
 data/raw/
 data/normalized/
+data/validation/
+data/metadata/
 data/results/

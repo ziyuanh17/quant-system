@@ -15,6 +15,8 @@ YFINANCE_COLUMN_MAP = {
     "Volume": "volume",
 }
 
+MARKET_BAR_NORMALIZATION_VERSION = "market_bars.v1"
+
 
 def normalize_market_bars(raw: RawDataset, symbol: str) -> PriceData:
     frame = pd.DataFrame(raw.records)

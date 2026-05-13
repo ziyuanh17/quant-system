@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 
 from quant.data.ingest import ingest_market_bars
@@ -52,12 +54,56 @@ def test_ingest_market_bars_writes_raw_and_normalized_files(tmp_path) -> None:
         request,
         raw_root=tmp_path / "raw",
         normalized_root=tmp_path / "normalized",
+        validation_root=tmp_path / "validation",
+        metadata_root=tmp_path / "metadata",
     )
 
     assert len(artifacts) == 1
     assert (tmp_path / "normalized" / "market_bars" / "AAPL.csv").exists()
+    assert (tmp_path / "validation" / "market_bars" / "AAPL.json").exists()
+    assert (tmp_path / "metadata" / "market_bars" / "AAPL.json").exists()
     assert "provider=fake" in artifacts[0].raw_path
     assert "modality=market_bars" in artifacts[0].raw_path
+    assert artifacts[0].validation_passed is True
+
+    metadata = json.loads(
+        (tmp_path / "metadata" / "market_bars" / "AAPL.json").read_text()
+    )
+    assert metadata["provider"] == "fake"
+    assert metadata["modality"] == "market_bars"
+    assert metadata["symbol"] == "AAPL"
+    assert metadata["validation_status"] == "passed"
+    assert metadata["normalization_version"] == "market_bars.v1"
+    assert metadata["raw_path"] == artifacts[0].raw_path
+    assert metadata["normalized_path"] == artifacts[0].normalized_path
+
+    report = json.loads(
+        (tmp_path / "validation" / "market_bars" / "AAPL.json").read_text()
+    )
+    assert report["passed"] is True
+    assert report["issues"] == []
+
+
+def test_ingest_market_bars_records_failed_validation(tmp_path) -> None:
+    request = IngestRequest(symbols=("AAPL",), start="2024-01-01")
+    provider = BadMarketBarProvider()
+
+    artifacts = ingest_market_bars(
+        provider,
+        request,
+        raw_root=tmp_path / "raw",
+        normalized_root=tmp_path / "normalized",
+        validation_root=tmp_path / "validation",
+        metadata_root=tmp_path / "metadata",
+    )
+
+    metadata = json.loads(
+        (tmp_path / "metadata" / "market_bars" / "AAPL.json").read_text()
+    )
+
+    assert artifacts[0].validation_passed is False
+    assert metadata["validation_status"] == "failed"
+    assert metadata["validation_issue_count"] > 0
 
 
 def test_yfinance_records_flatten_multiindex_columns() -> None:
@@ -95,6 +141,30 @@ class FakeMarketBarProvider:
                     "Low": 99.0,
                     "Close": 105.0,
                     "Adj Close": 104.5,
+                    "Volume": 1000,
+                }
+            ],
+        )
+
+
+class BadMarketBarProvider:
+    name = "bad"
+    modality = DataModality.MARKET_BARS
+
+    def fetch(self, request: IngestRequest) -> RawDataset:
+        return RawDataset(
+            provider=self.name,
+            modality=self.modality,
+            request=request,
+            records=[
+                {
+                    "Date": "2024-01-02",
+                    "symbol": "AAPL",
+                    "Open": 100.0,
+                    "High": 99.0,
+                    "Low": 100.0,
+                    "Close": 101.0,
+                    "Adj Close": 101.0,
                     "Volume": 1000,
                 }
             ],

@@ -21,8 +21,8 @@ side discussions.
 | 3 | Backtest artifacts | Done | Save durable backtest summaries and trade outputs under `data/results/`. |
 | 4 | Multi-modal ingestion foundation | Done | Add provider interface, modality-aware raw dataset models, yfinance market-bar ingestion, normalized market-bar output, and news/text data model placeholders. |
 | 5 | Data validation v1 | Done | Add market-bar validation checks and `quant data validate`. |
-| 6 | Validation guardrails | In Review | Run validation by default during ingestion and before CSV backtests; allow explicit `--skip-validation`. |
-| 7 | Data lineage v1 | Next | Persist validation reports and dataset metadata that link raw data, normalized data, provider, symbol, timestamps, and normalization version. |
+| 6 | Validation guardrails | Done | Run validation by default during ingestion and before CSV backtests; allow explicit `--skip-validation`. |
+| 7 | Data lineage v1 | In Review | Persist validation reports and dataset metadata that link raw data, normalized data, provider, symbol, timestamps, and normalization version. |
 | 8 | Storage abstraction v1 | Planned | Add a `MarketBarStore` boundary so CSV can later be swapped or complemented with Parquet. |
 | 9 | Feature engineering v1 | Planned | Compute and persist feature datasets from normalized/validated data. |
 | 10 | Strategy feature interface | Planned | Let strategies consume typed feature inputs instead of raw price frames only. |
@@ -31,7 +31,8 @@ side discussions.
 
 ## Current Recommendation
 
-The next milestone should be **Data Lineage v1**.
+The next milestone after the in-review lineage work should be
+**Storage Abstraction v1**.
 
 Feature engineering is important, but it should come after lineage because
 feature artifacts need to explain exactly which data produced them.

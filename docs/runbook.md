@@ -30,6 +30,13 @@ before bad data reaches a strategy.
 Ingestion and backtesting run this validation by default. Use
 `--skip-validation` only when intentionally inspecting bad data behavior.
 
+Ingestion also writes JSON lineage artifacts:
+
+```text
+data/validation/market_bars/AAPL.json
+data/metadata/market_bars/AAPL.json
+```
+
 ## When Something Fails
 
 1. Confirm the input data has the required columns:

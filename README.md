@@ -53,6 +53,8 @@ This writes:
 ```text
 data/raw/provider=yfinance/modality=market_bars/symbol=AAPL/...
 data/normalized/market_bars/AAPL.csv
+data/validation/market_bars/AAPL.json
+data/metadata/market_bars/AAPL.json
 ```
 
 Validate normalized data before backtesting it:

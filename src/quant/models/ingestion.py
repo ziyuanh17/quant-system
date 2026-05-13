@@ -31,3 +31,21 @@ class RawDataset(FrozenModel):
 class IngestArtifactPaths(FrozenModel):
     raw_path: str
     normalized_path: str
+    validation_report_path: str | None = None
+    metadata_path: str | None = None
+    validation_passed: bool | None = None
+
+
+class DatasetMetadata(FrozenModel):
+    provider: str
+    modality: DataModality
+    symbol: str
+    request_start: str
+    request_end: str | None
+    raw_path: str
+    normalized_path: str
+    validation_report_path: str | None
+    ingested_at: datetime
+    normalization_version: str
+    validation_status: str
+    validation_issue_count: int | None = None

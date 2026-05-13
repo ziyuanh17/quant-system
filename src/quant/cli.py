@@ -107,6 +107,14 @@ def ingest_data(
         Path,
         typer.Option(help="Root directory for normalized data."),
     ] = Path("data/normalized"),
+    validation_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for validation report artifacts."),
+    ] = Path("data/validation"),
+    metadata_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for dataset metadata artifacts."),
+    ] = Path("data/metadata"),
     skip_validation: Annotated[
         bool,
         typer.Option(help="Skip validation after writing normalized data."),
@@ -126,15 +134,25 @@ def ingest_data(
         request,
         raw_root=raw_dir,
         normalized_root=normalized_dir,
+        validation_root=validation_dir,
+        metadata_root=metadata_dir,
+        validate=not skip_validation,
+        min_rows=min_rows,
     )
 
+    validation_failed = False
     for artifact in artifacts:
         typer.echo(f"Raw: {artifact.raw_path}")
         typer.echo(f"Normalized: {artifact.normalized_path}")
-        if not skip_validation:
-            _validate_or_exit(
-                Path(artifact.normalized_path), symbol, min_rows=min_rows
-            )
+        if artifact.validation_report_path is not None:
+            typer.echo(f"Validation report: {artifact.validation_report_path}")
+        if artifact.metadata_path is not None:
+            typer.echo(f"Metadata: {artifact.metadata_path}")
+        if artifact.validation_passed is False:
+            validation_failed = True
+
+    if validation_failed:
+        raise typer.Exit(code=1)
 
 
 @data_app.command("validate")

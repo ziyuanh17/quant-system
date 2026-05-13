@@ -6,6 +6,7 @@ from quant.models.backtest import (
 )
 from quant.models.ingestion import (
     DataModality,
+    DatasetMetadata,
     IngestArtifactPaths,
     IngestRequest,
     RawDataset,
@@ -25,6 +26,7 @@ __all__ = [
     "BacktestResult",
     "Bar",
     "DataModality",
+    "DatasetMetadata",
     "IngestArtifactPaths",
     "IngestRequest",
     "MarketBar",
