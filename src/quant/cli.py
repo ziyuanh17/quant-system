@@ -11,14 +11,18 @@ from quant.data import (
     load_price_csv,
     validate_market_bars_csv,
 )
+from quant.features import build_technical_features, write_feature_artifact
 from quant.models.backtest import BacktestConfig
+from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.validation import ValidationReport
 from quant.strategies import MomentumStrategy
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
+features_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
+app.add_typer(features_app, name="features")
 
 
 @app.callback()
@@ -170,6 +174,61 @@ def validate_data(
     """Validate normalized market-bar data before using it."""
     report = _validate_or_exit(data, symbol, min_rows=min_rows)
     _print_validation_report(report)
+
+
+@features_app.command("build")
+def build_features(
+    data: Annotated[
+        Path,
+        typer.Option(help="Normalized market-bars CSV to build features from."),
+    ],
+    symbol: Annotated[
+        str, typer.Option(help="Symbol to build features for.")
+    ] = "AAPL",
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where feature artifacts are written."),
+    ] = Path("data/features/technical"),
+    fast_window: Annotated[
+        int, typer.Option(help="Fast moving-average window.")
+    ] = 5,
+    slow_window: Annotated[
+        int, typer.Option(help="Slow moving-average window.")
+    ] = 20,
+    volatility_window: Annotated[
+        int, typer.Option(help="Rolling volatility window.")
+    ] = 20,
+    momentum_window: Annotated[
+        int, typer.Option(help="Momentum percent-change window.")
+    ] = 20,
+    skip_validation: Annotated[
+        bool,
+        typer.Option(
+            help="Skip market-data validation before feature building."
+        ),
+    ] = False,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
+) -> None:
+    """Build technical features from normalized market bars."""
+    # Features are downstream of data quality, so validation is on by default.
+    if not skip_validation:
+        _validate_or_exit(data, symbol, min_rows=min_rows)
+
+    prices = load_price_csv(data, symbol)
+    features = build_technical_features(
+        prices,
+        TechnicalFeatureConfig(
+            fast_window=fast_window,
+            slow_window=slow_window,
+            volatility_window=volatility_window,
+            momentum_window=momentum_window,
+        ),
+    )
+    artifact = write_feature_artifact(features, output_dir, symbol)
+    typer.echo(f"Features: {artifact.features_path}")
 
 
 def _validate_or_exit(

@@ -23,16 +23,16 @@ side discussions.
 | 5 | Data validation v1 | Done | Add market-bar validation checks and `quant data validate`. |
 | 6 | Validation guardrails | Done | Run validation by default during ingestion and before CSV backtests; allow explicit `--skip-validation`. |
 | 7 | Data lineage v1 | Done | Persist validation reports and dataset metadata that link raw data, normalized data, provider, symbol, timestamps, and normalization version. |
-| 8 | Storage abstraction v1 | In Review | Add a `MarketBarStore` boundary so CSV can later be swapped or complemented with Parquet. |
-| 9 | Feature engineering v1 | Planned | Compute and persist feature datasets from normalized/validated data. |
+| 8 | Storage abstraction v1 | Done | Add a `MarketBarStore` boundary so CSV can later be swapped or complemented with Parquet. |
+| 9 | Feature engineering v1 | In Review | Compute and persist feature datasets from normalized/validated data. |
 | 10 | Strategy feature interface | Planned | Let strategies consume typed feature inputs instead of raw price frames only. |
 | 11 | Provider reconciliation | Planned | Add checks and policies for comparing or combining data from multiple providers. |
 | 12 | Paper trading foundation | Planned | Add paper broker, risk checks, order records, portfolio snapshots, and scheduler loop. |
 
 ## Current Recommendation
 
-The next milestone after the in-review storage abstraction work should be
-**Feature Engineering v1**.
+The next milestone after the in-review feature engineering work should be
+**Strategy Feature Interface**.
 
 Feature engineering is important, but it should come after lineage because
 feature artifacts need to explain exactly which data produced them.

@@ -47,6 +47,18 @@ MarketBarStore
 
 This keeps ingestion from depending directly on CSV path construction.
 
+## Feature Layer
+
+Feature engineering consumes normalized and validated market bars, then writes
+feature artifacts under:
+
+```text
+data/features/
+```
+
+Feature artifacts should eventually carry lineage back to the normalized
+dataset and validation report that produced them.
+
 ## Intended Growth
 
 ```text

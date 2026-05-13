@@ -10,4 +10,6 @@ data/raw/
 data/normalized/
 data/validation/
 data/metadata/
+# Generated feature artifacts are reproducible from normalized data.
+data/features/
 data/results/

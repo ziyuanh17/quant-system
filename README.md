@@ -66,6 +66,20 @@ quant data validate --data data/normalized/market_bars/AAPL.csv --symbol AAPL
 Validation also runs by default during ingestion and before CSV backtests. Use
 `--skip-validation` only when intentionally debugging bad data.
 
+## Feature Engineering
+
+Build technical features from normalized market bars:
+
+```bash
+quant features build --data data/normalized/market_bars/AAPL.csv --symbol AAPL
+```
+
+This writes:
+
+```text
+data/features/technical/AAPL.csv
+```
+
 ## Local Checks
 
 ```bash

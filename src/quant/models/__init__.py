@@ -4,6 +4,7 @@ from quant.models.backtest import (
     BacktestResult,
     PerformanceMetrics,
 )
+from quant.models.features import FeatureArtifactPaths, TechnicalFeatureConfig
 from quant.models.ingestion import (
     DataModality,
     DatasetMetadata,
@@ -27,6 +28,7 @@ __all__ = [
     "Bar",
     "DataModality",
     "DatasetMetadata",
+    "FeatureArtifactPaths",
     "IngestArtifactPaths",
     "IngestRequest",
     "MarketBar",
@@ -36,6 +38,7 @@ __all__ = [
     "RawDataset",
     "SignalFrame",
     "TextSentimentFeature",
+    "TechnicalFeatureConfig",
     "ValidationIssue",
     "ValidationReport",
     "ValidationSeverity",
