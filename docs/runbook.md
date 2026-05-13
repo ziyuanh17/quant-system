@@ -27,6 +27,9 @@ quant data validate --data data/normalized/market_bars/AAPL.csv --symbol AAPL
 Validation failures return a nonzero exit code so scheduled jobs can stop
 before bad data reaches a strategy.
 
+Ingestion and backtesting run this validation by default. Use
+`--skip-validation` only when intentionally inspecting bad data behavior.
+
 ## When Something Fails
 
 1. Confirm the input data has the required columns:

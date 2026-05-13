@@ -46,12 +46,23 @@ def backtest(
         Path,
         typer.Option(help="Directory where backtest artifacts are written."),
     ] = Path("data/results/latest"),
+    skip_validation: Annotated[
+        bool,
+        typer.Option(help="Skip market-data validation before backtesting."),
+    ] = False,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
 ) -> None:
     """Run a VectorBT-backed signal backtest."""
     if strategy != "momentum":
         raise typer.BadParameter(
             "Only the momentum strategy is scaffolded right now."
         )
+
+    if not skip_validation:
+        _validate_or_exit(data, symbol, min_rows=min_rows)
 
     prices = load_price_csv(data, symbol)
     result, trades = VectorBTBacktester(
@@ -96,6 +107,14 @@ def ingest_data(
         Path,
         typer.Option(help="Root directory for normalized data."),
     ] = Path("data/normalized"),
+    skip_validation: Annotated[
+        bool,
+        typer.Option(help="Skip validation after writing normalized data."),
+    ] = False,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
 ) -> None:
     """Ingest market bars through the data provider interface."""
     if provider != "yfinance":
@@ -112,6 +131,10 @@ def ingest_data(
     for artifact in artifacts:
         typer.echo(f"Raw: {artifact.raw_path}")
         typer.echo(f"Normalized: {artifact.normalized_path}")
+        if not skip_validation:
+            _validate_or_exit(
+                Path(artifact.normalized_path), symbol, min_rows=min_rows
+            )
 
 
 @data_app.command("validate")
@@ -127,10 +150,21 @@ def validate_data(
     ] = 1,
 ) -> None:
     """Validate normalized market-bar data before using it."""
-    report = validate_market_bars_csv(data, symbol, min_rows=min_rows)
+    report = _validate_or_exit(data, symbol, min_rows=min_rows)
     _print_validation_report(report)
+
+
+def _validate_or_exit(
+    data: Path,
+    symbol: str,
+    *,
+    min_rows: int,
+) -> ValidationReport:
+    report = validate_market_bars_csv(data, symbol, min_rows=min_rows)
     if not report.passed:
+        _print_validation_report(report)
         raise typer.Exit(code=1)
+    return report
 
 
 def _print_validation_report(report: ValidationReport) -> None:

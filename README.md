@@ -61,6 +61,9 @@ Validate normalized data before backtesting it:
 quant data validate --data data/normalized/market_bars/AAPL.csv --symbol AAPL
 ```
 
+Validation also runs by default during ingestion and before CSV backtests. Use
+`--skip-validation` only when intentionally debugging bad data.
+
 ## Local Checks
 
 ```bash
