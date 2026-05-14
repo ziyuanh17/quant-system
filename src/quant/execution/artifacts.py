@@ -1,0 +1,13 @@
+from pathlib import Path
+
+from quant.models.execution import PaperTradeRecord
+
+
+def write_paper_trade_record(
+    record: PaperTradeRecord,
+    output_dir: Path,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / f"{record.order.id}.json"
+    path.write_text(record.model_dump_json(indent=2) + "\n")
+    return path

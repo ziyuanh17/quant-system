@@ -87,6 +87,26 @@ Keeping these protocols separate makes a backtest's inputs easier to audit.
 Price-based strategies can still recompute indicators during early research,
 while feature-based strategies consume persisted feature columns by name.
 
+## Execution Layer
+
+Paper trading starts with a deterministic broker boundary:
+
+```text
+OrderRequest
+  -> risk check
+  -> PaperBroker
+  -> Fill or rejection
+  -> PortfolioSnapshot
+  -> PaperTradeRecord
+```
+
+The first implementation simulates market orders at an explicit supplied price.
+That keeps tests deterministic and makes the audit trail easy to inspect before
+the system grows into scheduled signal execution or external broker APIs.
+
+See [trading_stages.md](trading_stages.md) for the beginner-level distinction
+between backtesting, paper trading, and real trading.
+
 ## Intended Growth
 
 ```text

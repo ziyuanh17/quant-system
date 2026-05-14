@@ -102,6 +102,23 @@ quant backtest --strategy feature-momentum --features-data data/features/technic
 Use `--fast-feature` and `--slow-feature` to point the strategy at different
 moving-average columns.
 
+## Paper Trading
+
+Submit a deterministic paper market order at a supplied price:
+
+```bash
+quant paper order --symbol AAPL --side buy --quantity 10 --price 100
+```
+
+This writes an audit record under:
+
+```text
+data/paper/latest/
+```
+
+See [docs/trading_stages.md](docs/trading_stages.md) for the distinction
+between backtesting, paper trading, and real trading.
+
 ## Local Checks
 
 ```bash
@@ -125,6 +142,6 @@ Dictionaries are allowed at system edges. Core domain logic uses typed models:
 - signals
 - strategy configuration
 - backtest metrics
-- orders and fills, when added later
+- orders and fills
 
 See [docs/code_style.md](docs/code_style.md).

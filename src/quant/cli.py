@@ -14,12 +14,14 @@ from quant.data import (
     validate_market_bars_csv,
     write_reconciliation_report,
 )
+from quant.execution import PaperBroker, write_paper_trade_record
 from quant.features import (
     build_technical_features,
     load_feature_csv,
     write_feature_artifact,
 )
 from quant.models.backtest import BacktestConfig, BacktestResult
+from quant.models.execution import OrderRequest, OrderSide
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.reconciliation import ProviderReconciliationReport
@@ -33,8 +35,10 @@ from quant.strategies import (
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
 features_app = typer.Typer(no_args_is_help=True)
+paper_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
+app.add_typer(paper_app, name="paper")
 
 
 @app.callback()
@@ -355,6 +359,53 @@ def build_features(
     )
     artifact = write_feature_artifact(features, output_dir, symbol)
     typer.echo(f"Features: {artifact.features_path}")
+
+
+@paper_app.command("order")
+def paper_order(
+    symbol: Annotated[str, typer.Option(help="Symbol to trade.")] = "AAPL",
+    side: Annotated[
+        OrderSide,
+        typer.Option(help="Order side."),
+    ] = OrderSide.BUY,
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity."),
+    ] = 1,
+    price: Annotated[
+        float,
+        typer.Option(help="Market price used for the simulated fill."),
+    ] = 100.0,
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Starting cash for this paper session."),
+    ] = 100_000,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where paper trade records are written."),
+    ] = Path("data/paper/latest"),
+) -> None:
+    """Submit a single market order to the paper broker."""
+    broker = PaperBroker(initial_cash=initial_cash)
+    record = broker.submit_market_order(
+        OrderRequest(symbol=symbol, side=side, quantity=quantity),
+        market_price=price,
+    )
+    record_path = write_paper_trade_record(record, output_dir)
+
+    typer.echo(f"Order: {record.order.id}")
+    typer.echo(f"Status: {record.order.status}")
+    if record.order.risk.reason is not None:
+        typer.echo(f"Risk reason: {record.order.risk.reason}")
+    if record.fill is not None:
+        typer.echo(f"Fill price: {record.fill.price:,.2f}")
+        typer.echo(f"Fill quantity: {record.fill.quantity}")
+    typer.echo(f"Cash: {record.snapshot.cash:,.2f}")
+    typer.echo(f"Equity: {record.snapshot.equity:,.2f}")
+    typer.echo(f"Record: {record_path}")
+
+    if record.fill is None:
+        raise typer.Exit(code=1)
 
 
 def _validate_or_exit(
