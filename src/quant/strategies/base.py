@@ -4,6 +4,7 @@ Base interfaces and protocols for quantitative trading strategies.
 
 from typing import Protocol
 
+from quant.models.features import FeatureData
 from quant.models.market import PriceData
 from quant.models.signals import SignalFrame
 
@@ -31,4 +32,20 @@ class Strategy(Protocol):
             A frame of generated trading signals (e.g., target positions or
             entries/exits).
         """
+        ...
+
+
+class FeatureStrategy(Protocol):
+    """
+    Protocol for strategies that consume precomputed feature artifacts.
+
+    Keeping this separate from `Strategy` makes it obvious whether a backtest
+    recomputes indicators from prices or consumes a reproducible feature file.
+    """
+
+    name: str
+
+    def generate_signals_from_features(
+        self, features: FeatureData
+    ) -> SignalFrame:
         ...

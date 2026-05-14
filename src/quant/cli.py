@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Annotated
 
+import pandas as pd
 import typer
 
 from quant.backtest import VectorBTBacktester
@@ -11,12 +12,20 @@ from quant.data import (
     load_price_csv,
     validate_market_bars_csv,
 )
-from quant.features import build_technical_features, write_feature_artifact
-from quant.models.backtest import BacktestConfig
+from quant.features import (
+    build_technical_features,
+    load_feature_csv,
+    write_feature_artifact,
+)
+from quant.models.backtest import BacktestConfig, BacktestResult
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.validation import ValidationReport
-from quant.strategies import MomentumStrategy
+from quant.strategies import (
+    FeatureMomentumConfig,
+    FeatureMomentumStrategy,
+    MomentumStrategy,
+)
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
@@ -39,6 +48,10 @@ def backtest(
         Path,
         typer.Option(help="CSV file with OHLCV data."),
     ] = Path("data/sample_prices.csv"),
+    features_data: Annotated[
+        Path | None,
+        typer.Option(help="Feature CSV for feature-based strategies."),
+    ] = None,
     symbol: Annotated[str, typer.Option(help="Symbol to backtest.")] = "AAPL",
     initial_cash: Annotated[
         float, typer.Option(help="Initial cash.")
@@ -58,20 +71,39 @@ def backtest(
         int,
         typer.Option(help="Minimum row count required by validation."),
     ] = 1,
+    fast_feature: Annotated[
+        str,
+        typer.Option(help="Fast feature column for feature-momentum."),
+    ] = "ma_5",
+    slow_feature: Annotated[
+        str,
+        typer.Option(help="Slow feature column for feature-momentum."),
+    ] = "ma_20",
 ) -> None:
     """Run a VectorBT-backed signal backtest."""
-    if strategy != "momentum":
+    if strategy == "momentum":
+        result, trades = _run_price_backtest(
+            data=data,
+            symbol=symbol,
+            initial_cash=initial_cash,
+            fees=fees,
+            skip_validation=skip_validation,
+            min_rows=min_rows,
+        )
+    elif strategy == "feature-momentum":
+        result, trades = _run_feature_backtest(
+            features_data=features_data,
+            symbol=symbol,
+            initial_cash=initial_cash,
+            fees=fees,
+            fast_feature=fast_feature,
+            slow_feature=slow_feature,
+        )
+    else:
         raise typer.BadParameter(
-            "Only the momentum strategy is scaffolded right now."
+            "Supported strategies are: momentum, feature-momentum."
         )
 
-    if not skip_validation:
-        _validate_or_exit(data, symbol, min_rows=min_rows)
-
-    prices = load_price_csv(data, symbol)
-    result, trades = VectorBTBacktester(
-        BacktestConfig(initial_cash=initial_cash, fees=fees)
-    ).run_with_trades(MomentumStrategy(), prices)
     artifacts = write_backtest_artifacts(result, trades, output_dir)
 
     metrics = result.metrics
@@ -87,6 +119,52 @@ def backtest(
     typer.echo(f"Trades: {metrics.total_trades}")
     typer.echo(f"Summary: {artifacts.summary_json}")
     typer.echo(f"Trades CSV: {artifacts.trades_csv}")
+
+
+def _run_price_backtest(
+    *,
+    data: Path,
+    symbol: str,
+    initial_cash: float,
+    fees: float,
+    skip_validation: bool,
+    min_rows: int,
+) -> tuple[BacktestResult, pd.DataFrame]:
+    if not skip_validation:
+        _validate_or_exit(data, symbol, min_rows=min_rows)
+
+    prices = load_price_csv(data, symbol)
+    return VectorBTBacktester(
+        BacktestConfig(initial_cash=initial_cash, fees=fees)
+    ).run_with_trades(MomentumStrategy(), prices)
+
+
+def _run_feature_backtest(
+    *,
+    features_data: Path | None,
+    symbol: str,
+    initial_cash: float,
+    fees: float,
+    fast_feature: str,
+    slow_feature: str,
+) -> tuple[BacktestResult, pd.DataFrame]:
+    if features_data is None:
+        raise typer.BadParameter(
+            "--features-data is required for feature-momentum."
+        )
+
+    # FeatureData validates artifact shape, but market-bar validation is not
+    # applicable because feature CSVs intentionally lack OHLCV columns.
+    features = load_feature_csv(features_data, symbol)
+    strategy = FeatureMomentumStrategy(
+        FeatureMomentumConfig(
+            fast_column=fast_feature,
+            slow_column=slow_feature,
+        )
+    )
+    return VectorBTBacktester(
+        BacktestConfig(initial_cash=initial_cash, fees=fees)
+    ).run_feature_with_trades(strategy, features)
 
 
 @data_app.command("ingest")

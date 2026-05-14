@@ -8,8 +8,9 @@ from quant.models.backtest import (
     BacktestResult,
     PerformanceMetrics,
 )
+from quant.models.features import FeatureData
 from quant.models.market import PriceData
-from quant.strategies.base import Strategy
+from quant.strategies.base import FeatureStrategy, Strategy
 
 
 class VectorBTBacktester:
@@ -80,6 +81,44 @@ class VectorBTBacktester:
         result = BacktestResult(
             strategy_name=strategy.name,
             symbol=prices.symbol,
+            config=self.config,
+            metrics=metrics,
+        )
+        return result, readable_trades(portfolio)
+
+    def run_feature_with_trades(
+        self, strategy: FeatureStrategy, features: FeatureData
+    ) -> tuple[BacktestResult, pd.DataFrame]:
+        try:
+            import vectorbt as vbt
+        except ImportError as exc:
+            raise RuntimeError(
+                "VectorBT is not installed. Install dependencies with "
+                '`python -m pip install -e ".[dev]"` and try again.'
+            ) from exc
+
+        signals = strategy.generate_signals_from_features(features)
+        # Feature-based strategies still need a tradeable price series; the
+        # feature artifact keeps `close` as the canonical portfolio input.
+        portfolio = vbt.Portfolio.from_signals(
+            close=features.close,
+            entries=signals.entries,
+            exits=signals.exits,
+            init_cash=self.config.initial_cash,
+            fees=self.config.fees,
+            freq=self.config.frequency,
+        )
+
+        metrics = PerformanceMetrics(
+            total_return=_call_metric(portfolio, "total_return"),
+            sharpe_ratio=_optional_metric(portfolio, "sharpe_ratio"),
+            max_drawdown=_optional_metric(portfolio, "max_drawdown"),
+            total_trades=_trade_count(portfolio),
+            final_value=_call_metric(portfolio, "final_value"),
+        )
+        result = BacktestResult(
+            strategy_name=strategy.name,
+            symbol=features.symbol,
             config=self.config,
             metrics=metrics,
         )

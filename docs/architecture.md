@@ -59,6 +59,22 @@ data/features/
 Feature artifacts should eventually carry lineage back to the normalized
 dataset and validation report that produced them.
 
+## Strategy Layer
+
+Strategies have two input contracts:
+
+```text
+Strategy
+  -> consumes PriceData
+
+FeatureStrategy
+  -> consumes FeatureData
+```
+
+Keeping these protocols separate makes a backtest's inputs easier to audit.
+Price-based strategies can still recompute indicators during early research,
+while feature-based strategies consume persisted feature columns by name.
+
 ## Intended Growth
 
 ```text

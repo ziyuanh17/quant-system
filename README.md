@@ -80,6 +80,15 @@ This writes:
 data/features/technical/AAPL.csv
 ```
 
+Run a backtest that consumes a persisted feature artifact:
+
+```bash
+quant backtest --strategy feature-momentum --features-data data/features/technical/AAPL.csv --symbol AAPL
+```
+
+Use `--fast-feature` and `--slow-feature` to point the strategy at different
+moving-average columns.
+
 ## Local Checks
 
 ```bash

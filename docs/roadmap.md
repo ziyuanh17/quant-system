@@ -24,22 +24,21 @@ side discussions.
 | 6 | Validation guardrails | Done | Run validation by default during ingestion and before CSV backtests; allow explicit `--skip-validation`. |
 | 7 | Data lineage v1 | Done | Persist validation reports and dataset metadata that link raw data, normalized data, provider, symbol, timestamps, and normalization version. |
 | 8 | Storage abstraction v1 | Done | Add a `MarketBarStore` boundary so CSV can later be swapped or complemented with Parquet. |
-| 9 | Feature engineering v1 | In Review | Compute and persist feature datasets from normalized/validated data. |
-| 10 | Strategy feature interface | Planned | Let strategies consume typed feature inputs instead of raw price frames only. |
+| 9 | Feature engineering v1 | Done | Compute and persist feature datasets from normalized/validated data. |
+| 10 | Strategy feature interface | In Review | Let strategies consume typed feature inputs instead of raw price frames only. |
 | 11 | Provider reconciliation | Planned | Add checks and policies for comparing or combining data from multiple providers. |
 | 12 | Paper trading foundation | Planned | Add paper broker, risk checks, order records, portfolio snapshots, and scheduler loop. |
 
 ## Current Recommendation
 
-The next milestone after the in-review feature engineering work should be
-**Strategy Feature Interface**.
+The next milestone after the in-review strategy feature interface work should be
+**Provider Reconciliation**.
 
-Feature engineering is important, but it should come after lineage because
-feature artifacts need to explain exactly which data produced them.
-
-Storage abstraction is also important, but it should come after lineage because
-we first need to know what metadata and artifact relationships the store should
-preserve.
+Feature strategies make the research loop more reproducible because the
+backtest can point to the exact feature artifact it consumed. After that,
+provider reconciliation becomes the next data-quality priority: the system
+should make contradictions across sources visible before they leak into
+features, simulations, or trading decisions.
 
 ## Corrected Near-Term Order
 
@@ -51,6 +50,7 @@ data ingestion
   -> storage abstraction
   -> feature engineering
   -> strategy feature interface
+  -> provider reconciliation
 ```
 
 ## Data Lineage v1 Scope
@@ -101,3 +101,18 @@ Start with simple technical features:
 
 Feature outputs should be artifacts with lineage back to the normalized dataset
 and validation report that produced them.
+
+## Strategy Feature Interface Scope
+
+Introduce:
+
+```text
+FeatureData
+FeatureStrategy
+FeatureMomentumStrategy
+```
+
+Keep price-based strategies working. Feature-based strategies should consume a
+named feature artifact and explicitly declare which feature columns drive their
+signals, so later debugging can trace a backtest from result to signal columns
+to feature file to normalized input data.

@@ -1,7 +1,11 @@
 import pandas as pd
 import pytest
 
-from quant.features import build_technical_features, write_feature_artifact
+from quant.features import (
+    build_technical_features,
+    load_feature_csv,
+    write_feature_artifact,
+)
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.market import PriceData
 
@@ -46,6 +50,36 @@ def test_write_feature_artifact_writes_csv(tmp_path) -> None:
 
     assert artifact.features_path == str(tmp_path / "AAPL.csv")
     assert (tmp_path / "AAPL.csv").exists()
+
+
+def test_load_feature_csv_filters_symbol_and_preserves_close_series(
+    tmp_path,
+) -> None:
+    features = pd.DataFrame(
+        {
+            "date": [
+                "2024-01-02",
+                "2024-01-01",
+                "2024-01-01",
+            ],
+            "symbol": ["AAPL", "MSFT", "AAPL"],
+            "close": [11.0, 99.0, 10.0],
+            "ma_2": [10.5, 99.0, None],
+            "ma_3": [None, 99.0, None],
+        }
+    )
+    path = tmp_path / "features.csv"
+    features.to_csv(path, index=False)
+
+    loaded = load_feature_csv(path, "AAPL")
+
+    assert loaded.symbol == "AAPL"
+    assert loaded.frame["symbol"].tolist() == ["AAPL", "AAPL"]
+    assert loaded.close.index.tolist() == [
+        pd.Timestamp("2024-01-01"),
+        pd.Timestamp("2024-01-02"),
+    ]
+    assert loaded.close.tolist() == [10.0, 11.0]
 
 
 def _price_frame() -> pd.DataFrame:

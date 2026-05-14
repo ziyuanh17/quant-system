@@ -1,3 +1,12 @@
+from quant.strategies.feature_momentum import (
+    FeatureMomentumConfig,
+    FeatureMomentumStrategy,
+)
 from quant.strategies.momentum import MomentumConfig, MomentumStrategy
 
-__all__ = ["MomentumConfig", "MomentumStrategy"]
+__all__ = [
+    "FeatureMomentumConfig",
+    "FeatureMomentumStrategy",
+    "MomentumConfig",
+    "MomentumStrategy",
+]
