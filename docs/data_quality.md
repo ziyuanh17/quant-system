@@ -113,6 +113,7 @@ Use separate layers:
 ```text
 data/raw/
 data/normalized/
+data/reconciliation/
 data/features/
 data/results/
 ```
@@ -176,6 +177,29 @@ quant data validate --data data/normalized/market_bars/AAPL.csv --symbol AAPL
 ```
 
 Validation also runs by default during ingestion and before CSV backtests.
+
+### Reconcile Before Mixing Providers
+
+When two providers can supply the same market-bar domain, compare their
+normalized outputs before choosing one as canonical or combining them:
+
+```bash
+quant data reconcile --left provider_a.csv --right provider_b.csv --symbol AAPL
+```
+
+The first reconciliation report checks:
+
+- missing required columns
+- missing symbol rows
+- duplicate dates
+- dates present in only one source
+- close-price differences
+- volume differences
+
+Close-price mismatches are treated as errors because they can directly change
+returns, features, and portfolio simulations. Coverage and volume differences
+start as warnings because they may be explainable by calendars, holidays,
+provider correction timing, or volume methodology.
 
 ## Multi-Modal Data
 
@@ -267,7 +291,7 @@ The next important improvements are:
 - add dataset metadata files
 - record data artifact paths in backtest results
 - add explicit adjusted/unadjusted price policy
-- add provider reconciliation checks before mixing sources
+- expand provider reconciliation policies before mixing sources
 
 ## References
 

@@ -66,6 +66,19 @@ quant data validate --data data/normalized/market_bars/AAPL.csv --symbol AAPL
 Validation also runs by default during ingestion and before CSV backtests. Use
 `--skip-validation` only when intentionally debugging bad data.
 
+Compare two normalized market-bar datasets before trusting a merged or
+provider-swapped research run:
+
+```bash
+quant data reconcile --left path/to/provider_a.csv --right path/to/provider_b.csv --symbol AAPL
+```
+
+This writes a report under:
+
+```text
+data/reconciliation/AAPL.json
+```
+
 ## Feature Engineering
 
 Build technical features from normalized market bars:

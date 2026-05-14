@@ -18,6 +18,10 @@ from quant.models.ingestion import (
 )
 from quant.models.market import Bar, MarketBar, PriceData
 from quant.models.news import NewsArticle, TextSentimentFeature
+from quant.models.reconciliation import (
+    ProviderReconciliationReport,
+    ReconciliationDifference,
+)
 from quant.models.signals import SignalFrame
 from quant.models.validation import (
     ValidationIssue,
@@ -40,7 +44,9 @@ __all__ = [
     "NewsArticle",
     "PerformanceMetrics",
     "PriceData",
+    "ProviderReconciliationReport",
     "RawDataset",
+    "ReconciliationDifference",
     "SignalFrame",
     "TextSentimentFeature",
     "TechnicalFeatureConfig",

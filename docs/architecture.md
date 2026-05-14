@@ -47,6 +47,18 @@ MarketBarStore
 
 This keeps ingestion from depending directly on CSV path construction.
 
+Provider reconciliation compares normalized market-bar datasets before they
+feed features or backtests:
+
+```text
+normalized provider A
+  -> ProviderReconciliationReport
+normalized provider B
+```
+
+The first reconciliation checks coverage, close-price differences, volume
+differences, duplicate dates, missing symbols, and missing required columns.
+
 ## Feature Layer
 
 Feature engineering consumes normalized and validated market bars, then writes

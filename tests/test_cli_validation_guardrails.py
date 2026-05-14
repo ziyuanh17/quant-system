@@ -1,6 +1,10 @@
+import re
+
 from typer.testing import CliRunner
 
 from quant.cli import app
+
+ANSI_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 def test_backtest_fails_invalid_data_before_strategy_runs(tmp_path) -> None:
@@ -24,11 +28,12 @@ def test_backtest_fails_invalid_data_before_strategy_runs(tmp_path) -> None:
             "AAPL",
         ],
     )
+    output = strip_ansi(result.output)
 
     assert result.exit_code == 1
-    assert "Status: failed" in result.output
-    assert "invalid_ohlc" in result.output
-    assert "Strategy:" not in result.output
+    assert "Status: failed" in output
+    assert "invalid_ohlc" in output
+    assert "Strategy:" not in output
 
 
 def test_backtest_skip_validation_continues_on_invalid_data(tmp_path) -> None:
@@ -55,9 +60,10 @@ def test_backtest_skip_validation_continues_on_invalid_data(tmp_path) -> None:
             str(tmp_path / "results"),
         ],
     )
+    output = strip_ansi(result.output)
 
     assert result.exit_code == 0
-    assert "Strategy: momentum" in result.output
+    assert "Strategy: momentum" in output
 
 
 def test_feature_momentum_backtest_uses_feature_artifact(tmp_path) -> None:
@@ -94,9 +100,10 @@ def test_feature_momentum_backtest_uses_feature_artifact(tmp_path) -> None:
             str(tmp_path / "results"),
         ],
     )
+    output = strip_ansi(result.output)
 
     assert result.exit_code == 0
-    assert "Strategy: feature-momentum" in result.output
+    assert "Strategy: feature-momentum" in output
 
 
 def test_feature_momentum_backtest_requires_feature_artifact() -> None:
@@ -108,6 +115,11 @@ def test_feature_momentum_backtest_requires_feature_artifact() -> None:
             "feature-momentum",
         ],
     )
+    output = strip_ansi(result.output)
 
     assert result.exit_code == 2
-    assert "--features-data is required for feature-momentum" in result.output
+    assert "--features-data is required for feature-momentum" in output
+
+
+def strip_ansi(output: str) -> str:
+    return ANSI_PATTERN.sub("", output)

@@ -10,7 +10,9 @@ from quant.data import (
     YFinanceMarketBarProvider,
     ingest_market_bars,
     load_price_csv,
+    reconcile_market_bars_csv,
     validate_market_bars_csv,
+    write_reconciliation_report,
 )
 from quant.features import (
     build_technical_features,
@@ -20,6 +22,7 @@ from quant.features import (
 from quant.models.backtest import BacktestConfig, BacktestResult
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
+from quant.models.reconciliation import ProviderReconciliationReport
 from quant.models.validation import ValidationReport
 from quant.strategies import (
     FeatureMomentumConfig,
@@ -254,6 +257,51 @@ def validate_data(
     _print_validation_report(report)
 
 
+@data_app.command("reconcile")
+def reconcile_data(
+    left: Annotated[
+        Path,
+        typer.Option(help="First normalized market-bars CSV to compare."),
+    ],
+    right: Annotated[
+        Path,
+        typer.Option(help="Second normalized market-bars CSV to compare."),
+    ],
+    symbol: Annotated[str, typer.Option(help="Symbol to reconcile.")] = "AAPL",
+    output_dir: Annotated[
+        Path,
+        typer.Option(
+            help="Directory where reconciliation reports are written."
+        ),
+    ] = Path("data/reconciliation"),
+    close_tolerance_pct: Annotated[
+        float,
+        typer.Option(help="Allowed relative close-price difference."),
+    ] = 0.001,
+    volume_tolerance_pct: Annotated[
+        float,
+        typer.Option(help="Allowed relative volume difference."),
+    ] = 0.05,
+) -> None:
+    """Compare two normalized market-bar datasets for one symbol."""
+    report = reconcile_market_bars_csv(
+        left_path=left,
+        right_path=right,
+        symbol=symbol,
+        close_tolerance_pct=close_tolerance_pct,
+        volume_tolerance_pct=volume_tolerance_pct,
+    )
+    report_path = write_reconciliation_report(
+        report, output_dir / f"{symbol}.json"
+    )
+
+    _print_reconciliation_report(report)
+    typer.echo(f"Report: {report_path}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
 @features_app.command("build")
 def build_features(
     data: Annotated[
@@ -337,6 +385,27 @@ def _print_validation_report(report: ValidationReport) -> None:
         if issue.field is not None:
             location.append(f"field={issue.field}")
         suffix = f" ({', '.join(location)})" if location else ""
+        typer.echo(
+            f"[{issue.severity}] {issue.code}: {issue.message}{suffix}"
+        )
+
+
+def _print_reconciliation_report(
+    report: ProviderReconciliationReport,
+) -> None:
+    status = "passed" if report.passed else "failed"
+    typer.echo(f"Left: {report.left_dataset}")
+    typer.echo(f"Right: {report.right_dataset}")
+    typer.echo(f"Symbol: {report.symbol}")
+    typer.echo(f"Rows: left={report.left_rows}, right={report.right_rows}")
+    typer.echo(f"Overlap rows: {report.overlap_rows}")
+    typer.echo(f"Status: {status}")
+    typer.echo(f"Issues: {report.issue_count}")
+    typer.echo(f"Close differences: {len(report.close_differences)}")
+    typer.echo(f"Volume differences: {len(report.volume_differences)}")
+
+    for issue in report.issues:
+        suffix = f" ({issue.field})" if issue.field is not None else ""
         typer.echo(
             f"[{issue.severity}] {issue.code}: {issue.message}{suffix}"
         )

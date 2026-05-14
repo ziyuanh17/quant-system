@@ -25,20 +25,19 @@ side discussions.
 | 7 | Data lineage v1 | Done | Persist validation reports and dataset metadata that link raw data, normalized data, provider, symbol, timestamps, and normalization version. |
 | 8 | Storage abstraction v1 | Done | Add a `MarketBarStore` boundary so CSV can later be swapped or complemented with Parquet. |
 | 9 | Feature engineering v1 | Done | Compute and persist feature datasets from normalized/validated data. |
-| 10 | Strategy feature interface | In Review | Let strategies consume typed feature inputs instead of raw price frames only. |
-| 11 | Provider reconciliation | Planned | Add checks and policies for comparing or combining data from multiple providers. |
+| 10 | Strategy feature interface | Done | Let strategies consume typed feature inputs instead of raw price frames only. |
+| 11 | Provider reconciliation | In Review | Add checks and policies for comparing or combining data from multiple providers. |
 | 12 | Paper trading foundation | Planned | Add paper broker, risk checks, order records, portfolio snapshots, and scheduler loop. |
 
 ## Current Recommendation
 
-The next milestone after the in-review strategy feature interface work should be
-**Provider Reconciliation**.
+The next milestone after the in-review provider reconciliation work should be
+**Paper Trading Foundation**.
 
-Feature strategies make the research loop more reproducible because the
-backtest can point to the exact feature artifact it consumed. After that,
-provider reconciliation becomes the next data-quality priority: the system
-should make contradictions across sources visible before they leak into
-features, simulations, or trading decisions.
+Provider reconciliation makes cross-source contradictions visible before they
+leak into features, simulations, or trading decisions. After this data-quality
+boundary is reviewed, the system can start growing toward paper trading with
+more confidence in its inputs.
 
 ## Corrected Near-Term Order
 
@@ -51,6 +50,7 @@ data ingestion
   -> feature engineering
   -> strategy feature interface
   -> provider reconciliation
+  -> paper trading foundation
 ```
 
 ## Data Lineage v1 Scope
@@ -116,3 +116,19 @@ Keep price-based strategies working. Feature-based strategies should consume a
 named feature artifact and explicitly declare which feature columns drive their
 signals, so later debugging can trace a backtest from result to signal columns
 to feature file to normalized input data.
+
+## Provider Reconciliation Scope
+
+Introduce:
+
+```text
+ProviderReconciliationReport
+ReconciliationDifference
+quant data reconcile
+```
+
+The first version compares two normalized market-bar CSVs for one symbol. It
+checks date coverage, required columns, duplicate dates, close-price
+differences, and volume differences. Close mismatches are treated as errors;
+coverage and volume mismatches start as warnings so they are visible without
+blocking every exploratory run.
