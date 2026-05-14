@@ -107,6 +107,21 @@ the system grows into scheduled signal execution or external broker APIs.
 See [trading_stages.md](trading_stages.md) for the beginner-level distinction
 between backtesting, paper trading, and real trading.
 
+## Scheduler Layer
+
+Scheduled runs produce durable run records:
+
+```text
+scheduled task
+  -> SchedulerRunner
+  -> ScheduledRunRecord
+  -> task artifacts
+```
+
+The first scheduler is a finite loop, not a forever-running daemon. That keeps
+local tests and server jobs predictable while still giving the system a
+repeatable boundary for future cron, service, or worker deployment.
+
 ## Intended Growth
 
 ```text

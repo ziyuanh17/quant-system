@@ -37,6 +37,23 @@ data/validation/market_bars/AAPL.json
 data/metadata/market_bars/AAPL.json
 ```
 
+## Run A Scheduled Paper Task
+
+```bash
+quant schedule paper-order --symbol AAPL --side buy --quantity 1 --price 100 --iterations 1
+```
+
+This command writes:
+
+```text
+data/paper/scheduled/
+data/scheduler/latest/
+```
+
+Use `--iterations` and `--interval-seconds` for a finite repeated run. Keep
+finite loops as the default until the system has explicit service supervision,
+idempotency, and alerting.
+
 ## When Something Fails
 
 1. Confirm the input data has the required columns:

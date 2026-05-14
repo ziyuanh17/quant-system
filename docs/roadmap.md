@@ -27,17 +27,17 @@ side discussions.
 | 9 | Feature engineering v1 | Done | Compute and persist feature datasets from normalized/validated data. |
 | 10 | Strategy feature interface | Done | Let strategies consume typed feature inputs instead of raw price frames only. |
 | 11 | Provider reconciliation | Done | Add checks and policies for comparing or combining data from multiple providers. |
-| 12 | Paper trading foundation | In Review | Add paper broker, risk checks, order records, portfolio snapshots, and audit records. |
+| 12 | Paper trading foundation | Done | Add paper broker, risk checks, order records, portfolio snapshots, and audit records. |
+| 13 | Scheduler Loop v1 | In Review | Add finite scheduled task runs with durable run records. |
 
 ## Current Recommendation
 
-The next milestone after the in-review paper trading foundation should be
-**Scheduler Loop v1**.
+The next milestone after the in-review scheduler loop should be
+**Paper Signal Execution v1**.
 
-Paper trading introduces the execution boundary, but it still needs a scheduler
-before it can run frequently on a server. The next step should connect data
-refresh, signal generation, risk checks, paper orders, and audit records in a
-repeatable loop.
+The scheduler can now run bounded tasks and write run records. The next step
+should connect strategy signals to paper orders, so scheduled jobs can execute a
+real research-to-paper path rather than a manually specified order.
 
 ## Corrected Near-Term Order
 
@@ -52,6 +52,7 @@ data ingestion
   -> provider reconciliation
   -> paper trading foundation
   -> scheduler loop
+  -> paper signal execution
 ```
 
 ## Data Lineage v1 Scope
@@ -171,4 +172,21 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Paper trading | Simulates one market order at a supplied price in a fresh in-memory broker session. | Persist broker state, connect to strategy signals, support scheduled runs, model slippage/fees/partial fills, add order idempotency, and separate paper broker adapters from real broker adapters. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
-| Server operation | No scheduler, service process, health checks, or alerting yet. | Add Scheduler Loop v1 with run records, retries, idempotency, structured logs, and failure notifications. |
+| Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
+| Server operation | No service process, health checks, or alerting yet. | Add service supervision, heartbeat records, health checks, structured logs, and failure notifications. |
+
+## Scheduler Loop v1 Scope
+
+Introduce:
+
+```text
+SchedulerRunner
+ScheduledTaskResult
+ScheduledRunRecord
+quant schedule paper-order
+```
+
+The first scheduler runs a task once or for a finite number of iterations. It
+writes one JSON run record per attempt and points each run record at task
+artifacts, such as paper trade records. It is intentionally not a permanent
+daemon yet.

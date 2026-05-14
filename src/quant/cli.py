@@ -25,7 +25,9 @@ from quant.models.execution import OrderRequest, OrderSide
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.reconciliation import ProviderReconciliationReport
+from quant.models.scheduler import ScheduledTaskResult
 from quant.models.validation import ValidationReport
+from quant.scheduler import SchedulerRunner
 from quant.strategies import (
     FeatureMomentumConfig,
     FeatureMomentumStrategy,
@@ -36,9 +38,11 @@ app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
 features_app = typer.Typer(no_args_is_help=True)
 paper_app = typer.Typer(no_args_is_help=True)
+schedule_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
+app.add_typer(schedule_app, name="schedule")
 
 
 @app.callback()
@@ -405,6 +409,83 @@ def paper_order(
     typer.echo(f"Record: {record_path}")
 
     if record.fill is None:
+        raise typer.Exit(code=1)
+
+
+@schedule_app.command("paper-order")
+def schedule_paper_order(
+    symbol: Annotated[str, typer.Option(help="Symbol to trade.")] = "AAPL",
+    side: Annotated[
+        OrderSide,
+        typer.Option(help="Order side."),
+    ] = OrderSide.BUY,
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity per scheduled run."),
+    ] = 1,
+    price: Annotated[
+        float,
+        typer.Option(help="Market price used for simulated fills."),
+    ] = 100.0,
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Starting cash for the paper broker session."),
+    ] = 100_000,
+    iterations: Annotated[
+        int,
+        typer.Option(help="Number of scheduled runs to execute."),
+    ] = 1,
+    interval_seconds: Annotated[
+        float,
+        typer.Option(help="Seconds to wait between scheduled runs."),
+    ] = 0.0,
+    paper_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where paper trade records are written."),
+    ] = Path("data/paper/scheduled"),
+    run_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where scheduler run records are written."),
+    ] = Path("data/scheduler/latest"),
+) -> None:
+    """Run a finite scheduled paper-order loop."""
+    if iterations < 1:
+        raise typer.BadParameter("iterations must be at least 1")
+    if interval_seconds < 0:
+        raise typer.BadParameter("interval-seconds must be non-negative")
+
+    broker = PaperBroker(initial_cash=initial_cash)
+    runner = SchedulerRunner(output_dir=run_output_dir)
+    request = OrderRequest(symbol=symbol, side=side, quantity=quantity)
+
+    def task() -> ScheduledTaskResult:
+        record = broker.submit_market_order(request, market_price=price)
+        paper_path = write_paper_trade_record(record, paper_output_dir)
+        status = record.order.status
+        message = f"paper order {status}"
+        if record.order.risk.reason is not None:
+            message = f"{message}: {record.order.risk.reason}"
+        return ScheduledTaskResult(
+            message=message,
+            artifact_paths=(str(paper_path),),
+        )
+
+    records = runner.run_loop(
+        task_name="paper-order",
+        task=task,
+        iterations=iterations,
+        interval_seconds=interval_seconds,
+    )
+
+    failed_records = [
+        record for record in records if record.status.value == "failed"
+    ]
+    typer.echo(f"Scheduled runs: {len(records)}")
+    typer.echo(f"Failures: {len(failed_records)}")
+    typer.echo(f"Run records: {run_output_dir}")
+    typer.echo(f"Paper records: {paper_output_dir}")
+
+    if failed_records:
         raise typer.Exit(code=1)
 
 

@@ -35,6 +35,11 @@ from quant.models.reconciliation import (
     ProviderReconciliationReport,
     ReconciliationDifference,
 )
+from quant.models.scheduler import (
+    ScheduledRunRecord,
+    ScheduledRunStatus,
+    ScheduledTaskResult,
+)
 from quant.models.signals import SignalFrame
 from quant.models.validation import (
     ValidationIssue,
@@ -71,6 +76,9 @@ __all__ = [
     "ReconciliationDifference",
     "RiskCheckResult",
     "RiskDecision",
+    "ScheduledRunRecord",
+    "ScheduledRunStatus",
+    "ScheduledTaskResult",
     "SignalFrame",
     "TextSentimentFeature",
     "TechnicalFeatureConfig",

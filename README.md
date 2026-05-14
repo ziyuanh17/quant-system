@@ -119,6 +119,20 @@ data/paper/latest/
 See [docs/trading_stages.md](docs/trading_stages.md) for the distinction
 between backtesting, paper trading, and real trading.
 
+## Scheduled Runs
+
+Run a finite scheduled paper-order loop:
+
+```bash
+quant schedule paper-order --symbol AAPL --side buy --quantity 1 --price 100 --iterations 1
+```
+
+This writes scheduler run records under:
+
+```text
+data/scheduler/latest/
+```
+
 ## Local Checks
 
 ```bash
