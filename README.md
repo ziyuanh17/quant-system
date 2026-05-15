@@ -119,6 +119,10 @@ data/paper/latest/
 See [docs/trading_stages.md](docs/trading_stages.md) for the distinction
 between backtesting, paper trading, and real trading.
 
+See [docs/broker_adapters.md](docs/broker_adapters.md) for the broker adapter
+boundary that keeps paper execution separate from any future real broker
+integration.
+
 ## Scheduled Runs
 
 Run a finite scheduled paper-order loop:

@@ -1,11 +1,11 @@
 import pandas as pd
 
 from quant.execution import (
-    PaperBroker,
+    PaperBrokerAdapter,
     decide_latest_signal,
     execute_latest_signal,
 )
-from quant.models.execution import PaperSignalAction
+from quant.models.execution import BrokerMode, PaperSignalAction
 from quant.models.market import PriceData
 from quant.strategies import MomentumStrategy
 
@@ -28,7 +28,7 @@ def test_decide_latest_signal_returns_buy_for_latest_entry() -> None:
 
 def test_execute_latest_signal_buys_through_paper_broker() -> None:
     prices = PriceData(symbol="AAPL", frame=_entry_frame())
-    broker = PaperBroker(initial_cash=1_000)
+    broker = PaperBrokerAdapter.from_initial_cash(initial_cash=1_000)
 
     record = execute_latest_signal(
         strategy=MomentumStrategy(),
@@ -47,9 +47,29 @@ def test_execute_latest_signal_buys_through_paper_broker() -> None:
     )
 
 
+def test_execute_latest_signal_can_use_paper_broker_adapter() -> None:
+    prices = PriceData(symbol="AAPL", frame=_entry_frame())
+    adapter = PaperBrokerAdapter.from_initial_cash(initial_cash=1_000)
+
+    record = execute_latest_signal(
+        strategy=MomentumStrategy(),
+        prices=prices,
+        broker=adapter,
+        quantity=2,
+    )
+
+    account = adapter.account_snapshot()
+    assert account.mode == BrokerMode.PAPER
+    assert record.trade is not None
+    assert account.portfolio.cash == 960
+    assert adapter.state().processed_signal_keys == (
+        "momentum:AAPL:2024-01-25:buy",
+    )
+
+
 def test_execute_latest_signal_skips_duplicate_trade() -> None:
     prices = PriceData(symbol="AAPL", frame=_entry_frame())
-    broker = PaperBroker(initial_cash=1_000)
+    broker = PaperBrokerAdapter.from_initial_cash(initial_cash=1_000)
     strategy = MomentumStrategy()
 
     first = execute_latest_signal(
@@ -74,7 +94,7 @@ def test_execute_latest_signal_skips_duplicate_trade() -> None:
 
 def test_execute_latest_signal_holds_without_trade() -> None:
     prices = PriceData(symbol="AAPL", frame=_hold_frame())
-    broker = PaperBroker(initial_cash=1_000)
+    broker = PaperBrokerAdapter.from_initial_cash(initial_cash=1_000)
 
     record = execute_latest_signal(
         strategy=MomentumStrategy(),

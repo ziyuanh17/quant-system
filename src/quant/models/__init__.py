@@ -5,6 +5,8 @@ from quant.models.backtest import (
     PerformanceMetrics,
 )
 from quant.models.execution import (
+    BrokerAccountSnapshot,
+    BrokerMode,
     Fill,
     Order,
     OrderRequest,
@@ -68,6 +70,8 @@ __all__ = [
     "BacktestArtifactPaths",
     "BacktestResult",
     "Bar",
+    "BrokerAccountSnapshot",
+    "BrokerMode",
     "DataModality",
     "DataRefreshWorkflowRecord",
     "DashboardHealthIssue",

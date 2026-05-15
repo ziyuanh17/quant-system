@@ -33,6 +33,11 @@ class PaperSignalAction(StrEnum):
     HOLD = "hold"
 
 
+class BrokerMode(StrEnum):
+    PAPER = "paper"
+    LIVE = "live"
+
+
 class OrderRequest(FrozenModel):
     symbol: str
     side: OrderSide
@@ -91,6 +96,13 @@ class PortfolioSnapshot(FrozenModel):
         return self.cash + sum(
             position.market_value for position in self.positions
         )
+
+
+class BrokerAccountSnapshot(FrozenModel):
+    """Broker-facing account view used before any real broker integration."""
+
+    mode: BrokerMode
+    portfolio: PortfolioSnapshot
 
 
 class PaperBrokerState(FrozenModel):

@@ -5,10 +5,10 @@
     "updated": "2026-05-15"
   },
   "summary": {
-    "done": 23,
+    "done": 24,
     "in_review": 1,
     "planned": 1,
-    "next": "Broker Adapter Boundary v1"
+    "next": "Live Trading Safety Gates v1"
   },
   "milestones": [
     {
@@ -152,14 +152,20 @@
     {
       "order": 24,
       "name": "Dashboard Alert Status v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Publish sanitized operational health status to the GitHub Pages dashboard."
     },
     {
       "order": 25,
       "name": "Broker Adapter Boundary v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Define the paper-vs-real broker boundary before adding real-money trading logic."
+    },
+    {
+      "order": 26,
+      "name": "Live Trading Safety Gates v1",
+      "status": "planned",
+      "purpose": "Add explicit controls that keep real-money trading impossible by default."
     }
   ],
   "futureMetrics": [

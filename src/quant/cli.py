@@ -16,6 +16,7 @@ from quant.data import (
 )
 from quant.execution import (
     PaperBroker,
+    PaperBrokerAdapter,
     execute_latest_signal,
     load_paper_broker_state,
     reconcile_paper_state,
@@ -664,7 +665,7 @@ def schedule_paper_signal(
         default_cash=initial_cash,
         default_positions=initial_positions,
     )
-    broker = PaperBroker.from_state(state)
+    broker = PaperBrokerAdapter.from_state(state)
     runner = SchedulerRunner(output_dir=run_output_dir)
     signal_strategy = MomentumStrategy()
 

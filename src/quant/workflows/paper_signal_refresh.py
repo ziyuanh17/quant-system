@@ -4,7 +4,7 @@ from pathlib import Path
 from quant.data import ingest_market_bars, load_price_csv
 from quant.data.providers.base import DataProvider
 from quant.execution import (
-    PaperBroker,
+    PaperBrokerAdapter,
     execute_latest_signal,
     load_paper_broker_state,
     save_paper_broker_state,
@@ -193,7 +193,7 @@ def _run_paper_signal_loop(
         default_cash=initial_cash,
         default_positions=initial_positions,
     )
-    broker = PaperBroker.from_state(state)
+    broker = PaperBrokerAdapter.from_state(state)
     runner = SchedulerRunner(output_dir=run_output_dir)
     strategy = MomentumStrategy()
 

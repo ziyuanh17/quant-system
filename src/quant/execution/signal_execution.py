@@ -2,7 +2,7 @@ from typing import Any, cast
 
 import pandas as pd
 
-from quant.execution.paper_broker import PaperBroker
+from quant.execution.broker_adapter import SignalExecutionBroker
 from quant.models.execution import (
     OrderRequest,
     OrderSide,
@@ -71,7 +71,7 @@ def execute_latest_signal(
     *,
     strategy: Strategy,
     prices: PriceData,
-    broker: PaperBroker,
+    broker: SignalExecutionBroker,
     quantity: int,
 ) -> PaperSignalRecord:
     signals = strategy.generate_signals(prices)
