@@ -12,7 +12,7 @@ paper
 The supported modes are:
 
 - `paper`: local paper broker behavior only
-- `dry_run`: future live-style path that must not submit real orders
+- `dry_run`: live-shaped path that records intended orders without submission
 - `live`: real-money mode, blocked unless every explicit gate passes
 
 ## Safety Check

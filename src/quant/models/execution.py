@@ -35,6 +35,7 @@ class PaperSignalAction(StrEnum):
 
 class BrokerMode(StrEnum):
     PAPER = "paper"
+    DRY_RUN = "dry_run"
     LIVE = "live"
 
 
@@ -131,6 +132,24 @@ class TradingSafetyCheck(FrozenModel):
         if self.allowed:
             return "trading mode is allowed"
         return "; ".join(self.issues)
+
+
+class DryRunOrderStatus(StrEnum):
+    WOULD_SUBMIT = "would_submit"
+
+
+class DryRunOrderRecord(FrozenModel):
+    """Intended broker order that was recorded without being submitted."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    request: OrderRequest
+    market_price: float = Field(gt=0)
+    notional: float = Field(gt=0)
+    status: DryRunOrderStatus = DryRunOrderStatus.WOULD_SUBMIT
+    trading_mode: TradingMode = TradingMode.DRY_RUN
+    broker_name: str
+    safety_check: TradingSafetyCheck
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class PaperBrokerState(FrozenModel):

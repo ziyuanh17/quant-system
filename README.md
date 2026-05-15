@@ -132,6 +132,15 @@ quant safety check
 See [docs/trading_safety.md](docs/trading_safety.md) for the fail-closed live
 trading rules.
 
+Record a live-shaped dry-run order without submitting it:
+
+```bash
+quant dry-run order --symbol AAPL --side buy --quantity 1 --price 100
+```
+
+See [docs/dry_run_trading.md](docs/dry_run_trading.md) for the difference
+between paper trading and dry-run trading.
+
 ## Scheduled Runs
 
 Run a finite scheduled paper-order loop:

@@ -7,6 +7,8 @@ from quant.models.backtest import (
 from quant.models.execution import (
     BrokerAccountSnapshot,
     BrokerMode,
+    DryRunOrderRecord,
+    DryRunOrderStatus,
     Fill,
     Order,
     OrderRequest,
@@ -75,6 +77,8 @@ __all__ = [
     "Bar",
     "BrokerAccountSnapshot",
     "BrokerMode",
+    "DryRunOrderRecord",
+    "DryRunOrderStatus",
     "DataModality",
     "DataRefreshWorkflowRecord",
     "DashboardHealthIssue",

@@ -5,10 +5,10 @@
     "updated": "2026-05-15"
   },
   "summary": {
-    "done": 25,
+    "done": 26,
     "in_review": 1,
     "planned": 1,
-    "next": "Dry-Run Broker Adapter v1"
+    "next": "Dry-Run Signal Execution v1"
   },
   "milestones": [
     {
@@ -164,14 +164,20 @@
     {
       "order": 26,
       "name": "Live Trading Safety Gates v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Add explicit controls that keep real-money trading impossible by default."
     },
     {
       "order": 27,
       "name": "Dry-Run Broker Adapter v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Add a live-shaped broker adapter that records intended orders without submitting them."
+    },
+    {
+      "order": 28,
+      "name": "Dry-Run Signal Execution v1",
+      "status": "planned",
+      "purpose": "Route strategy signals into dry-run intended-order records."
     }
   ],
   "futureMetrics": [

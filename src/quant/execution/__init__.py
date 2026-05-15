@@ -1,9 +1,11 @@
 from quant.execution.artifacts import (
+    write_dry_run_order_record,
     write_paper_signal_record,
     write_paper_trade_record,
 )
 from quant.execution.broker_adapter import (
     BrokerAdapter,
+    DryRunBrokerAdapter,
     PaperBrokerAdapter,
     SignalExecutionBroker,
 )
@@ -31,6 +33,7 @@ from quant.execution.state import (
 
 __all__ = [
     "BrokerAdapter",
+    "DryRunBrokerAdapter",
     "LIVE_TRADING_CONFIRMATION",
     "LiveTradingNotAllowedError",
     "PaperBroker",
@@ -45,6 +48,7 @@ __all__ = [
     "load_trading_safety_config_from_env",
     "reconcile_paper_state",
     "save_paper_broker_state",
+    "write_dry_run_order_record",
     "write_paper_state_reconciliation_report",
     "write_paper_signal_record",
     "write_paper_trade_record",

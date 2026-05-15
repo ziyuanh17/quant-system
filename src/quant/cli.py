@@ -16,6 +16,7 @@ from quant.data import (
 )
 from quant.execution import (
     LIVE_TRADING_CONFIRMATION,
+    DryRunBrokerAdapter,
     PaperBroker,
     PaperBrokerAdapter,
     evaluate_trading_safety,
@@ -24,6 +25,7 @@ from quant.execution import (
     load_trading_safety_config_from_env,
     reconcile_paper_state,
     save_paper_broker_state,
+    write_dry_run_order_record,
     write_paper_signal_record,
     write_paper_state_reconciliation_report,
     write_paper_trade_record,
@@ -70,6 +72,7 @@ schedule_app = typer.Typer(no_args_is_help=True)
 ops_app = typer.Typer(no_args_is_help=True)
 workflow_app = typer.Typer(no_args_is_help=True)
 safety_app = typer.Typer(no_args_is_help=True)
+dry_run_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
@@ -77,6 +80,7 @@ app.add_typer(schedule_app, name="schedule")
 app.add_typer(ops_app, name="ops")
 app.add_typer(workflow_app, name="workflow")
 app.add_typer(safety_app, name="safety")
+app.add_typer(dry_run_app, name="dry-run")
 
 
 @app.callback()
@@ -138,6 +142,54 @@ def safety_check(
 
     if not check.allowed:
         raise typer.Exit(code=1)
+
+
+@dry_run_app.command("order")
+def dry_run_order(
+    symbol: Annotated[str, typer.Option(help="Symbol to trade.")] = "AAPL",
+    side: Annotated[
+        OrderSide,
+        typer.Option(help="Order side."),
+    ] = OrderSide.BUY,
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity."),
+    ] = 1,
+    price: Annotated[
+        float,
+        typer.Option(help="Market price used for the intended order."),
+    ] = 100.0,
+    broker_name: Annotated[
+        str,
+        typer.Option(help="Broker name to include in the dry-run record."),
+    ] = "dry-run",
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where dry-run order records are written."),
+    ] = Path("data/dry_run/orders"),
+) -> None:
+    """Record a would-submit market order without placing or filling it."""
+    config = TradingSafetyConfig(mode=TradingMode.DRY_RUN)
+    check = evaluate_trading_safety(config)
+    if not check.allowed:
+        raise typer.Exit(code=1)
+
+    adapter = DryRunBrokerAdapter(broker_name=broker_name)
+    record = adapter.submit_market_order(
+        OrderRequest(symbol=symbol, side=side, quantity=quantity),
+        market_price=price,
+        safety_check=check,
+    )
+    record_path = write_dry_run_order_record(record, output_dir)
+
+    typer.echo(f"Dry-run order: {record.id}")
+    typer.echo(f"Status: {record.status.value}")
+    typer.echo(f"Broker: {record.broker_name}")
+    typer.echo(f"Side: {record.request.side.value}")
+    typer.echo(f"Quantity: {record.request.quantity}")
+    typer.echo(f"Market price: {record.market_price:,.2f}")
+    typer.echo(f"Notional: {record.notional:,.2f}")
+    typer.echo(f"Record: {record_path}")
 
 
 @app.command()

@@ -4,10 +4,13 @@ from quant.execution.paper_broker import PaperBroker
 from quant.models.execution import (
     BrokerAccountSnapshot,
     BrokerMode,
+    DryRunOrderRecord,
     OrderRequest,
     PaperBrokerState,
     PaperTradeRecord,
     PortfolioSnapshot,
+    TradingMode,
+    TradingSafetyCheck,
 )
 
 
@@ -92,3 +95,32 @@ class PaperBrokerAdapter:
 
     def mark_signal_processed(self, key: str) -> None:
         self._broker.mark_signal_processed(key)
+
+
+class DryRunBrokerAdapter:
+    """Live-shaped adapter that records intended orders without submission."""
+
+    mode = BrokerMode.DRY_RUN
+
+    def __init__(self, *, broker_name: str) -> None:
+        if not broker_name:
+            raise ValueError("broker_name is required for dry-run orders")
+        self._broker_name = broker_name
+
+    def submit_market_order(
+        self,
+        request: OrderRequest,
+        *,
+        market_price: float,
+        safety_check: TradingSafetyCheck,
+    ) -> DryRunOrderRecord:
+        if not safety_check.allowed or safety_check.mode != TradingMode.DRY_RUN:
+            raise ValueError("dry-run orders require an allowed dry-run check")
+
+        return DryRunOrderRecord(
+            request=request,
+            market_price=market_price,
+            notional=request.quantity * market_price,
+            broker_name=self._broker_name,
+            safety_check=safety_check,
+        )
