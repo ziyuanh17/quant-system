@@ -29,6 +29,8 @@ class DataRefreshWorkflowRecord(FrozenModel):
     normalized_path: str | None = None
     validation_report_path: str | None = None
     metadata_path: str | None = None
+    lock_path: str | None = None
+    lock_owner: str | None = None
     scheduler_run_paths: tuple[str, ...] = ()
     artifact_paths: tuple[str, ...] = ()
 

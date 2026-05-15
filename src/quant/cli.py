@@ -713,6 +713,14 @@ def workflow_paper_signal_refresh(
         Path,
         typer.Option(help="Directory where scheduler run records are written."),
     ] = Path("data/scheduler/latest"),
+    lock_path: Annotated[
+        Path,
+        typer.Option(help="Lock file that prevents overlapping workflow runs."),
+    ] = Path("data/locks/paper-signal-refresh.lock"),
+    lock_stale_after_seconds: Annotated[
+        int,
+        typer.Option(help="Seconds before an existing workflow lock is stale."),
+    ] = 7200,
 ) -> None:
     """Refresh data, validate it, then run the paper-signal scheduler."""
     _validate_paper_signal_options(
@@ -747,6 +755,8 @@ def workflow_paper_signal_refresh(
             signal_output_dir=signal_output_dir,
             state_path=state_path,
             run_output_dir=run_output_dir,
+            lock_path=lock_path,
+            lock_stale_after_seconds=lock_stale_after_seconds,
         )
     except WorkflowRunFailed as exc:
         _print_workflow_record(exc.record, workflow_output_dir)
@@ -905,6 +915,7 @@ def _print_workflow_record(
         "Validation report: "
         f"{_format_health_value(record.validation_report_path)}"
     )
+    typer.echo(f"Lock: {_format_health_value(record.lock_path)}")
     typer.echo(f"Scheduler runs: {len(record.scheduler_run_paths)}")
     typer.echo(f"Record: {record_path}")
 

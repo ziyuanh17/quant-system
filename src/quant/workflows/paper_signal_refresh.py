@@ -14,6 +14,7 @@ from quant.models.execution import Position
 from quant.models.ingestion import IngestArtifactPaths, IngestRequest
 from quant.models.scheduler import ScheduledRunRecord, ScheduledTaskResult
 from quant.models.workflow import DataRefreshWorkflowRecord, WorkflowRunStatus
+from quant.operations import FileLock
 from quant.scheduler import SchedulerRunner
 from quant.strategies import MomentumStrategy
 
@@ -46,57 +47,78 @@ def run_paper_signal_refresh_workflow(
     signal_output_dir: Path,
     state_path: Path,
     run_output_dir: Path,
+    lock_path: Path | None = None,
+    lock_stale_after_seconds: int = 7200,
 ) -> DataRefreshWorkflowRecord:
     """Refresh data, validate it, then run the paper-signal scheduler."""
     started_at = datetime.now(UTC)
     ingest_artifact: IngestArtifactPaths | None = None
     scheduler_records: tuple[ScheduledRunRecord, ...] = ()
+    lock_owner: str | None = None
 
     try:
-        if strategy != "momentum":
-            raise ValueError("Only momentum is implemented right now.")
-
-        request = IngestRequest(symbols=(symbol,), start=start, end=end)
-        artifacts = ingest_market_bars(
-            provider,
-            request,
-            raw_root=raw_dir,
-            normalized_root=normalized_dir,
-            validation_root=validation_dir,
-            metadata_root=metadata_dir,
-            validate=True,
-            min_rows=min_rows,
-        )
-        ingest_artifact = _single_artifact(artifacts)
-        if ingest_artifact.validation_passed is not True:
-            raise ValueError(
-                "data refresh validation failed; paper signal was not run"
+        lock = (
+            FileLock(
+                path=lock_path,
+                lock_name="paper-signal-refresh",
+                stale_after_seconds=lock_stale_after_seconds,
             )
-
-        scheduler_records = _run_paper_signal_loop(
-            data=Path(ingest_artifact.normalized_path),
-            symbol=symbol,
-            quantity=quantity,
-            initial_cash=initial_cash,
-            initial_position_quantity=initial_position_quantity,
-            initial_position_price=initial_position_price,
-            iterations=iterations,
-            interval_seconds=interval_seconds,
-            signal_output_dir=signal_output_dir,
-            state_path=state_path,
-            run_output_dir=run_output_dir,
+            if lock_path is not None
+            else None
         )
-        failed_runs = [
-            record
-            for record in scheduler_records
-            if record.status.value == "failed"
-        ]
-        if failed_runs:
-            message = f"{len(failed_runs)} paper signal scheduler runs failed"
-            status = WorkflowRunStatus.FAILED
-        else:
-            message = "data refreshed and paper signal workflow completed"
-            status = WorkflowRunStatus.SUCCEEDED
+        if lock is not None:
+            lock_owner = lock.acquire().owner
+
+        try:
+            if strategy != "momentum":
+                raise ValueError("Only momentum is implemented right now.")
+
+            request = IngestRequest(symbols=(symbol,), start=start, end=end)
+            artifacts = ingest_market_bars(
+                provider,
+                request,
+                raw_root=raw_dir,
+                normalized_root=normalized_dir,
+                validation_root=validation_dir,
+                metadata_root=metadata_dir,
+                validate=True,
+                min_rows=min_rows,
+            )
+            ingest_artifact = _single_artifact(artifacts)
+            if ingest_artifact.validation_passed is not True:
+                raise ValueError(
+                    "data refresh validation failed; paper signal was not run"
+                )
+
+            scheduler_records = _run_paper_signal_loop(
+                data=Path(ingest_artifact.normalized_path),
+                symbol=symbol,
+                quantity=quantity,
+                initial_cash=initial_cash,
+                initial_position_quantity=initial_position_quantity,
+                initial_position_price=initial_position_price,
+                iterations=iterations,
+                interval_seconds=interval_seconds,
+                signal_output_dir=signal_output_dir,
+                state_path=state_path,
+                run_output_dir=run_output_dir,
+            )
+            failed_runs = [
+                record
+                for record in scheduler_records
+                if record.status.value == "failed"
+            ]
+            if failed_runs:
+                message = (
+                    f"{len(failed_runs)} paper signal scheduler runs failed"
+                )
+                status = WorkflowRunStatus.FAILED
+            else:
+                message = "data refreshed and paper signal workflow completed"
+                status = WorkflowRunStatus.SUCCEEDED
+        finally:
+            if lock is not None:
+                lock.release()
 
         record = _build_record(
             status=status,
@@ -109,6 +131,8 @@ def run_paper_signal_refresh_workflow(
             ingest_artifact=ingest_artifact,
             scheduler_records=scheduler_records,
             run_output_dir=run_output_dir,
+            lock_path=lock_path,
+            lock_owner=lock_owner,
         )
         write_data_refresh_workflow_record(record, workflow_output_dir)
         if status == WorkflowRunStatus.FAILED:
@@ -128,6 +152,8 @@ def run_paper_signal_refresh_workflow(
             ingest_artifact=ingest_artifact,
             scheduler_records=scheduler_records,
             run_output_dir=run_output_dir,
+            lock_path=lock_path,
+            lock_owner=lock_owner,
         )
         write_data_refresh_workflow_record(record, workflow_output_dir)
         raise WorkflowRunFailed(record) from exc
@@ -241,6 +267,8 @@ def _build_record(
     ingest_artifact: IngestArtifactPaths | None,
     scheduler_records: tuple[ScheduledRunRecord, ...],
     run_output_dir: Path,
+    lock_path: Path | None,
+    lock_owner: str | None,
 ) -> DataRefreshWorkflowRecord:
     scheduler_run_paths = tuple(
         str(run_output_dir / f"{record.run_id}.json")
@@ -271,6 +299,8 @@ def _build_record(
         metadata_path=(
             ingest_artifact.metadata_path if ingest_artifact else None
         ),
+        lock_path=str(lock_path) if lock_path is not None else None,
+        lock_owner=lock_owner,
         scheduler_run_paths=scheduler_run_paths,
         artifact_paths=artifact_paths,
     )

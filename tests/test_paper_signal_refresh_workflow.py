@@ -6,6 +6,7 @@ import quant.cli
 from quant.cli import app
 from quant.models.ingestion import DataModality, IngestRequest, RawDataset
 from quant.models.workflow import WorkflowRunStatus
+from quant.operations import FileLock
 from quant.workflows import (
     WorkflowRunFailed,
     run_paper_signal_refresh_workflow,
@@ -36,6 +37,8 @@ def test_paper_signal_refresh_workflow_refreshes_then_runs_signal(
         signal_output_dir=tmp_path / "signals",
         state_path=tmp_path / "state" / "paper.json",
         run_output_dir=tmp_path / "runs",
+        lock_path=tmp_path / "locks" / "workflow.lock",
+        lock_stale_after_seconds=60,
     )
 
     workflow_records = list((tmp_path / "workflows").glob("*.json"))
@@ -50,6 +53,7 @@ def test_paper_signal_refresh_workflow_refreshes_then_runs_signal(
     assert len(signal_records) == 1
     assert len(scheduler_records) == 1
     assert (tmp_path / "state" / "paper.json").exists()
+    assert not (tmp_path / "locks" / "workflow.lock").exists()
     assert record.scheduler_run_paths == (str(scheduler_records[0]),)
     assert str(signal_records[0]) in record.artifact_paths
 
@@ -83,6 +87,8 @@ def test_paper_signal_refresh_workflow_stops_when_validation_fails(
             signal_output_dir=tmp_path / "signals",
             state_path=tmp_path / "state" / "paper.json",
             run_output_dir=tmp_path / "runs",
+            lock_path=tmp_path / "locks" / "workflow.lock",
+            lock_stale_after_seconds=60,
         )
     except WorkflowRunFailed as exc:
         record = exc.record
@@ -93,6 +99,7 @@ def test_paper_signal_refresh_workflow_stops_when_validation_fails(
     assert "validation failed" in record.message
     assert record.validation_report_path is not None
     assert list((tmp_path / "workflows").glob("*.json"))
+    assert not (tmp_path / "locks" / "workflow.lock").exists()
     assert not (tmp_path / "signals").exists()
     assert not (tmp_path / "runs").exists()
     assert not (tmp_path / "state" / "paper.json").exists()
@@ -141,6 +148,10 @@ def test_paper_signal_refresh_cli_prints_workflow_record(
             str(tmp_path / "state" / "paper.json"),
             "--run-output-dir",
             str(tmp_path / "runs"),
+            "--lock-path",
+            str(tmp_path / "locks" / "workflow.lock"),
+            "--lock-stale-after-seconds",
+            "60",
         ],
     )
 
@@ -148,6 +159,94 @@ def test_paper_signal_refresh_cli_prints_workflow_record(
     assert "Workflow: paper-signal-refresh" in result.output
     assert "Status: succeeded" in result.output
     assert "Scheduler runs: 1" in result.output
+
+
+def test_paper_signal_refresh_workflow_records_lock_conflict(
+    tmp_path,
+) -> None:
+    lock_path = tmp_path / "locks" / "workflow.lock"
+    active_lock = FileLock(
+        path=lock_path,
+        lock_name="paper-signal-refresh",
+        owner="active-run",
+        stale_after_seconds=60,
+    )
+    active_lock.acquire()
+
+    try:
+        run_paper_signal_refresh_workflow(
+            provider=FakeTrendingMarketBarProvider(),
+            symbol="AAPL",
+            start="2024-01-01",
+            end="2024-02-01",
+            raw_dir=tmp_path / "raw",
+            normalized_dir=tmp_path / "normalized",
+            validation_dir=tmp_path / "validation",
+            metadata_dir=tmp_path / "metadata",
+            workflow_output_dir=tmp_path / "workflows",
+            strategy="momentum",
+            quantity=1,
+            initial_cash=1000,
+            initial_position_quantity=0,
+            initial_position_price=1,
+            iterations=1,
+            interval_seconds=0,
+            min_rows=20,
+            signal_output_dir=tmp_path / "signals",
+            state_path=tmp_path / "state" / "paper.json",
+            run_output_dir=tmp_path / "runs",
+            lock_path=lock_path,
+            lock_stale_after_seconds=60,
+        )
+    except WorkflowRunFailed as exc:
+        record = exc.record
+    else:
+        raise AssertionError("expected active lock to stop workflow")
+    finally:
+        active_lock.release()
+
+    assert record.status == WorkflowRunStatus.FAILED
+    assert "lock already held" in record.message
+    assert record.lock_path == str(lock_path)
+    assert not (tmp_path / "raw").exists()
+
+
+def test_paper_signal_refresh_workflow_releases_lock_after_error(
+    tmp_path,
+) -> None:
+    lock_path = tmp_path / "locks" / "workflow.lock"
+
+    try:
+        run_paper_signal_refresh_workflow(
+            provider=FakeTrendingMarketBarProvider(),
+            symbol="AAPL",
+            start="2024-01-01",
+            end="2024-02-01",
+            raw_dir=tmp_path / "raw",
+            normalized_dir=tmp_path / "normalized",
+            validation_dir=tmp_path / "validation",
+            metadata_dir=tmp_path / "metadata",
+            workflow_output_dir=tmp_path / "workflows",
+            strategy="unknown",
+            quantity=1,
+            initial_cash=1000,
+            initial_position_quantity=0,
+            initial_position_price=1,
+            iterations=1,
+            interval_seconds=0,
+            min_rows=20,
+            signal_output_dir=tmp_path / "signals",
+            state_path=tmp_path / "state" / "paper.json",
+            run_output_dir=tmp_path / "runs",
+            lock_path=lock_path,
+            lock_stale_after_seconds=60,
+        )
+    except WorkflowRunFailed:
+        pass
+    else:
+        raise AssertionError("expected invalid strategy to stop workflow")
+
+    assert not lock_path.exists()
 
 
 class FakeTrendingMarketBarProvider:

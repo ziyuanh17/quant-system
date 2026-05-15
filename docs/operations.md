@@ -72,5 +72,5 @@ to be stable enough for debugging notes and future alert routing.
 ## Current Limits
 
 Operational Observability v1 does not send notifications, track historical
-health, inspect data freshness, or detect concurrent runs. Those belong in
-later milestones after the basic local health contract is stable.
+health, or inspect data freshness. Lock files now prevent overlapping refresh
+workflow runs, but the health command does not yet summarize lock status.

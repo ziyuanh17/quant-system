@@ -30,6 +30,8 @@ normalized_dir="${QUANT_NORMALIZED_DIR:-data/normalized}"
 validation_dir="${QUANT_VALIDATION_DIR:-data/validation}"
 metadata_dir="${QUANT_METADATA_DIR:-data/metadata}"
 workflow_output_dir="${QUANT_WORKFLOW_OUTPUT_DIR:-data/workflows/paper-signal-refresh}"
+lock_path="${QUANT_LOCK_PATH:-data/locks/paper-signal-refresh.lock}"
+lock_stale_after_seconds="${QUANT_LOCK_STALE_AFTER_SECONDS:-7200}"
 log_dir="${QUANT_LOG_DIR:-logs}"
 
 mkdir -p "$log_dir"
@@ -42,6 +44,7 @@ log_file="$log_dir/paper-signal-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
   echo "provider=$provider"
   echo "start=$start"
   echo "state_path=$state_path"
+  echo "lock_path=$lock_path"
 
   command=(
     "$quant_cmd"
@@ -64,6 +67,8 @@ log_file="$log_dir/paper-signal-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
     "--validation-dir" "$validation_dir"
     "--metadata-dir" "$metadata_dir"
     "--workflow-output-dir" "$workflow_output_dir"
+    "--lock-path" "$lock_path"
+    "--lock-stale-after-seconds" "$lock_stale_after_seconds"
   )
 
   if [[ -n "$end" ]]; then

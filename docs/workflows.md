@@ -50,8 +50,33 @@ log under `logs/`.
 The older `scripts/run_paper_signal.sh` wrapper still exists for testing a known
 static CSV, but it does not refresh data before generating a signal.
 
+## Concurrent Run Safety
+
+The refresh workflow uses a lock file by default:
+
+```text
+data/locks/paper-signal-refresh.lock
+```
+
+If another run already holds the lock, the workflow fails before refreshing data
+or touching paper state. It still writes a failed workflow record, so the reason
+is auditable.
+
+Locks become stale after `--lock-stale-after-seconds`, which defaults to `7200`
+seconds. A later run can replace a stale lock. This is meant for crash recovery,
+not for routinely running multiple workflows at once.
+
+Inspect a lock with:
+
+```bash
+cat data/locks/paper-signal-refresh.lock
+```
+
+Only remove a lock manually after confirming no workflow process is still
+running.
+
 ## Current Limits
 
 Data Refresh Workflow v1 refreshes one symbol with one provider and then runs
-one strategy. It does not yet reconcile multiple providers, lock concurrent
-runs, refresh feature artifacts, or support multi-symbol portfolios.
+one strategy. It does not yet reconcile multiple providers, refresh feature
+artifacts, or support multi-symbol portfolios.

@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 
 from pydantic import Field
@@ -47,3 +47,22 @@ class HealthReport(FrozenModel):
     @property
     def issue_count(self) -> int:
         return len(self.issues)
+
+
+class RunLockRecord(FrozenModel):
+    """On-disk record for a single active operational lock."""
+
+    lock_name: str
+    owner: str
+    hostname: str
+    pid: int
+    acquired_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    stale_after_seconds: int = Field(gt=0)
+
+    @property
+    def expires_at(self) -> datetime:
+        return self.acquired_at + timedelta(seconds=self.stale_after_seconds)
+
+    def is_stale(self, now: datetime | None = None) -> bool:
+        checked_at = now or datetime.now(UTC)
+        return checked_at >= self.expires_at

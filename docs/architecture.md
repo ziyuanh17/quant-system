@@ -163,7 +163,8 @@ are marked as skipped and do not change cash or positions.
 Workflows compose existing boundaries into ordered operational paths:
 
 ```text
-provider refresh
+RunLockRecord
+  -> provider refresh
   -> validation and lineage
   -> scheduled paper signal
   -> DataRefreshWorkflowRecord
@@ -172,7 +173,8 @@ provider refresh
 The first workflow refreshes one provider-backed market-bar dataset before
 paper signal execution. If validation fails, paper execution does not run. The
 workflow record links the refreshed data artifacts to the scheduler records and
-paper artifacts that followed.
+paper artifacts that followed. A lock file prevents overlapping workflow runs
+from refreshing data or mutating the same paper state at the same time.
 
 Deployment starts as a wrapper script plus environment file:
 

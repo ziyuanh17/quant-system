@@ -38,6 +38,8 @@ Important settings:
 - `QUANT_SIGNAL_OUTPUT_DIR`: paper signal audit records
 - `QUANT_RUN_OUTPUT_DIR`: scheduler run records
 - `QUANT_WORKFLOW_OUTPUT_DIR`: refresh workflow records
+- `QUANT_LOCK_PATH`: lock file that prevents overlapping refresh runs
+- `QUANT_LOCK_STALE_AFTER_SECONDS`: seconds before a lock can be replaced
 - `QUANT_LOG_DIR`: wrapper logs
 
 Use a different `QUANT_STATE_PATH` for each separate paper account or
@@ -114,6 +116,7 @@ Before enabling a recurring run:
 - `make check` passes.
 - `.env` points to the intended provider, symbol, and refresh start date.
 - `QUANT_STATE_PATH` is unique to the paper account.
+- `QUANT_LOCK_PATH` is unique to the workflow/account being scheduled.
 - the first local wrapper run writes logs, data artifacts, workflow records,
   run records, signal records, and state.
 - ignored output directories have enough disk space.
@@ -122,6 +125,7 @@ After enabling a recurring run:
 
 - run `quant ops health` and inspect any issue codes.
 - inspect `logs/` after the first scheduled run.
+- confirm `data/locks/` is empty after the wrapper exits successfully.
 - inspect `data/workflows/paper-signal-refresh/` for workflow records.
 - inspect `data/scheduler/latest/` for run records.
 - inspect `data/paper/signals/` for buy/sell/hold/skipped decisions.
@@ -137,7 +141,6 @@ It does not yet provide:
 
 - process supervision beyond cron or systemd
 - alerts or notifications
-- lock files for concurrent runs
 - atomic state writes
 - cloud deployment templates
 - real broker connectivity

@@ -158,7 +158,7 @@ quant workflow paper-signal-refresh --symbol AAPL --start 2024-01-01
 ```
 
 See [docs/workflows.md](docs/workflows.md) for the workflow record and server
-wrapper details.
+wrapper details, including the lock file that prevents overlapping runs.
 
 Check the local service artifacts:
 

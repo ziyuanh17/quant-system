@@ -40,6 +40,7 @@ from quant.models.operations import (
     HealthIssueSeverity,
     HealthReport,
     HealthStatus,
+    RunLockRecord,
 )
 from quant.models.reconciliation import (
     ProviderReconciliationReport,
@@ -96,6 +97,7 @@ __all__ = [
     "ReconciliationDifference",
     "RiskCheckResult",
     "RiskDecision",
+    "RunLockRecord",
     "ScheduledRunRecord",
     "ScheduledRunStatus",
     "ScheduledTaskResult",

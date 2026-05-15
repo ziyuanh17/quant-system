@@ -15,6 +15,7 @@ data/reconciliation/
 data/paper/
 data/scheduler/
 data/workflows/
+data/locks/
 # Generated feature artifacts are reproducible from normalized data.
 data/features/
 data/results/

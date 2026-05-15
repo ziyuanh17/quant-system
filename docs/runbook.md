@@ -111,12 +111,24 @@ exit code only when the status is `failed`.
 
 See [operations.md](operations.md) for status meanings and current limits.
 
+## Inspect A Workflow Lock
+
+```bash
+cat data/locks/paper-signal-refresh.lock
+```
+
+The lock file should exist only while the refresh workflow is running. If it is
+present after a crash, check whether a workflow process is still active before
+removing it. A later run can replace the lock after the configured stale
+timeout.
+
 ## When Something Fails
 
 1. Run `quant ops health` and read the issue codes.
 2. Inspect the latest workflow record under `data/workflows/`.
-3. Confirm the input data has the required columns:
+3. If the failure mentions a lock, confirm whether another workflow is running.
+4. Confirm the input data has the required columns:
    `date`, `symbol`, `open`, `high`, `low`, `close`, `volume`.
-4. Confirm dependencies are installed in the active environment.
-5. Re-run with the smallest dataset that reproduces the issue.
-6. Add a regression test before changing core accounting or signal behavior.
+5. Confirm dependencies are installed in the active environment.
+6. Re-run with the smallest dataset that reproduces the issue.
+7. Add a regression test before changing core accounting or signal behavior.
