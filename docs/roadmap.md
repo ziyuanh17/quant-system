@@ -30,16 +30,17 @@ side discussions.
 | 12 | Paper trading foundation | Done | Add paper broker, risk checks, order records, portfolio snapshots, and audit records. |
 | 13 | Scheduler Loop v1 | Done | Add finite scheduled task runs with durable run records. |
 | 14 | Paper Signal Execution v1 | Done | Connect strategy signals to scheduled paper-trading decisions. |
-| 15 | Broker State Persistence v1 | In Review | Persist paper account cash and positions across scheduled runs. |
+| 15 | Broker State Persistence v1 | Done | Persist paper account cash and positions across scheduled runs. |
+| 16 | Idempotent Paper Signals v1 | In Review | Prevent duplicate paper orders for repeated signal processing. |
 
 ## Current Recommendation
 
-The next milestone after the in-review broker state persistence work should be
-**Idempotent Paper Signals v1**.
+The next milestone after the in-review idempotent paper signals work should be
+**Service Deployment v1**.
 
-Broker state persistence lets repeated runs behave like one paper account. The
-next safety improvement should prevent duplicate orders when the same signal is
-processed multiple times.
+Idempotent paper signals make repeated scheduled runs safer. The next step
+should document and scaffold how this system runs as an actual server job with
+logs, environment variables, and operational checks.
 
 ## Corrected Near-Term Order
 
@@ -57,6 +58,7 @@ data ingestion
   -> paper signal execution
   -> broker state persistence
   -> idempotent paper signals
+  -> service deployment
 ```
 
 ## Data Lineage v1 Scope
@@ -174,8 +176,9 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Strategy feature interface | Feature strategies consume a CSV artifact and named columns, but there is no feature registry or feature schema contract yet. | Add declared feature requirements, compatibility checks, strategy parameter serialization, and richer signal audit records. |
 | Provider reconciliation | Compares two normalized market-bar CSVs for one symbol. | Add multi-provider policies, canonical-source selection, adjusted-price comparison rules, calendar-aware coverage checks, reconciliation history, and severity configuration. |
 | Paper trading | Simulates deterministic market orders but still omits slippage, fees, partial fills, and broker-specific behavior. | Model slippage/fees/partial fills, add order idempotency, and separate paper broker adapters from real broker adapters. |
-| Paper signal execution | Uses the latest row of one price-based momentum strategy and local CSV data. | Support feature-based strategies, persisted strategy configs, position-aware duplicate-signal prevention, multi-symbol runs, and data refresh steps before signal generation. |
+| Paper signal execution | Uses the latest row of one price-based momentum strategy and local CSV data. | Support feature-based strategies, persisted strategy configs, multi-symbol runs, and data refresh steps before signal generation. |
 | Broker state persistence | Persists one JSON paper account state file, with no locking or transaction semantics. | Add atomic writes, file locks, account IDs, state history, reconciliation against audit records, and backup/restore tools. |
+| Idempotent paper signals | Uses simple strategy/symbol/date/action keys and local JSON state. | Add account-scoped idempotency, signal revision IDs, configurable reprocessing policy, and reconciliation between skipped records and trade records. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -229,3 +232,17 @@ The first version stores paper account cash and positions as JSON. Scheduled
 paper signal runs load this state before generating orders and save the updated
 state after each run, so separate process invocations can behave like one
 continuous paper account.
+
+## Idempotent Paper Signals v1 Scope
+
+Introduce:
+
+```text
+PaperSignalDecision.idempotency_key
+PaperBrokerState.processed_signal_keys
+PaperSignalRecord.skipped
+```
+
+The first version prevents duplicate paper orders for the same strategy, symbol,
+signal date, and action. Duplicate signals still produce paper signal records,
+but those records are marked as skipped and do not change cash or positions.

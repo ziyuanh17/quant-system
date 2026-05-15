@@ -35,6 +35,7 @@ def test_save_and_load_paper_broker_state_round_trips(tmp_path) -> None:
     assert loaded.cash == 980
     assert loaded.positions[0].symbol == "AAPL"
     assert loaded.positions[0].quantity == 2
+    assert loaded.processed_signal_keys == ()
 
 
 def test_paper_broker_can_resume_from_state() -> None:
@@ -54,3 +55,14 @@ def test_paper_broker_can_resume_from_state() -> None:
 
     assert broker.cash == 980
     assert broker.positions["AAPL"].quantity == 2
+
+
+def test_paper_broker_state_preserves_processed_signal_keys() -> None:
+    broker = PaperBroker.from_state(
+        PaperBrokerState(
+            cash=1_000,
+            processed_signal_keys=("momentum:AAPL:2024-01-25:buy",),
+        )
+    )
+
+    assert broker.has_processed_signal("momentum:AAPL:2024-01-25:buy")

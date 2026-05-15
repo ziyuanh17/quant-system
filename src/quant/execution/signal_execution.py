@@ -17,6 +17,7 @@ from quant.strategies.base import Strategy
 
 def decide_latest_signal(
     *,
+    strategy_name: str,
     prices: PriceData,
     signals: SignalFrame,
 ) -> PaperSignalDecision:
@@ -30,27 +31,39 @@ def decide_latest_signal(
     latest_exit = bool(cast(pd.Series, signals.exits).iloc[-1])
 
     if latest_entry:
+        action = PaperSignalAction.BUY
         return PaperSignalDecision(
             symbol=prices.symbol,
-            action=PaperSignalAction.BUY,
+            action=action,
             signal_date=signal_date,
             market_price=market_price,
             reason="latest strategy signal is entry",
+            idempotency_key=_signal_key(
+                strategy_name, prices.symbol, signal_date, action
+            ),
         )
     if latest_exit:
+        action = PaperSignalAction.SELL
         return PaperSignalDecision(
             symbol=prices.symbol,
-            action=PaperSignalAction.SELL,
+            action=action,
             signal_date=signal_date,
             market_price=market_price,
             reason="latest strategy signal is exit",
+            idempotency_key=_signal_key(
+                strategy_name, prices.symbol, signal_date, action
+            ),
         )
+    action = PaperSignalAction.HOLD
     return PaperSignalDecision(
         symbol=prices.symbol,
-        action=PaperSignalAction.HOLD,
+        action=action,
         signal_date=signal_date,
         market_price=market_price,
         reason="latest strategy signal is hold",
+        idempotency_key=_signal_key(
+            strategy_name, prices.symbol, signal_date, action
+        ),
     )
 
 
@@ -62,13 +75,33 @@ def execute_latest_signal(
     quantity: int,
 ) -> PaperSignalRecord:
     signals = strategy.generate_signals(prices)
-    decision = decide_latest_signal(prices=prices, signals=signals)
+    decision = decide_latest_signal(
+        strategy_name=strategy.name,
+        prices=prices,
+        signals=signals,
+    )
 
     if decision.action == PaperSignalAction.HOLD:
         return PaperSignalRecord(
             decision=decision,
             trade=None,
             snapshot=broker.snapshot(),
+        )
+    if broker.has_processed_signal(decision.idempotency_key):
+        return PaperSignalRecord(
+            decision=PaperSignalDecision(
+                symbol=decision.symbol,
+                action=decision.action,
+                signal_date=decision.signal_date,
+                market_price=decision.market_price,
+                reason=(
+                    "signal already processed; skipping duplicate paper order"
+                ),
+                idempotency_key=decision.idempotency_key,
+            ),
+            trade=None,
+            snapshot=broker.snapshot(),
+            skipped=True,
         )
 
     side = (
@@ -80,8 +113,18 @@ def execute_latest_signal(
         OrderRequest(symbol=decision.symbol, side=side, quantity=quantity),
         market_price=decision.market_price,
     )
+    broker.mark_signal_processed(decision.idempotency_key)
     return PaperSignalRecord(
         decision=decision,
         trade=trade,
         snapshot=trade.snapshot,
     )
+
+
+def _signal_key(
+    strategy_name: str,
+    symbol: str,
+    signal_date: str,
+    action: PaperSignalAction,
+) -> str:
+    return f"{strategy_name}:{symbol}:{signal_date}:{action.value}"

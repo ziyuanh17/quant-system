@@ -148,6 +148,16 @@ PaperBrokerState
 That lets separate scheduled processes behave like one continuous paper account
 instead of restarting cash and positions on every invocation.
 
+The paper state also stores processed signal keys:
+
+```text
+strategy:symbol:signal_date:action
+```
+
+This prevents duplicate paper orders when a scheduler sees the same actionable
+signal more than once. Duplicate signals still write audit records, but they
+are marked as skipped and do not change cash or positions.
+
 ## Intended Growth
 
 ```text

@@ -27,6 +27,7 @@ class PaperBroker:
         self._positions: dict[str, Position] = {
             position.symbol: position for position in initial_positions
         }
+        self._processed_signal_keys: set[str] = set()
 
     @property
     def cash(self) -> float:
@@ -38,7 +39,12 @@ class PaperBroker:
 
     @classmethod
     def from_state(cls, state: PaperBrokerState) -> "PaperBroker":
-        return cls(initial_cash=state.cash, initial_positions=state.positions)
+        broker = cls(
+            initial_cash=state.cash,
+            initial_positions=state.positions,
+        )
+        broker._processed_signal_keys = set(state.processed_signal_keys)
+        return broker
 
     def state(self) -> PaperBrokerState:
         return PaperBrokerState(
@@ -46,7 +52,14 @@ class PaperBroker:
             positions=tuple(
                 sorted(self._positions.values(), key=lambda item: item.symbol)
             ),
+            processed_signal_keys=tuple(sorted(self._processed_signal_keys)),
         )
+
+    def has_processed_signal(self, key: str) -> bool:
+        return key in self._processed_signal_keys
+
+    def mark_signal_processed(self, key: str) -> None:
+        self._processed_signal_keys.add(key)
 
     def snapshot(self) -> PortfolioSnapshot:
         return PortfolioSnapshot(

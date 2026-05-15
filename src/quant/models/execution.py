@@ -98,6 +98,7 @@ class PaperBrokerState(FrozenModel):
 
     cash: float = Field(ge=0)
     positions: tuple[Position, ...] = ()
+    processed_signal_keys: tuple[str, ...] = ()
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
@@ -113,9 +114,11 @@ class PaperSignalDecision(FrozenModel):
     signal_date: str
     market_price: float = Field(gt=0)
     reason: str
+    idempotency_key: str
 
 
 class PaperSignalRecord(FrozenModel):
     decision: PaperSignalDecision
     trade: PaperTradeRecord | None
     snapshot: PortfolioSnapshot
+    skipped: bool = False

@@ -597,6 +597,8 @@ def schedule_paper_signal(
             broker.state(), state_path
         )
         message = f"paper signal {record.decision.action}"
+        if record.skipped:
+            message = f"{message}: skipped duplicate"
         if record.trade is not None and record.trade.order.risk.reason:
             message = f"{message}: {record.trade.order.risk.reason}"
         return ScheduledTaskResult(

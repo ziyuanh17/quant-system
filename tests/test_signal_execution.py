@@ -15,6 +15,7 @@ def test_decide_latest_signal_returns_buy_for_latest_entry() -> None:
     strategy = MomentumStrategy()
 
     decision = decide_latest_signal(
+        strategy_name=strategy.name,
         prices=prices,
         signals=strategy.generate_signals(prices),
     )
@@ -22,6 +23,7 @@ def test_decide_latest_signal_returns_buy_for_latest_entry() -> None:
     assert decision.action == PaperSignalAction.BUY
     assert decision.signal_date == "2024-01-25"
     assert decision.market_price == 20
+    assert decision.idempotency_key == "momentum:AAPL:2024-01-25:buy"
 
 
 def test_execute_latest_signal_buys_through_paper_broker() -> None:
@@ -40,6 +42,34 @@ def test_execute_latest_signal_buys_through_paper_broker() -> None:
     assert record.trade.fill is not None
     assert record.trade.fill.quantity == 2
     assert record.snapshot.cash == 960
+    assert broker.state().processed_signal_keys == (
+        "momentum:AAPL:2024-01-25:buy",
+    )
+
+
+def test_execute_latest_signal_skips_duplicate_trade() -> None:
+    prices = PriceData(symbol="AAPL", frame=_entry_frame())
+    broker = PaperBroker(initial_cash=1_000)
+    strategy = MomentumStrategy()
+
+    first = execute_latest_signal(
+        strategy=strategy,
+        prices=prices,
+        broker=broker,
+        quantity=2,
+    )
+    second = execute_latest_signal(
+        strategy=strategy,
+        prices=prices,
+        broker=broker,
+        quantity=2,
+    )
+
+    assert first.trade is not None
+    assert second.trade is None
+    assert second.skipped
+    assert second.snapshot.cash == 960
+    assert "already processed" in second.decision.reason
 
 
 def test_execute_latest_signal_holds_without_trade() -> None:

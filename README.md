@@ -145,6 +145,9 @@ By default, this persists paper account state under:
 data/paper/state/default.json
 ```
 
+Repeated runs skip duplicate trade execution for the same strategy, symbol,
+signal date, and action.
+
 ## Progress Dashboard
 
 The repo includes a static dashboard under `site/`. It can be deployed for free

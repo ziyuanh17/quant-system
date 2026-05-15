@@ -70,6 +70,8 @@ data/scheduler/latest/
 ```
 
 Use `--state-path` to isolate separate paper accounts or experiments.
+If the same actionable signal is processed again, the command records a skipped
+signal instead of placing a duplicate paper order.
 
 ## When Something Fails
 

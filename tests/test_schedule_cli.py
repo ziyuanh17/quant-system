@@ -147,8 +147,19 @@ def test_schedule_paper_signal_persists_state_between_invocations(
         assert result.exit_code == 0
 
     state = json.loads(state_path.read_text())
-    assert state["cash"] == 920
-    assert state["positions"][0]["quantity"] == 4
+    assert state["cash"] == 960
+    assert state["positions"][0]["quantity"] == 2
+    assert state["processed_signal_keys"] == ["momentum:AAPL:2024-01-25:buy"]
+
+    signal_payloads = [
+        json.loads(path.read_text())
+        for path in (tmp_path / "signals").glob("*.json")
+    ]
+    skipped_payloads = [
+        payload for payload in signal_payloads if payload["skipped"]
+    ]
+    assert len(skipped_payloads) == 1
+    assert skipped_payloads[0]["trade"] is None
 
 
 def _write_entry_prices(path) -> None:
