@@ -133,6 +133,12 @@ This writes scheduler run records under:
 data/scheduler/latest/
 ```
 
+Run a scheduled strategy-to-paper loop:
+
+```bash
+quant schedule paper-signal --strategy momentum --data data/sample_prices.csv --symbol AAPL --quantity 1 --iterations 1
+```
+
 ## Local Checks
 
 ```bash

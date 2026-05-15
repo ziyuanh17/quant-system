@@ -28,16 +28,18 @@ side discussions.
 | 10 | Strategy feature interface | Done | Let strategies consume typed feature inputs instead of raw price frames only. |
 | 11 | Provider reconciliation | Done | Add checks and policies for comparing or combining data from multiple providers. |
 | 12 | Paper trading foundation | Done | Add paper broker, risk checks, order records, portfolio snapshots, and audit records. |
-| 13 | Scheduler Loop v1 | In Review | Add finite scheduled task runs with durable run records. |
+| 13 | Scheduler Loop v1 | Done | Add finite scheduled task runs with durable run records. |
+| 14 | Paper Signal Execution v1 | In Review | Connect strategy signals to scheduled paper-trading decisions. |
 
 ## Current Recommendation
 
-The next milestone after the in-review scheduler loop should be
-**Paper Signal Execution v1**.
+The next milestone after the in-review paper signal execution work should be
+**Broker State Persistence v1**.
 
-The scheduler can now run bounded tasks and write run records. The next step
-should connect strategy signals to paper orders, so scheduled jobs can execute a
-real research-to-paper path rather than a manually specified order.
+Paper signal execution connects strategies to paper orders, but the paper
+broker still starts fresh each process unless explicitly seeded. The next step
+should persist broker state so repeated scheduled runs can behave like one
+continuous paper account.
 
 ## Corrected Near-Term Order
 
@@ -53,6 +55,7 @@ data ingestion
   -> paper trading foundation
   -> scheduler loop
   -> paper signal execution
+  -> broker state persistence
 ```
 
 ## Data Lineage v1 Scope
@@ -170,6 +173,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Strategy feature interface | Feature strategies consume a CSV artifact and named columns, but there is no feature registry or feature schema contract yet. | Add declared feature requirements, compatibility checks, strategy parameter serialization, and richer signal audit records. |
 | Provider reconciliation | Compares two normalized market-bar CSVs for one symbol. | Add multi-provider policies, canonical-source selection, adjusted-price comparison rules, calendar-aware coverage checks, reconciliation history, and severity configuration. |
 | Paper trading | Simulates one market order at a supplied price in a fresh in-memory broker session. | Persist broker state, connect to strategy signals, support scheduled runs, model slippage/fees/partial fills, add order idempotency, and separate paper broker adapters from real broker adapters. |
+| Paper signal execution | Uses the latest row of one price-based momentum strategy and local CSV data. | Support feature-based strategies, persisted strategy configs, position-aware duplicate-signal prevention, multi-symbol runs, and data refresh steps before signal generation. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -190,3 +194,20 @@ The first scheduler runs a task once or for a finite number of iterations. It
 writes one JSON run record per attempt and points each run record at task
 artifacts, such as paper trade records. It is intentionally not a permanent
 daemon yet.
+
+## Paper Signal Execution v1 Scope
+
+Introduce:
+
+```text
+PaperSignalDecision
+PaperSignalRecord
+decide_latest_signal
+execute_latest_signal
+quant schedule paper-signal
+```
+
+The first version converts the latest momentum strategy signal into a paper
+decision. Entry signals buy, exit signals sell, and no signal records a hold.
+It writes paper signal records and scheduler run records so the research-to-paper
+path is auditable.

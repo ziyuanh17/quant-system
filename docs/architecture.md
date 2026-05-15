@@ -122,6 +122,21 @@ The first scheduler is a finite loop, not a forever-running daemon. That keeps
 local tests and server jobs predictable while still giving the system a
 repeatable boundary for future cron, service, or worker deployment.
 
+Paper signal execution connects the strategy and execution layers:
+
+```text
+PriceData
+  -> Strategy
+  -> latest SignalFrame row
+  -> PaperSignalDecision
+  -> PaperBroker
+  -> PaperSignalRecord
+```
+
+This is the first research-to-paper path. It still uses local CSV data and a
+deterministic paper broker, but the order side now comes from a strategy signal
+instead of a manually specified CLI option.
+
 ## Intended Growth
 
 ```text

@@ -14,11 +14,18 @@ from quant.models.execution import (
 class PaperBroker:
     """Deterministic broker for rehearsing execution without real orders."""
 
-    def __init__(self, *, initial_cash: float) -> None:
+    def __init__(
+        self,
+        *,
+        initial_cash: float,
+        initial_positions: tuple[Position, ...] = (),
+    ) -> None:
         if initial_cash <= 0:
             raise ValueError("initial_cash must be positive")
         self._cash = initial_cash
-        self._positions: dict[str, Position] = {}
+        self._positions: dict[str, Position] = {
+            position.symbol: position for position in initial_positions
+        }
 
     @property
     def cash(self) -> float:

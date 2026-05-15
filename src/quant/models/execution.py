@@ -27,6 +27,12 @@ class RiskDecision(StrEnum):
     REJECTED = "rejected"
 
 
+class PaperSignalAction(StrEnum):
+    BUY = "buy"
+    SELL = "sell"
+    HOLD = "hold"
+
+
 class OrderRequest(FrozenModel):
     symbol: str
     side: OrderSide
@@ -90,4 +96,18 @@ class PortfolioSnapshot(FrozenModel):
 class PaperTradeRecord(FrozenModel):
     order: Order
     fill: Fill | None
+    snapshot: PortfolioSnapshot
+
+
+class PaperSignalDecision(FrozenModel):
+    symbol: str
+    action: PaperSignalAction
+    signal_date: str
+    market_price: float = Field(gt=0)
+    reason: str
+
+
+class PaperSignalRecord(FrozenModel):
+    decision: PaperSignalDecision
+    trade: PaperTradeRecord | None
     snapshot: PortfolioSnapshot

@@ -14,14 +14,19 @@ from quant.data import (
     validate_market_bars_csv,
     write_reconciliation_report,
 )
-from quant.execution import PaperBroker, write_paper_trade_record
+from quant.execution import (
+    PaperBroker,
+    execute_latest_signal,
+    write_paper_signal_record,
+    write_paper_trade_record,
+)
 from quant.features import (
     build_technical_features,
     load_feature_csv,
     write_feature_artifact,
 )
 from quant.models.backtest import BacktestConfig, BacktestResult
-from quant.models.execution import OrderRequest, OrderSide
+from quant.models.execution import OrderRequest, OrderSide, Position
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.reconciliation import ProviderReconciliationReport
@@ -487,6 +492,142 @@ def schedule_paper_order(
 
     if failed_records:
         raise typer.Exit(code=1)
+
+
+@schedule_app.command("paper-signal")
+def schedule_paper_signal(
+    strategy: Annotated[
+        str, typer.Option(help="Strategy name to run.")
+    ] = "momentum",
+    data: Annotated[
+        Path,
+        typer.Option(help="CSV file with OHLCV data."),
+    ] = Path("data/sample_prices.csv"),
+    symbol: Annotated[str, typer.Option(help="Symbol to trade.")] = "AAPL",
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity if the latest signal trades."),
+    ] = 1,
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Starting cash for the paper broker session."),
+    ] = 100_000,
+    initial_position_quantity: Annotated[
+        int,
+        typer.Option(help="Optional starting position quantity."),
+    ] = 0,
+    initial_position_price: Annotated[
+        float,
+        typer.Option(help="Price basis for the optional starting position."),
+    ] = 1.0,
+    iterations: Annotated[
+        int,
+        typer.Option(help="Number of scheduled runs to execute."),
+    ] = 1,
+    interval_seconds: Annotated[
+        float,
+        typer.Option(help="Seconds to wait between scheduled runs."),
+    ] = 0.0,
+    skip_validation: Annotated[
+        bool,
+        typer.Option(help="Skip market-data validation before signal runs."),
+    ] = False,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
+    signal_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where paper signal records are written."),
+    ] = Path("data/paper/signals"),
+    run_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where scheduler run records are written."),
+    ] = Path("data/scheduler/latest"),
+) -> None:
+    """Run a finite scheduled strategy-to-paper execution loop."""
+    if strategy != "momentum":
+        raise typer.BadParameter("Only momentum is implemented right now.")
+    if iterations < 1:
+        raise typer.BadParameter("iterations must be at least 1")
+    if interval_seconds < 0:
+        raise typer.BadParameter("interval-seconds must be non-negative")
+    if initial_position_quantity < 0:
+        raise typer.BadParameter(
+            "initial-position-quantity must be non-negative"
+        )
+    if initial_position_quantity > 0 and initial_position_price <= 0:
+        raise typer.BadParameter("initial-position-price must be positive")
+
+    if not skip_validation:
+        _validate_or_exit(data, symbol, min_rows=min_rows)
+
+    initial_positions = _initial_positions(
+        symbol=symbol,
+        quantity=initial_position_quantity,
+        price=initial_position_price,
+    )
+    broker = PaperBroker(
+        initial_cash=initial_cash,
+        initial_positions=initial_positions,
+    )
+    runner = SchedulerRunner(output_dir=run_output_dir)
+    signal_strategy = MomentumStrategy()
+
+    def task() -> ScheduledTaskResult:
+        # Reload prices inside each scheduled attempt so future server runs can
+        # see data files refreshed by an upstream ingestion task.
+        prices = load_price_csv(data, symbol)
+        record = execute_latest_signal(
+            strategy=signal_strategy,
+            prices=prices,
+            broker=broker,
+            quantity=quantity,
+        )
+        signal_path = write_paper_signal_record(record, signal_output_dir)
+        message = f"paper signal {record.decision.action}"
+        if record.trade is not None and record.trade.order.risk.reason:
+            message = f"{message}: {record.trade.order.risk.reason}"
+        return ScheduledTaskResult(
+            message=message,
+            artifact_paths=(str(signal_path),),
+        )
+
+    records = runner.run_loop(
+        task_name="paper-signal",
+        task=task,
+        iterations=iterations,
+        interval_seconds=interval_seconds,
+    )
+
+    failed_records = [
+        record for record in records if record.status.value == "failed"
+    ]
+    typer.echo(f"Scheduled runs: {len(records)}")
+    typer.echo(f"Failures: {len(failed_records)}")
+    typer.echo(f"Run records: {run_output_dir}")
+    typer.echo(f"Signal records: {signal_output_dir}")
+
+    if failed_records:
+        raise typer.Exit(code=1)
+
+
+def _initial_positions(
+    *,
+    symbol: str,
+    quantity: int,
+    price: float,
+) -> tuple[Position, ...]:
+    if quantity == 0:
+        return ()
+    return (
+        Position(
+            symbol=symbol,
+            quantity=quantity,
+            average_price=price,
+            last_price=price,
+        ),
+    )
 
 
 def _validate_or_exit(
