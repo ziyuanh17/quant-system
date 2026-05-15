@@ -98,7 +98,7 @@ class FileLock:
             file.write(record.model_dump_json(indent=2) + "\n")
 
     def _is_recoverable(self, existing: RunLockRecord) -> bool:
-        """Check if the existing lock is from a dead process on the same host."""
+        """Check whether an existing lock belongs to a dead local process."""
         if existing.hostname != self.hostname:
             return False
         return not _is_process_alive(existing.pid)

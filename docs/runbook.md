@@ -122,6 +122,16 @@ present after a crash, check whether a workflow process is still active before
 removing it. A later run can replace the lock after the configured stale
 timeout.
 
+## Inspect Paper State
+
+```bash
+cat data/paper/state/default.json
+cat data/paper/state/default.json.bak
+```
+
+Paper state saves use an atomic replace. The `.bak` file is the previous state
+snapshot and is useful when debugging a bad run or interrupted process.
+
 ## When Something Fails
 
 1. Run `quant ops health` and read the issue codes.

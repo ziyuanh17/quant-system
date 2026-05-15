@@ -129,7 +129,8 @@ After enabling a recurring run:
 - inspect `data/workflows/paper-signal-refresh/` for workflow records.
 - inspect `data/scheduler/latest/` for run records.
 - inspect `data/paper/signals/` for buy/sell/hold/skipped decisions.
-- inspect `data/paper/state/` to confirm cash and positions are plausible.
+- inspect `data/paper/state/` to confirm cash, positions, and the latest
+  `.bak` backup are plausible.
 
 See [operations.md](operations.md) for health check behavior.
 
@@ -141,7 +142,6 @@ It does not yet provide:
 
 - process supervision beyond cron or systemd
 - alerts or notifications
-- atomic state writes
 - cloud deployment templates
 - real broker connectivity
 

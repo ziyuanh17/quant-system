@@ -1,3 +1,4 @@
+import quant.execution.state
 from quant.execution import (
     PaperBroker,
     load_paper_broker_state,
@@ -66,3 +67,39 @@ def test_paper_broker_state_preserves_processed_signal_keys() -> None:
     )
 
     assert broker.has_processed_signal("momentum:AAPL:2024-01-25:buy")
+
+
+def test_save_paper_broker_state_writes_backup_for_existing_state(
+    tmp_path,
+) -> None:
+    path = tmp_path / "state.json"
+    save_paper_broker_state(PaperBrokerState(cash=1_000), path)
+
+    save_paper_broker_state(PaperBrokerState(cash=900), path)
+
+    backup = path.with_name("state.json.bak")
+    assert load_paper_broker_state(path, default_cash=0).cash == 900
+    assert load_paper_broker_state(backup, default_cash=0).cash == 1_000
+
+
+def test_failed_atomic_replace_keeps_previous_state(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    path = tmp_path / "state.json"
+    save_paper_broker_state(PaperBrokerState(cash=1_000), path)
+
+    def fail_replace(source, destination) -> None:
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(quant.execution.state.os, "replace", fail_replace)
+
+    try:
+        save_paper_broker_state(PaperBrokerState(cash=900), path)
+    except OSError as exc:
+        assert str(exc) == "replace failed"
+    else:
+        raise AssertionError("expected replace failure")
+
+    assert load_paper_broker_state(path, default_cash=0).cash == 1_000
+    assert list(tmp_path.glob(".*.tmp")) == []

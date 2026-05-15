@@ -35,17 +35,19 @@ side discussions.
 | 17 | Service Deployment v1 | Done | Define local/server wrapper, environment config, logs, and deployment docs. |
 | 18 | Operational Observability v1 | Done | Add a read-only health command that checks scheduler records, signal records, paper state, and logs. |
 | 19 | Data Refresh Workflow v1 | Done | Refresh and validate provider data before running scheduled paper signal execution. |
-| 20 | Concurrent Run Safety v1 | In Review | Prevent overlapping refresh workflow runs from mutating the same paper state. |
+| 20 | Concurrent Run Safety v1 | Done | Prevent overlapping refresh workflow runs from mutating the same paper state. |
+| 21 | Atomic State Writes v1 | In Review | Write paper broker state through durable temp files, atomic replacement, and backups. |
 
 ## Current Recommendation
 
-The next milestone after Concurrent Run Safety v1 should be
-**Atomic State Writes v1**.
+The next milestone after Atomic State Writes v1 should be
+**Paper State Reconciliation v1**.
 
 The server path now has data refresh, validation, paper execution, and health
-checks, and lock files that prevent overlapping workflow runs. The next risk is
-a crash or interruption during state-file writes, so the next step should make
-paper state persistence atomic and easier to recover.
+checks, lock files that prevent overlapping workflow runs, and atomic paper
+state writes. The next risk is state drift: the persisted account state should
+be reconcilable against the paper signal and trade audit records that produced
+it.
 
 ## Corrected Near-Term Order
 
@@ -68,6 +70,7 @@ data ingestion
   -> data refresh workflow
   -> concurrent run safety
   -> atomic state writes
+  -> paper state reconciliation
 ```
 
 ## Data Lineage v1 Scope
@@ -186,12 +189,13 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Provider reconciliation | Compares two normalized market-bar CSVs for one symbol. | Add multi-provider policies, canonical-source selection, adjusted-price comparison rules, calendar-aware coverage checks, reconciliation history, and severity configuration. |
 | Paper trading | Simulates deterministic market orders but still omits slippage, fees, partial fills, and broker-specific behavior. | Model slippage/fees/partial fills, add order idempotency, and separate paper broker adapters from real broker adapters. |
 | Paper signal execution | Uses the latest row of one price-based momentum strategy and local CSV data. | Support feature-based strategies, persisted strategy configs, multi-symbol runs, and data refresh steps before signal generation. |
-| Broker state persistence | Persists one JSON paper account state file, with no locking or transaction semantics. | Add atomic writes, file locks, account IDs, state history, reconciliation against audit records, and backup/restore tools. |
+| Broker state persistence | Persists one JSON paper account state file with atomic replacement and one previous backup. | Add account IDs, state history, reconciliation against audit records, and restore tooling. |
 | Idempotent paper signals | Uses simple strategy/symbol/date/action keys and local JSON state. | Add account-scoped idempotency, signal revision IDs, configurable reprocessing policy, and reconciliation between skipped records and trade records. |
 | Service deployment | Provides local wrapper and cron/systemd documentation, but no managed process or alerting. | Add health checks, structured logs, alert hooks, deployment-specific configs, and safer concurrent-run handling. |
 | Operational observability | Provides a local read-only health command, but no notifications or health history. | Add alert hooks, structured health history, data freshness checks, lock/concurrency checks, and dashboard summaries. |
 | Data refresh workflow | Refreshes one symbol from one provider before one paper-signal workflow. | Add multi-symbol workflows, provider reconciliation before execution, feature refresh, configurable freshness windows, and workflow retries. |
 | Concurrent run safety | Adds one lock file around the refresh workflow. | Add lock status to health checks, account-scoped lock naming, lock cleanup tooling, and broader locking around future multi-workflow operations. |
+| Atomic state writes | Uses same-directory temp files, fsync, atomic replace, and one `.bak` copy. | Add state history, restore command, checksums, and reconciliation against paper audit records. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -324,3 +328,19 @@ The first version wraps the data-refresh paper-signal workflow with an atomic
 lock file. If another run is active, the workflow fails before refreshing data
 or touching paper state, and writes a failed workflow record. Stale locks can be
 replaced after a configured timeout for crash recovery.
+
+## Atomic State Writes v1 Scope
+
+Introduce:
+
+```text
+same-directory temporary state file
+fsync before replace
+os.replace
+state.json.bak
+```
+
+The first version writes paper broker state to a temporary file in the same
+directory, flushes it to disk, atomically replaces the live state file, and keeps
+one previous backup. If replacement fails, the previous live state file remains
+intact and the temporary file is cleaned up.

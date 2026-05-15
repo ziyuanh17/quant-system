@@ -142,11 +142,17 @@ Paper broker state is persisted separately from per-run audit records:
 ```text
 PaperBrokerState
   -> PaperBroker
+  -> temporary state file
+  -> atomic replace
   -> updated PaperBrokerState
 ```
 
 That lets separate scheduled processes behave like one continuous paper account
 instead of restarting cash and positions on every invocation.
+
+State writes keep one `.bak` copy of the previous state. The live JSON file is
+replaced only after the new state has been written and flushed, so an
+interrupted write should not leave a partial paper account file behind.
 
 The paper state also stores processed signal keys:
 
