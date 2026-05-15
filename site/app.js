@@ -6,8 +6,23 @@ async function loadProgress() {
   return response.json();
 }
 
+async function loadStatus() {
+  const response = await fetch("status.json", { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Could not load status.json: ${response.status}`);
+  }
+  return response.json();
+}
+
 function setText(id, value) {
   document.getElementById(id).textContent = value;
+}
+
+function formatValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "n/a";
+  }
+  return String(value).replaceAll("_", " ");
 }
 
 function renderSummary(progress) {
@@ -28,14 +43,27 @@ function renderMilestones(progress) {
     const row = document.createElement("article");
     row.className = "milestone";
 
-    row.innerHTML = `
-      <div class="order">#${milestone.order}</div>
-      <div>
-        <div class="name">${milestone.name}</div>
-        <span class="badge ${milestone.status}">${milestone.status.replace("_", " ")}</span>
-      </div>
-      <p class="purpose">${milestone.purpose}</p>
-    `;
+    const order = document.createElement("div");
+    order.className = "order";
+    order.textContent = `#${milestone.order}`;
+
+    const summary = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = milestone.name;
+    const badge = document.createElement("span");
+    badge.className = `badge ${milestone.status}`;
+    badge.textContent = formatValue(milestone.status);
+    summary.appendChild(name);
+    summary.appendChild(badge);
+
+    const purpose = document.createElement("p");
+    purpose.className = "purpose";
+    purpose.textContent = milestone.purpose;
+
+    row.appendChild(order);
+    row.appendChild(summary);
+    row.appendChild(purpose);
 
     timeline.appendChild(row);
   }
@@ -51,6 +79,52 @@ function renderFutureMetrics(progress) {
   }
 }
 
+function renderStatus(status) {
+  const panel = document.getElementById("status-panel");
+  panel.className = `status-panel ${status.status}`;
+  setText("status-generated", `Generated ${formatValue(status.generated_at)}`);
+  setText("health-status", formatValue(status.status));
+  setText("latest-run-status", formatValue(status.latest_run_status));
+  setText("lock-status", formatValue(status.lock_status));
+  setText(
+    "reconciliation-status",
+    formatValue(status.reconciliation_status),
+  );
+
+  const issues = document.getElementById("status-issues");
+  issues.innerHTML = "";
+  if (!status.issues || status.issues.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "No current issues.";
+    issues.appendChild(empty);
+    return;
+  }
+
+  for (const issue of status.issues) {
+    const item = document.createElement("article");
+    item.className = `issue ${issue.severity}`;
+    const code = document.createElement("strong");
+    code.textContent = issue.code;
+    const severity = document.createElement("span");
+    severity.textContent = formatValue(issue.severity);
+    const message = document.createElement("p");
+    message.textContent = issue.message;
+    item.appendChild(code);
+    item.appendChild(severity);
+    item.appendChild(message);
+    issues.appendChild(item);
+  }
+}
+
+function renderStatusError(error) {
+  setText("status-generated", error.message);
+  setText("health-status", "unknown");
+  setText("latest-run-status", "n/a");
+  setText("lock-status", "n/a");
+  setText("reconciliation-status", "n/a");
+}
+
 loadProgress()
   .then((progress) => {
     renderSummary(progress);
@@ -61,3 +135,5 @@ loadProgress()
     setText("project-name", "Quant System");
     setText("project-description", error.message);
   });
+
+loadStatus().then(renderStatus).catch(renderStatusError);

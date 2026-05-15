@@ -8,9 +8,11 @@
   --done: #187a4d;
   --review: #a05a00;
   --planned: #4e5f7a;
+  --failed: #b42318;
   --accent: #1c5d99;
   --accent-soft: #e4f0fb;
   --warn-soft: #fff3dd;
+  --failed-soft: #ffe8e5;
   --done-soft: #e4f5ed;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -101,6 +103,100 @@ h1 {
 .section h2 {
   font-size: 20px;
   margin-bottom: 12px;
+}
+
+.section-heading {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.section-heading h2 {
+  margin-bottom: 0;
+}
+
+.section-heading p,
+.label,
+.muted {
+  color: var(--muted);
+}
+
+.section-heading p {
+  font-size: 14px;
+}
+
+.status-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--planned);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.status-panel.healthy {
+  border-left-color: var(--done);
+}
+
+.status-panel.degraded {
+  border-left-color: var(--review);
+}
+
+.status-panel.failed {
+  border-left-color: var(--failed);
+}
+
+.status-panel strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1.2;
+  margin-top: 4px;
+  text-transform: capitalize;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+}
+
+.issues {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.issue {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  padding: 12px 14px;
+}
+
+.issue.warning {
+  background: var(--warn-soft);
+}
+
+.issue.error {
+  background: var(--failed-soft);
+}
+
+.issue span {
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+.issue p {
+  color: var(--muted);
+  grid-column: 1 / -1;
+  line-height: 1.4;
 }
 
 .timeline {
@@ -208,8 +304,17 @@ a {
 
   .topbar,
   .summary-grid,
+  .status-panel,
   .milestone {
     grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    display: block;
+  }
+
+  .section-heading p {
+    margin-top: 8px;
   }
 
   .topbar {

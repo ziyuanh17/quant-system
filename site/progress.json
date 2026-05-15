@@ -2,13 +2,13 @@
   "project": {
     "name": "Quant System",
     "description": "A typed, solo-maintainable quant research and paper-trading system.",
-    "updated": "2026-05-14"
+    "updated": "2026-05-15"
   },
   "summary": {
-    "done": 13,
+    "done": 23,
     "in_review": 1,
     "planned": 1,
-    "next": "Broker State Persistence v1"
+    "next": "Broker Adapter Boundary v1"
   },
   "milestones": [
     {
@@ -92,14 +92,74 @@
     {
       "order": 14,
       "name": "Paper Signal Execution v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Connect strategy signals to scheduled paper-trading decisions."
     },
     {
       "order": 15,
       "name": "Broker State Persistence v1",
-      "status": "planned",
+      "status": "done",
       "purpose": "Persist broker state so scheduled runs behave like one continuous paper account."
+    },
+    {
+      "order": 16,
+      "name": "Idempotent Paper Signals v1",
+      "status": "done",
+      "purpose": "Prevent duplicate paper orders when the same signal is processed again."
+    },
+    {
+      "order": 17,
+      "name": "Service Deployment v1",
+      "status": "done",
+      "purpose": "Define local and server wrapper, environment config, logs, and deployment docs."
+    },
+    {
+      "order": 18,
+      "name": "Operational Observability v1",
+      "status": "done",
+      "purpose": "Add a read-only health command for scheduler, signal, state, and log artifacts."
+    },
+    {
+      "order": 19,
+      "name": "Data Refresh Workflow v1",
+      "status": "done",
+      "purpose": "Refresh and validate provider data before scheduled paper signal execution."
+    },
+    {
+      "order": 20,
+      "name": "Concurrent Run Safety v1",
+      "status": "done",
+      "purpose": "Prevent overlapping refresh workflow runs from mutating the same paper state."
+    },
+    {
+      "order": 21,
+      "name": "Atomic State Writes v1",
+      "status": "done",
+      "purpose": "Write paper broker state through durable temp files, atomic replacement, and backups."
+    },
+    {
+      "order": 22,
+      "name": "Paper State Reconciliation v1",
+      "status": "done",
+      "purpose": "Replay paper signal audit records and compare them against persisted broker state."
+    },
+    {
+      "order": 23,
+      "name": "Health Check Integration v1",
+      "status": "done",
+      "purpose": "Surface lock and paper-state reconciliation status in operational health checks."
+    },
+    {
+      "order": 24,
+      "name": "Dashboard Alert Status v1",
+      "status": "in_review",
+      "purpose": "Publish sanitized operational health status to the GitHub Pages dashboard."
+    },
+    {
+      "order": 25,
+      "name": "Broker Adapter Boundary v1",
+      "status": "planned",
+      "purpose": "Define the paper-vs-real broker boundary before adding real-money trading logic."
     }
   ],
   "futureMetrics": [
@@ -109,6 +169,7 @@
     "last strategy signal",
     "last scheduler run status",
     "latest backtest return",
-    "data validation status"
+    "data validation status",
+    "dashboard health status"
   ]
 }

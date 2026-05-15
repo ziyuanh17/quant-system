@@ -23,6 +23,29 @@ class HealthIssue(FrozenModel):
     message: str
 
 
+class DashboardHealthIssue(FrozenModel):
+    code: str
+    severity: HealthIssueSeverity
+    message: str
+
+
+class DashboardHealthStatus(FrozenModel):
+    """Sanitized health status safe to publish on the static dashboard."""
+
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    status: HealthStatus
+    latest_run_status: str | None = None
+    latest_run_completed_at: datetime | None = None
+    latest_signal_action: str | None = None
+    latest_signal_date: str | None = None
+    latest_signal_skipped: bool | None = None
+    lock_status: str
+    reconciliation_status: str
+    reconciliation_difference_count: int | None = None
+    issue_count: int
+    issues: tuple[DashboardHealthIssue, ...] = ()
+
+
 class HealthReport(FrozenModel):
     """Read-only operational summary for the local quant service."""
 

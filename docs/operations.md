@@ -81,9 +81,32 @@ Issues: 0
 Each issue is printed with a severity, code, and message. Issue codes are meant
 to be stable enough for debugging notes and future alert routing.
 
+## Dashboard Status
+
+Publish the same operational health signal to the static dashboard:
+
+```bash
+quant ops publish-status --initial-cash 100000
+```
+
+This writes:
+
+```text
+site/status.json
+```
+
+The dashboard status file is safe to publish through GitHub Pages because it
+omits cash, positions, order records, and other sensitive account details. It
+only includes high-level run, signal, lock, reconciliation, and issue status.
+
+By default, the command exits successfully even when the health status is
+`failed`. That behavior is intentional: a server wrapper can still update the
+dashboard with a visible failed state. Add `--fail-on-failed` when the wrapper
+should stop on failed health instead.
+
 ## Current Limits
 
 Operational Observability v1 does not send notifications, track historical
 health, or inspect data freshness. Health can summarize lock and reconciliation
-status, but alert hooks and historical health records belong in later
-milestones.
+status. The dashboard can show the latest status, but external alert hooks and
+historical health records belong in later milestones.

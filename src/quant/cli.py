@@ -43,7 +43,11 @@ from quant.models.reconciliation import ProviderReconciliationReport
 from quant.models.scheduler import ScheduledTaskResult
 from quant.models.validation import ValidationReport
 from quant.models.workflow import DataRefreshWorkflowRecord
-from quant.operations import build_health_report
+from quant.operations import (
+    build_dashboard_health_status,
+    build_health_report,
+    write_dashboard_health_status,
+)
 from quant.scheduler import SchedulerRunner
 from quant.strategies import (
     FeatureMomentumConfig,
@@ -907,6 +911,83 @@ def ops_health(
     _print_health_report(report)
 
     if report.status == HealthStatus.FAILED:
+        raise typer.Exit(code=1)
+
+
+@ops_app.command("publish-status")
+def ops_publish_status(
+    output_path: Annotated[
+        Path,
+        typer.Option(help="Dashboard status JSON path."),
+    ] = Path("site/status.json"),
+    run_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing scheduler run JSON records."),
+    ] = Path("data/scheduler/latest"),
+    signal_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing paper signal JSON records."),
+    ] = Path("data/paper/signals"),
+    state_path: Annotated[
+        Path,
+        typer.Option(help="Path to the persisted paper broker state file."),
+    ] = Path("data/paper/state/default.json"),
+    logs_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing service wrapper logs."),
+    ] = Path("logs"),
+    lock_path: Annotated[
+        Path | None,
+        typer.Option(help="Optional workflow lock file to inspect."),
+    ] = Path("data/locks/paper-signal-refresh.lock"),
+    lock_stale_after_seconds: Annotated[
+        int,
+        typer.Option(help="Seconds before a workflow lock is stale."),
+    ] = 7200,
+    reconcile_state: Annotated[
+        bool,
+        typer.Option(help="Reconcile paper state against signal records."),
+    ] = True,
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Cash balance before replaying signal records."),
+    ] = 100_000,
+    cash_tolerance: Annotated[
+        float,
+        typer.Option(help="Allowed cash and price difference."),
+    ] = 0.01,
+    fail_on_failed: Annotated[
+        bool,
+        typer.Option(help="Exit nonzero after writing failed status."),
+    ] = False,
+) -> None:
+    """Publish a sanitized health snapshot for the static dashboard."""
+    if lock_stale_after_seconds <= 0:
+        raise typer.BadParameter("lock-stale-after-seconds must be positive")
+    if cash_tolerance < 0:
+        raise typer.BadParameter("cash-tolerance must be non-negative")
+
+    report = build_health_report(
+        run_records_dir=run_records_dir,
+        signal_records_dir=signal_records_dir,
+        state_path=state_path,
+        logs_dir=logs_dir,
+        lock_path=lock_path,
+        lock_stale_after_seconds=lock_stale_after_seconds,
+        reconcile_state=reconcile_state,
+        initial_cash=initial_cash,
+        cash_tolerance=cash_tolerance,
+        reconciliation_report_path=None,
+    )
+    status = build_dashboard_health_status(report)
+    path = write_dashboard_health_status(status, output_path)
+    typer.echo(f"Status: {status.status.value}")
+    typer.echo(f"Issues: {status.issue_count}")
+    typer.echo(f"Dashboard status: {path}")
+
+    # Publishing should normally succeed even for failed health, because a
+    # visible red dashboard is more useful than leaving yesterday's status live.
+    if fail_on_failed and status.status == HealthStatus.FAILED:
         raise typer.Exit(code=1)
 
 

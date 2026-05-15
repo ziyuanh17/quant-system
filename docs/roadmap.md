@@ -38,18 +38,20 @@ side discussions.
 | 20 | Concurrent Run Safety v1 | Done | Prevent overlapping refresh workflow runs from mutating the same paper state. |
 | 21 | Atomic State Writes v1 | Done | Write paper broker state through durable temp files, atomic replacement, and backups. |
 | 22 | Paper State Reconciliation v1 | Done | Replay paper signal audit records and compare them against persisted broker state. |
-| 23 | Health Check Integration v1 | In Review | Surface lock and paper-state reconciliation status in the operational health command. |
+| 23 | Health Check Integration v1 | Done | Surface lock and paper-state reconciliation status in the operational health command. |
+| 24 | Dashboard Alert Status v1 | In Review | Publish sanitized operational health status to the GitHub Pages dashboard. |
+| 25 | Broker Adapter Boundary v1 | Planned | Define the paper-vs-real broker boundary before adding real-money trading logic. |
 
 ## Current Recommendation
 
-The next milestone after Health Check Integration v1 should be
-**Alert Hooks v1**.
+The next milestone after Dashboard Alert Status v1 should be
+**Broker Adapter Boundary v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
-writes, read-only state reconciliation, and an integrated health command. The
-next step should let failed health notify the operator instead of relying on
-manual inspection.
+writes, read-only state reconciliation, an integrated health command, and a
+sanitized dashboard status file. External alert hooks are intentionally delayed
+until the real-money trading boundary is better designed.
 
 ## Corrected Near-Term Order
 
@@ -74,7 +76,8 @@ data ingestion
   -> atomic state writes
   -> paper state reconciliation
   -> health check integration
-  -> alert hooks
+  -> dashboard alert status
+  -> broker adapter boundary
 ```
 
 ## Data Lineage v1 Scope
@@ -202,6 +205,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Atomic state writes | Uses same-directory temp files, fsync, atomic replace, and one `.bak` copy. | Add state history, restore command, checksums, and reconciliation against paper audit records. |
 | Paper state reconciliation | Replays local paper signal records against one state file. | Integrate with health checks, add account IDs, state history, restore workflows, and richer drift diagnostics. |
 | Health check integration | Reports lock and reconciliation status from `quant ops health`, but does not notify anyone. | Add alert hooks, health history, dashboard summaries, and data freshness checks. |
+| Dashboard alert status | Publishes a sanitized `site/status.json` for GitHub Pages, but does not push notifications. | Add external alert hooks after the real-money trading path and broker boundary are designed. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -381,3 +385,24 @@ The first version keeps the basic health command read-only and adds optional
 state reconciliation. It reports missing, active, stale, and invalid workflow
 locks; active locks degrade health, stale or invalid locks fail health, and
 failed paper-state reconciliation fails health.
+
+## Dashboard Alert Status v1 Scope
+
+Introduce:
+
+```text
+DashboardHealthStatus
+quant ops publish-status
+site/status.json
+Operations Status dashboard panel
+```
+
+The first version converts the local health report into a public-safe status
+artifact for the static GitHub Pages dashboard. It includes high-level run,
+signal, lock, reconciliation, and issue status, but intentionally omits cash,
+positions, order details, and sensitive strategy state.
+
+By default, `quant ops publish-status` exits successfully even when the health
+status is `failed`, so a server job can still publish a visible red dashboard
+state. Use `--fail-on-failed` only when the publishing wrapper should stop on
+failed health.

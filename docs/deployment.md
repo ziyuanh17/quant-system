@@ -125,6 +125,8 @@ After enabling a recurring run:
 
 - run `quant ops health --reconcile-state --initial-cash 100000` and inspect
   any issue codes.
+- run `quant ops publish-status --initial-cash 100000` when the GitHub Pages
+  dashboard should show the latest operational status.
 - inspect `logs/` after the first scheduled run.
 - confirm `data/locks/` is empty after the wrapper exits successfully.
 - inspect `data/workflows/paper-signal-refresh/` for workflow records.
@@ -136,6 +138,29 @@ After enabling a recurring run:
   persisted state matches the signal audit trail.
 
 See [operations.md](operations.md) for health check behavior.
+
+## Dashboard Publishing
+
+The static dashboard reads:
+
+```text
+site/status.json
+```
+
+Generate that file with:
+
+```bash
+quant ops publish-status --initial-cash 100000
+```
+
+The file is intentionally sanitized for GitHub Pages. It includes health,
+latest run, latest signal, lock, reconciliation, and issue summaries, but not
+cash, positions, or order-level account details.
+
+If a server job commits and pushes changes under `site/`, the existing GitHub
+Pages workflow can publish the updated dashboard. Keep that publishing step
+separate from trading execution until the real-money trading boundary is
+designed.
 
 ## Current Limits
 

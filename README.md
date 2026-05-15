@@ -172,6 +172,12 @@ Run the fuller operational check with paper state reconciliation:
 quant ops health --reconcile-state --initial-cash 100000
 ```
 
+Publish a sanitized health snapshot for the static dashboard:
+
+```bash
+quant ops publish-status --initial-cash 100000
+```
+
 See [docs/operations.md](docs/operations.md) for health status meanings and
 current observability limits.
 
@@ -192,6 +198,7 @@ Local files:
 ```text
 site/index.html
 site/progress.json
+site/status.json
 ```
 
 ## Local Checks

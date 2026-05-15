@@ -38,6 +38,8 @@ from quant.models.ingestion import (
 from quant.models.market import Bar, MarketBar, PriceData
 from quant.models.news import NewsArticle, TextSentimentFeature
 from quant.models.operations import (
+    DashboardHealthIssue,
+    DashboardHealthStatus,
     HealthIssue,
     HealthIssueSeverity,
     HealthReport,
@@ -68,6 +70,8 @@ __all__ = [
     "Bar",
     "DataModality",
     "DataRefreshWorkflowRecord",
+    "DashboardHealthIssue",
+    "DashboardHealthStatus",
     "DatasetMetadata",
     "Fill",
     "FeatureArtifactPaths",

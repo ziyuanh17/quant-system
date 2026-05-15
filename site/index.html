@@ -37,6 +37,32 @@
         </div>
       </section>
 
+      <section class="section status-section" aria-labelledby="status-title">
+        <div class="section-heading">
+          <h2 id="status-title">Operations Status</h2>
+          <p id="status-generated">Status loading...</p>
+        </div>
+        <div class="status-panel" id="status-panel">
+          <div>
+            <span class="label">Health</span>
+            <strong id="health-status">...</strong>
+          </div>
+          <div>
+            <span class="label">Latest Run</span>
+            <strong id="latest-run-status">...</strong>
+          </div>
+          <div>
+            <span class="label">Lock</span>
+            <strong id="lock-status">...</strong>
+          </div>
+          <div>
+            <span class="label">Reconciliation</span>
+            <strong id="reconciliation-status">...</strong>
+          </div>
+        </div>
+        <div class="issues" id="status-issues"></div>
+      </section>
+
       <section class="section" aria-labelledby="milestones-title">
         <h2 id="milestones-title">Milestones</h2>
         <div class="timeline" id="timeline"></div>

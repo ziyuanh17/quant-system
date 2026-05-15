@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime, timedelta
 
 from typer.testing import CliRunner
@@ -226,6 +227,40 @@ def test_ops_health_cli_can_reconcile_state(tmp_path) -> None:
     assert result.exit_code == 0
     assert "Reconciliation: status=passed differences=0" in result.output
     assert report_path.exists()
+
+
+def test_ops_publish_status_writes_sanitized_dashboard_json(tmp_path) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    output_path = tmp_path / "site" / "status.json"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "publish-status",
+            "--output-path",
+            str(output_path),
+            "--run-records-dir",
+            str(paths["run_records_dir"]),
+            "--signal-records-dir",
+            str(paths["signal_records_dir"]),
+            "--state-path",
+            str(paths["state_path"]),
+            "--logs-dir",
+            str(paths["logs_dir"]),
+            "--initial-cash",
+            "1000",
+        ],
+    )
+
+    payload = json.loads(output_path.read_text())
+    assert result.exit_code == 0
+    assert "Status: healthy" in result.output
+    assert payload["status"] == "healthy"
+    assert payload["reconciliation_status"] == "passed"
+    assert payload["reconciliation_difference_count"] == 0
+    assert "state_cash" not in payload
+    assert "state_position_count" not in payload
 
 
 def _write_health_artifacts(
