@@ -40,20 +40,21 @@ side discussions.
 | 22 | Paper State Reconciliation v1 | Done | Replay paper signal audit records and compare them against persisted broker state. |
 | 23 | Health Check Integration v1 | Done | Surface lock and paper-state reconciliation status in the operational health command. |
 | 24 | Dashboard Alert Status v1 | Done | Publish sanitized operational health status to the GitHub Pages dashboard. |
-| 25 | Broker Adapter Boundary v1 | In Review | Define the paper-vs-real broker boundary before adding real-money trading logic. |
-| 26 | Live Trading Safety Gates v1 | Planned | Add explicit controls that keep real-money trading impossible by default. |
+| 25 | Broker Adapter Boundary v1 | Done | Define the paper-vs-real broker boundary before adding real-money trading logic. |
+| 26 | Live Trading Safety Gates v1 | In Review | Add explicit controls that keep real-money trading impossible by default. |
+| 27 | Dry-Run Broker Adapter v1 | Planned | Add a live-shaped broker adapter that records intended orders without submitting them. |
 
 ## Current Recommendation
 
-The next milestone after Broker Adapter Boundary v1 should be
-**Live Trading Safety Gates v1**.
+The next milestone after Live Trading Safety Gates v1 should be
+**Dry-Run Broker Adapter v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
 writes, read-only state reconciliation, an integrated health command, a
-sanitized dashboard status file, and a paper broker adapter boundary. The next
-step should make real-money trading impossible by default before any live broker
-adapter exists.
+sanitized dashboard status file, a paper broker adapter boundary, and
+fail-closed trading safety gates. The next step should rehearse a live-shaped
+adapter in dry-run mode before any real broker API is connected.
 
 ## Corrected Near-Term Order
 
@@ -81,6 +82,7 @@ data ingestion
   -> dashboard alert status
   -> broker adapter boundary
   -> live trading safety gates
+  -> dry-run broker adapter
 ```
 
 ## Data Lineage v1 Scope
@@ -210,6 +212,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Health check integration | Reports lock and reconciliation status from `quant ops health`, but does not notify anyone. | Add alert hooks, health history, dashboard summaries, and data freshness checks. |
 | Dashboard alert status | Publishes a sanitized `site/status.json` for GitHub Pages, but does not push notifications. | Add external alert hooks after the real-money trading path and broker boundary are designed. |
 | Broker adapter boundary | Strategy execution can target a broker protocol, but only the paper adapter exists. | Add safety gates, broker credential boundaries, live adapter contracts, and account reconciliation before real orders. |
+| Live trading safety gates | Adds fail-closed mode checks, but no live broker adapter uses them yet. | Require the guard in every future live-capable CLI command and adapter before credentials or orders are touched. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -431,3 +434,25 @@ details leak into strategy code, scheduler code, or workflow orchestration.
 This milestone does not add real broker connectivity. Real-money execution
 should remain impossible until explicit safety gates, credential rules,
 order-size limits, and live adapter tests exist.
+
+## Live Trading Safety Gates v1 Scope
+
+Introduce:
+
+```text
+TradingMode
+TradingSafetyConfig
+TradingSafetyCheck
+assert_trading_allowed
+quant safety check
+docs/trading_safety.md
+```
+
+The first version fails closed by default. Paper and dry-run modes are allowed,
+but live mode requires an explicit enable flag, exact confirmation phrase,
+positive maximum order notional, and broker name. Environment variables use the
+`QUANT_` prefix and missing variables never imply live-trading permission.
+
+This milestone still does not add live broker connectivity. Its purpose is to
+make future live-capable code call one central guard before it can construct a
+broker client or submit an order.

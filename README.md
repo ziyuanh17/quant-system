@@ -123,6 +123,15 @@ See [docs/broker_adapters.md](docs/broker_adapters.md) for the broker adapter
 boundary that keeps paper execution separate from any future real broker
 integration.
 
+Check the current trading safety gates:
+
+```bash
+quant safety check
+```
+
+See [docs/trading_safety.md](docs/trading_safety.md) for the fail-closed live
+trading rules.
+
 ## Scheduled Runs
 
 Run a finite scheduled paper-order loop:

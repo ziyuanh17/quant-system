@@ -15,10 +15,13 @@ from quant.data import (
     write_reconciliation_report,
 )
 from quant.execution import (
+    LIVE_TRADING_CONFIRMATION,
     PaperBroker,
     PaperBrokerAdapter,
+    evaluate_trading_safety,
     execute_latest_signal,
     load_paper_broker_state,
+    load_trading_safety_config_from_env,
     reconcile_paper_state,
     save_paper_broker_state,
     write_paper_signal_record,
@@ -36,6 +39,8 @@ from quant.models.execution import (
     OrderSide,
     PaperStateReconciliationReport,
     Position,
+    TradingMode,
+    TradingSafetyConfig,
 )
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
@@ -64,17 +69,75 @@ paper_app = typer.Typer(no_args_is_help=True)
 schedule_app = typer.Typer(no_args_is_help=True)
 ops_app = typer.Typer(no_args_is_help=True)
 workflow_app = typer.Typer(no_args_is_help=True)
+safety_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
 app.add_typer(schedule_app, name="schedule")
 app.add_typer(ops_app, name="ops")
 app.add_typer(workflow_app, name="workflow")
+app.add_typer(safety_app, name="safety")
 
 
 @app.callback()
 def main() -> None:
     """Quant research and trading CLI."""
+
+
+@safety_app.command("check")
+def safety_check(
+    trading_mode: Annotated[
+        TradingMode,
+        typer.Option(help="Requested trading mode to evaluate."),
+    ] = TradingMode.PAPER,
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live trading."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required phrase for live trading."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional for one live order."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live mode."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+) -> None:
+    """Evaluate fail-closed trading safety gates."""
+    if from_env:
+        try:
+            config = load_trading_safety_config_from_env()
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc)) from exc
+    else:
+        config = TradingSafetyConfig(
+            mode=trading_mode,
+            live_trading_enabled=live_trading_enabled,
+            live_trading_confirmation=live_trading_confirmation,
+            max_order_notional=max_order_notional,
+            broker_name=broker_name,
+        )
+
+    check = evaluate_trading_safety(config)
+    typer.echo(f"Mode: {check.mode.value}")
+    typer.echo(f"Allowed: {check.allowed}")
+    if check.issues:
+        for issue in check.issues:
+            typer.echo(f"- {issue}")
+        typer.echo(
+            f"Required confirmation: {LIVE_TRADING_CONFIRMATION}"
+        )
+
+    if not check.allowed:
+        raise typer.Exit(code=1)
 
 
 @app.command()

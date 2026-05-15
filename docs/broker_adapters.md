@@ -43,7 +43,6 @@ preserves the existing paper state and signal record formats.
 
 Before adding a live broker adapter, define and test:
 
-- explicit live-trading enablement gates
 - broker credential loading rules
 - market-hours and asset-universe checks
 - order idempotency that survives process restarts
@@ -55,3 +54,6 @@ Before adding a live broker adapter, define and test:
 Live trading should remain impossible by default. A real adapter should require
 clear configuration and separate commands so routine paper jobs cannot
 accidentally send real orders.
+
+See [trading_safety.md](trading_safety.md) for the first live-trading safety
+gate implementation.

@@ -38,6 +38,12 @@ class BrokerMode(StrEnum):
     LIVE = "live"
 
 
+class TradingMode(StrEnum):
+    PAPER = "paper"
+    DRY_RUN = "dry_run"
+    LIVE = "live"
+
+
 class OrderRequest(FrozenModel):
     symbol: str
     side: OrderSide
@@ -103,6 +109,28 @@ class BrokerAccountSnapshot(FrozenModel):
 
     mode: BrokerMode
     portfolio: PortfolioSnapshot
+
+
+class TradingSafetyConfig(FrozenModel):
+    """Explicit controls required before any future live trading path runs."""
+
+    mode: TradingMode = TradingMode.PAPER
+    live_trading_enabled: bool = False
+    live_trading_confirmation: str | None = None
+    max_order_notional: float | None = Field(default=None, gt=0)
+    broker_name: str | None = None
+
+
+class TradingSafetyCheck(FrozenModel):
+    mode: TradingMode
+    allowed: bool
+    issues: tuple[str, ...] = ()
+
+    @property
+    def reason(self) -> str:
+        if self.allowed:
+            return "trading mode is allowed"
+        return "; ".join(self.issues)
 
 
 class PaperBrokerState(FrozenModel):
