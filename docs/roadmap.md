@@ -33,16 +33,18 @@ side discussions.
 | 15 | Broker State Persistence v1 | Done | Persist paper account cash and positions across scheduled runs. |
 | 16 | Idempotent Paper Signals v1 | Done | Prevent duplicate paper orders for repeated signal processing. |
 | 17 | Service Deployment v1 | Done | Define local/server wrapper, environment config, logs, and deployment docs. |
-| 18 | Operational Observability v1 | In Review | Add a read-only health command that checks scheduler records, signal records, paper state, and logs. |
+| 18 | Operational Observability v1 | Done | Add a read-only health command that checks scheduler records, signal records, paper state, and logs. |
+| 19 | Data Refresh Workflow v1 | In Review | Refresh and validate provider data before running scheduled paper signal execution. |
 
 ## Current Recommendation
 
-The next milestone after Operational Observability v1 should be
-**Data Refresh Workflow v1**.
+The next milestone after Data Refresh Workflow v1 should be
+**Concurrent Run Safety v1**.
 
-Operational observability tells us whether the scheduled paper loop is producing
-readable artifacts. The next step should make the server refresh its market data
-before signal execution, so paper signals are not based on a stale CSV.
+The server path now has data refresh, validation, paper execution, and health
+checks. The next risk is overlapping scheduled runs writing the same paper state
+or artifacts at the same time, so the next step should add lock files and safer
+state writes.
 
 ## Corrected Near-Term Order
 
@@ -63,6 +65,7 @@ data ingestion
   -> service deployment
   -> operational observability
   -> data refresh workflow
+  -> concurrent run safety
 ```
 
 ## Data Lineage v1 Scope
@@ -185,6 +188,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Idempotent paper signals | Uses simple strategy/symbol/date/action keys and local JSON state. | Add account-scoped idempotency, signal revision IDs, configurable reprocessing policy, and reconciliation between skipped records and trade records. |
 | Service deployment | Provides local wrapper and cron/systemd documentation, but no managed process or alerting. | Add health checks, structured logs, alert hooks, deployment-specific configs, and safer concurrent-run handling. |
 | Operational observability | Provides a local read-only health command, but no notifications or health history. | Add alert hooks, structured health history, data freshness checks, lock/concurrency checks, and dashboard summaries. |
+| Data refresh workflow | Refreshes one symbol from one provider before one paper-signal workflow. | Add multi-symbol workflows, provider reconciliation before execution, feature refresh, configurable freshness windows, and workflow retries. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -284,3 +288,20 @@ The first version reads existing scheduler run records, paper signal records,
 paper broker state, and wrapper logs. It reports `healthy`, `degraded`, or
 `failed` without mutating account state or placing orders. It does not yet send
 alerts, store health history, or check data freshness.
+
+## Data Refresh Workflow v1 Scope
+
+Introduce:
+
+```text
+DataRefreshWorkflowRecord
+quant workflow paper-signal-refresh
+scripts/run_paper_signal_refresh.sh
+docs/workflows.md
+```
+
+The first version refreshes one market-bar dataset from one provider, writes raw
+and normalized data, writes validation and metadata artifacts, stops if
+validation fails, then runs the scheduled paper signal path. The workflow record
+links data artifacts, scheduler run records, signal records, and state paths so
+paper decisions can be traced back to their refreshed input data.

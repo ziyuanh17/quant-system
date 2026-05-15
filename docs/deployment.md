@@ -9,9 +9,11 @@ The goal of this version is operational clarity:
 configuration
   -> command wrapper
   -> logs
+  -> data refresh artifacts
   -> scheduler run records
   -> paper signal records
   -> persisted paper state
+  -> workflow records
 ```
 
 ## Configuration
@@ -27,11 +29,15 @@ Important settings:
 - `QUANT_CMD`: path to the CLI, usually `.venv/bin/quant`
 - `QUANT_STRATEGY`: strategy name, currently `momentum`
 - `QUANT_SYMBOL`: symbol to trade
+- `QUANT_PROVIDER`: market-data provider, currently `yfinance`
+- `QUANT_START`: refresh start date
+- `QUANT_END`: optional refresh end date
 - `QUANT_DATA`: market-bar CSV used for signal generation
 - `QUANT_QUANTITY`: paper order quantity for actionable signals
 - `QUANT_STATE_PATH`: persisted paper account state
 - `QUANT_SIGNAL_OUTPUT_DIR`: paper signal audit records
 - `QUANT_RUN_OUTPUT_DIR`: scheduler run records
+- `QUANT_WORKFLOW_OUTPUT_DIR`: refresh workflow records
 - `QUANT_LOG_DIR`: wrapper logs
 
 Use a different `QUANT_STATE_PATH` for each separate paper account or
@@ -42,26 +48,28 @@ experiment. Reusing a state path means the runs share one paper account.
 Run the wrapper:
 
 ```bash
-bash scripts/run_paper_signal.sh
+bash scripts/run_paper_signal_refresh.sh
 ```
 
 The wrapper loads `.env` when present, appends console output to a timestamped
 log file, and runs:
 
 ```bash
-quant schedule paper-signal
+quant workflow paper-signal-refresh
 ```
 
-The paper signal command is idempotent for repeated signals. If it sees the
-same strategy, symbol, signal date, and action again, it writes a skipped audit
-record instead of placing a duplicate paper order.
+The workflow refreshes market data, validates it, writes lineage artifacts, and
+only then runs the paper signal scheduler. The paper signal command remains
+idempotent for repeated signals. If it sees the same strategy, symbol, signal
+date, and action again, it writes a skipped audit record instead of placing a
+duplicate paper order.
 
 ## Cron Example
 
 Use absolute paths when installing a cron entry:
 
 ```cron
-0 14 * * 1-5 cd /absolute/path/to/quant-system && bash scripts/run_paper_signal.sh
+0 14 * * 1-5 cd /absolute/path/to/quant-system && bash scripts/run_paper_signal_refresh.sh
 ```
 
 The example above runs once per weekday. Choose a time that matches the data
@@ -79,7 +87,7 @@ Description=Quant paper signal run
 [Service]
 Type=oneshot
 WorkingDirectory=/absolute/path/to/quant-system
-ExecStart=/usr/bin/bash scripts/run_paper_signal.sh
+ExecStart=/usr/bin/bash scripts/run_paper_signal_refresh.sh
 ```
 
 Example timer:
@@ -104,17 +112,17 @@ and schedule should match the target machine.
 Before enabling a recurring run:
 
 - `make check` passes.
-- `.env` points to the intended data file.
+- `.env` points to the intended provider, symbol, and refresh start date.
 - `QUANT_STATE_PATH` is unique to the paper account.
-- the data file exists and has current normalized market bars.
-- validation is enabled unless debugging a known data issue.
-- the first local wrapper run writes logs, run records, signal records, and state.
+- the first local wrapper run writes logs, data artifacts, workflow records,
+  run records, signal records, and state.
 - ignored output directories have enough disk space.
 
 After enabling a recurring run:
 
 - run `quant ops health` and inspect any issue codes.
 - inspect `logs/` after the first scheduled run.
+- inspect `data/workflows/paper-signal-refresh/` for workflow records.
 - inspect `data/scheduler/latest/` for run records.
 - inspect `data/paper/signals/` for buy/sell/hold/skipped decisions.
 - inspect `data/paper/state/` to confirm cash and positions are plausible.
@@ -131,7 +139,6 @@ It does not yet provide:
 - alerts or notifications
 - lock files for concurrent runs
 - atomic state writes
-- data refresh orchestration
 - cloud deployment templates
 - real broker connectivity
 

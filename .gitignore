@@ -14,6 +14,7 @@ data/metadata/
 data/reconciliation/
 data/paper/
 data/scheduler/
+data/workflows/
 # Generated feature artifacts are reproducible from normalized data.
 data/features/
 data/results/

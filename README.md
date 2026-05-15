@@ -151,6 +151,15 @@ signal date, and action.
 See [docs/deployment.md](docs/deployment.md) for running the paper signal loop
 as a recurring server job.
 
+Refresh data before running the paper signal path:
+
+```bash
+quant workflow paper-signal-refresh --symbol AAPL --start 2024-01-01
+```
+
+See [docs/workflows.md](docs/workflows.md) for the workflow record and server
+wrapper details.
+
 Check the local service artifacts:
 
 ```bash

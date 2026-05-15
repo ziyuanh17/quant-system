@@ -35,6 +35,7 @@ from quant.models.operations import HealthReport, HealthStatus
 from quant.models.reconciliation import ProviderReconciliationReport
 from quant.models.scheduler import ScheduledTaskResult
 from quant.models.validation import ValidationReport
+from quant.models.workflow import DataRefreshWorkflowRecord
 from quant.operations import build_health_report
 from quant.scheduler import SchedulerRunner
 from quant.strategies import (
@@ -42,6 +43,7 @@ from quant.strategies import (
     FeatureMomentumStrategy,
     MomentumStrategy,
 )
+from quant.workflows import WorkflowRunFailed, run_paper_signal_refresh_workflow
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
@@ -49,11 +51,13 @@ features_app = typer.Typer(no_args_is_help=True)
 paper_app = typer.Typer(no_args_is_help=True)
 schedule_app = typer.Typer(no_args_is_help=True)
 ops_app = typer.Typer(no_args_is_help=True)
+workflow_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
 app.add_typer(schedule_app, name="schedule")
 app.add_typer(ops_app, name="ops")
+app.add_typer(workflow_app, name="workflow")
 
 
 @app.callback()
@@ -630,6 +634,127 @@ def schedule_paper_signal(
         raise typer.Exit(code=1)
 
 
+@workflow_app.command("paper-signal-refresh")
+def workflow_paper_signal_refresh(
+    symbol: Annotated[
+        str,
+        typer.Option(help="Symbol to refresh and trade."),
+    ] = "AAPL",
+    start: Annotated[
+        str, typer.Option(help="Inclusive market-data refresh start date.")
+    ] = "2024-01-01",
+    end: Annotated[
+        str | None,
+        typer.Option(help="Exclusive market-data refresh end date."),
+    ] = None,
+    provider: Annotated[
+        str,
+        typer.Option(help="Data provider name."),
+    ] = "yfinance",
+    strategy: Annotated[
+        str, typer.Option(help="Strategy name to run after refresh.")
+    ] = "momentum",
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity if the latest signal trades."),
+    ] = 1,
+    initial_cash: Annotated[
+        float, typer.Option(help="Starting cash for the paper broker session.")
+    ] = 100_000,
+    initial_position_quantity: Annotated[
+        int,
+        typer.Option(help="Optional starting position quantity."),
+    ] = 0,
+    initial_position_price: Annotated[
+        float,
+        typer.Option(help="Price basis for the optional starting position."),
+    ] = 1.0,
+    iterations: Annotated[
+        int,
+        typer.Option(help="Number of scheduled paper-signal runs."),
+    ] = 1,
+    interval_seconds: Annotated[
+        float,
+        typer.Option(help="Seconds to wait between scheduled runs."),
+    ] = 0.0,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
+    raw_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for refreshed raw data."),
+    ] = Path("data/raw"),
+    normalized_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for refreshed normalized data."),
+    ] = Path("data/normalized"),
+    validation_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for validation report artifacts."),
+    ] = Path("data/validation"),
+    metadata_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for dataset metadata artifacts."),
+    ] = Path("data/metadata"),
+    workflow_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where workflow records are written."),
+    ] = Path("data/workflows/paper-signal-refresh"),
+    signal_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where paper signal records are written."),
+    ] = Path("data/paper/signals"),
+    state_path: Annotated[
+        Path,
+        typer.Option(help="Path for persisted paper broker state."),
+    ] = Path("data/paper/state/default.json"),
+    run_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where scheduler run records are written."),
+    ] = Path("data/scheduler/latest"),
+) -> None:
+    """Refresh data, validate it, then run the paper-signal scheduler."""
+    _validate_paper_signal_options(
+        strategy=strategy,
+        iterations=iterations,
+        interval_seconds=interval_seconds,
+        initial_position_quantity=initial_position_quantity,
+        initial_position_price=initial_position_price,
+    )
+    if provider != "yfinance":
+        raise typer.BadParameter("Only yfinance is implemented right now.")
+
+    try:
+        record = run_paper_signal_refresh_workflow(
+            provider=YFinanceMarketBarProvider(),
+            symbol=symbol,
+            start=start,
+            end=end,
+            raw_dir=raw_dir,
+            normalized_dir=normalized_dir,
+            validation_dir=validation_dir,
+            metadata_dir=metadata_dir,
+            workflow_output_dir=workflow_output_dir,
+            strategy=strategy,
+            quantity=quantity,
+            initial_cash=initial_cash,
+            initial_position_quantity=initial_position_quantity,
+            initial_position_price=initial_position_price,
+            iterations=iterations,
+            interval_seconds=interval_seconds,
+            min_rows=min_rows,
+            signal_output_dir=signal_output_dir,
+            state_path=state_path,
+            run_output_dir=run_output_dir,
+        )
+    except WorkflowRunFailed as exc:
+        _print_workflow_record(exc.record, workflow_output_dir)
+        raise typer.Exit(code=1) from exc
+
+    _print_workflow_record(record, workflow_output_dir)
+
+
 @ops_app.command("health")
 def ops_health(
     run_records_dir: Annotated[
@@ -660,6 +785,28 @@ def ops_health(
 
     if report.status == HealthStatus.FAILED:
         raise typer.Exit(code=1)
+
+
+def _validate_paper_signal_options(
+    *,
+    strategy: str,
+    iterations: int,
+    interval_seconds: float,
+    initial_position_quantity: int,
+    initial_position_price: float,
+) -> None:
+    if strategy != "momentum":
+        raise typer.BadParameter("Only momentum is implemented right now.")
+    if iterations < 1:
+        raise typer.BadParameter("iterations must be at least 1")
+    if interval_seconds < 0:
+        raise typer.BadParameter("interval-seconds must be non-negative")
+    if initial_position_quantity < 0:
+        raise typer.BadParameter(
+            "initial-position-quantity must be non-negative"
+        )
+    if initial_position_quantity > 0 and initial_position_price <= 0:
+        raise typer.BadParameter("initial-position-price must be positive")
 
 
 def _initial_positions(
@@ -741,6 +888,25 @@ def _print_health_report(report: HealthReport) -> None:
         typer.echo(
             f"[{issue.severity.value}] {issue.code}: {issue.message}"
         )
+
+
+def _print_workflow_record(
+    record: DataRefreshWorkflowRecord,
+    output_dir: Path,
+) -> None:
+    record_path = output_dir / f"{record.workflow_id}.json"
+    typer.echo(f"Workflow: {record.workflow_name}")
+    typer.echo(f"Status: {record.status.value}")
+    typer.echo(f"Message: {record.message}")
+    typer.echo(f"Symbol: {record.symbol}")
+    typer.echo(f"Provider: {record.provider}")
+    typer.echo(f"Normalized: {_format_health_value(record.normalized_path)}")
+    typer.echo(
+        "Validation report: "
+        f"{_format_health_value(record.validation_report_path)}"
+    )
+    typer.echo(f"Scheduler runs: {len(record.scheduler_run_paths)}")
+    typer.echo(f"Record: {record_path}")
 
 
 def _format_health_value(value: object | None) -> str:

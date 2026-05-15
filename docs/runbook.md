@@ -73,10 +73,27 @@ Use `--state-path` to isolate separate paper accounts or experiments.
 If the same actionable signal is processed again, the command records a skipped
 signal instead of placing a duplicate paper order.
 
+## Refresh Data Then Run Paper Signal
+
+```bash
+quant workflow paper-signal-refresh --symbol AAPL --start 2024-01-01
+```
+
+This refreshes market data, writes validation and metadata artifacts, stops if
+validation fails, then runs the scheduled paper-signal path. It writes a
+workflow record under:
+
+```text
+data/workflows/paper-signal-refresh/
+```
+
+Use this path for recurring server runs once the provider and start date are
+configured.
+
 ## Run The Service Wrapper
 
 ```bash
-bash scripts/run_paper_signal.sh
+bash scripts/run_paper_signal_refresh.sh
 ```
 
 Copy `.env.example` to `.env` to configure the wrapper. See
@@ -97,8 +114,9 @@ See [operations.md](operations.md) for status meanings and current limits.
 ## When Something Fails
 
 1. Run `quant ops health` and read the issue codes.
-2. Confirm the input data has the required columns:
+2. Inspect the latest workflow record under `data/workflows/`.
+3. Confirm the input data has the required columns:
    `date`, `symbol`, `open`, `high`, `low`, `close`, `volume`.
-3. Confirm dependencies are installed in the active environment.
-4. Re-run with the smallest dataset that reproduces the issue.
-5. Add a regression test before changing core accounting or signal behavior.
+4. Confirm dependencies are installed in the active environment.
+5. Re-run with the smallest dataset that reproduces the issue.
+6. Add a regression test before changing core accounting or signal behavior.

@@ -158,12 +158,28 @@ This prevents duplicate paper orders when a scheduler sees the same actionable
 signal more than once. Duplicate signals still write audit records, but they
 are marked as skipped and do not change cash or positions.
 
+## Workflow Layer
+
+Workflows compose existing boundaries into ordered operational paths:
+
+```text
+provider refresh
+  -> validation and lineage
+  -> scheduled paper signal
+  -> DataRefreshWorkflowRecord
+```
+
+The first workflow refreshes one provider-backed market-bar dataset before
+paper signal execution. If validation fails, paper execution does not run. The
+workflow record links the refreshed data artifacts to the scheduler records and
+paper artifacts that followed.
+
 Deployment starts as a wrapper script plus environment file:
 
 ```text
 .env
-  -> scripts/run_paper_signal.sh
-  -> quant schedule paper-signal
+  -> scripts/run_paper_signal_refresh.sh
+  -> quant workflow paper-signal-refresh
   -> logs and artifacts
 ```
 

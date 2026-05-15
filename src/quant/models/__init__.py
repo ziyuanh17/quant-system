@@ -56,6 +56,7 @@ from quant.models.validation import (
     ValidationReport,
     ValidationSeverity,
 )
+from quant.models.workflow import DataRefreshWorkflowRecord, WorkflowRunStatus
 
 __all__ = [
     "BacktestConfig",
@@ -63,6 +64,7 @@ __all__ = [
     "BacktestResult",
     "Bar",
     "DataModality",
+    "DataRefreshWorkflowRecord",
     "DatasetMetadata",
     "Fill",
     "FeatureArtifactPaths",
@@ -103,4 +105,5 @@ __all__ = [
     "ValidationIssue",
     "ValidationReport",
     "ValidationSeverity",
+    "WorkflowRunStatus",
 ]
