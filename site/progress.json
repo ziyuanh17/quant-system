@@ -1,0 +1,114 @@
+{
+  "project": {
+    "name": "Quant System",
+    "description": "A typed, solo-maintainable quant research and paper-trading system.",
+    "updated": "2026-05-14"
+  },
+  "summary": {
+    "done": 13,
+    "in_review": 1,
+    "planned": 1,
+    "next": "Broker State Persistence v1"
+  },
+  "milestones": [
+    {
+      "order": 1,
+      "name": "Repo Scaffold",
+      "status": "done",
+      "purpose": "Python project layout, typed models, CLI, tests, docs, and VectorBT backtest path."
+    },
+    {
+      "order": 2,
+      "name": "GitHub and CI Foundation",
+      "status": "done",
+      "purpose": "GitHub repo, CI, Makefile commands, lockfile, and repeatable checks."
+    },
+    {
+      "order": 3,
+      "name": "Backtest Artifacts",
+      "status": "done",
+      "purpose": "Durable backtest summaries and trade CSV outputs."
+    },
+    {
+      "order": 4,
+      "name": "Multi-Modal Ingestion Foundation",
+      "status": "done",
+      "purpose": "Provider interface, raw datasets, yfinance market bars, normalized outputs, and text-model placeholders."
+    },
+    {
+      "order": 5,
+      "name": "Data Validation v1",
+      "status": "done",
+      "purpose": "Market-bar validation and data validation CLI."
+    },
+    {
+      "order": 6,
+      "name": "Validation Guardrails",
+      "status": "done",
+      "purpose": "Validation runs by default during ingestion and before CSV backtests."
+    },
+    {
+      "order": 7,
+      "name": "Data Lineage v1",
+      "status": "done",
+      "purpose": "Validation reports and metadata link raw data, normalized data, provider, symbol, timestamps, and validation status."
+    },
+    {
+      "order": 8,
+      "name": "Storage Abstraction v1",
+      "status": "done",
+      "purpose": "MarketBarStore boundary with CSV implementation."
+    },
+    {
+      "order": 9,
+      "name": "Feature Engineering v1",
+      "status": "done",
+      "purpose": "Technical features from normalized and validated data."
+    },
+    {
+      "order": 10,
+      "name": "Strategy Feature Interface",
+      "status": "done",
+      "purpose": "Strategies can consume typed feature inputs."
+    },
+    {
+      "order": 11,
+      "name": "Provider Reconciliation",
+      "status": "done",
+      "purpose": "Compare normalized market-bar datasets from different sources."
+    },
+    {
+      "order": 12,
+      "name": "Paper Trading Foundation",
+      "status": "done",
+      "purpose": "Paper broker, risk checks, orders, fills, positions, snapshots, and audit records."
+    },
+    {
+      "order": 13,
+      "name": "Scheduler Loop v1",
+      "status": "done",
+      "purpose": "Finite scheduled task runs with durable run records."
+    },
+    {
+      "order": 14,
+      "name": "Paper Signal Execution v1",
+      "status": "in_review",
+      "purpose": "Connect strategy signals to scheduled paper-trading decisions."
+    },
+    {
+      "order": 15,
+      "name": "Broker State Persistence v1",
+      "status": "planned",
+      "purpose": "Persist broker state so scheduled runs behave like one continuous paper account."
+    }
+  ],
+  "futureMetrics": [
+    "latest paper equity",
+    "latest paper cash",
+    "open paper positions",
+    "last strategy signal",
+    "last scheduler run status",
+    "latest backtest return",
+    "data validation status"
+  ]
+}

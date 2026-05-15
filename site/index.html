@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quant System Progress</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <header class="topbar">
+        <div>
+          <h1 id="project-name">Quant System</h1>
+          <p class="subtitle" id="project-description">
+            Loading project progress...
+          </p>
+        </div>
+        <p class="updated" id="updated">Updated</p>
+      </header>
+
+      <section class="summary-grid" aria-label="Project summary">
+        <div class="metric">
+          <span>Done</span>
+          <strong id="done-count">0</strong>
+        </div>
+        <div class="metric">
+          <span>In review</span>
+          <strong id="review-count">0</strong>
+        </div>
+        <div class="metric">
+          <span>Planned</span>
+          <strong id="planned-count">0</strong>
+        </div>
+        <div class="metric">
+          <span>Next</span>
+          <strong id="next-step">...</strong>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="milestones-title">
+        <h2 id="milestones-title">Milestones</h2>
+        <div class="timeline" id="timeline"></div>
+      </section>
+
+      <section class="section future" aria-labelledby="future-title">
+        <h2 id="future-title">Future Live Metrics</h2>
+        <p>
+          This static dashboard can later read generated JSON from scheduled
+          jobs, so the same page can track strategy and paper-trading health.
+        </p>
+        <ul id="future-metrics"></ul>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

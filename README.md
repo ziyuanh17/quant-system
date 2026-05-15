@@ -139,6 +139,19 @@ Run a scheduled strategy-to-paper loop:
 quant schedule paper-signal --strategy momentum --data data/sample_prices.csv --symbol AAPL --quantity 1 --iterations 1
 ```
 
+## Progress Dashboard
+
+The repo includes a static dashboard under `site/`. It can be deployed for free
+with GitHub Pages after enabling Pages from GitHub Actions in the repository
+settings.
+
+Local files:
+
+```text
+site/index.html
+site/progress.json
+```
+
 ## Local Checks
 
 ```bash
