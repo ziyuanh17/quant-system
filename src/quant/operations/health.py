@@ -1,7 +1,12 @@
+from datetime import datetime
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
 
+from quant.execution.reconciliation import (
+    reconcile_paper_state,
+    write_paper_state_reconciliation_report,
+)
 from quant.models.execution import PaperBrokerState, PaperSignalRecord
 from quant.models.operations import (
     HealthIssue,
@@ -10,6 +15,7 @@ from quant.models.operations import (
     HealthStatus,
 )
 from quant.models.scheduler import ScheduledRunRecord, ScheduledRunStatus
+from quant.operations.locks import read_lock_record
 
 
 def build_health_report(
@@ -18,6 +24,12 @@ def build_health_report(
     signal_records_dir: Path,
     state_path: Path,
     logs_dir: Path,
+    lock_path: Path | None = None,
+    lock_stale_after_seconds: int = 7200,
+    reconcile_state: bool = False,
+    initial_cash: float = 100_000,
+    cash_tolerance: float = 0.01,
+    reconciliation_report_path: Path | None = None,
 ) -> HealthReport:
     """Inspect local service artifacts without mutating account or run state."""
     issues: list[HealthIssue] = []
@@ -78,6 +90,7 @@ def build_health_report(
             latest_signal_date = signal_record.decision.signal_date
             latest_signal_skipped = signal_record.skipped
 
+    state: PaperBrokerState | None = None
     state_cash: float | None = None
     state_position_count: int | None = None
     # Paper state is critical: without it, scheduled invocations cannot behave
@@ -115,6 +128,51 @@ def build_health_report(
             _warning("missing_logs", f"No log files found in {logs_dir}.")
         )
 
+    lock_status = "not_checked"
+    lock_owner: str | None = None
+    lock_expires_at = None
+    if lock_path is not None:
+        lock_status, lock_owner, lock_expires_at = _check_lock(
+            lock_path=lock_path,
+            lock_stale_after_seconds=lock_stale_after_seconds,
+            issues=issues,
+        )
+
+    reconciliation_status = "skipped"
+    reconciliation_difference_count: int | None = None
+    if reconcile_state:
+        reconciliation_status = "unavailable"
+        if state is not None:
+            try:
+                report = reconcile_paper_state(
+                    state=state,
+                    state_path=state_path,
+                    signal_records_dir=signal_records_dir,
+                    initial_cash=initial_cash,
+                    cash_tolerance=cash_tolerance,
+                )
+                reconciliation_difference_count = report.difference_count
+                reconciliation_status = "passed" if report.passed else "failed"
+                if reconciliation_report_path is not None:
+                    write_paper_state_reconciliation_report(
+                        report,
+                        reconciliation_report_path,
+                    )
+                if not report.passed:
+                    issues.append(
+                        _error(
+                            "paper_state_reconciliation_failed",
+                            "Paper state does not match signal audit records.",
+                        )
+                    )
+            except Exception as exc:
+                issues.append(
+                    _error(
+                        "paper_state_reconciliation_error",
+                        f"Could not reconcile paper state: {exc}",
+                    )
+                )
+
     return HealthReport(
         status=_status_from_issues(issues),
         run_records_dir=str(run_records_dir),
@@ -133,8 +191,60 @@ def build_health_report(
         state_cash=state_cash,
         state_position_count=state_position_count,
         log_count=log_count,
+        lock_path=str(lock_path) if lock_path is not None else None,
+        lock_status=lock_status,
+        lock_owner=lock_owner,
+        lock_expires_at=lock_expires_at,
+        reconciliation_status=reconciliation_status,
+        reconciliation_difference_count=reconciliation_difference_count,
+        reconciliation_report_path=(
+            str(reconciliation_report_path)
+            if reconciliation_report_path is not None
+            else None
+        ),
         issues=tuple(issues),
     )
+
+
+def _check_lock(
+    *,
+    lock_path: Path,
+    lock_stale_after_seconds: int,
+    issues: list[HealthIssue],
+) -> tuple[str, str | None, datetime | None]:
+    if lock_stale_after_seconds <= 0:
+        issues.append(
+            _error(
+                "invalid_lock_stale_after_seconds",
+                "lock-stale-after-seconds must be positive.",
+            )
+        )
+        return "invalid", None, None
+    if not lock_path.exists():
+        return "missing", None, None
+
+    record = read_lock_record(lock_path)
+    if record is None:
+        issues.append(
+            _error("invalid_lock", f"Could not read lock file: {lock_path}.")
+        )
+        return "invalid", None, None
+    if record.is_stale():
+        issues.append(
+            _error(
+                "stale_lock",
+                f"Workflow lock is stale: {lock_path}.",
+            )
+        )
+        return "stale", record.owner, record.expires_at
+
+    issues.append(
+        _warning(
+            "active_lock",
+            f"Workflow lock is active: {lock_path}.",
+        )
+    )
+    return "active", record.owner, record.expires_at
 
 
 def _latest_json(directory: Path) -> Path | None:

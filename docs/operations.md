@@ -27,6 +27,7 @@ By default, the command checks:
 data/scheduler/latest/
 data/paper/signals/
 data/paper/state/default.json
+data/locks/paper-signal-refresh.lock
 logs/
 ```
 
@@ -37,7 +38,14 @@ quant ops health \
   --run-records-dir data/scheduler/latest \
   --signal-records-dir data/paper/signals \
   --state-path data/paper/state/default.json \
-  --logs-dir logs
+  --logs-dir logs \
+  --lock-path data/locks/paper-signal-refresh.lock
+```
+
+To include paper state reconciliation:
+
+```bash
+quant ops health --reconcile-state --initial-cash 100000
 ```
 
 ## Status Meaning
@@ -47,11 +55,13 @@ persisted paper state, and logs are all readable.
 
 `degraded` means the system has warnings but no hard failure. Examples include
 missing logs or no scheduler records yet. This is useful during first setup,
-where a service may not have completed its first run.
+where a service may not have completed its first run. An active workflow lock is
+also degraded because it usually means a run is in progress.
 
 `failed` means a critical operational artifact is missing, invalid, or the
 latest scheduler run failed. The command exits with code `1` for this status so
-cron, CI, or a future alerting wrapper can detect it.
+cron, CI, or a future alerting wrapper can detect it. A stale or invalid lock,
+or failed paper state reconciliation, is also failed health.
 
 ## Output
 
@@ -63,6 +73,8 @@ Latest run: succeeded at 2024-01-25 10:01:00+00:00 (...)
 Latest signal: action=buy date=2024-01-25 skipped=False (...)
 State: cash=1000.0 positions=0 (...)
 Logs: logs (1 files)
+Lock: status=missing owner=n/a expires_at=n/a (...)
+Reconciliation: status=skipped differences=n/a (...)
 Issues: 0
 ```
 
@@ -72,5 +84,6 @@ to be stable enough for debugging notes and future alert routing.
 ## Current Limits
 
 Operational Observability v1 does not send notifications, track historical
-health, or inspect data freshness. Lock files now prevent overlapping refresh
-workflow runs, but the health command does not yet summarize lock status.
+health, or inspect data freshness. Health can summarize lock and reconciliation
+status, but alert hooks and historical health records belong in later
+milestones.

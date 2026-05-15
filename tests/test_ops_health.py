@@ -1,18 +1,22 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from typer.testing import CliRunner
 
 from quant.cli import app
+from quant.execution import PaperBroker, save_paper_broker_state
+from quant.execution.artifacts import write_paper_signal_record
 from quant.models.execution import (
+    OrderRequest,
+    OrderSide,
     PaperBrokerState,
     PaperSignalAction,
     PaperSignalDecision,
     PaperSignalRecord,
     PortfolioSnapshot,
 )
-from quant.models.operations import HealthStatus
+from quant.models.operations import HealthStatus, RunLockRecord
 from quant.models.scheduler import ScheduledRunRecord, ScheduledRunStatus
-from quant.operations import build_health_report
+from quant.operations import FileLock, build_health_report
 
 
 def test_health_report_is_healthy_when_service_artifacts_are_readable(
@@ -80,6 +84,8 @@ def test_ops_health_cli_prints_healthy_report(tmp_path) -> None:
     assert "Latest run: succeeded" in result.output
     assert "Latest signal: action=buy" in result.output
     assert "Issues: 0" in result.output
+    assert "Lock: status=missing" in result.output
+    assert "Reconciliation: status=skipped" in result.output
 
 
 def test_ops_health_cli_exits_nonzero_for_failed_health(tmp_path) -> None:
@@ -105,6 +111,121 @@ def test_ops_health_cli_exits_nonzero_for_failed_health(tmp_path) -> None:
     assert result.exit_code == 1
     assert "Status: failed" in result.output
     assert "[error] missing_paper_state" in result.output
+
+
+def test_health_report_is_degraded_when_lock_is_active(tmp_path) -> None:
+    paths = _write_health_artifacts(tmp_path)
+    lock_path = tmp_path / "locks" / "workflow.lock"
+    lock = FileLock(
+        path=lock_path,
+        lock_name="paper-signal-refresh",
+        owner="active-run",
+        stale_after_seconds=60,
+    )
+    lock.acquire()
+
+    try:
+        report = build_health_report(**paths, lock_path=lock_path)
+    finally:
+        lock.release()
+
+    assert report.status == HealthStatus.DEGRADED
+    assert report.lock_status == "active"
+    assert report.lock_owner == "active-run"
+    assert "active_lock" in {issue.code for issue in report.issues}
+
+
+def test_health_report_fails_when_lock_is_stale(tmp_path) -> None:
+    paths = _write_health_artifacts(tmp_path)
+    lock_path = tmp_path / "locks" / "workflow.lock"
+    lock_path.parent.mkdir(parents=True)
+    lock_path.write_text(
+        RunLockRecord(
+            lock_name="paper-signal-refresh",
+            owner="old-run",
+            hostname="host",
+            pid=123,
+            acquired_at=datetime.now(UTC) - timedelta(seconds=120),
+            stale_after_seconds=60,
+        ).model_dump_json()
+    )
+
+    report = build_health_report(**paths, lock_path=lock_path)
+
+    assert report.status == HealthStatus.FAILED
+    assert report.lock_status == "stale"
+    assert "stale_lock" in {issue.code for issue in report.issues}
+
+
+def test_health_report_reconciles_paper_state_when_requested(
+    tmp_path,
+) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    report_path = tmp_path / "reports" / "health-state.json"
+
+    report = build_health_report(
+        **paths,
+        reconcile_state=True,
+        initial_cash=1_000,
+        reconciliation_report_path=report_path,
+    )
+
+    assert report.status == HealthStatus.HEALTHY
+    assert report.reconciliation_status == "passed"
+    assert report.reconciliation_difference_count == 0
+    assert report_path.exists()
+
+
+def test_health_report_fails_when_reconciliation_detects_drift(
+    tmp_path,
+) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    drifted_state = PaperBrokerState(cash=999)
+    paths["state_path"].write_text(drifted_state.model_dump_json())
+
+    report = build_health_report(
+        **paths,
+        reconcile_state=True,
+        initial_cash=1_000,
+    )
+
+    assert report.status == HealthStatus.FAILED
+    assert report.reconciliation_status == "failed"
+    assert report.reconciliation_difference_count is not None
+    assert report.reconciliation_difference_count > 0
+    assert "paper_state_reconciliation_failed" in {
+        issue.code for issue in report.issues
+    }
+
+
+def test_ops_health_cli_can_reconcile_state(tmp_path) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    report_path = tmp_path / "reports" / "health-state.json"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "health",
+            "--run-records-dir",
+            str(paths["run_records_dir"]),
+            "--signal-records-dir",
+            str(paths["signal_records_dir"]),
+            "--state-path",
+            str(paths["state_path"]),
+            "--logs-dir",
+            str(paths["logs_dir"]),
+            "--reconcile-state",
+            "--initial-cash",
+            "1000",
+            "--reconciliation-report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Reconciliation: status=passed differences=0" in result.output
+    assert report_path.exists()
 
 
 def _write_health_artifacts(
@@ -164,3 +285,31 @@ def _write_health_artifacts(
         "state_path": state_path,
         "logs_dir": logs_dir,
     }
+
+
+def _write_reconciled_health_artifacts(tmp_path):
+    paths = _write_health_artifacts(tmp_path)
+    broker = PaperBroker(initial_cash=1_000)
+    trade = broker.submit_market_order(
+        OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=2),
+        market_price=10,
+    )
+    key = "momentum:AAPL:2024-01-25:buy"
+    broker.mark_signal_processed(key)
+    signal_record = PaperSignalRecord(
+        decision=PaperSignalDecision(
+            symbol="AAPL",
+            action=PaperSignalAction.BUY,
+            signal_date="2024-01-25",
+            market_price=10,
+            reason="entry signal",
+            idempotency_key=key,
+        ),
+        trade=trade,
+        snapshot=trade.snapshot,
+    )
+    for path in paths["signal_records_dir"].glob("*.json"):
+        path.unlink()
+    write_paper_signal_record(signal_record, paths["signal_records_dir"])
+    save_paper_broker_state(broker.state(), paths["state_path"])
+    return paths

@@ -857,13 +857,52 @@ def ops_health(
         Path,
         typer.Option(help="Directory containing service wrapper logs."),
     ] = Path("logs"),
+    lock_path: Annotated[
+        Path | None,
+        typer.Option(help="Optional workflow lock file to inspect."),
+    ] = Path("data/locks/paper-signal-refresh.lock"),
+    lock_stale_after_seconds: Annotated[
+        int,
+        typer.Option(help="Seconds before a workflow lock is stale."),
+    ] = 7200,
+    reconcile_state: Annotated[
+        bool,
+        typer.Option(help="Reconcile paper state against signal records."),
+    ] = False,
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Cash balance before replaying signal records."),
+    ] = 100_000,
+    cash_tolerance: Annotated[
+        float,
+        typer.Option(help="Allowed cash and price difference."),
+    ] = 0.01,
+    reconciliation_report_path: Annotated[
+        Path,
+        typer.Option(
+            help="Path where reconciliation health report is written."
+        ),
+    ] = Path("data/paper/reconciliation/health-state.json"),
 ) -> None:
     """Check local service health from durable artifacts."""
+    if lock_stale_after_seconds <= 0:
+        raise typer.BadParameter("lock-stale-after-seconds must be positive")
+    if cash_tolerance < 0:
+        raise typer.BadParameter("cash-tolerance must be non-negative")
+
     report = build_health_report(
         run_records_dir=run_records_dir,
         signal_records_dir=signal_records_dir,
         state_path=state_path,
         logs_dir=logs_dir,
+        lock_path=lock_path,
+        lock_stale_after_seconds=lock_stale_after_seconds,
+        reconcile_state=reconcile_state,
+        initial_cash=initial_cash,
+        cash_tolerance=cash_tolerance,
+        reconciliation_report_path=(
+            reconciliation_report_path if reconcile_state else None
+        ),
     )
     _print_health_report(report)
 
@@ -966,6 +1005,20 @@ def _print_health_report(report: HealthReport) -> None:
         f"({report.state_path})"
     )
     typer.echo(f"Logs: {report.logs_dir} ({report.log_count} files)")
+    typer.echo(
+        "Lock: "
+        f"status={report.lock_status} "
+        f"owner={_format_health_value(report.lock_owner)} "
+        f"expires_at={_format_health_value(report.lock_expires_at)} "
+        f"({_format_health_value(report.lock_path)})"
+    )
+    typer.echo(
+        "Reconciliation: "
+        f"status={report.reconciliation_status} "
+        "differences="
+        f"{_format_health_value(report.reconciliation_difference_count)} "
+        f"({_format_health_value(report.reconciliation_report_path)})"
+    )
     typer.echo(f"Issues: {report.issue_count}")
 
     for issue in report.issues:

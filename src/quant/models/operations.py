@@ -42,6 +42,13 @@ class HealthReport(FrozenModel):
     state_cash: float | None = None
     state_position_count: int | None = None
     log_count: int = 0
+    lock_path: str | None = None
+    lock_status: str = "not_checked"
+    lock_owner: str | None = None
+    lock_expires_at: datetime | None = None
+    reconciliation_status: str = "skipped"
+    reconciliation_difference_count: int | None = None
+    reconciliation_report_path: str | None = None
     issues: tuple[HealthIssue, ...] = ()
 
     @property

@@ -123,7 +123,8 @@ Before enabling a recurring run:
 
 After enabling a recurring run:
 
-- run `quant ops health` and inspect any issue codes.
+- run `quant ops health --reconcile-state --initial-cash 100000` and inspect
+  any issue codes.
 - inspect `logs/` after the first scheduled run.
 - confirm `data/locks/` is empty after the wrapper exits successfully.
 - inspect `data/workflows/paper-signal-refresh/` for workflow records.

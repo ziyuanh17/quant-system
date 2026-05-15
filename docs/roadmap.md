@@ -37,18 +37,19 @@ side discussions.
 | 19 | Data Refresh Workflow v1 | Done | Refresh and validate provider data before running scheduled paper signal execution. |
 | 20 | Concurrent Run Safety v1 | Done | Prevent overlapping refresh workflow runs from mutating the same paper state. |
 | 21 | Atomic State Writes v1 | Done | Write paper broker state through durable temp files, atomic replacement, and backups. |
-| 22 | Paper State Reconciliation v1 | In Review | Replay paper signal audit records and compare them against persisted broker state. |
+| 22 | Paper State Reconciliation v1 | Done | Replay paper signal audit records and compare them against persisted broker state. |
+| 23 | Health Check Integration v1 | In Review | Surface lock and paper-state reconciliation status in the operational health command. |
 
 ## Current Recommendation
 
-The next milestone after Paper State Reconciliation v1 should be
-**Health Check Integration v1**.
+The next milestone after Health Check Integration v1 should be
+**Alert Hooks v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
-writes, and read-only state reconciliation. The next step should make
-operational health summarize lock and reconciliation status instead of requiring
-separate manual checks.
+writes, read-only state reconciliation, and an integrated health command. The
+next step should let failed health notify the operator instead of relying on
+manual inspection.
 
 ## Corrected Near-Term Order
 
@@ -73,6 +74,7 @@ data ingestion
   -> atomic state writes
   -> paper state reconciliation
   -> health check integration
+  -> alert hooks
 ```
 
 ## Data Lineage v1 Scope
@@ -199,6 +201,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Concurrent run safety | Adds one lock file around the refresh workflow. | Add lock status to health checks, account-scoped lock naming, lock cleanup tooling, and broader locking around future multi-workflow operations. |
 | Atomic state writes | Uses same-directory temp files, fsync, atomic replace, and one `.bak` copy. | Add state history, restore command, checksums, and reconciliation against paper audit records. |
 | Paper state reconciliation | Replays local paper signal records against one state file. | Integrate with health checks, add account IDs, state history, restore workflows, and richer drift diagnostics. |
+| Health check integration | Reports lock and reconciliation status from `quant ops health`, but does not notify anyone. | Add alert hooks, health history, dashboard summaries, and data freshness checks. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -363,3 +366,18 @@ The first version replays paper signal audit records from a known starting cash
 and optional starting position. It compares expected cash, positions, and
 processed signal keys against the persisted paper broker state, writes a JSON
 report, and exits nonzero when drift is detected.
+
+## Health Check Integration v1 Scope
+
+Introduce:
+
+```text
+quant ops health --reconcile-state
+lock status in HealthReport
+reconciliation status in HealthReport
+```
+
+The first version keeps the basic health command read-only and adds optional
+state reconciliation. It reports missing, active, stale, and invalid workflow
+locks; active locks degrade health, stale or invalid locks fail health, and
+failed paper-state reconciliation fails health.

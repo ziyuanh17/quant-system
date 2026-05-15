@@ -106,8 +106,14 @@ quant ops health
 ```
 
 The health command checks the latest scheduler run record, latest paper signal
-record, persisted paper state, and wrapper log directory. It returns a nonzero
-exit code only when the status is `failed`.
+record, persisted paper state, workflow lock, and wrapper log directory. It
+returns a nonzero exit code only when the status is `failed`.
+
+For a fuller daily check:
+
+```bash
+quant ops health --reconcile-state --initial-cash 100000
+```
 
 See [operations.md](operations.md) for status meanings and current limits.
 
@@ -154,7 +160,8 @@ the paper account was created.
 1. Run `quant ops health` and read the issue codes.
 2. Inspect the latest workflow record under `data/workflows/`.
 3. If the failure mentions a lock, confirm whether another workflow is running.
-4. Run `quant paper reconcile-state` to check for paper state drift.
+4. Check the `Reconciliation:` line in `quant ops health`, or run
+   `quant paper reconcile-state` for the standalone report.
 5. Confirm the input data has the required columns:
    `date`, `symbol`, `open`, `high`, `low`, `close`, `volume`.
 6. Confirm dependencies are installed in the active environment.

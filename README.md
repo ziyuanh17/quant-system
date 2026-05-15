@@ -166,6 +166,12 @@ Check the local service artifacts:
 quant ops health
 ```
 
+Run the fuller operational check with paper state reconciliation:
+
+```bash
+quant ops health --reconcile-state --initial-cash 100000
+```
+
 See [docs/operations.md](docs/operations.md) for health status meanings and
 current observability limits.
 
