@@ -161,6 +161,7 @@ h1 {
   color: var(--planned);
 }
 
+.docs,
 .future {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -168,10 +169,23 @@ h1 {
   padding: 18px;
 }
 
+.docs p,
 .future p {
   color: var(--muted);
   line-height: 1.5;
   margin-bottom: 12px;
+}
+
+.doc-link {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 6px;
+  color: #ffffff;
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 8px 12px;
+  text-decoration: none;
 }
 
 .future ul {

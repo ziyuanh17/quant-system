@@ -158,6 +158,18 @@ This prevents duplicate paper orders when a scheduler sees the same actionable
 signal more than once. Duplicate signals still write audit records, but they
 are marked as skipped and do not change cash or positions.
 
+Deployment starts as a wrapper script plus environment file:
+
+```text
+.env
+  -> scripts/run_paper_signal.sh
+  -> quant schedule paper-signal
+  -> logs and artifacts
+```
+
+This keeps the runtime contract explicit before introducing cloud services,
+alerts, or process supervision.
+
 ## Intended Growth
 
 ```text

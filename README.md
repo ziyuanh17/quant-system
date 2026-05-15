@@ -148,6 +148,9 @@ data/paper/state/default.json
 Repeated runs skip duplicate trade execution for the same strategy, symbol,
 signal date, and action.
 
+See [docs/deployment.md](docs/deployment.md) for running the paper signal loop
+as a recurring server job.
+
 ## Progress Dashboard
 
 The repo includes a static dashboard under `site/`. It can be deployed for free

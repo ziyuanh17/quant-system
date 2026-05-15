@@ -31,16 +31,17 @@ side discussions.
 | 13 | Scheduler Loop v1 | Done | Add finite scheduled task runs with durable run records. |
 | 14 | Paper Signal Execution v1 | Done | Connect strategy signals to scheduled paper-trading decisions. |
 | 15 | Broker State Persistence v1 | Done | Persist paper account cash and positions across scheduled runs. |
-| 16 | Idempotent Paper Signals v1 | In Review | Prevent duplicate paper orders for repeated signal processing. |
+| 16 | Idempotent Paper Signals v1 | Done | Prevent duplicate paper orders for repeated signal processing. |
+| 17 | Service Deployment v1 | In Review | Define local/server wrapper, environment config, logs, and deployment docs. |
 
 ## Current Recommendation
 
-The next milestone after the in-review idempotent paper signals work should be
-**Service Deployment v1**.
+The next milestone after the in-review service deployment work should be
+**Operational Observability v1**.
 
-Idempotent paper signals make repeated scheduled runs safer. The next step
-should document and scaffold how this system runs as an actual server job with
-logs, environment variables, and operational checks.
+Service deployment defines how the paper signal loop runs on a machine. The
+next step should improve visibility: health records, log structure, failure
+summaries, and notification hooks.
 
 ## Corrected Near-Term Order
 
@@ -59,6 +60,7 @@ data ingestion
   -> broker state persistence
   -> idempotent paper signals
   -> service deployment
+  -> operational observability
 ```
 
 ## Data Lineage v1 Scope
@@ -179,6 +181,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Paper signal execution | Uses the latest row of one price-based momentum strategy and local CSV data. | Support feature-based strategies, persisted strategy configs, multi-symbol runs, and data refresh steps before signal generation. |
 | Broker state persistence | Persists one JSON paper account state file, with no locking or transaction semantics. | Add atomic writes, file locks, account IDs, state history, reconciliation against audit records, and backup/restore tools. |
 | Idempotent paper signals | Uses simple strategy/symbol/date/action keys and local JSON state. | Add account-scoped idempotency, signal revision IDs, configurable reprocessing policy, and reconciliation between skipped records and trade records. |
+| Service deployment | Provides local wrapper and cron/systemd documentation, but no managed process or alerting. | Add health checks, structured logs, alert hooks, deployment-specific configs, and safer concurrent-run handling. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -246,3 +249,19 @@ PaperSignalRecord.skipped
 The first version prevents duplicate paper orders for the same strategy, symbol,
 signal date, and action. Duplicate signals still produce paper signal records,
 but those records are marked as skipped and do not change cash or positions.
+
+## Service Deployment v1 Scope
+
+Introduce:
+
+```text
+.env.example
+scripts/run_paper_signal.sh
+docs/deployment.md
+logs/
+```
+
+The first version documents the operational contract for running the paper
+signal loop as a recurring server job. It covers local runs, environment
+configuration, log output, cron, and systemd-style deployment. It does not yet
+include alerts, process supervision, locking, or cloud infrastructure.

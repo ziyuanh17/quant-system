@@ -73,6 +73,15 @@ Use `--state-path` to isolate separate paper accounts or experiments.
 If the same actionable signal is processed again, the command records a skipped
 signal instead of placing a duplicate paper order.
 
+## Run The Service Wrapper
+
+```bash
+bash scripts/run_paper_signal.sh
+```
+
+Copy `.env.example` to `.env` to configure the wrapper. See
+[deployment.md](deployment.md) for cron and systemd examples.
+
 ## When Something Fails
 
 1. Confirm the input data has the required columns:
