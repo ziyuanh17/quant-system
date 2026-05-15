@@ -132,13 +132,31 @@ cat data/paper/state/default.json.bak
 Paper state saves use an atomic replace. The `.bak` file is the previous state
 snapshot and is useful when debugging a bad run or interrupted process.
 
+## Reconcile Paper State
+
+```bash
+quant paper reconcile-state --initial-cash 100000
+```
+
+This replays paper signal records and compares the expected cash, positions,
+and processed signal keys against `data/paper/state/default.json`. It writes a
+report under:
+
+```text
+data/paper/reconciliation/state.json
+```
+
+Use the same starting cash and optional starting position that were used when
+the paper account was created.
+
 ## When Something Fails
 
 1. Run `quant ops health` and read the issue codes.
 2. Inspect the latest workflow record under `data/workflows/`.
 3. If the failure mentions a lock, confirm whether another workflow is running.
-4. Confirm the input data has the required columns:
+4. Run `quant paper reconcile-state` to check for paper state drift.
+5. Confirm the input data has the required columns:
    `date`, `symbol`, `open`, `high`, `low`, `close`, `volume`.
-5. Confirm dependencies are installed in the active environment.
-6. Re-run with the smallest dataset that reproduces the issue.
-7. Add a regression test before changing core accounting or signal behavior.
+6. Confirm dependencies are installed in the active environment.
+7. Re-run with the smallest dataset that reproduces the issue.
+8. Add a regression test before changing core accounting or signal behavior.

@@ -122,3 +122,34 @@ class PaperSignalRecord(FrozenModel):
     trade: PaperTradeRecord | None
     snapshot: PortfolioSnapshot
     skipped: bool = False
+
+
+class PaperStateDifference(FrozenModel):
+    field: str
+    expected: str
+    actual: str
+    message: str
+
+
+class PaperStateReconciliationReport(FrozenModel):
+    """Read-only comparison between paper state and signal audit records."""
+
+    state_path: str
+    signal_records_dir: str
+    signal_record_count: int
+    filled_trade_count: int
+    expected_cash: float
+    actual_cash: float
+    expected_positions: tuple[Position, ...]
+    actual_positions: tuple[Position, ...]
+    expected_processed_signal_keys: tuple[str, ...]
+    actual_processed_signal_keys: tuple[str, ...]
+    differences: tuple[PaperStateDifference, ...] = ()
+
+    @property
+    def passed(self) -> bool:
+        return len(self.differences) == 0
+
+    @property
+    def difference_count(self) -> int:
+        return len(self.differences)

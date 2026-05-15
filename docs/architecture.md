@@ -164,6 +164,19 @@ This prevents duplicate paper orders when a scheduler sees the same actionable
 signal more than once. Duplicate signals still write audit records, but they
 are marked as skipped and do not change cash or positions.
 
+Paper state reconciliation replays signal audit records back into expected
+account state:
+
+```text
+PaperSignalRecord
+  -> filled trade replay
+  -> expected PaperBrokerState
+  -> PaperStateReconciliationReport
+```
+
+This is read-only. It detects drift between the persisted state file and the
+paper decisions and fills that produced it.
+
 ## Workflow Layer
 
 Workflows compose existing boundaries into ordered operational paths:

@@ -36,18 +36,19 @@ side discussions.
 | 18 | Operational Observability v1 | Done | Add a read-only health command that checks scheduler records, signal records, paper state, and logs. |
 | 19 | Data Refresh Workflow v1 | Done | Refresh and validate provider data before running scheduled paper signal execution. |
 | 20 | Concurrent Run Safety v1 | Done | Prevent overlapping refresh workflow runs from mutating the same paper state. |
-| 21 | Atomic State Writes v1 | In Review | Write paper broker state through durable temp files, atomic replacement, and backups. |
+| 21 | Atomic State Writes v1 | Done | Write paper broker state through durable temp files, atomic replacement, and backups. |
+| 22 | Paper State Reconciliation v1 | In Review | Replay paper signal audit records and compare them against persisted broker state. |
 
 ## Current Recommendation
 
-The next milestone after Atomic State Writes v1 should be
-**Paper State Reconciliation v1**.
+The next milestone after Paper State Reconciliation v1 should be
+**Health Check Integration v1**.
 
 The server path now has data refresh, validation, paper execution, and health
-checks, lock files that prevent overlapping workflow runs, and atomic paper
-state writes. The next risk is state drift: the persisted account state should
-be reconcilable against the paper signal and trade audit records that produced
-it.
+checks, lock files that prevent overlapping workflow runs, atomic paper state
+writes, and read-only state reconciliation. The next step should make
+operational health summarize lock and reconciliation status instead of requiring
+separate manual checks.
 
 ## Corrected Near-Term Order
 
@@ -71,6 +72,7 @@ data ingestion
   -> concurrent run safety
   -> atomic state writes
   -> paper state reconciliation
+  -> health check integration
 ```
 
 ## Data Lineage v1 Scope
@@ -196,6 +198,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Data refresh workflow | Refreshes one symbol from one provider before one paper-signal workflow. | Add multi-symbol workflows, provider reconciliation before execution, feature refresh, configurable freshness windows, and workflow retries. |
 | Concurrent run safety | Adds one lock file around the refresh workflow. | Add lock status to health checks, account-scoped lock naming, lock cleanup tooling, and broader locking around future multi-workflow operations. |
 | Atomic state writes | Uses same-directory temp files, fsync, atomic replace, and one `.bak` copy. | Add state history, restore command, checksums, and reconciliation against paper audit records. |
+| Paper state reconciliation | Replays local paper signal records against one state file. | Integrate with health checks, add account IDs, state history, restore workflows, and richer drift diagnostics. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -344,3 +347,19 @@ The first version writes paper broker state to a temporary file in the same
 directory, flushes it to disk, atomically replaces the live state file, and keeps
 one previous backup. If replacement fails, the previous live state file remains
 intact and the temporary file is cleaned up.
+
+## Paper State Reconciliation v1 Scope
+
+Introduce:
+
+```text
+PaperStateReconciliationReport
+PaperStateDifference
+reconcile_paper_state
+quant paper reconcile-state
+```
+
+The first version replays paper signal audit records from a known starting cash
+and optional starting position. It compares expected cash, positions, and
+processed signal keys against the persisted paper broker state, writes a JSON
+report, and exits nonzero when drift is detected.

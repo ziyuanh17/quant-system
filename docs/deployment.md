@@ -131,6 +131,8 @@ After enabling a recurring run:
 - inspect `data/paper/signals/` for buy/sell/hold/skipped decisions.
 - inspect `data/paper/state/` to confirm cash, positions, and the latest
   `.bak` backup are plausible.
+- run `quant paper reconcile-state` with the account's starting cash to confirm
+  persisted state matches the signal audit trail.
 
 See [operations.md](operations.md) for health check behavior.
 

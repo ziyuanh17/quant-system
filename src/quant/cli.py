@@ -18,8 +18,10 @@ from quant.execution import (
     PaperBroker,
     execute_latest_signal,
     load_paper_broker_state,
+    reconcile_paper_state,
     save_paper_broker_state,
     write_paper_signal_record,
+    write_paper_state_reconciliation_report,
     write_paper_trade_record,
 )
 from quant.features import (
@@ -28,7 +30,12 @@ from quant.features import (
     write_feature_artifact,
 )
 from quant.models.backtest import BacktestConfig, BacktestResult
-from quant.models.execution import OrderRequest, OrderSide, Position
+from quant.models.execution import (
+    OrderRequest,
+    OrderSide,
+    PaperStateReconciliationReport,
+    Position,
+)
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.operations import HealthReport, HealthStatus
@@ -424,6 +431,73 @@ def paper_order(
     typer.echo(f"Record: {record_path}")
 
     if record.fill is None:
+        raise typer.Exit(code=1)
+
+
+@paper_app.command("reconcile-state")
+def paper_reconcile_state(
+    state_path: Annotated[
+        Path,
+        typer.Option(help="Path to the persisted paper broker state."),
+    ] = Path("data/paper/state/default.json"),
+    signal_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing paper signal JSON records."),
+    ] = Path("data/paper/signals"),
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Cash balance before replaying signal records."),
+    ] = 100_000,
+    initial_position_quantity: Annotated[
+        int,
+        typer.Option(help="Optional starting position quantity."),
+    ] = 0,
+    initial_position_price: Annotated[
+        float,
+        typer.Option(help="Price basis for the optional starting position."),
+    ] = 1.0,
+    symbol: Annotated[
+        str,
+        typer.Option(help="Symbol for the optional starting position."),
+    ] = "AAPL",
+    cash_tolerance: Annotated[
+        float,
+        typer.Option(help="Allowed cash and price difference."),
+    ] = 0.01,
+    output_path: Annotated[
+        Path,
+        typer.Option(help="Path where the reconciliation report is written."),
+    ] = Path("data/paper/reconciliation/state.json"),
+) -> None:
+    """Reconcile persisted paper state against paper signal audit records."""
+    if initial_position_quantity < 0:
+        raise typer.BadParameter(
+            "initial-position-quantity must be non-negative"
+        )
+    if initial_position_quantity > 0 and initial_position_price <= 0:
+        raise typer.BadParameter("initial-position-price must be positive")
+    if cash_tolerance < 0:
+        raise typer.BadParameter("cash-tolerance must be non-negative")
+    if not state_path.exists():
+        raise typer.BadParameter(f"state path does not exist: {state_path}")
+
+    state = load_paper_broker_state(state_path, default_cash=initial_cash)
+    report = reconcile_paper_state(
+        state=state,
+        state_path=state_path,
+        signal_records_dir=signal_records_dir,
+        initial_cash=initial_cash,
+        initial_positions=_initial_positions(
+            symbol=symbol,
+            quantity=initial_position_quantity,
+            price=initial_position_price,
+        ),
+        cash_tolerance=cash_tolerance,
+    )
+    report_path = write_paper_state_reconciliation_report(report, output_path)
+    _print_paper_state_reconciliation_report(report, report_path)
+
+    if not report.passed:
         raise typer.Exit(code=1)
 
 
@@ -898,6 +972,27 @@ def _print_health_report(report: HealthReport) -> None:
         typer.echo(
             f"[{issue.severity.value}] {issue.code}: {issue.message}"
         )
+
+
+def _print_paper_state_reconciliation_report(
+    report: PaperStateReconciliationReport,
+    report_path: Path,
+) -> None:
+    status = "passed" if report.passed else "failed"
+    typer.echo(f"Status: {status}")
+    typer.echo(f"State: {report.state_path}")
+    typer.echo(f"Signal records: {report.signal_records_dir}")
+    typer.echo(f"Signal record count: {report.signal_record_count}")
+    typer.echo(f"Filled trades: {report.filled_trade_count}")
+    typer.echo(f"Expected cash: {report.expected_cash:,.2f}")
+    typer.echo(f"Actual cash: {report.actual_cash:,.2f}")
+    typer.echo(f"Differences: {report.difference_count}")
+    for difference in report.differences:
+        typer.echo(
+            f"[difference] {difference.field}: {difference.message} "
+            f"(expected={difference.expected}, actual={difference.actual})"
+        )
+    typer.echo(f"Report: {report_path}")
 
 
 def _print_workflow_record(

@@ -169,6 +169,12 @@ quant ops health
 See [docs/operations.md](docs/operations.md) for health status meanings and
 current observability limits.
 
+Reconcile paper state against the signal audit trail:
+
+```bash
+quant paper reconcile-state --initial-cash 100000
+```
+
 ## Progress Dashboard
 
 The repo includes a static dashboard under `site/`. It can be deployed for free
