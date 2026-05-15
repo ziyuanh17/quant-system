@@ -93,6 +93,14 @@ class PortfolioSnapshot(FrozenModel):
         )
 
 
+class PaperBrokerState(FrozenModel):
+    """Persisted paper account state between scheduled runs."""
+
+    cash: float = Field(ge=0)
+    positions: tuple[Position, ...] = ()
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 class PaperTradeRecord(FrozenModel):
     order: Order
     fill: Fill | None

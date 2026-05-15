@@ -5,6 +5,7 @@ from quant.models.execution import (
     OrderRequest,
     OrderSide,
     OrderStatus,
+    PaperBrokerState,
     PaperTradeRecord,
     PortfolioSnapshot,
     Position,
@@ -20,8 +21,8 @@ class PaperBroker:
         initial_cash: float,
         initial_positions: tuple[Position, ...] = (),
     ) -> None:
-        if initial_cash <= 0:
-            raise ValueError("initial_cash must be positive")
+        if initial_cash < 0:
+            raise ValueError("initial_cash must be non-negative")
         self._cash = initial_cash
         self._positions: dict[str, Position] = {
             position.symbol: position for position in initial_positions
@@ -34,6 +35,18 @@ class PaperBroker:
     @property
     def positions(self) -> dict[str, Position]:
         return dict(self._positions)
+
+    @classmethod
+    def from_state(cls, state: PaperBrokerState) -> "PaperBroker":
+        return cls(initial_cash=state.cash, initial_positions=state.positions)
+
+    def state(self) -> PaperBrokerState:
+        return PaperBrokerState(
+            cash=self._cash,
+            positions=tuple(
+                sorted(self._positions.values(), key=lambda item: item.symbol)
+            ),
+        )
 
     def snapshot(self) -> PortfolioSnapshot:
         return PortfolioSnapshot(

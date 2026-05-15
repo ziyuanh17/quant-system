@@ -74,6 +74,7 @@ def test_schedule_paper_signal_writes_signal_record(tmp_path) -> None:
     _write_entry_prices(data)
     run_output_dir = tmp_path / "scheduler"
     signal_output_dir = tmp_path / "signals"
+    state_path = tmp_path / "state" / "paper.json"
 
     result = CliRunner().invoke(
         app,
@@ -94,6 +95,8 @@ def test_schedule_paper_signal_writes_signal_record(tmp_path) -> None:
             str(run_output_dir),
             "--signal-output-dir",
             str(signal_output_dir),
+            "--state-path",
+            str(state_path),
         ],
     )
 
@@ -108,6 +111,44 @@ def test_schedule_paper_signal_writes_signal_record(tmp_path) -> None:
     assert payload["decision"]["action"] == "buy"
     assert payload["trade"]["fill"]["quantity"] == 2
     assert payload["snapshot"]["cash"] == 960
+
+
+def test_schedule_paper_signal_persists_state_between_invocations(
+    tmp_path,
+) -> None:
+    data = tmp_path / "prices.csv"
+    _write_entry_prices(data)
+    state_path = tmp_path / "state" / "paper.json"
+
+    for _ in range(2):
+        result = CliRunner().invoke(
+            app,
+            [
+                "schedule",
+                "paper-signal",
+                "--data",
+                str(data),
+                "--symbol",
+                "AAPL",
+                "--quantity",
+                "2",
+                "--initial-cash",
+                "1000",
+                "--iterations",
+                "1",
+                "--state-path",
+                str(state_path),
+                "--run-output-dir",
+                str(tmp_path / "scheduler"),
+                "--signal-output-dir",
+                str(tmp_path / "signals"),
+            ],
+        )
+        assert result.exit_code == 0
+
+    state = json.loads(state_path.read_text())
+    assert state["cash"] == 920
+    assert state["positions"][0]["quantity"] == 4
 
 
 def _write_entry_prices(path) -> None:

@@ -139,6 +139,12 @@ Run a scheduled strategy-to-paper loop:
 quant schedule paper-signal --strategy momentum --data data/sample_prices.csv --symbol AAPL --quantity 1 --iterations 1
 ```
 
+By default, this persists paper account state under:
+
+```text
+data/paper/state/default.json
+```
+
 ## Progress Dashboard
 
 The repo includes a static dashboard under `site/`. It can be deployed for free

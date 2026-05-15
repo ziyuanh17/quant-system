@@ -65,8 +65,11 @@ signal into a paper-trading decision, and writes:
 
 ```text
 data/paper/signals/
+data/paper/state/default.json
 data/scheduler/latest/
 ```
+
+Use `--state-path` to isolate separate paper accounts or experiments.
 
 ## When Something Fails
 

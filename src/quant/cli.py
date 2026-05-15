@@ -17,6 +17,8 @@ from quant.data import (
 from quant.execution import (
     PaperBroker,
     execute_latest_signal,
+    load_paper_broker_state,
+    save_paper_broker_state,
     write_paper_signal_record,
     write_paper_trade_record,
 )
@@ -540,6 +542,10 @@ def schedule_paper_signal(
         Path,
         typer.Option(help="Directory where paper signal records are written."),
     ] = Path("data/paper/signals"),
+    state_path: Annotated[
+        Path,
+        typer.Option(help="Path for persisted paper broker state."),
+    ] = Path("data/paper/state/default.json"),
     run_output_dir: Annotated[
         Path,
         typer.Option(help="Directory where scheduler run records are written."),
@@ -567,10 +573,12 @@ def schedule_paper_signal(
         quantity=initial_position_quantity,
         price=initial_position_price,
     )
-    broker = PaperBroker(
-        initial_cash=initial_cash,
-        initial_positions=initial_positions,
+    state = load_paper_broker_state(
+        state_path,
+        default_cash=initial_cash,
+        default_positions=initial_positions,
     )
+    broker = PaperBroker.from_state(state)
     runner = SchedulerRunner(output_dir=run_output_dir)
     signal_strategy = MomentumStrategy()
 
@@ -585,12 +593,15 @@ def schedule_paper_signal(
             quantity=quantity,
         )
         signal_path = write_paper_signal_record(record, signal_output_dir)
+        state_path_written = save_paper_broker_state(
+            broker.state(), state_path
+        )
         message = f"paper signal {record.decision.action}"
         if record.trade is not None and record.trade.order.risk.reason:
             message = f"{message}: {record.trade.order.risk.reason}"
         return ScheduledTaskResult(
             message=message,
-            artifact_paths=(str(signal_path),),
+            artifact_paths=(str(signal_path), str(state_path_written)),
         )
 
     records = runner.run_loop(
@@ -607,6 +618,7 @@ def schedule_paper_signal(
     typer.echo(f"Failures: {len(failed_records)}")
     typer.echo(f"Run records: {run_output_dir}")
     typer.echo(f"Signal records: {signal_output_dir}")
+    typer.echo(f"State: {state_path}")
 
     if failed_records:
         raise typer.Exit(code=1)

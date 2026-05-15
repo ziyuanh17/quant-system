@@ -137,6 +137,17 @@ This is the first research-to-paper path. It still uses local CSV data and a
 deterministic paper broker, but the order side now comes from a strategy signal
 instead of a manually specified CLI option.
 
+Paper broker state is persisted separately from per-run audit records:
+
+```text
+PaperBrokerState
+  -> PaperBroker
+  -> updated PaperBrokerState
+```
+
+That lets separate scheduled processes behave like one continuous paper account
+instead of restarting cash and positions on every invocation.
+
 ## Intended Growth
 
 ```text
