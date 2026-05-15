@@ -35,6 +35,12 @@ from quant.models.ingestion import (
 )
 from quant.models.market import Bar, MarketBar, PriceData
 from quant.models.news import NewsArticle, TextSentimentFeature
+from quant.models.operations import (
+    HealthIssue,
+    HealthIssueSeverity,
+    HealthReport,
+    HealthStatus,
+)
 from quant.models.reconciliation import (
     ProviderReconciliationReport,
     ReconciliationDifference,
@@ -61,6 +67,10 @@ __all__ = [
     "Fill",
     "FeatureArtifactPaths",
     "FeatureData",
+    "HealthIssue",
+    "HealthIssueSeverity",
+    "HealthReport",
+    "HealthStatus",
     "IngestArtifactPaths",
     "IngestRequest",
     "MarketBar",

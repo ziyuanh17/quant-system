@@ -31,9 +31,11 @@ from quant.models.backtest import BacktestConfig, BacktestResult
 from quant.models.execution import OrderRequest, OrderSide, Position
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
+from quant.models.operations import HealthReport, HealthStatus
 from quant.models.reconciliation import ProviderReconciliationReport
 from quant.models.scheduler import ScheduledTaskResult
 from quant.models.validation import ValidationReport
+from quant.operations import build_health_report
 from quant.scheduler import SchedulerRunner
 from quant.strategies import (
     FeatureMomentumConfig,
@@ -46,10 +48,12 @@ data_app = typer.Typer(no_args_is_help=True)
 features_app = typer.Typer(no_args_is_help=True)
 paper_app = typer.Typer(no_args_is_help=True)
 schedule_app = typer.Typer(no_args_is_help=True)
+ops_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
 app.add_typer(schedule_app, name="schedule")
+app.add_typer(ops_app, name="ops")
 
 
 @app.callback()
@@ -626,6 +630,38 @@ def schedule_paper_signal(
         raise typer.Exit(code=1)
 
 
+@ops_app.command("health")
+def ops_health(
+    run_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing scheduler run JSON records."),
+    ] = Path("data/scheduler/latest"),
+    signal_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing paper signal JSON records."),
+    ] = Path("data/paper/signals"),
+    state_path: Annotated[
+        Path,
+        typer.Option(help="Path to the persisted paper broker state file."),
+    ] = Path("data/paper/state/default.json"),
+    logs_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing service wrapper logs."),
+    ] = Path("logs"),
+) -> None:
+    """Check local service health from durable artifacts."""
+    report = build_health_report(
+        run_records_dir=run_records_dir,
+        signal_records_dir=signal_records_dir,
+        state_path=state_path,
+        logs_dir=logs_dir,
+    )
+    _print_health_report(report)
+
+    if report.status == HealthStatus.FAILED:
+        raise typer.Exit(code=1)
+
+
 def _initial_positions(
     *,
     symbol: str,
@@ -675,6 +711,42 @@ def _print_validation_report(report: ValidationReport) -> None:
         typer.echo(
             f"[{issue.severity}] {issue.code}: {issue.message}{suffix}"
         )
+
+
+def _print_health_report(report: HealthReport) -> None:
+    typer.echo(f"Status: {report.status.value}")
+    typer.echo(
+        "Latest run: "
+        f"{_format_health_value(report.latest_run_status)} "
+        f"at {_format_health_value(report.latest_run_completed_at)} "
+        f"({_format_health_value(report.latest_run_path)})"
+    )
+    typer.echo(
+        "Latest signal: "
+        f"action={_format_health_value(report.latest_signal_action)} "
+        f"date={_format_health_value(report.latest_signal_date)} "
+        f"skipped={_format_health_value(report.latest_signal_skipped)} "
+        f"({_format_health_value(report.latest_signal_path)})"
+    )
+    typer.echo(
+        "State: "
+        f"cash={_format_health_value(report.state_cash)} "
+        f"positions={_format_health_value(report.state_position_count)} "
+        f"({report.state_path})"
+    )
+    typer.echo(f"Logs: {report.logs_dir} ({report.log_count} files)")
+    typer.echo(f"Issues: {report.issue_count}")
+
+    for issue in report.issues:
+        typer.echo(
+            f"[{issue.severity.value}] {issue.code}: {issue.message}"
+        )
+
+
+def _format_health_value(value: object | None) -> str:
+    if value is None:
+        return "n/a"
+    return str(value)
 
 
 def _print_reconciliation_report(

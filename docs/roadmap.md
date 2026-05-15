@@ -32,16 +32,17 @@ side discussions.
 | 14 | Paper Signal Execution v1 | Done | Connect strategy signals to scheduled paper-trading decisions. |
 | 15 | Broker State Persistence v1 | Done | Persist paper account cash and positions across scheduled runs. |
 | 16 | Idempotent Paper Signals v1 | Done | Prevent duplicate paper orders for repeated signal processing. |
-| 17 | Service Deployment v1 | In Review | Define local/server wrapper, environment config, logs, and deployment docs. |
+| 17 | Service Deployment v1 | Done | Define local/server wrapper, environment config, logs, and deployment docs. |
+| 18 | Operational Observability v1 | In Review | Add a read-only health command that checks scheduler records, signal records, paper state, and logs. |
 
 ## Current Recommendation
 
-The next milestone after the in-review service deployment work should be
-**Operational Observability v1**.
+The next milestone after Operational Observability v1 should be
+**Data Refresh Workflow v1**.
 
-Service deployment defines how the paper signal loop runs on a machine. The
-next step should improve visibility: health records, log structure, failure
-summaries, and notification hooks.
+Operational observability tells us whether the scheduled paper loop is producing
+readable artifacts. The next step should make the server refresh its market data
+before signal execution, so paper signals are not based on a stale CSV.
 
 ## Corrected Near-Term Order
 
@@ -61,6 +62,7 @@ data ingestion
   -> idempotent paper signals
   -> service deployment
   -> operational observability
+  -> data refresh workflow
 ```
 
 ## Data Lineage v1 Scope
@@ -182,6 +184,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Broker state persistence | Persists one JSON paper account state file, with no locking or transaction semantics. | Add atomic writes, file locks, account IDs, state history, reconciliation against audit records, and backup/restore tools. |
 | Idempotent paper signals | Uses simple strategy/symbol/date/action keys and local JSON state. | Add account-scoped idempotency, signal revision IDs, configurable reprocessing policy, and reconciliation between skipped records and trade records. |
 | Service deployment | Provides local wrapper and cron/systemd documentation, but no managed process or alerting. | Add health checks, structured logs, alert hooks, deployment-specific configs, and safer concurrent-run handling. |
+| Operational observability | Provides a local read-only health command, but no notifications or health history. | Add alert hooks, structured health history, data freshness checks, lock/concurrency checks, and dashboard summaries. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -265,3 +268,19 @@ The first version documents the operational contract for running the paper
 signal loop as a recurring server job. It covers local runs, environment
 configuration, log output, cron, and systemd-style deployment. It does not yet
 include alerts, process supervision, locking, or cloud infrastructure.
+
+## Operational Observability v1 Scope
+
+Introduce:
+
+```text
+HealthReport
+HealthIssue
+quant ops health
+docs/operations.md
+```
+
+The first version reads existing scheduler run records, paper signal records,
+paper broker state, and wrapper logs. It reports `healthy`, `degraded`, or
+`failed` without mutating account state or placing orders. It does not yet send
+alerts, store health history, or check data freshness.

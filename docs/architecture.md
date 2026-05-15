@@ -170,6 +170,22 @@ Deployment starts as a wrapper script plus environment file:
 This keeps the runtime contract explicit before introducing cloud services,
 alerts, or process supervision.
 
+## Operations Layer
+
+Operational health is derived from durable local artifacts:
+
+```text
+ScheduledRunRecord
+  -> PaperSignalRecord
+  -> PaperBrokerState
+  -> wrapper logs
+  -> HealthReport
+```
+
+The first health command is read-only. It does not place orders, refresh data,
+or mutate paper state. That separation matters because operational checks
+should be safe to run from a shell, cron, CI, or a future alerting hook.
+
 ## Intended Growth
 
 ```text

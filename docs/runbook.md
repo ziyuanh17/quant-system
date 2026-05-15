@@ -82,10 +82,23 @@ bash scripts/run_paper_signal.sh
 Copy `.env.example` to `.env` to configure the wrapper. See
 [deployment.md](deployment.md) for cron and systemd examples.
 
+## Check Operational Health
+
+```bash
+quant ops health
+```
+
+The health command checks the latest scheduler run record, latest paper signal
+record, persisted paper state, and wrapper log directory. It returns a nonzero
+exit code only when the status is `failed`.
+
+See [operations.md](operations.md) for status meanings and current limits.
+
 ## When Something Fails
 
-1. Confirm the input data has the required columns:
+1. Run `quant ops health` and read the issue codes.
+2. Confirm the input data has the required columns:
    `date`, `symbol`, `open`, `high`, `low`, `close`, `volume`.
-2. Confirm dependencies are installed in the active environment.
-3. Re-run with the smallest dataset that reproduces the issue.
-4. Add a regression test before changing core accounting or signal behavior.
+3. Confirm dependencies are installed in the active environment.
+4. Re-run with the smallest dataset that reproduces the issue.
+5. Add a regression test before changing core accounting or signal behavior.

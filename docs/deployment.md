@@ -113,10 +113,13 @@ Before enabling a recurring run:
 
 After enabling a recurring run:
 
+- run `quant ops health` and inspect any issue codes.
 - inspect `logs/` after the first scheduled run.
 - inspect `data/scheduler/latest/` for run records.
 - inspect `data/paper/signals/` for buy/sell/hold/skipped decisions.
 - inspect `data/paper/state/` to confirm cash and positions are plausible.
+
+See [operations.md](operations.md) for health check behavior.
 
 ## Current Limits
 
