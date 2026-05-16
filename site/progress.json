@@ -5,10 +5,10 @@
     "updated": "2026-05-15"
   },
   "summary": {
-    "done": 27,
+    "done": 28,
     "in_review": 1,
     "planned": 1,
-    "next": "Dry-Run Scheduler v1"
+    "next": "Paper vs Dry-Run Comparison v1"
   },
   "milestones": [
     {
@@ -176,14 +176,20 @@
     {
       "order": 28,
       "name": "Dry-Run Signal Execution v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Route strategy signals into dry-run intended-order records."
     },
     {
       "order": 29,
       "name": "Dry-Run Scheduler v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Run dry-run signal execution on a scheduled loop with durable run records."
+    },
+    {
+      "order": 30,
+      "name": "Paper vs Dry-Run Comparison v1",
+      "status": "planned",
+      "purpose": "Compare scheduled paper decisions with scheduled dry-run intended orders."
     }
   ],
   "futureMetrics": [

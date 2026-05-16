@@ -43,21 +43,23 @@ side discussions.
 | 25 | Broker Adapter Boundary v1 | Done | Define the paper-vs-real broker boundary before adding real-money trading logic. |
 | 26 | Live Trading Safety Gates v1 | Done | Add explicit controls that keep real-money trading impossible by default. |
 | 27 | Dry-Run Broker Adapter v1 | Done | Add a live-shaped broker adapter that records intended orders without submitting them. |
-| 28 | Dry-Run Signal Execution v1 | In Review | Route strategy signals into dry-run intended-order records. |
-| 29 | Dry-Run Scheduler v1 | Planned | Run dry-run signal execution on a scheduled loop with durable run records. |
+| 28 | Dry-Run Signal Execution v1 | Done | Route strategy signals into dry-run intended-order records. |
+| 29 | Dry-Run Scheduler v1 | In Review | Run dry-run signal execution on a scheduled loop with durable run records. |
+| 30 | Paper vs Dry-Run Comparison v1 | Planned | Compare scheduled paper decisions with scheduled dry-run intended orders. |
 
 ## Current Recommendation
 
-The next milestone after Dry-Run Signal Execution v1 should be
-**Dry-Run Scheduler v1**.
+The next milestone after Dry-Run Scheduler v1 should be
+**Paper vs Dry-Run Comparison v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
 writes, read-only state reconciliation, an integrated health command, a
 sanitized dashboard status file, a paper broker adapter boundary,
-fail-closed trading safety gates, a live-shaped dry-run order adapter, and a
-strategy-to-dry-run signal path. The next step should run dry-run signals on a
-scheduled loop with durable run records before any real broker API is connected.
+fail-closed trading safety gates, a live-shaped dry-run order adapter,
+strategy-to-dry-run signal execution, and scheduled dry-run signal runs. The
+next step should compare paper decisions with dry-run intended orders before
+any real broker API is connected.
 
 ## Corrected Near-Term Order
 
@@ -88,6 +90,7 @@ data ingestion
   -> dry-run broker adapter
   -> dry-run signal execution
   -> dry-run scheduler
+  -> paper vs dry-run comparison
 ```
 
 ## Data Lineage v1 Scope
@@ -220,6 +223,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Live trading safety gates | Adds fail-closed mode checks, but no live broker adapter uses them yet. | Require the guard in every future live-capable CLI command and adapter before credentials or orders are touched. |
 | Dry-run broker adapter | Records manual intended orders, but strategy signals do not route to dry-run records yet. | Add scheduled dry-run signal execution and compare intended orders with paper decisions before live broker work. |
 | Dry-run signal execution | Routes one latest strategy signal into a dry-run record, but does not run on a schedule yet. | Add scheduled dry-run execution, run records, idempotency policy, and comparison against paper signal records. |
+| Dry-run scheduler | Runs dry-run signals on a finite scheduler loop, but does not compare against paper execution yet. | Add paper-vs-dry-run comparison reports to catch divergence before live broker work. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -500,3 +504,20 @@ and do not write an order artifact.
 
 This milestone does not mutate paper state, create fills, or call any external
 broker API.
+
+## Dry-Run Scheduler v1 Scope
+
+Introduce:
+
+```text
+quant schedule dry-run-signal
+data/scheduler/dry-run/
+```
+
+The first version runs latest-signal dry-run execution inside the existing
+finite scheduler loop. Buy and sell signals write dry-run intended-order
+artifacts and scheduler run records. Hold signals write scheduler run records
+with no order artifacts.
+
+This milestone still does not mutate paper state, create fills, or call any
+external broker API.

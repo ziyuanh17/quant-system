@@ -144,6 +144,12 @@ Route the latest strategy signal into the dry-run path:
 quant dry-run signal --strategy momentum --data data/sample_prices.csv --symbol AAPL --quantity 1
 ```
 
+Run dry-run signal execution through the scheduler:
+
+```bash
+quant schedule dry-run-signal --strategy momentum --data data/sample_prices.csv --symbol AAPL --quantity 1
+```
+
 See [docs/dry_run_trading.md](docs/dry_run_trading.md) for the difference
 between paper trading and dry-run trading.
 

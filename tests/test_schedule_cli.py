@@ -162,8 +162,99 @@ def test_schedule_paper_signal_persists_state_between_invocations(
     assert skipped_payloads[0]["trade"] is None
 
 
+def test_schedule_dry_run_signal_writes_run_and_order_records(
+    tmp_path,
+) -> None:
+    data = tmp_path / "prices.csv"
+    _write_entry_prices(data)
+    run_output_dir = tmp_path / "scheduler" / "dry-run"
+    dry_run_output_dir = tmp_path / "dry_run" / "orders"
+    state_path = tmp_path / "state" / "paper.json"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "schedule",
+            "dry-run-signal",
+            "--data",
+            str(data),
+            "--symbol",
+            "AAPL",
+            "--quantity",
+            "2",
+            "--iterations",
+            "2",
+            "--run-output-dir",
+            str(run_output_dir),
+            "--dry-run-output-dir",
+            str(dry_run_output_dir),
+        ],
+    )
+
+    run_records = list(run_output_dir.glob("*.json"))
+    dry_run_records = list(dry_run_output_dir.glob("*.json"))
+    assert result.exit_code == 0
+    assert "Scheduled runs: 2" in result.output
+    assert len(run_records) == 2
+    assert len(dry_run_records) == 2
+    assert not state_path.exists()
+
+    payload = json.loads(dry_run_records[0].read_text())
+    assert payload["status"] == "would_submit"
+    assert payload["request"]["symbol"] == "AAPL"
+    assert payload["request"]["side"] == "buy"
+    assert payload["request"]["quantity"] == 2
+    assert payload["market_price"] == 20
+    assert payload["notional"] == 40
+
+
+def test_schedule_dry_run_signal_records_hold_without_order(
+    tmp_path,
+) -> None:
+    data = tmp_path / "prices.csv"
+    _write_hold_prices(data)
+    run_output_dir = tmp_path / "scheduler" / "dry-run"
+    dry_run_output_dir = tmp_path / "dry_run" / "orders"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "schedule",
+            "dry-run-signal",
+            "--data",
+            str(data),
+            "--symbol",
+            "AAPL",
+            "--iterations",
+            "1",
+            "--run-output-dir",
+            str(run_output_dir),
+            "--dry-run-output-dir",
+            str(dry_run_output_dir),
+        ],
+    )
+
+    run_records = list(run_output_dir.glob("*.json"))
+    run_payload = json.loads(run_records[0].read_text())
+    assert result.exit_code == 0
+    assert "Scheduled runs: 1" in result.output
+    assert len(run_records) == 1
+    assert not dry_run_output_dir.exists()
+    assert "no order intended" in run_payload["message"]
+    assert run_payload["artifact_paths"] == []
+
+
 def _write_entry_prices(path) -> None:
     closes = [10.0] * 19 + [8.0] * 5 + [20.0]
+    _write_prices(path, closes)
+
+
+def _write_hold_prices(path) -> None:
+    closes = [10.0] * 25
+    _write_prices(path, closes)
+
+
+def _write_prices(path, closes) -> None:
     rows = ["date,symbol,open,high,low,close,volume"]
     for index, close in enumerate(closes, start=1):
         rows.append(

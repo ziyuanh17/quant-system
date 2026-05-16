@@ -22,6 +22,15 @@ quant dry-run signal
   -> DryRunOrderRecord for buy/sell signals
 ```
 
+The same path can run inside the scheduler:
+
+```text
+quant schedule dry-run-signal
+  -> SchedulerRunner
+  -> quant dry-run signal behavior
+  -> scheduler run records
+```
+
 ## Run One Dry-Run Order
 
 ```bash
@@ -57,6 +66,31 @@ data/dry_run/orders/
 ```
 
 Hold signals print `Dry-run order: none` and do not write an order record.
+
+## Schedule Dry-Run Signals
+
+```bash
+quant schedule dry-run-signal \
+  --strategy momentum \
+  --data data/sample_prices.csv \
+  --symbol AAPL \
+  --quantity 1 \
+  --iterations 1
+```
+
+This writes scheduler run records under:
+
+```text
+data/scheduler/dry-run/
+```
+
+Buy and sell signals also write dry-run order records under:
+
+```text
+data/dry_run/orders/
+```
+
+Hold signals write a scheduler run record with no order artifact.
 
 The record says what would have been submitted to a broker:
 

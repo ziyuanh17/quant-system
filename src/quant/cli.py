@@ -898,6 +898,109 @@ def schedule_paper_signal(
         raise typer.Exit(code=1)
 
 
+@schedule_app.command("dry-run-signal")
+def schedule_dry_run_signal(
+    strategy: Annotated[
+        str, typer.Option(help="Strategy name to run.")
+    ] = "momentum",
+    data: Annotated[
+        Path,
+        typer.Option(help="CSV file with OHLCV data."),
+    ] = Path("data/sample_prices.csv"),
+    symbol: Annotated[str, typer.Option(help="Symbol to trade.")] = "AAPL",
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity for actionable signals."),
+    ] = 1,
+    broker_name: Annotated[
+        str,
+        typer.Option(help="Broker name to include in dry-run records."),
+    ] = "dry-run",
+    iterations: Annotated[
+        int,
+        typer.Option(help="Number of scheduled runs to execute."),
+    ] = 1,
+    interval_seconds: Annotated[
+        float,
+        typer.Option(help="Seconds to wait between scheduled runs."),
+    ] = 0.0,
+    skip_validation: Annotated[
+        bool,
+        typer.Option(help="Skip market-data validation before signal runs."),
+    ] = False,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
+    dry_run_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where dry-run order records are written."),
+    ] = Path("data/dry_run/orders"),
+    run_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where scheduler run records are written."),
+    ] = Path("data/scheduler/dry-run"),
+) -> None:
+    """Run a finite scheduled strategy-to-dry-run execution loop."""
+    if strategy != "momentum":
+        raise typer.BadParameter("Only momentum is implemented right now.")
+    if iterations < 1:
+        raise typer.BadParameter("iterations must be at least 1")
+    if interval_seconds < 0:
+        raise typer.BadParameter("interval-seconds must be non-negative")
+
+    if not skip_validation:
+        _validate_or_exit(data, symbol, min_rows=min_rows)
+
+    config = TradingSafetyConfig(mode=TradingMode.DRY_RUN)
+    check = evaluate_trading_safety(config)
+    if not check.allowed:
+        raise typer.Exit(code=1)
+
+    runner = SchedulerRunner(output_dir=run_output_dir)
+    signal_strategy = MomentumStrategy()
+    adapter = DryRunBrokerAdapter(broker_name=broker_name)
+
+    def task() -> ScheduledTaskResult:
+        # Reload inside each scheduled attempt to match paper signal behavior.
+        prices = load_price_csv(data, symbol)
+        decision, record = execute_latest_signal_dry_run(
+            strategy=signal_strategy,
+            prices=prices,
+            broker=adapter,
+            quantity=quantity,
+            safety_check=check,
+        )
+        message = f"dry-run signal {decision.action}"
+        if record is None:
+            message = f"{message}: no order intended"
+            return ScheduledTaskResult(message=message)
+
+        record_path = write_dry_run_order_record(record, dry_run_output_dir)
+        return ScheduledTaskResult(
+            message=message,
+            artifact_paths=(str(record_path),),
+        )
+
+    records = runner.run_loop(
+        task_name="dry-run-signal",
+        task=task,
+        iterations=iterations,
+        interval_seconds=interval_seconds,
+    )
+
+    failed_records = [
+        record for record in records if record.status.value == "failed"
+    ]
+    typer.echo(f"Scheduled runs: {len(records)}")
+    typer.echo(f"Failures: {len(failed_records)}")
+    typer.echo(f"Run records: {run_output_dir}")
+    typer.echo(f"Dry-run records: {dry_run_output_dir}")
+
+    if failed_records:
+        raise typer.Exit(code=1)
+
+
 @workflow_app.command("paper-signal-refresh")
 def workflow_paper_signal_refresh(
     symbol: Annotated[
