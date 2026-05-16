@@ -21,6 +21,7 @@ from quant.execution import (
     PaperBrokerAdapter,
     evaluate_trading_safety,
     execute_latest_signal,
+    execute_latest_signal_dry_run,
     load_paper_broker_state,
     load_trading_safety_config_from_env,
     reconcile_paper_state,
@@ -182,6 +183,75 @@ def dry_run_order(
     )
     record_path = write_dry_run_order_record(record, output_dir)
 
+    typer.echo(f"Dry-run order: {record.id}")
+    typer.echo(f"Status: {record.status.value}")
+    typer.echo(f"Broker: {record.broker_name}")
+    typer.echo(f"Side: {record.request.side.value}")
+    typer.echo(f"Quantity: {record.request.quantity}")
+    typer.echo(f"Market price: {record.market_price:,.2f}")
+    typer.echo(f"Notional: {record.notional:,.2f}")
+    typer.echo(f"Record: {record_path}")
+
+
+@dry_run_app.command("signal")
+def dry_run_signal(
+    strategy: Annotated[
+        str, typer.Option(help="Strategy name to run.")
+    ] = "momentum",
+    data: Annotated[
+        Path,
+        typer.Option(help="CSV file with OHLCV data."),
+    ] = Path("data/sample_prices.csv"),
+    symbol: Annotated[str, typer.Option(help="Symbol to trade.")] = "AAPL",
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity for actionable signals."),
+    ] = 1,
+    broker_name: Annotated[
+        str,
+        typer.Option(help="Broker name to include in dry-run records."),
+    ] = "dry-run",
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where dry-run order records are written."),
+    ] = Path("data/dry_run/orders"),
+    skip_validation: Annotated[
+        bool,
+        typer.Option(help="Skip market-data validation before signal runs."),
+    ] = False,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
+) -> None:
+    """Run the latest strategy signal through the dry-run broker path."""
+    if strategy != "momentum":
+        raise typer.BadParameter("Only momentum is implemented right now.")
+    if not skip_validation:
+        _validate_or_exit(data, symbol, min_rows=min_rows)
+
+    config = TradingSafetyConfig(mode=TradingMode.DRY_RUN)
+    check = evaluate_trading_safety(config)
+    if not check.allowed:
+        raise typer.Exit(code=1)
+
+    prices = load_price_csv(data, symbol)
+    adapter = DryRunBrokerAdapter(broker_name=broker_name)
+    decision, record = execute_latest_signal_dry_run(
+        strategy=MomentumStrategy(),
+        prices=prices,
+        broker=adapter,
+        quantity=quantity,
+        safety_check=check,
+    )
+
+    typer.echo(f"Signal: {decision.action.value}")
+    typer.echo(f"Signal date: {decision.signal_date}")
+    if record is None:
+        typer.echo("Dry-run order: none")
+        return
+
+    record_path = write_dry_run_order_record(record, output_dir)
     typer.echo(f"Dry-run order: {record.id}")
     typer.echo(f"Status: {record.status.value}")
     typer.echo(f"Broker: {record.broker_name}")

@@ -5,10 +5,10 @@
     "updated": "2026-05-15"
   },
   "summary": {
-    "done": 26,
+    "done": 27,
     "in_review": 1,
     "planned": 1,
-    "next": "Dry-Run Signal Execution v1"
+    "next": "Dry-Run Scheduler v1"
   },
   "milestones": [
     {
@@ -170,14 +170,20 @@
     {
       "order": 27,
       "name": "Dry-Run Broker Adapter v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Add a live-shaped broker adapter that records intended orders without submitting them."
     },
     {
       "order": 28,
       "name": "Dry-Run Signal Execution v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Route strategy signals into dry-run intended-order records."
+    },
+    {
+      "order": 29,
+      "name": "Dry-Run Scheduler v1",
+      "status": "planned",
+      "purpose": "Run dry-run signal execution on a scheduled loop with durable run records."
     }
   ],
   "futureMetrics": [

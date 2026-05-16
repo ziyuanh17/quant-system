@@ -12,6 +12,16 @@ quant dry-run order
   -> DryRunOrderRecord
 ```
 
+Strategy signals can also route into the dry-run path:
+
+```text
+quant dry-run signal
+  -> MomentumStrategy
+  -> latest signal decision
+  -> DryRunBrokerAdapter
+  -> DryRunOrderRecord for buy/sell signals
+```
+
 ## Run One Dry-Run Order
 
 ```bash
@@ -28,6 +38,25 @@ This writes:
 ```text
 data/dry_run/orders/<record-id>.json
 ```
+
+## Run The Latest Strategy Signal
+
+```bash
+quant dry-run signal \
+  --strategy momentum \
+  --data data/sample_prices.csv \
+  --symbol AAPL \
+  --quantity 1 \
+  --broker-name dry-run
+```
+
+Buy and sell signals write a would-submit order record under:
+
+```text
+data/dry_run/orders/
+```
+
+Hold signals print `Dry-run order: none` and do not write an order record.
 
 The record says what would have been submitted to a broker:
 

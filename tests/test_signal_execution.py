@@ -1,11 +1,19 @@
 import pandas as pd
 
 from quant.execution import (
+    DryRunBrokerAdapter,
     PaperBrokerAdapter,
     decide_latest_signal,
+    evaluate_trading_safety,
     execute_latest_signal,
+    execute_latest_signal_dry_run,
 )
-from quant.models.execution import BrokerMode, PaperSignalAction
+from quant.models.execution import (
+    BrokerMode,
+    PaperSignalAction,
+    TradingMode,
+    TradingSafetyConfig,
+)
 from quant.models.market import PriceData
 from quant.strategies import MomentumStrategy
 
@@ -106,6 +114,47 @@ def test_execute_latest_signal_holds_without_trade() -> None:
     assert record.decision.action == PaperSignalAction.HOLD
     assert record.trade is None
     assert record.snapshot.cash == 1_000
+
+
+def test_execute_latest_signal_dry_run_records_actionable_order() -> None:
+    prices = PriceData(symbol="AAPL", frame=_entry_frame())
+    check = evaluate_trading_safety(
+        TradingSafetyConfig(mode=TradingMode.DRY_RUN)
+    )
+
+    decision, record = execute_latest_signal_dry_run(
+        strategy=MomentumStrategy(),
+        prices=prices,
+        broker=DryRunBrokerAdapter(broker_name="example-broker"),
+        quantity=2,
+        safety_check=check,
+    )
+
+    assert decision.action == PaperSignalAction.BUY
+    assert record is not None
+    assert record.request.symbol == "AAPL"
+    assert record.request.side == "buy"
+    assert record.request.quantity == 2
+    assert record.market_price == 20
+    assert record.notional == 40
+
+
+def test_execute_latest_signal_dry_run_holds_without_order() -> None:
+    prices = PriceData(symbol="AAPL", frame=_hold_frame())
+    check = evaluate_trading_safety(
+        TradingSafetyConfig(mode=TradingMode.DRY_RUN)
+    )
+
+    decision, record = execute_latest_signal_dry_run(
+        strategy=MomentumStrategy(),
+        prices=prices,
+        broker=DryRunBrokerAdapter(broker_name="example-broker"),
+        quantity=2,
+        safety_check=check,
+    )
+
+    assert decision.action == PaperSignalAction.HOLD
+    assert record is None
 
 
 def _entry_frame() -> pd.DataFrame:

@@ -2,13 +2,18 @@ from typing import Any, cast
 
 import pandas as pd
 
-from quant.execution.broker_adapter import SignalExecutionBroker
+from quant.execution.broker_adapter import (
+    DryRunBrokerAdapter,
+    SignalExecutionBroker,
+)
 from quant.models.execution import (
+    DryRunOrderRecord,
     OrderRequest,
     OrderSide,
     PaperSignalAction,
     PaperSignalDecision,
     PaperSignalRecord,
+    TradingSafetyCheck,
 )
 from quant.models.market import PriceData
 from quant.models.signals import SignalFrame
@@ -119,6 +124,38 @@ def execute_latest_signal(
         trade=trade,
         snapshot=trade.snapshot,
     )
+
+
+def execute_latest_signal_dry_run(
+    *,
+    strategy: Strategy,
+    prices: PriceData,
+    broker: DryRunBrokerAdapter,
+    quantity: int,
+    safety_check: TradingSafetyCheck,
+) -> tuple[PaperSignalDecision, DryRunOrderRecord | None]:
+    """Convert the latest signal into a would-submit broker order."""
+    signals = strategy.generate_signals(prices)
+    decision = decide_latest_signal(
+        strategy_name=strategy.name,
+        prices=prices,
+        signals=signals,
+    )
+
+    if decision.action == PaperSignalAction.HOLD:
+        return decision, None
+
+    side = (
+        OrderSide.BUY
+        if decision.action == PaperSignalAction.BUY
+        else OrderSide.SELL
+    )
+    record = broker.submit_market_order(
+        OrderRequest(symbol=decision.symbol, side=side, quantity=quantity),
+        market_price=decision.market_price,
+        safety_check=safety_check,
+    )
+    return decision, record
 
 
 def _signal_key(

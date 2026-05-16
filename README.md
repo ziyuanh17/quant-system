@@ -138,6 +138,12 @@ Record a live-shaped dry-run order without submitting it:
 quant dry-run order --symbol AAPL --side buy --quantity 1 --price 100
 ```
 
+Route the latest strategy signal into the dry-run path:
+
+```bash
+quant dry-run signal --strategy momentum --data data/sample_prices.csv --symbol AAPL --quantity 1
+```
+
 See [docs/dry_run_trading.md](docs/dry_run_trading.md) for the difference
 between paper trading and dry-run trading.
 

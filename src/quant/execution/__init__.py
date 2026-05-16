@@ -25,6 +25,7 @@ from quant.execution.safety import (
 from quant.execution.signal_execution import (
     decide_latest_signal,
     execute_latest_signal,
+    execute_latest_signal_dry_run,
 )
 from quant.execution.state import (
     load_paper_broker_state,
@@ -44,6 +45,7 @@ __all__ = [
     "decide_latest_signal",
     "evaluate_trading_safety",
     "execute_latest_signal",
+    "execute_latest_signal_dry_run",
     "load_paper_broker_state",
     "load_trading_safety_config_from_env",
     "reconcile_paper_state",

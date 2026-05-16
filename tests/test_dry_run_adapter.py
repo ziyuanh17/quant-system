@@ -1,5 +1,6 @@
 import json
 
+import pandas as pd
 import pytest
 from typer.testing import CliRunner
 
@@ -83,3 +84,89 @@ def test_dry_run_order_cli_writes_intended_order_record(tmp_path) -> None:
     assert payload["notional"] == 50
     assert "fill" not in payload
     assert "snapshot" not in payload
+
+
+def test_dry_run_signal_cli_writes_order_for_buy_signal(tmp_path) -> None:
+    data = tmp_path / "prices.csv"
+    _entry_frame().to_csv(data, index=False)
+    output_dir = tmp_path / "dry_run" / "orders"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "dry-run",
+            "signal",
+            "--data",
+            str(data),
+            "--symbol",
+            "AAPL",
+            "--quantity",
+            "2",
+            "--broker-name",
+            "example-broker",
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    records = list(output_dir.glob("*.json"))
+    payload = json.loads(records[0].read_text())
+    assert result.exit_code == 0
+    assert "Signal: buy" in result.output
+    assert "Status: would_submit" in result.output
+    assert len(records) == 1
+    assert payload["request"]["symbol"] == "AAPL"
+    assert payload["request"]["side"] == "buy"
+    assert payload["request"]["quantity"] == 2
+    assert payload["market_price"] == 20
+    assert payload["notional"] == 40
+
+
+def test_dry_run_signal_cli_writes_no_order_for_hold_signal(tmp_path) -> None:
+    data = tmp_path / "prices.csv"
+    _hold_frame().to_csv(data, index=False)
+    output_dir = tmp_path / "dry_run" / "orders"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "dry-run",
+            "signal",
+            "--data",
+            str(data),
+            "--symbol",
+            "AAPL",
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Signal: hold" in result.output
+    assert "Dry-run order: none" in result.output
+    assert not output_dir.exists()
+
+
+def _entry_frame() -> pd.DataFrame:
+    closes = [10.0] * 19 + [8.0] * 5 + [20.0]
+    return _frame_from_closes(closes)
+
+
+def _hold_frame() -> pd.DataFrame:
+    closes = [10.0] * 25
+    return _frame_from_closes(closes)
+
+
+def _frame_from_closes(closes: list[float]) -> pd.DataFrame:
+    dates = pd.date_range("2024-01-01", periods=len(closes))
+    return pd.DataFrame(
+        {
+            "date": [timestamp.date() for timestamp in dates],
+            "symbol": ["AAPL"] * len(closes),
+            "open": closes,
+            "high": [close + 1 for close in closes],
+            "low": [close - 1 for close in closes],
+            "close": closes,
+            "volume": [100] * len(closes),
+        }
+    )

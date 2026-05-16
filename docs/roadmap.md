@@ -42,21 +42,22 @@ side discussions.
 | 24 | Dashboard Alert Status v1 | Done | Publish sanitized operational health status to the GitHub Pages dashboard. |
 | 25 | Broker Adapter Boundary v1 | Done | Define the paper-vs-real broker boundary before adding real-money trading logic. |
 | 26 | Live Trading Safety Gates v1 | Done | Add explicit controls that keep real-money trading impossible by default. |
-| 27 | Dry-Run Broker Adapter v1 | In Review | Add a live-shaped broker adapter that records intended orders without submitting them. |
-| 28 | Dry-Run Signal Execution v1 | Planned | Route strategy signals into dry-run intended-order records. |
+| 27 | Dry-Run Broker Adapter v1 | Done | Add a live-shaped broker adapter that records intended orders without submitting them. |
+| 28 | Dry-Run Signal Execution v1 | In Review | Route strategy signals into dry-run intended-order records. |
+| 29 | Dry-Run Scheduler v1 | Planned | Run dry-run signal execution on a scheduled loop with durable run records. |
 
 ## Current Recommendation
 
-The next milestone after Dry-Run Broker Adapter v1 should be
-**Dry-Run Signal Execution v1**.
+The next milestone after Dry-Run Signal Execution v1 should be
+**Dry-Run Scheduler v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
 writes, read-only state reconciliation, an integrated health command, a
 sanitized dashboard status file, a paper broker adapter boundary,
-fail-closed trading safety gates, and a live-shaped dry-run order adapter. The
-next step should connect strategy signals to dry-run intended-order records
-without touching paper account state.
+fail-closed trading safety gates, a live-shaped dry-run order adapter, and a
+strategy-to-dry-run signal path. The next step should run dry-run signals on a
+scheduled loop with durable run records before any real broker API is connected.
 
 ## Corrected Near-Term Order
 
@@ -86,6 +87,7 @@ data ingestion
   -> live trading safety gates
   -> dry-run broker adapter
   -> dry-run signal execution
+  -> dry-run scheduler
 ```
 
 ## Data Lineage v1 Scope
@@ -217,6 +219,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Broker adapter boundary | Strategy execution can target a broker protocol, but only the paper adapter exists. | Add safety gates, broker credential boundaries, live adapter contracts, and account reconciliation before real orders. |
 | Live trading safety gates | Adds fail-closed mode checks, but no live broker adapter uses them yet. | Require the guard in every future live-capable CLI command and adapter before credentials or orders are touched. |
 | Dry-run broker adapter | Records manual intended orders, but strategy signals do not route to dry-run records yet. | Add scheduled dry-run signal execution and compare intended orders with paper decisions before live broker work. |
+| Dry-run signal execution | Routes one latest strategy signal into a dry-run record, but does not run on a schedule yet. | Add scheduled dry-run execution, run records, idempotency policy, and comparison against paper signal records. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -480,3 +483,20 @@ cash, mutate positions, or call any external broker API.
 
 This milestone is a rehearsal of the broker submission shape. Strategy-to-dry
 run execution belongs in the next milestone.
+
+## Dry-Run Signal Execution v1 Scope
+
+Introduce:
+
+```text
+execute_latest_signal_dry_run
+quant dry-run signal
+```
+
+The first version reuses the same latest-signal decision logic as paper signal
+execution. Buy and sell signals write `DryRunOrderRecord` artifacts under
+`data/dry_run/orders/`; hold signals print that no dry-run order was intended
+and do not write an order artifact.
+
+This milestone does not mutate paper state, create fills, or call any external
+broker API.
