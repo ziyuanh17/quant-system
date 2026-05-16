@@ -117,6 +117,37 @@ Operational health can surface the latest comparison status:
 quant ops health --check-comparison
 ```
 
+## Run The Dry-Run Refresh Workflow
+
+```bash
+quant workflow dry-run-refresh \
+  --symbol AAPL \
+  --start 2024-01-01 \
+  --quantity 1
+```
+
+This is the composed server-style path for dry-run trading. It refreshes and
+validates market data, runs the scheduled dry-run signal loop, compares the
+latest paper signal with the latest dry-run order when paper signal artifacts
+exist, and writes a workflow record under:
+
+```text
+data/workflows/dry-run-refresh/
+```
+
+The workflow can also publish dashboard health status:
+
+```bash
+quant workflow dry-run-refresh \
+  --symbol AAPL \
+  --start 2024-01-01 \
+  --quantity 1 \
+  --publish-status-path site/status.json
+```
+
+It still stops before broker submission. It does not create fills or mutate
+paper account state.
+
 The record says what would have been submitted to a broker:
 
 - symbol

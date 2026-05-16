@@ -66,7 +66,11 @@ from quant.strategies import (
     FeatureMomentumStrategy,
     MomentumStrategy,
 )
-from quant.workflows import WorkflowRunFailed, run_paper_signal_refresh_workflow
+from quant.workflows import (
+    WorkflowRunFailed,
+    run_dry_run_refresh_workflow,
+    run_paper_signal_refresh_workflow,
+)
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
@@ -1186,6 +1190,153 @@ def workflow_paper_signal_refresh(
             signal_output_dir=signal_output_dir,
             state_path=state_path,
             run_output_dir=run_output_dir,
+            lock_path=lock_path,
+            lock_stale_after_seconds=lock_stale_after_seconds,
+        )
+    except WorkflowRunFailed as exc:
+        _print_workflow_record(exc.record, workflow_output_dir)
+        raise typer.Exit(code=1) from exc
+
+    _print_workflow_record(record, workflow_output_dir)
+
+
+@workflow_app.command("dry-run-refresh")
+def workflow_dry_run_refresh(
+    symbol: Annotated[
+        str,
+        typer.Option(help="Symbol to refresh and dry-run."),
+    ] = "AAPL",
+    start: Annotated[
+        str,
+        typer.Option(help="Refresh start date, YYYY-MM-DD."),
+    ] = "2024-01-01",
+    end: Annotated[
+        str | None,
+        typer.Option(help="Optional refresh end date, YYYY-MM-DD."),
+    ] = None,
+    provider: Annotated[
+        str,
+        typer.Option(help="Data provider name."),
+    ] = "yfinance",
+    strategy: Annotated[
+        str, typer.Option(help="Strategy name to run after refresh.")
+    ] = "momentum",
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity for actionable dry-run signals."),
+    ] = 1,
+    broker_name: Annotated[
+        str,
+        typer.Option(help="Broker name to include in dry-run records."),
+    ] = "dry-run",
+    iterations: Annotated[
+        int,
+        typer.Option(help="Number of scheduled dry-run signal runs."),
+    ] = 1,
+    interval_seconds: Annotated[
+        float,
+        typer.Option(help="Seconds to wait between scheduled runs."),
+    ] = 0.0,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
+    raw_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for refreshed raw data."),
+    ] = Path("data/raw"),
+    normalized_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for refreshed normalized data."),
+    ] = Path("data/normalized"),
+    validation_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for validation report artifacts."),
+    ] = Path("data/validation"),
+    metadata_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for dataset metadata artifacts."),
+    ] = Path("data/metadata"),
+    workflow_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where workflow records are written."),
+    ] = Path("data/workflows/dry-run-refresh"),
+    dry_run_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where dry-run order records are written."),
+    ] = Path("data/dry_run/orders"),
+    run_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where scheduler run records are written."),
+    ] = Path("data/scheduler/dry-run"),
+    paper_signal_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing paper signal records."),
+    ] = Path("data/paper/signals"),
+    comparison_output_path: Annotated[
+        Path,
+        typer.Option(help="Path where comparison report is written."),
+    ] = Path("data/dry_run/comparison/latest.json"),
+    publish_status_path: Annotated[
+        Path | None,
+        typer.Option(help="Optional dashboard status JSON path to publish."),
+    ] = None,
+    health_run_records_dir: Annotated[
+        Path | None,
+        typer.Option(help="Optional run records dir for published health."),
+    ] = None,
+    paper_state_path: Annotated[
+        Path,
+        typer.Option(help="Paper state path used for published health."),
+    ] = Path("data/paper/state/default.json"),
+    logs_dir: Annotated[
+        Path,
+        typer.Option(help="Logs directory used for published health."),
+    ] = Path("logs"),
+    lock_path: Annotated[
+        Path,
+        typer.Option(help="Lock file that prevents overlapping workflow runs."),
+    ] = Path("data/locks/dry-run-refresh.lock"),
+    lock_stale_after_seconds: Annotated[
+        int,
+        typer.Option(help="Seconds before an existing workflow lock is stale."),
+    ] = 7200,
+) -> None:
+    """Refresh data, run dry-run signals, compare, and optionally publish."""
+    if strategy != "momentum":
+        raise typer.BadParameter("Only momentum is implemented right now.")
+    if iterations < 1:
+        raise typer.BadParameter("iterations must be at least 1")
+    if interval_seconds < 0:
+        raise typer.BadParameter("interval-seconds must be non-negative")
+    if provider != "yfinance":
+        raise typer.BadParameter("Only yfinance is implemented right now.")
+
+    try:
+        record = run_dry_run_refresh_workflow(
+            provider=YFinanceMarketBarProvider(),
+            symbol=symbol,
+            start=start,
+            end=end,
+            raw_dir=raw_dir,
+            normalized_dir=normalized_dir,
+            validation_dir=validation_dir,
+            metadata_dir=metadata_dir,
+            workflow_output_dir=workflow_output_dir,
+            strategy=strategy,
+            quantity=quantity,
+            broker_name=broker_name,
+            iterations=iterations,
+            interval_seconds=interval_seconds,
+            min_rows=min_rows,
+            dry_run_output_dir=dry_run_output_dir,
+            run_output_dir=run_output_dir,
+            paper_signal_dir=paper_signal_dir,
+            comparison_output_path=comparison_output_path,
+            publish_status_path=publish_status_path,
+            health_run_records_dir=health_run_records_dir,
+            paper_state_path=paper_state_path,
+            logs_dir=logs_dir,
             lock_path=lock_path,
             lock_stale_after_seconds=lock_stale_after_seconds,
         )

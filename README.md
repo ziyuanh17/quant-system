@@ -156,6 +156,13 @@ Compare the latest paper signal with the latest dry-run intended order:
 quant dry-run compare-paper
 ```
 
+Refresh market data, run the scheduled dry-run signal path, compare outputs,
+and optionally publish dashboard health from one workflow:
+
+```bash
+quant workflow dry-run-refresh --symbol AAPL --start 2024-01-01 --quantity 1
+```
+
 See [docs/dry_run_trading.md](docs/dry_run_trading.md) for the difference
 between paper trading and dry-run trading.
 

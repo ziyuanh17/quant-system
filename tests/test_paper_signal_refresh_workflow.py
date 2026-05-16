@@ -4,11 +4,21 @@ from typer.testing import CliRunner
 
 import quant.cli
 from quant.cli import app
+from quant.execution import PaperBroker
+from quant.execution.artifacts import write_paper_signal_record
+from quant.models.execution import (
+    OrderRequest,
+    OrderSide,
+    PaperSignalAction,
+    PaperSignalDecision,
+    PaperSignalRecord,
+)
 from quant.models.ingestion import DataModality, IngestRequest, RawDataset
 from quant.models.workflow import WorkflowRunStatus
 from quant.operations import FileLock
 from quant.workflows import (
     WorkflowRunFailed,
+    run_dry_run_refresh_workflow,
     run_paper_signal_refresh_workflow,
 )
 
@@ -247,6 +257,186 @@ def test_paper_signal_refresh_workflow_releases_lock_after_error(
         raise AssertionError("expected invalid strategy to stop workflow")
 
     assert not lock_path.exists()
+
+
+def test_dry_run_refresh_workflow_refreshes_runs_and_compares(
+    tmp_path,
+) -> None:
+    paper_signal_dir = tmp_path / "paper" / "signals"
+    _write_matching_paper_signal(paper_signal_dir, quantity=2, price=20)
+
+    record = run_dry_run_refresh_workflow(
+        provider=FakeTrendingMarketBarProvider(),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=2,
+        broker_name="dry-run",
+        iterations=1,
+        interval_seconds=0,
+        min_rows=20,
+        dry_run_output_dir=tmp_path / "dry_run" / "orders",
+        run_output_dir=tmp_path / "runs" / "dry-run",
+        paper_signal_dir=paper_signal_dir,
+        comparison_output_path=tmp_path
+        / "dry_run"
+        / "comparison"
+        / "latest.json",
+        publish_status_path=tmp_path / "site" / "status.json",
+        paper_state_path=tmp_path / "paper" / "state.json",
+        logs_dir=tmp_path / "logs",
+        lock_path=tmp_path / "locks" / "dry-run.lock",
+        lock_stale_after_seconds=60,
+    )
+
+    dry_run_records = list((tmp_path / "dry_run" / "orders").glob("*.json"))
+    scheduler_records = list((tmp_path / "runs" / "dry-run").glob("*.json"))
+    comparison_path = tmp_path / "dry_run" / "comparison" / "latest.json"
+    status_path = tmp_path / "site" / "status.json"
+
+    assert record.workflow_name == "dry-run-refresh"
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert len(dry_run_records) == 1
+    assert len(scheduler_records) == 1
+    assert comparison_path.exists()
+    assert status_path.exists()
+    assert str(comparison_path) in record.artifact_paths
+    assert str(status_path) in record.artifact_paths
+    assert not (tmp_path / "paper" / "state.json").exists()
+    assert not (tmp_path / "locks" / "dry-run.lock").exists()
+
+
+def test_dry_run_refresh_workflow_stops_when_validation_fails(
+    tmp_path,
+) -> None:
+    try:
+        run_dry_run_refresh_workflow(
+            provider=BadMarketBarProvider(),
+            symbol="AAPL",
+            start="2024-01-01",
+            end=None,
+            raw_dir=tmp_path / "raw",
+            normalized_dir=tmp_path / "normalized",
+            validation_dir=tmp_path / "validation",
+            metadata_dir=tmp_path / "metadata",
+            workflow_output_dir=tmp_path / "workflows",
+            strategy="momentum",
+            quantity=1,
+            broker_name="dry-run",
+            iterations=1,
+            interval_seconds=0,
+            min_rows=20,
+            dry_run_output_dir=tmp_path / "dry_run" / "orders",
+            run_output_dir=tmp_path / "runs" / "dry-run",
+            paper_signal_dir=tmp_path / "paper" / "signals",
+            comparison_output_path=tmp_path
+            / "dry_run"
+            / "comparison"
+            / "latest.json",
+            lock_path=tmp_path / "locks" / "dry-run.lock",
+            lock_stale_after_seconds=60,
+        )
+    except WorkflowRunFailed as exc:
+        record = exc.record
+    else:
+        raise AssertionError("expected failed validation to stop workflow")
+
+    assert record.workflow_name == "dry-run-refresh"
+    assert record.status == WorkflowRunStatus.FAILED
+    assert "validation failed" in record.message
+    assert not (tmp_path / "dry_run").exists()
+    assert not (tmp_path / "runs").exists()
+    assert not (tmp_path / "locks" / "dry-run.lock").exists()
+
+
+def test_dry_run_refresh_cli_prints_workflow_record(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    paper_signal_dir = tmp_path / "paper" / "signals"
+    _write_matching_paper_signal(paper_signal_dir, quantity=2, price=20)
+    monkeypatch.setattr(
+        quant.cli,
+        "YFinanceMarketBarProvider",
+        lambda: FakeTrendingMarketBarProvider(),
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "dry-run-refresh",
+            "--symbol",
+            "AAPL",
+            "--start",
+            "2024-01-01",
+            "--end",
+            "2024-02-01",
+            "--quantity",
+            "2",
+            "--min-rows",
+            "20",
+            "--raw-dir",
+            str(tmp_path / "raw"),
+            "--normalized-dir",
+            str(tmp_path / "normalized"),
+            "--validation-dir",
+            str(tmp_path / "validation"),
+            "--metadata-dir",
+            str(tmp_path / "metadata"),
+            "--workflow-output-dir",
+            str(tmp_path / "workflows"),
+            "--dry-run-output-dir",
+            str(tmp_path / "dry_run" / "orders"),
+            "--run-output-dir",
+            str(tmp_path / "runs" / "dry-run"),
+            "--paper-signal-dir",
+            str(paper_signal_dir),
+            "--comparison-output-path",
+            str(tmp_path / "dry_run" / "comparison" / "latest.json"),
+            "--lock-path",
+            str(tmp_path / "locks" / "dry-run.lock"),
+            "--lock-stale-after-seconds",
+            "60",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Workflow: dry-run-refresh" in result.output
+    assert "Status: succeeded" in result.output
+    assert "Scheduler runs: 1" in result.output
+
+
+def _write_matching_paper_signal(
+    output_dir,
+    *,
+    quantity: int,
+    price: float,
+) -> None:
+    broker = PaperBroker(initial_cash=1_000)
+    trade = broker.submit_market_order(
+        OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=quantity),
+        market_price=price,
+    )
+    record = PaperSignalRecord(
+        decision=PaperSignalDecision(
+            symbol="AAPL",
+            action=PaperSignalAction.BUY,
+            signal_date="2024-01-25",
+            market_price=price,
+            reason="entry signal",
+            idempotency_key="momentum:AAPL:2024-01-25:buy",
+        ),
+        trade=trade,
+        snapshot=trade.snapshot,
+    )
+    write_paper_signal_record(record, output_dir)
 
 
 class FakeTrendingMarketBarProvider:

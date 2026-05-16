@@ -90,6 +90,30 @@ data/workflows/paper-signal-refresh/
 Use this path for recurring server runs once the provider and start date are
 configured.
 
+## Refresh Data Then Run Dry-Run Signal
+
+```bash
+quant workflow dry-run-refresh --symbol AAPL --start 2024-01-01 --quantity 1
+```
+
+This refreshes market data, writes validation and metadata artifacts, stops if
+validation fails, then runs the scheduled dry-run signal path. When paper signal
+records exist, it compares the latest paper decision with the latest dry-run
+intended order and writes:
+
+```text
+data/dry_run/comparison/latest.json
+```
+
+It writes its workflow record under:
+
+```text
+data/workflows/dry-run-refresh/
+```
+
+Add `--publish-status-path site/status.json` when the run should refresh the
+static dashboard health payload.
+
 ## Run The Service Wrapper
 
 ```bash

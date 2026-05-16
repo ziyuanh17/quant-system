@@ -2,13 +2,13 @@
   "project": {
     "name": "Quant System",
     "description": "A typed, solo-maintainable quant research and paper-trading system.",
-    "updated": "2026-05-15"
+    "updated": "2026-05-16"
   },
   "summary": {
-    "done": 30,
+    "done": 31,
     "in_review": 1,
     "planned": 1,
-    "next": "Dry-Run Refresh Workflow v1"
+    "next": "Dry-Run Server Wrapper v1"
   },
   "milestones": [
     {
@@ -194,14 +194,20 @@
     {
       "order": 31,
       "name": "Comparison Health Integration v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Surface paper-vs-dry-run divergence in operational health and dashboard status."
     },
     {
       "order": 32,
       "name": "Dry-Run Refresh Workflow v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Refresh data, run dry-run signals, compare outputs, and publish health in one server workflow."
+    },
+    {
+      "order": 33,
+      "name": "Dry-Run Server Wrapper v1",
+      "status": "planned",
+      "purpose": "Add repeatable local/server wrapper configuration for the dry-run refresh workflow."
     }
   ],
   "futureMetrics": [
