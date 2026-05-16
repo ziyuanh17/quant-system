@@ -92,6 +92,25 @@ data/dry_run/orders/
 
 Hold signals write a scheduler run record with no order artifact.
 
+## Compare Paper And Dry-Run Records
+
+```bash
+quant dry-run compare-paper
+```
+
+By default, this compares the latest paper signal record under
+`data/paper/signals/` with the latest dry-run order record under
+`data/dry_run/orders/`, then writes:
+
+```text
+data/dry_run/comparison/latest.json
+```
+
+The comparison checks order presence, side, symbol, quantity, and market price.
+Paper hold or skipped signals should have no matching dry-run order. A mismatch
+returns a nonzero exit code so scheduled checks can catch divergence before any
+live broker adapter exists.
+
 The record says what would have been submitted to a broker:
 
 - symbol

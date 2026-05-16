@@ -152,6 +152,42 @@ class DryRunOrderRecord(FrozenModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
+class PaperDryRunComparisonStatus(StrEnum):
+    PASSED = "passed"
+    FAILED = "failed"
+
+
+class PaperDryRunDifference(FrozenModel):
+    field: str
+    paper_value: str
+    dry_run_value: str
+    message: str
+
+
+class PaperDryRunComparisonReport(FrozenModel):
+    """Read-only comparison between paper signal and dry-run order artifacts."""
+
+    paper_signal_path: str
+    dry_run_order_path: str | None
+    status: PaperDryRunComparisonStatus
+    paper_action: PaperSignalAction
+    dry_run_side: OrderSide | None = None
+    paper_symbol: str
+    dry_run_symbol: str | None = None
+    paper_quantity: int | None = None
+    dry_run_quantity: int | None = None
+    paper_market_price: float
+    dry_run_market_price: float | None = None
+    paper_signal_date: str
+    difference_tolerance: float
+    difference_count: int
+    differences: tuple[PaperDryRunDifference, ...] = ()
+
+    @property
+    def passed(self) -> bool:
+        return self.status == PaperDryRunComparisonStatus.PASSED
+
+
 class PaperBrokerState(FrozenModel):
     """Persisted paper account state between scheduled runs."""
 

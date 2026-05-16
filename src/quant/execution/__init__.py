@@ -9,6 +9,11 @@ from quant.execution.broker_adapter import (
     PaperBrokerAdapter,
     SignalExecutionBroker,
 )
+from quant.execution.dry_run_comparison import (
+    compare_paper_signal_to_dry_run_order,
+    latest_json,
+    write_paper_dry_run_comparison_report,
+)
 from quant.execution.paper_broker import PaperBroker
 from quant.execution.reconciliation import (
     reconcile_paper_state,
@@ -41,6 +46,7 @@ __all__ = [
     "PaperBrokerAdapter",
     "SignalExecutionBroker",
     "check_order_risk",
+    "compare_paper_signal_to_dry_run_order",
     "assert_trading_allowed",
     "decide_latest_signal",
     "evaluate_trading_safety",
@@ -48,9 +54,11 @@ __all__ = [
     "execute_latest_signal_dry_run",
     "load_paper_broker_state",
     "load_trading_safety_config_from_env",
+    "latest_json",
     "reconcile_paper_state",
     "save_paper_broker_state",
     "write_dry_run_order_record",
+    "write_paper_dry_run_comparison_report",
     "write_paper_state_reconciliation_report",
     "write_paper_signal_record",
     "write_paper_trade_record",

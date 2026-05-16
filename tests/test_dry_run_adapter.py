@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -145,6 +146,157 @@ def test_dry_run_signal_cli_writes_no_order_for_hold_signal(tmp_path) -> None:
     assert "Signal: hold" in result.output
     assert "Dry-run order: none" in result.output
     assert not output_dir.exists()
+
+
+def test_dry_run_compare_paper_cli_passes_matching_records(tmp_path) -> None:
+    paper_dir = tmp_path / "paper" / "signals"
+    dry_run_dir = tmp_path / "dry_run" / "orders"
+    report_path = tmp_path / "dry_run" / "comparison" / "latest.json"
+    data = tmp_path / "prices.csv"
+    _entry_frame().to_csv(data, index=False)
+    _run_paper_signal(data, paper_dir)
+    _run_dry_run_signal(data, dry_run_dir)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "dry-run",
+            "compare-paper",
+            "--paper-signal-dir",
+            str(paper_dir),
+            "--dry-run-order-dir",
+            str(dry_run_dir),
+            "--output-path",
+            str(report_path),
+        ],
+    )
+
+    payload = json.loads(report_path.read_text())
+    assert result.exit_code == 0
+    assert "Status: passed" in result.output
+    assert payload["status"] == "passed"
+    assert payload["difference_count"] == 0
+    assert payload["paper_action"] == "buy"
+    assert payload["dry_run_side"] == "buy"
+
+
+def test_dry_run_compare_paper_cli_fails_quantity_mismatch(
+    tmp_path,
+) -> None:
+    paper_dir = tmp_path / "paper" / "signals"
+    dry_run_dir = tmp_path / "dry_run" / "orders"
+    report_path = tmp_path / "dry_run" / "comparison" / "latest.json"
+    data = tmp_path / "prices.csv"
+    _entry_frame().to_csv(data, index=False)
+    _run_paper_signal(data, paper_dir, quantity=2)
+    _run_dry_run_signal(data, dry_run_dir, quantity=1)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "dry-run",
+            "compare-paper",
+            "--paper-signal-dir",
+            str(paper_dir),
+            "--dry-run-order-dir",
+            str(dry_run_dir),
+            "--output-path",
+            str(report_path),
+        ],
+    )
+
+    payload = json.loads(report_path.read_text())
+    assert result.exit_code == 1
+    assert "Status: failed" in result.output
+    assert payload["status"] == "failed"
+    assert payload["differences"][0]["field"] == "quantity"
+
+
+def test_dry_run_compare_paper_cli_passes_hold_without_order(
+    tmp_path,
+) -> None:
+    paper_dir = tmp_path / "paper" / "signals"
+    dry_run_dir = tmp_path / "dry_run" / "orders"
+    report_path = tmp_path / "dry_run" / "comparison" / "latest.json"
+    data = tmp_path / "prices.csv"
+    _hold_frame().to_csv(data, index=False)
+    _run_paper_signal(data, paper_dir)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "dry-run",
+            "compare-paper",
+            "--paper-signal-dir",
+            str(paper_dir),
+            "--dry-run-order-dir",
+            str(dry_run_dir),
+            "--output-path",
+            str(report_path),
+        ],
+    )
+
+    payload = json.loads(report_path.read_text())
+    assert result.exit_code == 0
+    assert payload["status"] == "passed"
+    assert payload["paper_action"] == "hold"
+    assert payload["dry_run_side"] is None
+
+
+def _run_paper_signal(
+    data: Path,
+    output_dir: Path,
+    *,
+    quantity: int = 2,
+) -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "schedule",
+            "paper-signal",
+            "--data",
+            str(data),
+            "--symbol",
+            "AAPL",
+            "--quantity",
+            str(quantity),
+            "--initial-cash",
+            "1000",
+            "--iterations",
+            "1",
+            "--signal-output-dir",
+            str(output_dir),
+            "--state-path",
+            str(output_dir.parent / "state.json"),
+            "--run-output-dir",
+            str(output_dir.parent / "runs"),
+        ],
+    )
+    assert result.exit_code == 0
+
+
+def _run_dry_run_signal(
+    data: Path,
+    output_dir: Path,
+    *,
+    quantity: int = 2,
+) -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "dry-run",
+            "signal",
+            "--data",
+            str(data),
+            "--symbol",
+            "AAPL",
+            "--quantity",
+            str(quantity),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+    assert result.exit_code == 0
 
 
 def _entry_frame() -> pd.DataFrame:

@@ -19,14 +19,17 @@ from quant.execution import (
     DryRunBrokerAdapter,
     PaperBroker,
     PaperBrokerAdapter,
+    compare_paper_signal_to_dry_run_order,
     evaluate_trading_safety,
     execute_latest_signal,
     execute_latest_signal_dry_run,
+    latest_json,
     load_paper_broker_state,
     load_trading_safety_config_from_env,
     reconcile_paper_state,
     save_paper_broker_state,
     write_dry_run_order_record,
+    write_paper_dry_run_comparison_report,
     write_paper_signal_record,
     write_paper_state_reconciliation_report,
     write_paper_trade_record,
@@ -260,6 +263,67 @@ def dry_run_signal(
     typer.echo(f"Market price: {record.market_price:,.2f}")
     typer.echo(f"Notional: {record.notional:,.2f}")
     typer.echo(f"Record: {record_path}")
+
+
+@dry_run_app.command("compare-paper")
+def dry_run_compare_paper(
+    paper_signal_path: Annotated[
+        Path | None,
+        typer.Option(help="Paper signal record to compare."),
+    ] = None,
+    dry_run_order_path: Annotated[
+        Path | None,
+        typer.Option(help="Dry-run order record to compare."),
+    ] = None,
+    paper_signal_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing paper signal records."),
+    ] = Path("data/paper/signals"),
+    dry_run_order_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing dry-run order records."),
+    ] = Path("data/dry_run/orders"),
+    output_path: Annotated[
+        Path,
+        typer.Option(help="Path where the comparison report is written."),
+    ] = Path("data/dry_run/comparison/latest.json"),
+    tolerance: Annotated[
+        float,
+        typer.Option(help="Allowed market price difference."),
+    ] = 0.01,
+) -> None:
+    """Compare paper signal intent with dry-run broker intent."""
+    if tolerance < 0:
+        raise typer.BadParameter("tolerance must be non-negative")
+
+    resolved_paper_signal_path = paper_signal_path or latest_json(
+        paper_signal_dir
+    )
+    if resolved_paper_signal_path is None:
+        raise typer.BadParameter(
+            f"No paper signal records found in {paper_signal_dir}"
+        )
+    resolved_dry_run_order_path = dry_run_order_path or latest_json(
+        dry_run_order_dir
+    )
+    report = compare_paper_signal_to_dry_run_order(
+        paper_signal_path=resolved_paper_signal_path,
+        dry_run_order_path=resolved_dry_run_order_path,
+        tolerance=tolerance,
+    )
+    report_path = write_paper_dry_run_comparison_report(report, output_path)
+
+    typer.echo(f"Status: {report.status.value}")
+    typer.echo(f"Differences: {report.difference_count}")
+    for difference in report.differences:
+        typer.echo(
+            f"[{difference.field}] paper={difference.paper_value} "
+            f"dry_run={difference.dry_run_value}: {difference.message}"
+        )
+    typer.echo(f"Report: {report_path}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @app.command()
