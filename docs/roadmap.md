@@ -47,13 +47,14 @@ side discussions.
 | 29 | Dry-Run Scheduler v1 | Done | Run dry-run signal execution on a scheduled loop with durable run records. |
 | 30 | Paper vs Dry-Run Comparison v1 | Done | Compare scheduled paper decisions with scheduled dry-run intended orders. |
 | 31 | Comparison Health Integration v1 | Done | Surface paper-vs-dry-run divergence in operational health and dashboard status. |
-| 32 | Dry-Run Refresh Workflow v1 | In Review | Refresh data, run dry-run signals, compare outputs, and publish health in one server workflow. |
-| 33 | Dry-Run Server Wrapper v1 | Planned | Add repeatable local/server wrapper configuration for the dry-run refresh workflow. |
+| 32 | Dry-Run Refresh Workflow v1 | Done | Refresh data, run dry-run signals, compare outputs, and publish health in one server workflow. |
+| 33 | Dry-Run Server Wrapper v1 | In Review | Add repeatable local/server wrapper configuration for the dry-run refresh workflow. |
+| 34 | Live Broker Adapter Design v1 | Planned | Design the real broker adapter, credential boundary, and account reconciliation contract before real orders are possible. |
 
 ## Current Recommendation
 
-The next milestone after Dry-Run Refresh Workflow v1 should be
-**Dry-Run Server Wrapper v1**.
+The next milestone after Dry-Run Server Wrapper v1 should be
+**Live Broker Adapter Design v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -62,9 +63,9 @@ sanitized dashboard status file, a paper broker adapter boundary,
 fail-closed trading safety gates, a live-shaped dry-run order adapter,
 strategy-to-dry-run signal execution, scheduled dry-run signal runs, a
 paper-vs-dry-run comparison report, health/dashboard visibility for comparison
-failures, and a composed dry-run refresh workflow. The next step should make
-that workflow easy to run repeatedly from a local machine or server before any
-real broker API is connected.
+failures, a composed dry-run refresh workflow, and a server wrapper for running
+that dry-run workflow repeatedly. The next step should design the live broker
+adapter contract before any real broker API is connected.
 
 ## Corrected Near-Term Order
 
@@ -99,6 +100,7 @@ data ingestion
   -> comparison health integration
   -> dry-run refresh workflow
   -> dry-run server wrapper
+  -> live broker adapter design
 ```
 
 ## Data Lineage v1 Scope
@@ -235,6 +237,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Paper vs dry-run comparison | Compares the latest paper signal and dry-run order, but is not part of health checks yet. | Integrate comparison status into operational health, dashboard status, and future alert routing. |
 | Comparison health integration | Health and dashboard can show comparison status, but generating the comparison is still a separate step. | Compose dry-run signal execution, comparison generation, and status publishing into a repeatable workflow. |
 | Dry-run refresh workflow | Refreshes one symbol, runs one dry-run strategy loop, and compares against the latest paper signal when one exists. | Add local/server wrapper configuration, multi-symbol runs, retries, and deployment-specific health publishing. |
+| Dry-run server wrapper | Provides an env-driven wrapper for the dry-run refresh workflow, but still relies on cron/systemd and local files. | Add stronger scheduling supervision, deployment templates, health publishing automation, and alert hooks after live-trading boundaries are designed. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -595,3 +598,23 @@ detects divergence.
 
 This milestone does not submit broker orders, create fills, mutate paper broker
 state, or define the server wrapper that will run the workflow repeatedly.
+
+## Dry-Run Server Wrapper v1 Scope
+
+Introduce:
+
+```text
+scripts/run_dry_run_refresh.sh
+QUANT_DRY_RUN_* environment settings
+dry-run cron/systemd deployment notes
+```
+
+The first version gives the dry-run refresh workflow the same deployment shape
+as the paper refresh workflow. The wrapper loads `.env`, runs
+`quant workflow dry-run-refresh`, writes a timestamped log, and keeps dry-run
+orders, dry-run scheduler records, comparison reports, workflow records, and
+lock files in separate default paths.
+
+This milestone still does not submit broker orders. It is an operational
+rehearsal layer for running the live-shaped path frequently before credentials
+or real order APIs are introduced.

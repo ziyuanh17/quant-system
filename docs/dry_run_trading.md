@@ -148,6 +148,15 @@ quant workflow dry-run-refresh \
 It still stops before broker submission. It does not create fills or mutate
 paper account state.
 
+For recurring local or server runs, prefer the wrapper:
+
+```bash
+bash scripts/run_dry_run_refresh.sh
+```
+
+The wrapper reads `.env`, uses the `QUANT_DRY_RUN_*` output settings, and writes
+a timestamped log under `logs/`.
+
 The record says what would have been submitted to a broker:
 
 - symbol

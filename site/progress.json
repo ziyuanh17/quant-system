@@ -5,10 +5,10 @@
     "updated": "2026-05-16"
   },
   "summary": {
-    "done": 31,
+    "done": 32,
     "in_review": 1,
     "planned": 1,
-    "next": "Dry-Run Server Wrapper v1"
+    "next": "Live Broker Adapter Design v1"
   },
   "milestones": [
     {
@@ -200,14 +200,20 @@
     {
       "order": 32,
       "name": "Dry-Run Refresh Workflow v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Refresh data, run dry-run signals, compare outputs, and publish health in one server workflow."
     },
     {
       "order": 33,
       "name": "Dry-Run Server Wrapper v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Add repeatable local/server wrapper configuration for the dry-run refresh workflow."
+    },
+    {
+      "order": 34,
+      "name": "Live Broker Adapter Design v1",
+      "status": "planned",
+      "purpose": "Design the real broker adapter, credential boundary, and account reconciliation contract before real orders are possible."
     }
   ],
   "futureMetrics": [

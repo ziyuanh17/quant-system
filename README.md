@@ -163,6 +163,12 @@ and optionally publish dashboard health from one workflow:
 quant workflow dry-run-refresh --symbol AAPL --start 2024-01-01 --quantity 1
 ```
 
+Run the dry-run workflow through the local/server wrapper:
+
+```bash
+bash scripts/run_dry_run_refresh.sh
+```
+
 See [docs/dry_run_trading.md](docs/dry_run_trading.md) for the difference
 between paper trading and dry-run trading.
 

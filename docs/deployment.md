@@ -66,12 +66,34 @@ idempotent for repeated signals. If it sees the same strategy, symbol, signal
 date, and action again, it writes a skipped audit record instead of placing a
 duplicate paper order.
 
+For the dry-run rehearsal path, run:
+
+```bash
+bash scripts/run_dry_run_refresh.sh
+```
+
+That wrapper runs:
+
+```bash
+quant workflow dry-run-refresh
+```
+
+It refreshes market data, validates it, runs scheduled dry-run signal
+execution, compares against the latest paper signal when one exists, and can
+publish dashboard health when `QUANT_DRY_RUN_PUBLISH_STATUS_PATH` is set.
+
 ## Cron Example
 
 Use absolute paths when installing a cron entry:
 
 ```cron
 0 14 * * 1-5 cd /absolute/path/to/quant-system && bash scripts/run_paper_signal_refresh.sh
+```
+
+Dry-run wrapper example:
+
+```cron
+5 14 * * 1-5 cd /absolute/path/to/quant-system && bash scripts/run_dry_run_refresh.sh
 ```
 
 The example above runs once per weekday. Choose a time that matches the data
@@ -90,6 +112,12 @@ Description=Quant paper signal run
 Type=oneshot
 WorkingDirectory=/absolute/path/to/quant-system
 ExecStart=/usr/bin/bash scripts/run_paper_signal_refresh.sh
+```
+
+For dry-run rehearsals, change `ExecStart` to:
+
+```ini
+ExecStart=/usr/bin/bash scripts/run_dry_run_refresh.sh
 ```
 
 Example timer:
@@ -117,6 +145,7 @@ Before enabling a recurring run:
 - `.env` points to the intended provider, symbol, and refresh start date.
 - `QUANT_STATE_PATH` is unique to the paper account.
 - `QUANT_LOCK_PATH` is unique to the workflow/account being scheduled.
+- dry-run wrappers use distinct `QUANT_DRY_RUN_*` output paths and lock files.
 - the first local wrapper run writes logs, data artifacts, workflow records,
   run records, signal records, and state.
 - ignored output directories have enough disk space.
@@ -130,6 +159,9 @@ After enabling a recurring run:
 - inspect `logs/` after the first scheduled run.
 - confirm `data/locks/` is empty after the wrapper exits successfully.
 - inspect `data/workflows/paper-signal-refresh/` for workflow records.
+- inspect `data/workflows/dry-run-refresh/` for dry-run workflow records.
+- inspect `data/dry_run/comparison/latest.json` when dry-run comparison is
+  enabled by available paper signal artifacts.
 - inspect `data/scheduler/latest/` for run records.
 - inspect `data/paper/signals/` for buy/sell/hold/skipped decisions.
 - inspect `data/paper/state/` to confirm cash, positions, and the latest

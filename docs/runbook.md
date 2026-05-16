@@ -120,6 +120,12 @@ static dashboard health payload.
 bash scripts/run_paper_signal_refresh.sh
 ```
 
+For the dry-run rehearsal workflow:
+
+```bash
+bash scripts/run_dry_run_refresh.sh
+```
+
 Copy `.env.example` to `.env` to configure the wrapper. See
 [deployment.md](deployment.md) for cron and systemd examples.
 
