@@ -42,6 +42,8 @@ class DashboardHealthStatus(FrozenModel):
     lock_status: str
     reconciliation_status: str
     reconciliation_difference_count: int | None = None
+    comparison_status: str
+    comparison_difference_count: int | None = None
     issue_count: int
     issues: tuple[DashboardHealthIssue, ...] = ()
 
@@ -72,6 +74,9 @@ class HealthReport(FrozenModel):
     reconciliation_status: str = "skipped"
     reconciliation_difference_count: int | None = None
     reconciliation_report_path: str | None = None
+    comparison_status: str = "skipped"
+    comparison_difference_count: int | None = None
+    comparison_report_path: str | None = None
     issues: tuple[HealthIssue, ...] = ()
 
     @property

@@ -7,7 +7,12 @@ from quant.execution.reconciliation import (
     reconcile_paper_state,
     write_paper_state_reconciliation_report,
 )
-from quant.models.execution import PaperBrokerState, PaperSignalRecord
+from quant.models.execution import (
+    PaperBrokerState,
+    PaperDryRunComparisonReport,
+    PaperDryRunComparisonStatus,
+    PaperSignalRecord,
+)
 from quant.models.operations import (
     HealthIssue,
     HealthIssueSeverity,
@@ -30,6 +35,8 @@ def build_health_report(
     initial_cash: float = 100_000,
     cash_tolerance: float = 0.01,
     reconciliation_report_path: Path | None = None,
+    check_comparison: bool = False,
+    comparison_report_path: Path | None = None,
 ) -> HealthReport:
     """Inspect local service artifacts without mutating account or run state."""
     issues: list[HealthIssue] = []
@@ -173,6 +180,48 @@ def build_health_report(
                     )
                 )
 
+    comparison_status = "skipped"
+    comparison_difference_count: int | None = None
+    if check_comparison:
+        comparison_status = "unavailable"
+        if comparison_report_path is None:
+            issues.append(
+                _warning(
+                    "missing_comparison_report_path",
+                    "Comparison check requested without a report path.",
+                )
+            )
+        elif not comparison_report_path.exists():
+            issues.append(
+                _warning(
+                    "missing_comparison_report",
+                    "Comparison report does not exist: "
+                    f"{comparison_report_path}.",
+                )
+            )
+        else:
+            comparison_report = _parse_model(
+                PaperDryRunComparisonReport,
+                comparison_report_path,
+                issues,
+                code="invalid_comparison_report",
+            )
+            if comparison_report is not None:
+                comparison_difference_count = (
+                    comparison_report.difference_count
+                )
+                comparison_status = comparison_report.status.value
+                if (
+                    comparison_report.status
+                    == PaperDryRunComparisonStatus.FAILED
+                ):
+                    issues.append(
+                        _error(
+                            "paper_dry_run_comparison_failed",
+                            "Paper signal and dry-run order diverged.",
+                        )
+                    )
+
     return HealthReport(
         status=_status_from_issues(issues),
         run_records_dir=str(run_records_dir),
@@ -200,6 +249,13 @@ def build_health_report(
         reconciliation_report_path=(
             str(reconciliation_report_path)
             if reconciliation_report_path is not None
+            else None
+        ),
+        comparison_status=comparison_status,
+        comparison_difference_count=comparison_difference_count,
+        comparison_report_path=(
+            str(comparison_report_path)
+            if comparison_report_path is not None
             else None
         ),
         issues=tuple(issues),

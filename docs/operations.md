@@ -48,6 +48,12 @@ To include paper state reconciliation:
 quant ops health --reconcile-state --initial-cash 100000
 ```
 
+To include the paper-vs-dry-run comparison report:
+
+```bash
+quant ops health --check-comparison
+```
+
 ## Status Meaning
 
 `healthy` means the latest scheduler record, latest paper signal record,
@@ -75,6 +81,7 @@ State: cash=1000.0 positions=0 (...)
 Logs: logs (1 files)
 Lock: status=missing owner=n/a expires_at=n/a (...)
 Reconciliation: status=skipped differences=n/a (...)
+Comparison: status=skipped differences=n/a (...)
 Issues: 0
 ```
 
@@ -97,7 +104,8 @@ site/status.json
 
 The dashboard status file is safe to publish through GitHub Pages because it
 omits cash, positions, order records, and other sensitive account details. It
-only includes high-level run, signal, lock, reconciliation, and issue status.
+only includes high-level run, signal, lock, reconciliation, comparison, and
+issue status.
 
 By default, the command exits successfully even when the health status is
 `failed`. That behavior is intentional: a server wrapper can still update the

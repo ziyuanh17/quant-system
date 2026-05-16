@@ -45,23 +45,25 @@ side discussions.
 | 27 | Dry-Run Broker Adapter v1 | Done | Add a live-shaped broker adapter that records intended orders without submitting them. |
 | 28 | Dry-Run Signal Execution v1 | Done | Route strategy signals into dry-run intended-order records. |
 | 29 | Dry-Run Scheduler v1 | Done | Run dry-run signal execution on a scheduled loop with durable run records. |
-| 30 | Paper vs Dry-Run Comparison v1 | In Review | Compare scheduled paper decisions with scheduled dry-run intended orders. |
-| 31 | Comparison Health Integration v1 | Planned | Surface paper-vs-dry-run divergence in operational health and dashboard status. |
+| 30 | Paper vs Dry-Run Comparison v1 | Done | Compare scheduled paper decisions with scheduled dry-run intended orders. |
+| 31 | Comparison Health Integration v1 | In Review | Surface paper-vs-dry-run divergence in operational health and dashboard status. |
+| 32 | Dry-Run Refresh Workflow v1 | Planned | Refresh data, run dry-run signals, compare outputs, and publish health in one server workflow. |
 
 ## Current Recommendation
 
-The next milestone after Paper vs Dry-Run Comparison v1 should be
-**Comparison Health Integration v1**.
+The next milestone after Comparison Health Integration v1 should be
+**Dry-Run Refresh Workflow v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
 writes, read-only state reconciliation, an integrated health command, a
 sanitized dashboard status file, a paper broker adapter boundary,
 fail-closed trading safety gates, a live-shaped dry-run order adapter,
-strategy-to-dry-run signal execution, scheduled dry-run signal runs, and a
-paper-vs-dry-run comparison report. The next step should surface comparison
-failures in operational health and dashboard status before any real broker API
-is connected.
+strategy-to-dry-run signal execution, scheduled dry-run signal runs, a
+paper-vs-dry-run comparison report, and health/dashboard visibility for
+comparison failures. The next step should compose dry-run refresh, scheduled
+dry-run execution, comparison, and dashboard publishing into one server
+workflow before any real broker API is connected.
 
 ## Corrected Near-Term Order
 
@@ -93,6 +95,8 @@ data ingestion
   -> dry-run signal execution
   -> dry-run scheduler
   -> paper vs dry-run comparison
+  -> comparison health integration
+  -> dry-run refresh workflow
   -> comparison health integration
 ```
 
@@ -228,6 +232,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Dry-run signal execution | Routes one latest strategy signal into a dry-run record, but does not run on a schedule yet. | Add scheduled dry-run execution, run records, idempotency policy, and comparison against paper signal records. |
 | Dry-run scheduler | Runs dry-run signals on a finite scheduler loop, but does not compare against paper execution yet. | Add paper-vs-dry-run comparison reports to catch divergence before live broker work. |
 | Paper vs dry-run comparison | Compares the latest paper signal and dry-run order, but is not part of health checks yet. | Integrate comparison status into operational health, dashboard status, and future alert routing. |
+| Comparison health integration | Health and dashboard can show comparison status, but generating the comparison is still a separate step. | Compose dry-run signal execution, comparison generation, and status publishing into a repeatable workflow. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -545,3 +550,23 @@ should not have a dry-run order.
 The command writes a report and exits nonzero when divergence is found. It is
 read-only and does not execute orders, mutate paper state, or call any external
 broker API.
+
+## Comparison Health Integration v1 Scope
+
+Introduce:
+
+```text
+quant ops health --check-comparison
+comparison status in HealthReport
+comparison status in DashboardHealthStatus
+dashboard Comparison panel field
+```
+
+The first version reads an existing paper-vs-dry-run comparison report and
+surfaces its status in operational health and the static dashboard status JSON.
+Failed comparison reports fail health. Missing comparison reports are warnings
+when comparison checking is explicitly requested.
+
+This milestone does not generate comparison reports automatically. It only makes
+existing comparison artifacts visible in the same operational channel as
+scheduler status, workflow locks, and paper-state reconciliation.

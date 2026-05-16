@@ -5,10 +5,10 @@
     "updated": "2026-05-15"
   },
   "summary": {
-    "done": 29,
+    "done": 30,
     "in_review": 1,
     "planned": 1,
-    "next": "Comparison Health Integration v1"
+    "next": "Dry-Run Refresh Workflow v1"
   },
   "milestones": [
     {
@@ -188,14 +188,20 @@
     {
       "order": 30,
       "name": "Paper vs Dry-Run Comparison v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Compare scheduled paper decisions with scheduled dry-run intended orders."
     },
     {
       "order": 31,
       "name": "Comparison Health Integration v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Surface paper-vs-dry-run divergence in operational health and dashboard status."
+    },
+    {
+      "order": 32,
+      "name": "Dry-Run Refresh Workflow v1",
+      "status": "planned",
+      "purpose": "Refresh data, run dry-run signals, compare outputs, and publish health in one server workflow."
     }
   ],
   "futureMetrics": [

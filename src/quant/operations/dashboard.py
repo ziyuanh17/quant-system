@@ -23,6 +23,8 @@ def build_dashboard_health_status(
         lock_status=report.lock_status,
         reconciliation_status=report.reconciliation_status,
         reconciliation_difference_count=report.reconciliation_difference_count,
+        comparison_status=report.comparison_status,
+        comparison_difference_count=report.comparison_difference_count,
         issue_count=report.issue_count,
         issues=tuple(
             DashboardHealthIssue(

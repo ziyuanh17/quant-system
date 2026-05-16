@@ -10,6 +10,9 @@ from quant.models.execution import (
     OrderRequest,
     OrderSide,
     PaperBrokerState,
+    PaperDryRunComparisonReport,
+    PaperDryRunComparisonStatus,
+    PaperDryRunDifference,
     PaperSignalAction,
     PaperSignalDecision,
     PaperSignalRecord,
@@ -229,9 +232,58 @@ def test_ops_health_cli_can_reconcile_state(tmp_path) -> None:
     assert report_path.exists()
 
 
+def test_health_report_fails_when_comparison_report_failed(tmp_path) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    comparison_path = tmp_path / "dry_run" / "comparison" / "latest.json"
+    _write_comparison_report(comparison_path, passed=False)
+
+    report = build_health_report(
+        **paths,
+        check_comparison=True,
+        comparison_report_path=comparison_path,
+    )
+
+    assert report.status == HealthStatus.FAILED
+    assert report.comparison_status == "failed"
+    assert report.comparison_difference_count == 1
+    assert "paper_dry_run_comparison_failed" in {
+        issue.code for issue in report.issues
+    }
+
+
+def test_ops_health_cli_can_check_comparison_report(tmp_path) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    comparison_path = tmp_path / "dry_run" / "comparison" / "latest.json"
+    _write_comparison_report(comparison_path, passed=True)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "health",
+            "--run-records-dir",
+            str(paths["run_records_dir"]),
+            "--signal-records-dir",
+            str(paths["signal_records_dir"]),
+            "--state-path",
+            str(paths["state_path"]),
+            "--logs-dir",
+            str(paths["logs_dir"]),
+            "--check-comparison",
+            "--comparison-report-path",
+            str(comparison_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Comparison: status=passed differences=0" in result.output
+
+
 def test_ops_publish_status_writes_sanitized_dashboard_json(tmp_path) -> None:
     paths = _write_reconciled_health_artifacts(tmp_path)
     output_path = tmp_path / "site" / "status.json"
+    comparison_path = tmp_path / "dry_run" / "comparison" / "latest.json"
+    _write_comparison_report(comparison_path, passed=True)
 
     result = CliRunner().invoke(
         app,
@@ -250,6 +302,8 @@ def test_ops_publish_status_writes_sanitized_dashboard_json(tmp_path) -> None:
             str(paths["logs_dir"]),
             "--initial-cash",
             "1000",
+            "--comparison-report-path",
+            str(comparison_path),
         ],
     )
 
@@ -259,6 +313,8 @@ def test_ops_publish_status_writes_sanitized_dashboard_json(tmp_path) -> None:
     assert payload["status"] == "healthy"
     assert payload["reconciliation_status"] == "passed"
     assert payload["reconciliation_difference_count"] == 0
+    assert payload["comparison_status"] == "passed"
+    assert payload["comparison_difference_count"] == 0
     assert "state_cash" not in payload
     assert "state_position_count" not in payload
 
@@ -348,3 +404,39 @@ def _write_reconciled_health_artifacts(tmp_path):
     write_paper_signal_record(signal_record, paths["signal_records_dir"])
     save_paper_broker_state(broker.state(), paths["state_path"])
     return paths
+
+
+def _write_comparison_report(path, *, passed: bool) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    differences = ()
+    if not passed:
+        differences = (
+            PaperDryRunDifference(
+                field="quantity",
+                paper_value="2",
+                dry_run_value="1",
+                message="paper fill quantity and dry-run quantity do not match",
+            ),
+        )
+    report = PaperDryRunComparisonReport(
+        paper_signal_path="paper.json",
+        dry_run_order_path="dry-run.json",
+        status=(
+            PaperDryRunComparisonStatus.PASSED
+            if passed
+            else PaperDryRunComparisonStatus.FAILED
+        ),
+        paper_action=PaperSignalAction.BUY,
+        dry_run_side=OrderSide.BUY,
+        paper_symbol="AAPL",
+        dry_run_symbol="AAPL",
+        paper_quantity=2,
+        dry_run_quantity=2 if passed else 1,
+        paper_market_price=10,
+        dry_run_market_price=10,
+        paper_signal_date="2024-01-25",
+        difference_tolerance=0.01,
+        difference_count=len(differences),
+        differences=differences,
+    )
+    path.write_text(report.model_dump_json(indent=2) + "\n")

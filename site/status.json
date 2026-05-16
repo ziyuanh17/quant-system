@@ -9,6 +9,8 @@
   "lock_status": "missing",
   "reconciliation_status": "skipped",
   "reconciliation_difference_count": null,
+  "comparison_status": "skipped",
+  "comparison_difference_count": null,
   "issue_count": 1,
   "issues": [
     {

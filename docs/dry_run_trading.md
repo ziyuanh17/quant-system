@@ -111,6 +111,12 @@ Paper hold or skipped signals should have no matching dry-run order. A mismatch
 returns a nonzero exit code so scheduled checks can catch divergence before any
 live broker adapter exists.
 
+Operational health can surface the latest comparison status:
+
+```bash
+quant ops health --check-comparison
+```
+
 The record says what would have been submitted to a broker:
 
 - symbol

@@ -1240,6 +1240,14 @@ def ops_health(
             help="Path where reconciliation health report is written."
         ),
     ] = Path("data/paper/reconciliation/health-state.json"),
+    check_comparison: Annotated[
+        bool,
+        typer.Option(help="Check paper-vs-dry-run comparison report."),
+    ] = False,
+    comparison_report_path: Annotated[
+        Path,
+        typer.Option(help="Path to paper-vs-dry-run comparison report."),
+    ] = Path("data/dry_run/comparison/latest.json"),
 ) -> None:
     """Check local service health from durable artifacts."""
     if lock_stale_after_seconds <= 0:
@@ -1259,6 +1267,10 @@ def ops_health(
         cash_tolerance=cash_tolerance,
         reconciliation_report_path=(
             reconciliation_report_path if reconcile_state else None
+        ),
+        check_comparison=check_comparison,
+        comparison_report_path=(
+            comparison_report_path if check_comparison else None
         ),
     )
     _print_health_report(report)
@@ -1313,6 +1325,14 @@ def ops_publish_status(
         bool,
         typer.Option(help="Exit nonzero after writing failed status."),
     ] = False,
+    check_comparison: Annotated[
+        bool,
+        typer.Option(help="Check paper-vs-dry-run comparison report."),
+    ] = True,
+    comparison_report_path: Annotated[
+        Path,
+        typer.Option(help="Path to paper-vs-dry-run comparison report."),
+    ] = Path("data/dry_run/comparison/latest.json"),
 ) -> None:
     """Publish a sanitized health snapshot for the static dashboard."""
     if lock_stale_after_seconds <= 0:
@@ -1331,6 +1351,10 @@ def ops_publish_status(
         initial_cash=initial_cash,
         cash_tolerance=cash_tolerance,
         reconciliation_report_path=None,
+        check_comparison=check_comparison,
+        comparison_report_path=(
+            comparison_report_path if check_comparison else None
+        ),
     )
     status = build_dashboard_health_status(report)
     path = write_dashboard_health_status(status, output_path)
@@ -1452,6 +1476,13 @@ def _print_health_report(report: HealthReport) -> None:
         "differences="
         f"{_format_health_value(report.reconciliation_difference_count)} "
         f"({_format_health_value(report.reconciliation_report_path)})"
+    )
+    typer.echo(
+        "Comparison: "
+        f"status={report.comparison_status} "
+        "differences="
+        f"{_format_health_value(report.comparison_difference_count)} "
+        f"({_format_health_value(report.comparison_report_path)})"
     )
     typer.echo(f"Issues: {report.issue_count}")
 

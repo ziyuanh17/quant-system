@@ -115,6 +115,12 @@ For a fuller daily check:
 quant ops health --reconcile-state --initial-cash 100000
 ```
 
+After running paper and dry-run paths, include the comparison report:
+
+```bash
+quant ops health --check-comparison
+```
+
 See [operations.md](operations.md) for status meanings and current limits.
 
 ## Publish Dashboard Status
@@ -174,10 +180,12 @@ the paper account was created.
 3. If the failure mentions a lock, confirm whether another workflow is running.
 4. Check the `Reconciliation:` line in `quant ops health`, or run
    `quant paper reconcile-state` for the standalone report.
-5. Run `quant ops publish-status --initial-cash 100000` if the GitHub Pages
+5. If dry-run comparison is enabled, inspect
+   `data/dry_run/comparison/latest.json`.
+6. Run `quant ops publish-status --initial-cash 100000` if the GitHub Pages
    dashboard should reflect the current failure.
-6. Confirm the input data has the required columns:
+7. Confirm the input data has the required columns:
    `date`, `symbol`, `open`, `high`, `low`, `close`, `volume`.
-7. Confirm dependencies are installed in the active environment.
-8. Re-run with the smallest dataset that reproduces the issue.
-9. Add a regression test before changing core accounting or signal behavior.
+8. Confirm dependencies are installed in the active environment.
+9. Re-run with the smallest dataset that reproduces the issue.
+10. Add a regression test before changing core accounting or signal behavior.

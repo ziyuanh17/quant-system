@@ -90,6 +90,7 @@ function renderStatus(status) {
     "reconciliation-status",
     formatValue(status.reconciliation_status),
   );
+  setText("comparison-status", formatValue(status.comparison_status));
 
   const issues = document.getElementById("status-issues");
   issues.innerHTML = "";
@@ -123,6 +124,7 @@ function renderStatusError(error) {
   setText("latest-run-status", "n/a");
   setText("lock-status", "n/a");
   setText("reconciliation-status", "n/a");
+  setText("comparison-status", "n/a");
 }
 
 loadProgress()
