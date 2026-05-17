@@ -132,6 +132,13 @@ quant safety check
 See [docs/trading_safety.md](docs/trading_safety.md) for the fail-closed live
 trading rules.
 
+See [docs/live_broker_adapter.md](docs/live_broker_adapter.md) for the live
+broker adapter design boundary. The project still has no real broker
+connectivity.
+
+See [docs/live_broker_api_research.md](docs/live_broker_api_research.md) for
+the broker API/package research behind the first integration decision.
+
 Record a live-shaped dry-run order without submitting it:
 
 ```bash

@@ -5,10 +5,10 @@
     "updated": "2026-05-16"
   },
   "summary": {
-    "done": 32,
+    "done": 33,
     "in_review": 1,
     "planned": 1,
-    "next": "Live Broker Adapter Design v1"
+    "next": "Live Audit Models v1"
   },
   "milestones": [
     {
@@ -206,14 +206,20 @@
     {
       "order": 33,
       "name": "Dry-Run Server Wrapper v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Add repeatable local/server wrapper configuration for the dry-run refresh workflow."
     },
     {
       "order": 34,
       "name": "Live Broker Adapter Design v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Design the real broker adapter, credential boundary, and account reconciliation contract before real orders are possible."
+    },
+    {
+      "order": 35,
+      "name": "Live Audit Models v1",
+      "status": "planned",
+      "purpose": "Add typed live order, fill, account snapshot, and reconciliation models without broker network access."
     }
   ],
   "futureMetrics": [

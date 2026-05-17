@@ -72,3 +72,7 @@ visible before credentials, network calls, or account state are touched.
 
 This milestone does not add live broker connectivity and does not place real
 trades.
+
+See [live_broker_adapter.md](live_broker_adapter.md) for the design boundary a
+future real broker adapter must satisfy before credentials or order APIs are
+introduced.

@@ -3,6 +3,9 @@
 This project is not ready for real-money live trading. This deployment guide is
 for running the paper-trading signal loop as a recurring server job.
 
+See [live_broker_adapter.md](live_broker_adapter.md) for the design boundary
+that must be satisfied before any real broker deployment is added.
+
 The goal of this version is operational clarity:
 
 ```text

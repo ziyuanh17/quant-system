@@ -41,7 +41,9 @@ preserves the existing paper state and signal record formats.
 
 ## Future Live Broker Requirements
 
-Before adding a live broker adapter, define and test:
+The live broker design is now tracked in
+[live_broker_adapter.md](live_broker_adapter.md). Before adding a live broker
+adapter, define and test:
 
 - broker credential loading rules
 - market-hours and asset-universe checks
