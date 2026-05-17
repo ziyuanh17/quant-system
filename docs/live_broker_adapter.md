@@ -218,12 +218,13 @@ explicit safety config, and live-specific output directories.
 Build in this order:
 
 1. Add typed live order, fill, account snapshot, and reconciliation models.
-2. Add append-only live artifact writers and readers.
+2. Add append-only live artifact writers.
 3. Add fake live broker client tests with no network access.
 4. Add a live adapter against the fake client only.
 5. Add live reconciliation against fake broker snapshots.
 6. Add CLI commands that are blocked by safety gates and fake-client tests.
 7. Only then evaluate a real broker SDK integration.
 
-The next milestone should be typed live audit models and artifact writers. That
-keeps progress concrete while still avoiding credentials and real order APIs.
+Typed live audit models and artifact writers now exist. The next milestone
+should add a no-network fake live broker client that produces these records in
+tests before any real broker SDK integration.

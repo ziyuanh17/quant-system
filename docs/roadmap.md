@@ -49,13 +49,14 @@ side discussions.
 | 31 | Comparison Health Integration v1 | Done | Surface paper-vs-dry-run divergence in operational health and dashboard status. |
 | 32 | Dry-Run Refresh Workflow v1 | Done | Refresh data, run dry-run signals, compare outputs, and publish health in one server workflow. |
 | 33 | Dry-Run Server Wrapper v1 | Done | Add repeatable local/server wrapper configuration for the dry-run refresh workflow. |
-| 34 | Live Broker Adapter Design v1 | In Review | Design the real broker adapter, credential boundary, and account reconciliation contract before real orders are possible. |
-| 35 | Live Audit Models v1 | Planned | Add typed live order, fill, account snapshot, and reconciliation models without broker network access. |
+| 34 | Live Broker Adapter Design v1 | Done | Design the real broker adapter, credential boundary, and account reconciliation contract before real orders are possible. |
+| 35 | Live Audit Models v1 | In Review | Add typed live order, fill, account snapshot, and reconciliation models without broker network access. |
+| 36 | Fake Live Broker Client v1 | Planned | Add a no-network fake broker client for live adapter tests before any real SDK integration. |
 
 ## Current Recommendation
 
-The next milestone after Live Broker Adapter Design v1 should be
-**Live Audit Models v1**.
+The next milestone after Live Audit Models v1 should be
+**Fake Live Broker Client v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -65,9 +66,9 @@ fail-closed trading safety gates, a live-shaped dry-run order adapter,
 strategy-to-dry-run signal execution, scheduled dry-run signal runs, a
 paper-vs-dry-run comparison report, health/dashboard visibility for comparison
 failures, a composed dry-run refresh workflow, a server wrapper for running
-that dry-run workflow repeatedly, and a live broker adapter design boundary. The
-next step should add typed live audit models before any real broker API is
-connected.
+that dry-run workflow repeatedly, a live broker adapter design boundary, and
+typed live audit models. The next step should add a no-network fake live broker
+client before any real broker API is connected.
 
 ## Corrected Near-Term Order
 
@@ -104,6 +105,7 @@ data ingestion
   -> dry-run server wrapper
   -> live broker adapter design
   -> live audit models
+  -> fake live broker client
 ```
 
 ## Data Lineage v1 Scope
@@ -242,6 +244,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Dry-run refresh workflow | Refreshes one symbol, runs one dry-run strategy loop, and compares against the latest paper signal when one exists. | Add local/server wrapper configuration, multi-symbol runs, retries, and deployment-specific health publishing. |
 | Dry-run server wrapper | Provides an env-driven wrapper for the dry-run refresh workflow, but still relies on cron/systemd and local files. | Add stronger scheduling supervision, deployment templates, health publishing automation, and alert hooks after live-trading boundaries are designed. |
 | Live broker adapter design | Defines the real broker boundary, but no typed live audit models or fake broker tests exist yet. | Add typed live order/fill/account/reconciliation models and append-only artifact writers before any broker SDK integration. |
+| Live audit models | Defines broker-neutral live audit records and JSON writers, but no fake broker client produces them yet. | Add a no-network fake live broker client and adapter tests before any real broker SDK integration. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -645,3 +648,28 @@ live order submission, live fills, or any command that can place a real order.
 The companion research report recommends keeping the next implementation
 broker-neutral, then using Alpaca paper trading as the first external broker
 integration candidate after fake-client and audit-artifact tests exist.
+
+## Live Audit Models v1 Scope
+
+Introduce:
+
+```text
+LiveOrderRecord
+LiveFillRecord
+LiveAccountSnapshot
+LiveReconciliationReport
+data/live/orders/
+data/live/fills/
+data/live/account_snapshots/
+data/live/reconciliation/
+```
+
+The first version adds broker-neutral typed records for future live order
+attempts, broker fills, sanitized account snapshots, and reconciliation reports.
+It also adds append-only JSON artifact writers so every future live adapter can
+write the same local audit trail before any broker-specific behavior leaks into
+the rest of the system.
+
+This milestone does not add credentials, broker dependencies, broker clients,
+network calls, live order submission, live fills, or any command that can place
+a real order.

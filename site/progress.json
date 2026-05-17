@@ -5,10 +5,10 @@
     "updated": "2026-05-16"
   },
   "summary": {
-    "done": 33,
+    "done": 34,
     "in_review": 1,
     "planned": 1,
-    "next": "Live Audit Models v1"
+    "next": "Fake Live Broker Client v1"
   },
   "milestones": [
     {
@@ -212,14 +212,20 @@
     {
       "order": 34,
       "name": "Live Broker Adapter Design v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Design the real broker adapter, credential boundary, and account reconciliation contract before real orders are possible."
     },
     {
       "order": 35,
       "name": "Live Audit Models v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Add typed live order, fill, account snapshot, and reconciliation models without broker network access."
+    },
+    {
+      "order": 36,
+      "name": "Fake Live Broker Client v1",
+      "status": "planned",
+      "purpose": "Add a no-network fake broker client for live adapter tests before any real SDK integration."
     }
   ],
   "futureMetrics": [

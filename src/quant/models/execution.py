@@ -22,6 +22,15 @@ class OrderStatus(StrEnum):
     FILLED = "filled"
 
 
+class LiveOrderStatus(StrEnum):
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    PARTIALLY_FILLED = "partially_filled"
+    FILLED = "filled"
+    CANCELLED = "cancelled"
+    UNKNOWN = "unknown"
+
+
 class RiskDecision(StrEnum):
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -150,6 +159,116 @@ class DryRunOrderRecord(FrozenModel):
     broker_name: str
     safety_check: TradingSafetyCheck
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class LiveOrderRecord(FrozenModel):
+    """Broker order audit record for future live adapters.
+
+    The model is intentionally broker-neutral. A live adapter should translate
+    provider-specific responses into this shape before writing local artifacts.
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    client_order_id: str
+    broker_order_id: str | None = None
+    broker_name: str
+    account_id: str
+    broker_environment: str
+    request: OrderRequest
+    reference_price: float = Field(gt=0)
+    notional: float = Field(gt=0)
+    safety_check: TradingSafetyCheck
+    status: LiveOrderStatus
+    rejection_reason: str | None = None
+    raw_response_ref: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    submitted_at: datetime | None = None
+    broker_updated_at: datetime | None = None
+    recorded_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class LiveFillRecord(FrozenModel):
+    """Broker execution/fill audit record for future live adapters."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    order_record_id: str
+    client_order_id: str
+    broker_order_id: str
+    broker_execution_id: str | None = None
+    broker_name: str
+    account_id: str
+    broker_environment: str
+    symbol: str
+    side: OrderSide
+    quantity: int = Field(gt=0)
+    price: float = Field(gt=0)
+    commission: float = Field(default=0, ge=0)
+    raw_response_ref: str | None = None
+    filled_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    recorded_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    @property
+    def notional(self) -> float:
+        return self.quantity * self.price
+
+
+class LiveAccountSnapshot(FrozenModel):
+    """Sanitized broker account snapshot for future live reconciliation."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    broker_name: str
+    account_id: str
+    broker_environment: str
+    cash: float = Field(ge=0)
+    buying_power: float = Field(ge=0)
+    positions: tuple[Position, ...] = ()
+    open_order_ids: tuple[str, ...] = ()
+    captured_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    raw_response_ref: str | None = None
+
+    @property
+    def equity(self) -> float:
+        return self.cash + sum(
+            position.market_value for position in self.positions
+        )
+
+
+class LiveReconciliationStatus(StrEnum):
+    PASSED = "passed"
+    FAILED = "failed"
+
+
+class LiveReconciliationDifference(FrozenModel):
+    field: str
+    local_value: str
+    broker_value: str
+    message: str
+
+
+class LiveReconciliationReport(FrozenModel):
+    """Read-only comparison between local live artifacts and broker truth."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    broker_name: str
+    account_id: str
+    broker_environment: str
+    local_order_count: int = Field(ge=0)
+    broker_order_count: int = Field(ge=0)
+    local_fill_count: int = Field(ge=0)
+    broker_fill_count: int = Field(ge=0)
+    local_position_count: int = Field(ge=0)
+    broker_position_count: int = Field(ge=0)
+    status: LiveReconciliationStatus
+    differences: tuple[LiveReconciliationDifference, ...] = ()
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    @property
+    def passed(self) -> bool:
+        return self.status == LiveReconciliationStatus.PASSED
+
+    @property
+    def difference_count(self) -> int:
+        return len(self.differences)
 
 
 class PaperDryRunComparisonStatus(StrEnum):
