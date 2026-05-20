@@ -17,6 +17,8 @@ from quant.data import (
 from quant.execution import (
     LIVE_TRADING_CONFIRMATION,
     DryRunBrokerAdapter,
+    FakeLiveBrokerClient,
+    LiveBrokerAdapter,
     PaperBroker,
     PaperBrokerAdapter,
     compare_paper_signal_to_dry_run_order,
@@ -26,9 +28,11 @@ from quant.execution import (
     latest_json,
     load_paper_broker_state,
     load_trading_safety_config_from_env,
+    reconcile_live_state,
     reconcile_paper_state,
     save_paper_broker_state,
     write_dry_run_order_record,
+    write_live_reconciliation_report,
     write_paper_dry_run_comparison_report,
     write_paper_signal_record,
     write_paper_state_reconciliation_report,
@@ -46,6 +50,7 @@ from quant.models.execution import (
     PaperStateReconciliationReport,
     Position,
     TradingMode,
+    TradingSafetyCheck,
     TradingSafetyConfig,
 )
 from quant.models.features import TechnicalFeatureConfig
@@ -81,6 +86,7 @@ ops_app = typer.Typer(no_args_is_help=True)
 workflow_app = typer.Typer(no_args_is_help=True)
 safety_app = typer.Typer(no_args_is_help=True)
 dry_run_app = typer.Typer(no_args_is_help=True)
+live_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
@@ -89,6 +95,7 @@ app.add_typer(ops_app, name="ops")
 app.add_typer(workflow_app, name="workflow")
 app.add_typer(safety_app, name="safety")
 app.add_typer(dry_run_app, name="dry-run")
+app.add_typer(live_app, name="live")
 
 
 @app.callback()
@@ -323,6 +330,224 @@ def dry_run_compare_paper(
         typer.echo(
             f"[{difference.field}] paper={difference.paper_value} "
             f"dry_run={difference.dry_run_value}: {difference.message}"
+        )
+    typer.echo(f"Report: {report_path}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@live_app.command("fake-order")
+def live_fake_order(
+    symbol: Annotated[str, typer.Option(help="Symbol to trade.")] = "AAPL",
+    side: Annotated[
+        OrderSide,
+        typer.Option(help="Order side."),
+    ] = OrderSide.BUY,
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity."),
+    ] = 1,
+    price: Annotated[
+        float,
+        typer.Option(help="Reference market price for the fake live order."),
+    ] = 100.0,
+    client_order_id: Annotated[
+        str,
+        typer.Option(help="Idempotent client order ID."),
+    ] = "fake-live-order",
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Starting cash for the fake broker client."),
+    ] = 100_000,
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live-mode rehearsal."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required live-mode confirmation phrase."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional for this fake live order."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live-mode rehearsal."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+    order_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live order artifacts."),
+    ] = Path("data/live/orders"),
+    fill_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live fill artifacts."),
+    ] = Path("data/live/fills"),
+    snapshot_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live account snapshot artifacts."),
+    ] = Path("data/live/account_snapshots"),
+) -> None:
+    """Submit a safety-gated fake live order with no broker network calls."""
+    check, resolved_max_order_notional = _live_safety_check_or_exit(
+        from_env=from_env,
+        live_trading_enabled=live_trading_enabled,
+        live_trading_confirmation=live_trading_confirmation,
+        max_order_notional=max_order_notional,
+        broker_name=broker_name,
+    )
+    _validate_live_order_notional(
+        quantity=quantity,
+        price=price,
+        max_order_notional=resolved_max_order_notional,
+    )
+    client = FakeLiveBrokerClient(
+        initial_cash=initial_cash,
+        broker_name=broker_name or "fake-live",
+    )
+    adapter = LiveBrokerAdapter(
+        client=client,
+        order_output_dir=order_output_dir,
+        fill_output_dir=fill_output_dir,
+        snapshot_output_dir=snapshot_output_dir,
+    )
+    record = adapter.submit_market_order(
+        OrderRequest(symbol=symbol, side=side, quantity=quantity),
+        reference_price=price,
+        client_order_id=client_order_id,
+        safety_check=check,
+    )
+    snapshot = adapter.account_snapshot()
+
+    typer.echo(f"Live fake order: {record.id}")
+    typer.echo(f"Status: {record.status.value}")
+    if record.rejection_reason is not None:
+        typer.echo(f"Rejection reason: {record.rejection_reason}")
+    typer.echo(f"Broker: {record.broker_name}")
+    typer.echo(f"Client order ID: {record.client_order_id}")
+    typer.echo(f"Broker order ID: {record.broker_order_id}")
+    typer.echo(f"Side: {record.request.side.value}")
+    typer.echo(f"Quantity: {record.request.quantity}")
+    typer.echo(f"Reference price: {record.reference_price:,.2f}")
+    typer.echo(f"Notional: {record.notional:,.2f}")
+    typer.echo(f"Cash: {snapshot.cash:,.2f}")
+    typer.echo(f"Order records: {order_output_dir}")
+    typer.echo(f"Fill records: {fill_output_dir}")
+    typer.echo(f"Snapshot records: {snapshot_output_dir}")
+
+    if record.status.value == "rejected":
+        raise typer.Exit(code=1)
+
+
+@live_app.command("fake-reconcile")
+def live_fake_reconcile(
+    symbol: Annotated[str, typer.Option(help="Symbol to reconcile.")] = "AAPL",
+    side: Annotated[
+        OrderSide,
+        typer.Option(help="Order side used to rebuild fake broker truth."),
+    ] = OrderSide.BUY,
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity used to rebuild fake broker truth."),
+    ] = 1,
+    price: Annotated[
+        float,
+        typer.Option(help="Reference price used to rebuild fake broker truth."),
+    ] = 100.0,
+    client_order_id: Annotated[
+        str,
+        typer.Option(help="Client order ID used to rebuild fake broker truth."),
+    ] = "fake-live-order",
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Starting cash for the fake broker truth."),
+    ] = 100_000,
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live-mode rehearsal."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required live-mode confirmation phrase."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional for this fake live order."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live-mode rehearsal."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+    order_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing local live order artifacts."),
+    ] = Path("data/live/orders"),
+    fill_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing local live fill artifacts."),
+    ] = Path("data/live/fills"),
+    snapshot_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing local account snapshots."),
+    ] = Path("data/live/account_snapshots"),
+    output_path: Annotated[
+        Path,
+        typer.Option(help="Path where reconciliation report is written."),
+    ] = Path("data/live/reconciliation/latest.json"),
+    cash_tolerance: Annotated[
+        float,
+        typer.Option(help="Allowed cash and price difference."),
+    ] = 0.01,
+) -> None:
+    """Reconcile local live artifacts against fake broker truth."""
+    if cash_tolerance < 0:
+        raise typer.BadParameter("cash-tolerance must be non-negative")
+    check, resolved_max_order_notional = _live_safety_check_or_exit(
+        from_env=from_env,
+        live_trading_enabled=live_trading_enabled,
+        live_trading_confirmation=live_trading_confirmation,
+        max_order_notional=max_order_notional,
+        broker_name=broker_name,
+    )
+    _validate_live_order_notional(
+        quantity=quantity,
+        price=price,
+        max_order_notional=resolved_max_order_notional,
+    )
+    client = FakeLiveBrokerClient(
+        initial_cash=initial_cash,
+        broker_name=broker_name or "fake-live",
+    )
+    client.submit_market_order(
+        OrderRequest(symbol=symbol, side=side, quantity=quantity),
+        reference_price=price,
+        client_order_id=client_order_id,
+        safety_check=check,
+    )
+    report = reconcile_live_state(
+        client=client,
+        order_records_dir=order_records_dir,
+        fill_records_dir=fill_records_dir,
+        snapshot_records_dir=snapshot_records_dir,
+        cash_tolerance=cash_tolerance,
+    )
+    report_path = write_live_reconciliation_report(report, output_path)
+
+    typer.echo(f"Status: {report.status.value}")
+    typer.echo(f"Differences: {report.difference_count}")
+    for difference in report.differences:
+        typer.echo(
+            f"[{difference.field}] local={difference.local_value} "
+            f"broker={difference.broker_value}: {difference.message}"
         )
     typer.echo(f"Report: {report_path}")
 
@@ -1539,6 +1764,53 @@ def _validate_paper_signal_options(
         )
     if initial_position_quantity > 0 and initial_position_price <= 0:
         raise typer.BadParameter("initial-position-price must be positive")
+
+
+def _live_safety_check_or_exit(
+    *,
+    from_env: bool,
+    live_trading_enabled: bool,
+    live_trading_confirmation: str | None,
+    max_order_notional: float | None,
+    broker_name: str | None,
+) -> tuple[TradingSafetyCheck, float | None]:
+    if from_env:
+        try:
+            config = load_trading_safety_config_from_env()
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc)) from exc
+    else:
+        config = TradingSafetyConfig(
+            mode=TradingMode.LIVE,
+            live_trading_enabled=live_trading_enabled,
+            live_trading_confirmation=live_trading_confirmation,
+            max_order_notional=max_order_notional,
+            broker_name=broker_name,
+        )
+
+    check = evaluate_trading_safety(config)
+    if not check.allowed:
+        typer.echo("Allowed: False")
+        for issue in check.issues:
+            typer.echo(f"- {issue}")
+        typer.echo(f"Required confirmation: {LIVE_TRADING_CONFIRMATION}")
+        raise typer.Exit(code=1)
+    return check, config.max_order_notional
+
+
+def _validate_live_order_notional(
+    *,
+    quantity: int,
+    price: float,
+    max_order_notional: float | None,
+) -> None:
+    if price <= 0:
+        raise typer.BadParameter("price must be positive")
+    notional = quantity * price
+    if max_order_notional is not None and notional > max_order_notional:
+        raise typer.BadParameter(
+            "order notional exceeds max-order-notional"
+        )
 
 
 def _initial_positions(

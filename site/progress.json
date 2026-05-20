@@ -5,10 +5,10 @@
     "updated": "2026-05-16"
   },
   "summary": {
-    "done": 37,
+    "done": 38,
     "in_review": 1,
     "planned": 1,
-    "next": "Fake Live CLI v1"
+    "next": "Alpaca Paper Adapter Design v1"
   },
   "milestones": [
     {
@@ -236,14 +236,20 @@
     {
       "order": 38,
       "name": "Fake Live Reconciliation v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Compare local live artifacts against fake broker account/order/fill state before any real SDK integration."
     },
     {
       "order": 39,
       "name": "Fake Live CLI v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Add safety-gated fake live commands for order submission and reconciliation without real broker SDKs."
+    },
+    {
+      "order": 40,
+      "name": "Alpaca Paper Adapter Design v1",
+      "status": "planned",
+      "purpose": "Design the first external paper-broker adapter and dependency boundary before adding the Alpaca SDK."
     }
   ],
   "futureMetrics": [
