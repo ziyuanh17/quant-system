@@ -2,13 +2,13 @@
   "project": {
     "name": "Quant System",
     "description": "A typed, solo-maintainable quant research and paper-trading system.",
-    "updated": "2026-05-16"
+    "updated": "2026-05-20"
   },
   "summary": {
-    "done": 38,
+    "done": 39,
     "in_review": 1,
     "planned": 1,
-    "next": "Alpaca Paper Adapter Design v1"
+    "next": "Alpaca Paper Mapping v1"
   },
   "milestones": [
     {
@@ -242,14 +242,20 @@
     {
       "order": 39,
       "name": "Fake Live CLI v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Add safety-gated fake live commands for order submission and reconciliation without real broker SDKs."
     },
     {
       "order": 40,
       "name": "Alpaca Paper Adapter Design v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Design the first external paper-broker adapter and dependency boundary before adding the Alpaca SDK."
+    },
+    {
+      "order": 41,
+      "name": "Alpaca Paper Mapping v1",
+      "status": "planned",
+      "purpose": "Add Alpaca-shaped mapping helpers and tests without installing the Alpaca SDK."
     }
   ],
   "futureMetrics": [

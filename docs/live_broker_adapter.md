@@ -7,6 +7,9 @@ credential, or real order submission code is added.
 See [live_broker_api_research.md](live_broker_api_research.md) for the current
 broker API/package research and first-integration recommendation.
 
+See [alpaca_paper_adapter.md](alpaca_paper_adapter.md) for the first external
+paper-broker adapter design.
+
 The goal is to make live trading boring, explicit, auditable, and impossible by
 accident.
 

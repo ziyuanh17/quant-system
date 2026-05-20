@@ -105,6 +105,9 @@ Use Alpaca as the first real external integration, but only after the offline
 live audit models and fake broker adapter exist. The first Alpaca implementation
 should target paper mode, not live mode.
 
+See [alpaca_paper_adapter.md](alpaca_paper_adapter.md) for the first Alpaca
+paper adapter design boundary.
+
 ## Tradier
 
 Sources:
