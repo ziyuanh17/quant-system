@@ -1,5 +1,12 @@
+from pathlib import Path
 from typing import Protocol
 
+from quant.execution.artifacts import (
+    write_live_account_snapshot,
+    write_live_fill_record,
+    write_live_order_record,
+)
+from quant.execution.safety import LiveTradingNotAllowedError
 from quant.models.execution import (
     LiveAccountSnapshot,
     LiveFillRecord,
@@ -247,4 +254,81 @@ class FakeLiveBrokerClient:
             quantity=total_quantity,
             average_price=total_cost / total_quantity,
             last_price=fill.price,
+        )
+
+
+class LiveBrokerAdapter:
+    """Adapter boundary for live-capable broker clients.
+
+    The adapter is deliberately client-agnostic. Today it can wrap only the
+    no-network fake client, but future Alpaca or Tradier clients should fit
+    behind the same protocol and write the same audit artifacts.
+    """
+
+    def __init__(
+        self,
+        *,
+        client: LiveBrokerClient,
+        order_output_dir: Path | None = None,
+        fill_output_dir: Path | None = None,
+        snapshot_output_dir: Path | None = None,
+    ) -> None:
+        self._client = client
+        self._order_output_dir = order_output_dir
+        self._fill_output_dir = fill_output_dir
+        self._snapshot_output_dir = snapshot_output_dir
+        self._written_fill_ids: set[str] = set()
+
+    def submit_market_order(
+        self,
+        request: OrderRequest,
+        *,
+        reference_price: float,
+        client_order_id: str,
+        safety_check: TradingSafetyCheck,
+    ) -> LiveOrderRecord:
+        self._require_live_allowed(safety_check)
+        record = self._client.submit_market_order(
+            request,
+            reference_price=reference_price,
+            client_order_id=client_order_id,
+            safety_check=safety_check,
+        )
+        if self._order_output_dir is not None:
+            write_live_order_record(record, self._order_output_dir)
+        self._write_new_fills()
+        return record
+
+    def account_snapshot(self) -> LiveAccountSnapshot:
+        snapshot = self._client.account_snapshot()
+        if self._snapshot_output_dir is not None:
+            write_live_account_snapshot(snapshot, self._snapshot_output_dir)
+        return snapshot
+
+    def open_orders(self) -> tuple[LiveOrderRecord, ...]:
+        return self._client.open_orders()
+
+    def fills(self) -> tuple[LiveFillRecord, ...]:
+        fills = self._client.fills()
+        self._write_new_fills(fills)
+        return fills
+
+    def _write_new_fills(
+        self,
+        fills: tuple[LiveFillRecord, ...] | None = None,
+    ) -> None:
+        if self._fill_output_dir is None:
+            return
+        current_fills = fills if fills is not None else self._client.fills()
+        for fill in current_fills:
+            if fill.id in self._written_fill_ids:
+                continue
+            write_live_fill_record(fill, self._fill_output_dir)
+            self._written_fill_ids.add(fill.id)
+
+    def _require_live_allowed(self, safety_check: TradingSafetyCheck) -> None:
+        if safety_check.allowed and safety_check.mode == TradingMode.LIVE:
+            return
+        raise LiveTradingNotAllowedError(
+            "live broker adapter requires an allowed live safety check"
         )

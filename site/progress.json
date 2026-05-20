@@ -5,10 +5,10 @@
     "updated": "2026-05-16"
   },
   "summary": {
-    "done": 35,
+    "done": 36,
     "in_review": 1,
     "planned": 1,
-    "next": "Fake-Backed Live Adapter v1"
+    "next": "Fake Live Reconciliation v1"
   },
   "milestones": [
     {
@@ -224,14 +224,20 @@
     {
       "order": 36,
       "name": "Fake Live Broker Client v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Add a no-network fake broker client for live adapter tests before any real SDK integration."
     },
     {
       "order": 37,
       "name": "Fake-Backed Live Adapter v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Connect the live adapter boundary to the fake client before any real broker SDK integration."
+    },
+    {
+      "order": 38,
+      "name": "Fake Live Reconciliation v1",
+      "status": "planned",
+      "purpose": "Compare local live artifacts against fake broker account/order/fill state before any real SDK integration."
     }
   ],
   "futureMetrics": [
