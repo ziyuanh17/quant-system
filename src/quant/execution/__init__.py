@@ -18,6 +18,7 @@ from quant.execution.dry_run_comparison import (
     latest_json,
     write_paper_dry_run_comparison_report,
 )
+from quant.execution.live_broker import FakeLiveBrokerClient, LiveBrokerClient
 from quant.execution.paper_broker import PaperBroker
 from quant.execution.reconciliation import (
     reconcile_paper_state,
@@ -44,7 +45,9 @@ from quant.execution.state import (
 __all__ = [
     "BrokerAdapter",
     "DryRunBrokerAdapter",
+    "FakeLiveBrokerClient",
     "LIVE_TRADING_CONFIRMATION",
+    "LiveBrokerClient",
     "LiveTradingNotAllowedError",
     "PaperBroker",
     "PaperBrokerAdapter",

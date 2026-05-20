@@ -225,6 +225,6 @@ Build in this order:
 6. Add CLI commands that are blocked by safety gates and fake-client tests.
 7. Only then evaluate a real broker SDK integration.
 
-Typed live audit models and artifact writers now exist. The next milestone
-should add a no-network fake live broker client that produces these records in
-tests before any real broker SDK integration.
+Typed live audit models, artifact writers, and a no-network fake live broker
+client now exist. The next milestone should connect the live adapter boundary
+to the fake client before any real broker SDK integration.
