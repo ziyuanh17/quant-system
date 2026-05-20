@@ -52,13 +52,14 @@ side discussions.
 | 34 | Live Broker Adapter Design v1 | Done | Design the real broker adapter, credential boundary, and account reconciliation contract before real orders are possible. |
 | 35 | Live Audit Models v1 | Done | Add typed live order, fill, account snapshot, and reconciliation models without broker network access. |
 | 36 | Fake Live Broker Client v1 | Done | Add a no-network fake broker client for live adapter tests before any real SDK integration. |
-| 37 | Fake-Backed Live Adapter v1 | In Review | Connect the live adapter boundary to the fake client before any real broker SDK integration. |
-| 38 | Fake Live Reconciliation v1 | Planned | Compare local live artifacts against fake broker account/order/fill state before any real SDK integration. |
+| 37 | Fake-Backed Live Adapter v1 | Done | Connect the live adapter boundary to the fake client before any real broker SDK integration. |
+| 38 | Fake Live Reconciliation v1 | In Review | Compare local live artifacts against fake broker account/order/fill state before any real SDK integration. |
+| 39 | Fake Live CLI v1 | Planned | Add safety-gated fake live commands for order submission and reconciliation without real broker SDKs. |
 
 ## Current Recommendation
 
-The next milestone after Fake-Backed Live Adapter v1 should be
-**Fake Live Reconciliation v1**.
+The next milestone after Fake Live Reconciliation v1 should be
+**Fake Live CLI v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -69,9 +70,10 @@ strategy-to-dry-run signal execution, scheduled dry-run signal runs, a
 paper-vs-dry-run comparison report, health/dashboard visibility for comparison
 failures, a composed dry-run refresh workflow, a server wrapper for running
 that dry-run workflow repeatedly, a live broker adapter design boundary, typed
-live audit models, a no-network fake live broker client, and a fake-backed live
-adapter. The next step should compare local live artifacts against fake broker
-truth before any real broker API is connected.
+live audit models, a no-network fake live broker client, a fake-backed live
+adapter, and fake live reconciliation. The next step should expose the fake
+live path through safety-gated CLI commands before any real broker API is
+connected.
 
 ## Corrected Near-Term Order
 
@@ -111,6 +113,7 @@ data ingestion
   -> fake live broker client
   -> fake-backed live adapter
   -> fake live reconciliation
+  -> fake live CLI
 ```
 
 ## Data Lineage v1 Scope
@@ -252,6 +255,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Live audit models | Defines broker-neutral live audit records and JSON writers, but no fake broker client produces them yet. | Add a no-network fake live broker client and adapter tests before any real broker SDK integration. |
 | Fake live broker client | Simulates immediate-fill live broker behavior with no network calls, but is not yet behind a live adapter boundary. | Add a fake-backed live adapter that enforces safety checks and writes audit artifacts through the live adapter interface. |
 | Fake-backed live adapter | Enforces live safety checks and writes live audit artifacts through a fake client, but does not reconcile local artifacts against broker truth yet. | Add fake live reconciliation before any real broker SDK integration. |
+| Fake live reconciliation | Compares local live artifacts with fake broker truth, but has no user-facing CLI command yet. | Add safety-gated fake live order and reconciliation CLI commands before any real broker SDK integration. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -717,3 +721,24 @@ order, fill, and account snapshot artifacts.
 
 This milestone does not add credentials, broker dependencies, network calls,
 CLI commands, live order submission, or a real broker SDK adapter.
+
+## Fake Live Reconciliation v1 Scope
+
+Introduce:
+
+```text
+reconcile_live_state
+load_live_order_records
+load_live_fill_records
+latest_live_account_snapshot
+```
+
+The first version compares local live audit artifacts against the no-network
+fake broker client's open orders, fills, and account snapshot. It reports
+missing fills, cash drift, buying-power drift, and position drift through a
+`LiveReconciliationReport`, and it can write that report under
+`data/live/reconciliation/latest.json`.
+
+This milestone is read-only. It does not add credentials, broker dependencies,
+network calls, CLI commands, live order submission, cancellation, or account
+mutation.

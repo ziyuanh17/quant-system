@@ -226,6 +226,6 @@ Build in this order:
 7. Only then evaluate a real broker SDK integration.
 
 Typed live audit models, artifact writers, a no-network fake live broker
-client, and a fake-backed live adapter now exist. The next milestone should
-reconcile local live artifacts against fake broker truth before any real broker
-SDK integration.
+client, a fake-backed live adapter, and fake live reconciliation now exist. The
+next milestone should expose the fake live path through safety-gated CLI
+commands before any real broker SDK integration.

@@ -1,7 +1,15 @@
 from pathlib import Path
 
+from quant.execution.live_broker import LiveBrokerClient
 from quant.models.execution import (
     Fill,
+    LiveAccountSnapshot,
+    LiveFillRecord,
+    LiveOrderRecord,
+    LiveOrderStatus,
+    LiveReconciliationDifference,
+    LiveReconciliationReport,
+    LiveReconciliationStatus,
     OrderSide,
     PaperBrokerState,
     PaperSignalAction,
@@ -95,10 +103,330 @@ def write_paper_state_reconciliation_report(
     return path
 
 
+def reconcile_live_state(
+    *,
+    client: LiveBrokerClient,
+    order_records_dir: Path,
+    fill_records_dir: Path,
+    snapshot_records_dir: Path,
+    cash_tolerance: float = 0.01,
+) -> LiveReconciliationReport:
+    """Compare local live artifacts against broker-client truth.
+
+    This is intentionally read-only. It never submits, cancels, or mutates
+    broker state; it only asks the client for current truth and reports drift.
+    """
+    if cash_tolerance < 0:
+        raise ValueError("cash_tolerance must be non-negative")
+
+    local_orders = load_live_order_records(order_records_dir)
+    local_open_orders = _open_live_orders(local_orders)
+    local_fills = load_live_fill_records(fill_records_dir)
+    local_snapshot = latest_live_account_snapshot(snapshot_records_dir)
+    broker_open_orders = client.open_orders()
+    broker_fills = client.fills()
+    broker_snapshot = client.account_snapshot()
+
+    differences: list[LiveReconciliationDifference] = []
+    differences.extend(
+        _compare_live_open_orders(
+            local=local_open_orders,
+            broker=broker_open_orders,
+        )
+    )
+    differences.extend(
+        _compare_live_fills(local=local_fills, broker=broker_fills)
+    )
+    differences.extend(
+        _compare_live_snapshot(
+            local=local_snapshot,
+            broker=broker_snapshot,
+            tolerance=cash_tolerance,
+        )
+    )
+
+    return LiveReconciliationReport(
+        broker_name=broker_snapshot.broker_name,
+        account_id=broker_snapshot.account_id,
+        broker_environment=broker_snapshot.broker_environment,
+        local_order_count=len(local_open_orders),
+        broker_order_count=len(broker_open_orders),
+        local_fill_count=len(local_fills),
+        broker_fill_count=len(broker_fills),
+        local_position_count=(
+            len(local_snapshot.positions) if local_snapshot is not None else 0
+        ),
+        broker_position_count=len(broker_snapshot.positions),
+        status=(
+            LiveReconciliationStatus.PASSED
+            if not differences
+            else LiveReconciliationStatus.FAILED
+        ),
+        differences=tuple(differences),
+    )
+
+
+def load_live_order_records(
+    order_records_dir: Path,
+) -> tuple[LiveOrderRecord, ...]:
+    records = []
+    for path in sorted(order_records_dir.glob("*.json")):
+        records.append(LiveOrderRecord.model_validate_json(path.read_text()))
+    return tuple(sorted(records, key=lambda record: record.recorded_at))
+
+
+def load_live_fill_records(
+    fill_records_dir: Path,
+) -> tuple[LiveFillRecord, ...]:
+    records = []
+    for path in sorted(fill_records_dir.glob("*.json")):
+        records.append(LiveFillRecord.model_validate_json(path.read_text()))
+    return tuple(sorted(records, key=lambda record: record.recorded_at))
+
+
+def latest_live_account_snapshot(
+    snapshot_records_dir: Path,
+) -> LiveAccountSnapshot | None:
+    paths = sorted(
+        snapshot_records_dir.glob("*.json"),
+        key=lambda path: path.stat().st_mtime,
+    )
+    if not paths:
+        return None
+    return LiveAccountSnapshot.model_validate_json(paths[-1].read_text())
+
+
 def _records_processed_signal_key(record: PaperSignalRecord) -> bool:
     return (
         record.decision.action != PaperSignalAction.HOLD
         and not record.skipped
+    )
+
+
+def _open_live_orders(
+    records: tuple[LiveOrderRecord, ...],
+) -> tuple[LiveOrderRecord, ...]:
+    terminal = {
+        LiveOrderStatus.CANCELLED,
+        LiveOrderStatus.FILLED,
+        LiveOrderStatus.REJECTED,
+    }
+    return tuple(record for record in records if record.status not in terminal)
+
+
+def _compare_live_open_orders(
+    *,
+    local: tuple[LiveOrderRecord, ...],
+    broker: tuple[LiveOrderRecord, ...],
+) -> list[LiveReconciliationDifference]:
+    differences: list[LiveReconciliationDifference] = []
+    local_by_key = {_live_order_key(record): record for record in local}
+    broker_by_key = {_live_order_key(record): record for record in broker}
+    keys = sorted(local_by_key.keys() | broker_by_key.keys())
+    for key in keys:
+        local_record = local_by_key.get(key)
+        broker_record = broker_by_key.get(key)
+        if local_record is None or broker_record is None:
+            differences.append(
+                LiveReconciliationDifference(
+                    field=f"open_orders.{key}",
+                    local_value=str(local_record),
+                    broker_value=str(broker_record),
+                    message="open order presence differs",
+                )
+            )
+            continue
+        if local_record.status != broker_record.status:
+            differences.append(
+                LiveReconciliationDifference(
+                    field=f"open_orders.{key}.status",
+                    local_value=local_record.status.value,
+                    broker_value=broker_record.status.value,
+                    message="open order status differs",
+                )
+            )
+    return differences
+
+
+def _compare_live_fills(
+    *,
+    local: tuple[LiveFillRecord, ...],
+    broker: tuple[LiveFillRecord, ...],
+) -> list[LiveReconciliationDifference]:
+    differences: list[LiveReconciliationDifference] = []
+    local_by_key = {_live_fill_key(record): record for record in local}
+    broker_by_key = {_live_fill_key(record): record for record in broker}
+    keys = sorted(local_by_key.keys() | broker_by_key.keys())
+    for key in keys:
+        local_fill = local_by_key.get(key)
+        broker_fill = broker_by_key.get(key)
+        if local_fill is None or broker_fill is None:
+            differences.append(
+                LiveReconciliationDifference(
+                    field=f"fills.{key}",
+                    local_value=str(local_fill),
+                    broker_value=str(broker_fill),
+                    message="fill presence differs",
+                )
+            )
+            continue
+        differences.extend(
+            _compare_live_fill_values(
+                key=key,
+                local=local_fill,
+                broker=broker_fill,
+            )
+        )
+    return differences
+
+
+def _compare_live_fill_values(
+    *,
+    key: str,
+    local: LiveFillRecord,
+    broker: LiveFillRecord,
+) -> list[LiveReconciliationDifference]:
+    differences: list[LiveReconciliationDifference] = []
+    for field in ("symbol", "side", "quantity"):
+        local_value = getattr(local, field)
+        broker_value = getattr(broker, field)
+        if local_value != broker_value:
+            differences.append(
+                LiveReconciliationDifference(
+                    field=f"fills.{key}.{field}",
+                    local_value=str(local_value),
+                    broker_value=str(broker_value),
+                    message="fill value differs",
+                )
+            )
+    for field in ("price", "commission"):
+        local_value = getattr(local, field)
+        broker_value = getattr(broker, field)
+        if abs(local_value - broker_value) > 0.01:
+            differences.append(
+                LiveReconciliationDifference(
+                    field=f"fills.{key}.{field}",
+                    local_value=f"{local_value:.6f}",
+                    broker_value=f"{broker_value:.6f}",
+                    message="fill numeric value differs",
+                )
+            )
+    return differences
+
+
+def _compare_live_snapshot(
+    *,
+    local: LiveAccountSnapshot | None,
+    broker: LiveAccountSnapshot,
+    tolerance: float,
+) -> list[LiveReconciliationDifference]:
+    if local is None:
+        return [
+            LiveReconciliationDifference(
+                field="account_snapshot",
+                local_value="missing",
+                broker_value=broker.id,
+                message="local account snapshot is missing",
+            )
+        ]
+
+    differences: list[LiveReconciliationDifference] = []
+    for field in ("cash", "buying_power"):
+        local_value = getattr(local, field)
+        broker_value = getattr(broker, field)
+        if abs(local_value - broker_value) > tolerance:
+            differences.append(
+                LiveReconciliationDifference(
+                    field=field,
+                    local_value=f"{local_value:.6f}",
+                    broker_value=f"{broker_value:.6f}",
+                    message="account numeric value differs",
+                )
+            )
+    differences.extend(
+        _compare_live_positions(
+            local=local.positions,
+            broker=broker.positions,
+            tolerance=tolerance,
+        )
+    )
+    return differences
+
+
+def _compare_live_positions(
+    *,
+    local: tuple[Position, ...],
+    broker: tuple[Position, ...],
+    tolerance: float,
+) -> list[LiveReconciliationDifference]:
+    differences: list[LiveReconciliationDifference] = []
+    local_by_symbol = {position.symbol: position for position in local}
+    broker_by_symbol = {position.symbol: position for position in broker}
+    symbols = sorted(local_by_symbol.keys() | broker_by_symbol.keys())
+    for symbol in symbols:
+        local_position = local_by_symbol.get(symbol)
+        broker_position = broker_by_symbol.get(symbol)
+        if local_position is None or broker_position is None:
+            differences.append(
+                LiveReconciliationDifference(
+                    field=f"positions.{symbol}",
+                    local_value=str(local_position),
+                    broker_value=str(broker_position),
+                    message="position presence differs",
+                )
+            )
+            continue
+        differences.extend(
+            _compare_live_position_values(
+                symbol=symbol,
+                local=local_position,
+                broker=broker_position,
+                tolerance=tolerance,
+            )
+        )
+    return differences
+
+
+def _compare_live_position_values(
+    *,
+    symbol: str,
+    local: Position,
+    broker: Position,
+    tolerance: float,
+) -> list[LiveReconciliationDifference]:
+    differences: list[LiveReconciliationDifference] = []
+    if local.quantity != broker.quantity:
+        differences.append(
+            LiveReconciliationDifference(
+                field=f"positions.{symbol}.quantity",
+                local_value=str(local.quantity),
+                broker_value=str(broker.quantity),
+                message="position quantity differs",
+            )
+        )
+    for field in ("average_price", "last_price"):
+        local_value = getattr(local, field)
+        broker_value = getattr(broker, field)
+        if abs(local_value - broker_value) > tolerance:
+            differences.append(
+                LiveReconciliationDifference(
+                    field=f"positions.{symbol}.{field}",
+                    local_value=f"{local_value:.6f}",
+                    broker_value=f"{broker_value:.6f}",
+                    message="position numeric value differs",
+                )
+            )
+    return differences
+
+
+def _live_order_key(record: LiveOrderRecord) -> str:
+    return record.broker_order_id or record.client_order_id
+
+
+def _live_fill_key(record: LiveFillRecord) -> str:
+    return (
+        record.broker_execution_id
+        or f"{record.broker_order_id}:{record.symbol}:{record.quantity}"
     )
 
 
