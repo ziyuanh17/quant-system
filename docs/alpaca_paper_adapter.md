@@ -324,10 +324,10 @@ adapters exist.
 
 ## Implementation Order
 
-Recommended next milestones:
+Recommended implementation sequence:
 
 1. **Alpaca Paper Mapping v1**: add broker-neutral mapping helpers and tests
-   using fake Alpaca-shaped objects, with no SDK dependency.
+   using fake Alpaca-shaped objects, with no SDK dependency. Implemented.
 2. **Alpaca Optional Dependency v1**: add `alpaca-py` as an optional extra and
    verify import boundaries.
 3. **Alpaca Paper Client v1**: implement `AlpacaPaperBrokerClient` behind
@@ -336,5 +336,6 @@ Recommended next milestones:
 5. **Alpaca Paper Reconciliation v1**: reconcile local artifacts against Alpaca
    paper account state.
 
-This design intentionally keeps the next implementation step as mapping-only.
-The project should not add the SDK until the translation layer is tested.
+The mapping-only layer now exists in `src/quant/execution/alpaca_paper.py`.
+The project should add the SDK only as an optional dependency next, keeping
+default checks credential-free and network-free.

@@ -5,10 +5,10 @@
     "updated": "2026-05-20"
   },
   "summary": {
-    "done": 39,
+    "done": 40,
     "in_review": 1,
     "planned": 1,
-    "next": "Alpaca Paper Mapping v1"
+    "next": "Alpaca Optional Dependency v1"
   },
   "milestones": [
     {
@@ -248,14 +248,20 @@
     {
       "order": 40,
       "name": "Alpaca Paper Adapter Design v1",
-      "status": "in_review",
+      "status": "done",
       "purpose": "Design the first external paper-broker adapter and dependency boundary before adding the Alpaca SDK."
     },
     {
       "order": 41,
       "name": "Alpaca Paper Mapping v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Add Alpaca-shaped mapping helpers and tests without installing the Alpaca SDK."
+    },
+    {
+      "order": 42,
+      "name": "Alpaca Optional Dependency v1",
+      "status": "planned",
+      "purpose": "Add alpaca-py as an optional dependency and verify import boundaries without credentials or network access."
     }
   ],
   "futureMetrics": [

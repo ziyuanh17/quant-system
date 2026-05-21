@@ -1,3 +1,14 @@
+from quant.execution.alpaca_paper import (
+    AlpacaMarketOrderRequest,
+    AlpacaPaperConfig,
+    AlpacaTradingClientProtocol,
+    map_alpaca_account_snapshot,
+    map_alpaca_fill_records,
+    map_alpaca_order_record,
+    map_alpaca_order_status,
+    map_alpaca_position,
+    map_order_request_to_alpaca_market_order,
+)
 from quant.execution.artifacts import (
     write_dry_run_order_record,
     write_live_account_snapshot,
@@ -52,6 +63,9 @@ from quant.execution.state import (
 
 __all__ = [
     "BrokerAdapter",
+    "AlpacaMarketOrderRequest",
+    "AlpacaPaperConfig",
+    "AlpacaTradingClientProtocol",
     "DryRunBrokerAdapter",
     "FakeLiveBrokerClient",
     "LIVE_TRADING_CONFIRMATION",
@@ -74,6 +88,12 @@ __all__ = [
     "load_live_order_records",
     "load_trading_safety_config_from_env",
     "latest_json",
+    "map_alpaca_account_snapshot",
+    "map_alpaca_fill_records",
+    "map_alpaca_order_record",
+    "map_alpaca_order_status",
+    "map_alpaca_position",
+    "map_order_request_to_alpaca_market_order",
     "reconcile_live_state",
     "reconcile_paper_state",
     "save_paper_broker_state",

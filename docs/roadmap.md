@@ -55,13 +55,14 @@ side discussions.
 | 37 | Fake-Backed Live Adapter v1 | Done | Connect the live adapter boundary to the fake client before any real broker SDK integration. |
 | 38 | Fake Live Reconciliation v1 | Done | Compare local live artifacts against fake broker account/order/fill state before any real SDK integration. |
 | 39 | Fake Live CLI v1 | Done | Add safety-gated fake live commands for order submission and reconciliation without real broker SDKs. |
-| 40 | Alpaca Paper Adapter Design v1 | In Review | Design the first external paper-broker adapter and dependency boundary before adding the Alpaca SDK. |
-| 41 | Alpaca Paper Mapping v1 | Planned | Add Alpaca-shaped mapping helpers and tests without installing the Alpaca SDK. |
+| 40 | Alpaca Paper Adapter Design v1 | Done | Design the first external paper-broker adapter and dependency boundary before adding the Alpaca SDK. |
+| 41 | Alpaca Paper Mapping v1 | In Review | Add Alpaca-shaped mapping helpers and tests without installing the Alpaca SDK. |
+| 42 | Alpaca Optional Dependency v1 | Planned | Add `alpaca-py` as an optional dependency and verify import boundaries without requiring credentials or network access in default CI. |
 
 ## Current Recommendation
 
-The next milestone after Alpaca Paper Adapter Design v1 should be
-**Alpaca Paper Mapping v1**.
+The next milestone after Alpaca Paper Mapping v1 should be
+**Alpaca Optional Dependency v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -74,9 +75,11 @@ failures, a composed dry-run refresh workflow, a server wrapper for running
 that dry-run workflow repeatedly, a live broker adapter design boundary, typed
 live audit models, a no-network fake live broker client, a fake-backed live
 adapter, fake live reconciliation, safety-gated fake live CLI commands, and an
-Alpaca paper adapter design boundary. The next step should implement
-Alpaca-shaped mapping helpers and tests before adding any external broker SDK
-dependency.
+Alpaca paper adapter design boundary, and Alpaca-shaped mapping helpers for
+order requests, order statuses, order records, fill records, account snapshots,
+and positions. The next step should add `alpaca-py` as an optional dependency
+and verify that normal project checks still work without credentials or
+network calls.
 
 ## Corrected Near-Term Order
 
@@ -119,6 +122,7 @@ data ingestion
   -> fake live CLI
   -> Alpaca paper adapter design
   -> Alpaca paper mapping
+  -> Alpaca optional dependency
 ```
 
 ## Data Lineage v1 Scope
@@ -263,6 +267,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Fake live reconciliation | Compares local live artifacts with fake broker truth, but has no user-facing CLI command yet. | Add safety-gated fake live order and reconciliation CLI commands before any real broker SDK integration. |
 | Fake live CLI | Exposes fake live order and reconciliation commands, but still has no external broker dependency. | Design the Alpaca paper adapter dependency boundary before adding `alpaca-py`. |
 | Alpaca paper adapter design | Defines the first external broker adapter boundary, but no Alpaca-shaped mapping code exists yet. | Add Alpaca order/account/position mapping helpers and tests without installing `alpaca-py`. |
+| Alpaca paper mapping | Maps Alpaca-shaped objects without installing the SDK, but no optional dependency or client wrapper exists yet. | Add `alpaca-py` as an optional dependency and verify import boundaries without credentials or network calls. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -789,3 +794,31 @@ implementation order.
 
 This milestone does not add `alpaca-py`, credentials, broker network calls, CLI
 commands that contact Alpaca, or a real broker adapter.
+
+## Alpaca Paper Mapping v1 Scope
+
+Introduce:
+
+```text
+src/quant/execution/alpaca_paper.py
+AlpacaPaperConfig
+AlpacaTradingClientProtocol
+AlpacaMarketOrderRequest
+map_order_request_to_alpaca_market_order
+map_alpaca_order_status
+map_alpaca_order_record
+map_alpaca_fill_records
+map_alpaca_account_snapshot
+map_alpaca_position
+```
+
+The first version uses fake Alpaca-shaped objects in tests instead of importing
+the Alpaca SDK. It maps internal order requests to a market-order request
+shape, normalizes broker order statuses, converts Alpaca-shaped order objects
+into broker-neutral live order records, derives fill records when filled order
+data is present, and converts account and position objects into internal
+snapshots.
+
+This milestone intentionally does not add SDK installation, credential loading,
+network calls, CLI commands, or a constructed Alpaca client. Those belong in
+the next milestones after the translation layer is stable.
