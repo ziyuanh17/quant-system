@@ -6,9 +6,9 @@
   },
   "summary": {
     "done": 40,
-    "in_review": 2,
+    "in_review": 3,
     "planned": 1,
-    "next": "Alpaca Paper Client v1"
+    "next": "Alpaca Paper CLI v1"
   },
   "milestones": [
     {
@@ -266,8 +266,14 @@
     {
       "order": 43,
       "name": "Alpaca Paper Client v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Wrap the optional Alpaca SDK behind a paper client boundary without enabling real-money trading."
+    },
+    {
+      "order": 44,
+      "name": "Alpaca Paper CLI v1",
+      "status": "planned",
+      "purpose": "Add explicit safety-gated Alpaca paper commands without a generic live broker selector."
     }
   ],
   "futureMetrics": [

@@ -331,13 +331,14 @@ Recommended implementation sequence:
 2. **Alpaca Optional Dependency v1**: add `alpaca-py` as an optional extra and
    verify import boundaries. Implemented.
 3. **Alpaca Paper Client v1**: implement `AlpacaPaperBrokerClient` behind
-   `LiveBrokerClient`, still with no default network tests.
+   `LiveBrokerClient`, still with no default network tests. Implemented.
 4. **Alpaca Paper CLI v1**: add explicit safety-gated paper commands.
 5. **Alpaca Paper Reconciliation v1**: reconcile local artifacts against Alpaca
    paper account state.
 
 The mapping-only layer now exists in `src/quant/execution/alpaca_paper.py`,
 and the lazy optional SDK boundary now exists in
-`src/quant/execution/alpaca_sdk.py`. The next step should construct an Alpaca
-paper client wrapper behind the existing live broker protocol, while keeping
-default checks credential-free and network-free.
+`src/quant/execution/alpaca_sdk.py`. The Alpaca paper client wrapper now exists
+behind the existing live broker protocol. The next step should add explicit
+Alpaca paper CLI commands, while keeping default checks credential-free and
+network-free.

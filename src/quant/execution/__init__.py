@@ -1,5 +1,6 @@
 from quant.execution.alpaca_paper import (
     AlpacaMarketOrderRequest,
+    AlpacaPaperBrokerClient,
     AlpacaPaperConfig,
     AlpacaTradingClientProtocol,
     map_alpaca_account_snapshot,
@@ -64,6 +65,7 @@ from quant.execution.state import (
 __all__ = [
     "BrokerAdapter",
     "AlpacaMarketOrderRequest",
+    "AlpacaPaperBrokerClient",
     "AlpacaPaperConfig",
     "AlpacaTradingClientProtocol",
     "DryRunBrokerAdapter",

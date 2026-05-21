@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from pydantic import Field
 
@@ -15,13 +15,16 @@ from quant.models.execution import (
     TradingSafetyCheck,
 )
 
+if TYPE_CHECKING:
+    from quant.execution.alpaca_sdk import AlpacaTradingSdk
+
 
 class AlpacaPaperConfig(FrozenModel):
     """Config values needed before constructing an Alpaca paper client."""
 
-    api_key: str
-    secret_key: str
-    account_id: str
+    api_key: str = Field(min_length=1)
+    secret_key: str = Field(min_length=1)
+    account_id: str = Field(min_length=1)
     url_override: str | None = None
 
 
@@ -53,6 +56,150 @@ class AlpacaMarketOrderRequest(FrozenModel):
     qty: int = Field(gt=0)
     time_in_force: str = "day"
     client_order_id: str
+
+
+class AlpacaPaperBrokerClient:
+    """Alpaca paper implementation of the live broker client boundary."""
+
+    def __init__(
+        self,
+        *,
+        config: AlpacaPaperConfig,
+        trading_client: AlpacaTradingClientProtocol | None = None,
+        sdk: "AlpacaTradingSdk | None" = None,
+    ) -> None:
+        self._config = config
+        self._sdk = sdk
+        self._trading_client = trading_client or self._build_trading_client()
+        self._orders_by_client_id: dict[str, LiveOrderRecord] = {}
+        # Alpaca order polling does not include the original strategy request,
+        # so keep the local context needed to map known broker orders later.
+        self._order_contexts: dict[str, _AlpacaOrderContext] = {}
+        self._fills_by_execution_id: dict[str, LiveFillRecord] = {}
+
+    @property
+    def trading_client_for_testing(self) -> AlpacaTradingClientProtocol:
+        """Expose the wrapped client for no-network constructor tests."""
+        return self._trading_client
+
+    def submit_market_order(
+        self,
+        request: OrderRequest,
+        *,
+        reference_price: float,
+        client_order_id: str,
+        safety_check: TradingSafetyCheck,
+    ) -> LiveOrderRecord:
+        if reference_price <= 0:
+            raise ValueError("reference_price must be positive")
+        alpaca_request = map_order_request_to_alpaca_market_order(
+            request,
+            client_order_id=client_order_id,
+        )
+        order_data = self._build_sdk_market_order(alpaca_request)
+        raw_order = self._trading_client.submit_order(order_data)
+        record = map_alpaca_order_record(
+            raw_order,
+            request=request,
+            reference_price=reference_price,
+            safety_check=safety_check,
+            account_id=self._config.account_id,
+        )
+        self._orders_by_client_id[record.client_order_id] = record
+        self._order_contexts[record.client_order_id] = _AlpacaOrderContext(
+            request=request,
+            reference_price=reference_price,
+            safety_check=safety_check,
+        )
+        self._remember_fills(raw_order, order_record=record)
+        return record
+
+    def account_snapshot(self) -> LiveAccountSnapshot:
+        return map_alpaca_account_snapshot(
+            self._trading_client.get_account(),
+            self._trading_client.get_all_positions(),
+        )
+
+    def open_orders(self) -> tuple[LiveOrderRecord, ...]:
+        terminal = {
+            LiveOrderStatus.CANCELLED,
+            LiveOrderStatus.FILLED,
+            LiveOrderStatus.REJECTED,
+        }
+        records: list[LiveOrderRecord] = []
+        for raw_order in self._trading_client.get_orders():
+            client_order_id = _optional_attr(raw_order, "client_order_id")
+            if client_order_id is None:
+                continue
+            context = self._order_contexts.get(client_order_id)
+            if context is None:
+                continue
+            record = map_alpaca_order_record(
+                raw_order,
+                request=context.request,
+                reference_price=context.reference_price,
+                safety_check=context.safety_check,
+                account_id=self._config.account_id,
+            )
+            self._orders_by_client_id[client_order_id] = record
+            if record.status not in terminal:
+                records.append(record)
+        return tuple(records)
+
+    def fills(self) -> tuple[LiveFillRecord, ...]:
+        return tuple(self._fills_by_execution_id.values())
+
+    def _build_trading_client(self) -> AlpacaTradingClientProtocol:
+        sdk = self._load_sdk()
+        kwargs: dict[str, object] = {
+            "api_key": self._config.api_key,
+            "secret_key": self._config.secret_key,
+            "paper": True,
+        }
+        if self._config.url_override is not None:
+            kwargs["url_override"] = self._config.url_override
+        return sdk.TradingClient(**kwargs)
+
+    def _build_sdk_market_order(
+        self,
+        request: AlpacaMarketOrderRequest,
+    ) -> object:
+        # Keep alpaca-py imports lazy so default CI and normal imports do not
+        # need the optional broker dependency installed.
+        from quant.execution.alpaca_sdk import (
+            build_alpaca_sdk_market_order_request,
+        )
+
+        return build_alpaca_sdk_market_order_request(
+            request,
+            sdk=self._sdk,
+        )
+
+    def _load_sdk(self) -> "AlpacaTradingSdk":
+        if self._sdk is not None:
+            return self._sdk
+        from quant.execution.alpaca_sdk import load_alpaca_trading_sdk
+
+        return load_alpaca_trading_sdk()
+
+    def _remember_fills(
+        self,
+        raw_order: object,
+        *,
+        order_record: LiveOrderRecord,
+    ) -> None:
+        for fill in map_alpaca_fill_records(
+            raw_order,
+            order_record=order_record,
+        ):
+            fill_key = fill.broker_execution_id or fill.id
+            self._fills_by_execution_id[fill_key] = fill
+
+
+class _AlpacaOrderContext(FrozenModel):
+    request: OrderRequest
+    reference_price: float
+    safety_check: TradingSafetyCheck
 
 
 def map_order_request_to_alpaca_market_order(
