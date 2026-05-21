@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Annotated
 
@@ -16,6 +17,8 @@ from quant.data import (
 )
 from quant.execution import (
     LIVE_TRADING_CONFIRMATION,
+    AlpacaPaperBrokerClient,
+    AlpacaPaperConfig,
     DryRunBrokerAdapter,
     FakeLiveBrokerClient,
     LiveBrokerAdapter,
@@ -32,6 +35,7 @@ from quant.execution import (
     reconcile_paper_state,
     save_paper_broker_state,
     write_dry_run_order_record,
+    write_live_account_snapshot,
     write_live_reconciliation_report,
     write_paper_dry_run_comparison_report,
     write_paper_signal_record,
@@ -553,6 +557,158 @@ def live_fake_reconcile(
 
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@live_app.command("alpaca-paper-order")
+def live_alpaca_paper_order(
+    symbol: Annotated[str, typer.Option(help="Symbol to trade.")] = "AAPL",
+    side: Annotated[
+        OrderSide,
+        typer.Option(help="Order side."),
+    ] = OrderSide.BUY,
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity."),
+    ] = 1,
+    price: Annotated[
+        float,
+        typer.Option(help="Reference market price for safety/audit records."),
+    ] = 100.0,
+    client_order_id: Annotated[
+        str,
+        typer.Option(help="Idempotent client order ID."),
+    ] = "alpaca-paper-order",
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live-mode broker access."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required live-mode confirmation phrase."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional for this paper order."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live-mode broker access."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+    order_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live order artifacts."),
+    ] = Path("data/live/orders"),
+    fill_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live fill artifacts."),
+    ] = Path("data/live/fills"),
+    snapshot_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live account snapshot artifacts."),
+    ] = Path("data/live/account_snapshots"),
+) -> None:
+    """Submit a safety-gated Alpaca paper market order."""
+    check, resolved_max_order_notional = _live_safety_check_or_exit(
+        from_env=from_env,
+        live_trading_enabled=live_trading_enabled,
+        live_trading_confirmation=live_trading_confirmation,
+        max_order_notional=max_order_notional,
+        broker_name=broker_name,
+    )
+    _validate_live_order_notional(
+        quantity=quantity,
+        price=price,
+        max_order_notional=resolved_max_order_notional,
+    )
+    config = _load_alpaca_paper_config_from_env()
+    adapter = LiveBrokerAdapter(
+        client=AlpacaPaperBrokerClient(config=config),
+        order_output_dir=order_output_dir,
+        fill_output_dir=fill_output_dir,
+        snapshot_output_dir=snapshot_output_dir,
+    )
+    record = adapter.submit_market_order(
+        OrderRequest(symbol=symbol, side=side, quantity=quantity),
+        reference_price=price,
+        client_order_id=client_order_id,
+        safety_check=check,
+    )
+    snapshot = adapter.account_snapshot()
+
+    typer.echo(f"Alpaca paper order: {record.id}")
+    typer.echo(f"Status: {record.status.value}")
+    if record.rejection_reason is not None:
+        typer.echo(f"Rejection reason: {record.rejection_reason}")
+    typer.echo(f"Broker: {record.broker_name}")
+    typer.echo(f"Client order ID: {record.client_order_id}")
+    typer.echo(f"Broker order ID: {record.broker_order_id}")
+    typer.echo(f"Side: {record.request.side.value}")
+    typer.echo(f"Quantity: {record.request.quantity}")
+    typer.echo(f"Reference price: {record.reference_price:,.2f}")
+    typer.echo(f"Notional: {record.notional:,.2f}")
+    typer.echo(f"Cash: {snapshot.cash:,.2f}")
+    typer.echo(f"Order records: {order_output_dir}")
+    typer.echo(f"Fill records: {fill_output_dir}")
+    typer.echo(f"Snapshot records: {snapshot_output_dir}")
+
+    if record.status.value == "rejected":
+        raise typer.Exit(code=1)
+
+
+@live_app.command("alpaca-paper-snapshot")
+def live_alpaca_paper_snapshot(
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live-mode broker access."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required live-mode confirmation phrase."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional safety setting."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live-mode broker access."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+    snapshot_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live account snapshot artifacts."),
+    ] = Path("data/live/account_snapshots"),
+) -> None:
+    """Fetch a safety-gated Alpaca paper account snapshot."""
+    _live_safety_check_or_exit(
+        from_env=from_env,
+        live_trading_enabled=live_trading_enabled,
+        live_trading_confirmation=live_trading_confirmation,
+        max_order_notional=max_order_notional,
+        broker_name=broker_name,
+    )
+    config = _load_alpaca_paper_config_from_env()
+    client = AlpacaPaperBrokerClient(config=config)
+    snapshot = client.account_snapshot()
+    snapshot_path = write_live_account_snapshot(
+        snapshot,
+        snapshot_output_dir,
+    )
+
+    typer.echo(f"Alpaca paper account snapshot: {snapshot.id}")
+    typer.echo(f"Broker: {snapshot.broker_name}")
+    typer.echo(f"Account ID: {snapshot.account_id}")
+    typer.echo(f"Cash: {snapshot.cash:,.2f}")
+    typer.echo(f"Buying power: {snapshot.buying_power:,.2f}")
+    typer.echo(f"Positions: {len(snapshot.positions)}")
+    typer.echo(f"Snapshot: {snapshot_path}")
 
 
 @app.command()
@@ -1811,6 +1967,26 @@ def _validate_live_order_notional(
         raise typer.BadParameter(
             "order notional exceeds max-order-notional"
         )
+
+
+def _load_alpaca_paper_config_from_env() -> AlpacaPaperConfig:
+    api_key = _required_env("QUANT_ALPACA_PAPER_API_KEY")
+    secret_key = _required_env("QUANT_ALPACA_PAPER_SECRET_KEY")
+    account_id = _required_env("QUANT_ALPACA_PAPER_ACCOUNT_ID")
+    url_override = os.environ.get("QUANT_ALPACA_PAPER_URL_OVERRIDE")
+    return AlpacaPaperConfig(
+        api_key=api_key,
+        secret_key=secret_key,
+        account_id=account_id,
+        url_override=url_override or None,
+    )
+
+
+def _required_env(name: str) -> str:
+    value = os.environ.get(name)
+    if value is None or value == "":
+        raise typer.BadParameter(f"{name} is missing")
+    return value
 
 
 def _initial_positions(

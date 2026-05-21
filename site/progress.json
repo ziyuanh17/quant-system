@@ -6,9 +6,9 @@
   },
   "summary": {
     "done": 40,
-    "in_review": 3,
+    "in_review": 4,
     "planned": 1,
-    "next": "Alpaca Paper CLI v1"
+    "next": "Alpaca Paper Reconciliation v1"
   },
   "milestones": [
     {
@@ -272,8 +272,14 @@
     {
       "order": 44,
       "name": "Alpaca Paper CLI v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Add explicit safety-gated Alpaca paper commands without a generic live broker selector."
+    },
+    {
+      "order": 45,
+      "name": "Alpaca Paper Reconciliation v1",
+      "status": "planned",
+      "purpose": "Reconcile local live artifacts against Alpaca paper account, order, and fill state."
     }
   ],
   "futureMetrics": [

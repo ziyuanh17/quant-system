@@ -155,6 +155,39 @@ With `uv`:
 uv sync --extra dev --extra broker-alpaca
 ```
 
+Alpaca paper commands read credentials from explicit paper-only environment
+variables:
+
+```bash
+export QUANT_ALPACA_PAPER_API_KEY=...
+export QUANT_ALPACA_PAPER_SECRET_KEY=...
+export QUANT_ALPACA_PAPER_ACCOUNT_ID=...
+```
+
+Submit a safety-gated Alpaca paper order:
+
+```bash
+quant live alpaca-paper-order \
+  --live-trading-enabled \
+  --live-trading-confirmation I_UNDERSTAND_LIVE_TRADING_RISK \
+  --max-order-notional 500 \
+  --broker-name alpaca-paper \
+  --symbol AAPL \
+  --side buy \
+  --quantity 1 \
+  --price 100
+```
+
+Fetch a sanitized Alpaca paper account snapshot:
+
+```bash
+quant live alpaca-paper-snapshot \
+  --live-trading-enabled \
+  --live-trading-confirmation I_UNDERSTAND_LIVE_TRADING_RISK \
+  --max-order-notional 500 \
+  --broker-name alpaca-paper
+```
+
 Record a live-shaped dry-run order without submitting it:
 
 ```bash

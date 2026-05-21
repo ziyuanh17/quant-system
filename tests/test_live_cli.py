@@ -2,8 +2,16 @@ import json
 
 from typer.testing import CliRunner
 
+import quant.cli
 from quant.cli import app
 from quant.execution import LIVE_TRADING_CONFIRMATION
+from quant.models.execution import (
+    LiveAccountSnapshot,
+    LiveFillRecord,
+    LiveOrderRecord,
+    LiveOrderStatus,
+    Position,
+)
 
 
 def test_live_fake_order_cli_blocks_by_default(tmp_path) -> None:
@@ -149,6 +157,216 @@ def test_live_fake_reconcile_cli_fails_on_drift(tmp_path) -> None:
     assert payload["differences"][0]["field"].startswith("fills.")
 
 
+def test_live_alpaca_paper_order_blocks_before_client_construction(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    constructed = False
+
+    class BlockingClient:
+        def __init__(self, *args, **kwargs) -> None:
+            nonlocal constructed
+            constructed = True
+
+    monkeypatch.setattr(quant.cli, "AlpacaPaperBrokerClient", BlockingClient)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "live",
+            "alpaca-paper-order",
+            "--order-output-dir",
+            str(tmp_path / "orders"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Allowed: False" in result.output
+    assert constructed is False
+    assert not (tmp_path / "orders").exists()
+
+
+def test_live_alpaca_paper_order_writes_artifacts(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        FakeAlpacaPaperBrokerClient,
+    )
+    _set_alpaca_env(monkeypatch)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "live",
+            "alpaca-paper-order",
+            *_live_safety_args(broker_name="alpaca-paper"),
+            "--symbol",
+            "AAPL",
+            "--side",
+            "buy",
+            "--quantity",
+            "2",
+            "--price",
+            "100",
+            "--client-order-id",
+            "alpaca-client-1",
+            "--order-output-dir",
+            str(tmp_path / "orders"),
+            "--fill-output-dir",
+            str(tmp_path / "fills"),
+            "--snapshot-output-dir",
+            str(tmp_path / "snapshots"),
+        ],
+    )
+
+    order_paths = list((tmp_path / "orders").glob("*.json"))
+    fill_paths = list((tmp_path / "fills").glob("*.json"))
+    snapshot_paths = list((tmp_path / "snapshots").glob("*.json"))
+
+    assert result.exit_code == 0
+    assert "Alpaca paper order:" in result.output
+    assert "Status: filled" in result.output
+    assert len(order_paths) == 1
+    assert len(fill_paths) == 1
+    assert len(snapshot_paths) == 1
+    assert json.loads(order_paths[0].read_text())["broker_name"] == (
+        "alpaca-paper"
+    )
+
+
+def test_live_alpaca_paper_order_requires_credentials(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        FakeAlpacaPaperBrokerClient,
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "live",
+            "alpaca-paper-order",
+            *_live_safety_args(broker_name="alpaca-paper"),
+            "--order-output-dir",
+            str(tmp_path / "orders"),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "QUANT_ALPACA_PAPER_API_KEY is missing" in result.output
+    assert not (tmp_path / "orders").exists()
+
+
+def test_live_alpaca_paper_snapshot_writes_artifact(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        FakeAlpacaPaperBrokerClient,
+    )
+    _set_alpaca_env(monkeypatch)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "live",
+            "alpaca-paper-snapshot",
+            *_live_safety_args(broker_name="alpaca-paper"),
+            "--snapshot-output-dir",
+            str(tmp_path / "snapshots"),
+        ],
+    )
+
+    snapshot_paths = list((tmp_path / "snapshots").glob("*.json"))
+
+    assert result.exit_code == 0
+    assert "Alpaca paper account snapshot:" in result.output
+    assert len(snapshot_paths) == 1
+    assert json.loads(snapshot_paths[0].read_text())["cash"] == 1000
+
+
+class FakeAlpacaPaperBrokerClient:
+    def __init__(self, *, config) -> None:
+        self.config = config
+        self._fills: tuple[LiveFillRecord, ...] = ()
+
+    def submit_market_order(
+        self,
+        request,
+        *,
+        reference_price,
+        client_order_id,
+        safety_check,
+    ) -> LiveOrderRecord:
+        record = LiveOrderRecord(
+            client_order_id=client_order_id,
+            broker_order_id="alpaca-order-1",
+            broker_name="alpaca-paper",
+            account_id=self.config.account_id,
+            broker_environment="paper",
+            request=request,
+            reference_price=reference_price,
+            notional=request.quantity * reference_price,
+            safety_check=safety_check,
+            status=LiveOrderStatus.FILLED,
+            raw_response_ref="alpaca-paper:order:alpaca-order-1",
+        )
+        self._fills = (
+            LiveFillRecord(
+                order_record_id=record.id,
+                client_order_id=client_order_id,
+                broker_order_id="alpaca-order-1",
+                broker_execution_id="alpaca-exec-1",
+                broker_name="alpaca-paper",
+                account_id=self.config.account_id,
+                broker_environment="paper",
+                symbol=request.symbol,
+                side=request.side,
+                quantity=request.quantity,
+                price=reference_price,
+                raw_response_ref="alpaca-paper:fill:alpaca-exec-1",
+            ),
+        )
+        return record
+
+    def account_snapshot(self) -> LiveAccountSnapshot:
+        return LiveAccountSnapshot(
+            broker_name="alpaca-paper",
+            account_id=self.config.account_id,
+            broker_environment="paper",
+            cash=1000,
+            buying_power=1000,
+            positions=(
+                Position(
+                    symbol="AAPL",
+                    quantity=2,
+                    average_price=100,
+                    last_price=100,
+                ),
+            ),
+        )
+
+    def open_orders(self) -> tuple[LiveOrderRecord, ...]:
+        return ()
+
+    def fills(self) -> tuple[LiveFillRecord, ...]:
+        return self._fills
+
+
+def _set_alpaca_env(monkeypatch) -> None:
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-1")
+
+
 def _run_fake_order(tmp_path) -> None:
     result = CliRunner().invoke(
         app,
@@ -179,7 +397,7 @@ def _run_fake_order(tmp_path) -> None:
     assert result.exit_code == 0
 
 
-def _live_safety_args() -> list[str]:
+def _live_safety_args(broker_name: str = "fake-live") -> list[str]:
     return [
         "--live-trading-enabled",
         "--live-trading-confirmation",
@@ -187,5 +405,5 @@ def _live_safety_args() -> list[str]:
         "--max-order-notional",
         "500",
         "--broker-name",
-        "fake-live",
+        broker_name,
     ]

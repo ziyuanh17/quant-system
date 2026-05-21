@@ -59,12 +59,13 @@ side discussions.
 | 41 | Alpaca Paper Mapping v1 | In Review | Add Alpaca-shaped mapping helpers and tests without installing the Alpaca SDK. |
 | 42 | Alpaca Optional Dependency v1 | In Review | Add `alpaca-py` as an optional dependency and verify import boundaries without requiring credentials or network access in default CI. |
 | 43 | Alpaca Paper Client v1 | In Review | Wrap the optional SDK behind a paper client boundary without enabling real-money trading. |
-| 44 | Alpaca Paper CLI v1 | Planned | Add explicit safety-gated Alpaca paper commands without a generic live broker selector. |
+| 44 | Alpaca Paper CLI v1 | In Review | Add explicit safety-gated Alpaca paper commands without a generic live broker selector. |
+| 45 | Alpaca Paper Reconciliation v1 | Planned | Reconcile local live artifacts against Alpaca paper account/order/fill state. |
 
 ## Current Recommendation
 
-The next milestone after Alpaca Paper Client v1 should be
-**Alpaca Paper CLI v1**.
+The next milestone after Alpaca Paper CLI v1 should be
+**Alpaca Paper Reconciliation v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -80,10 +81,11 @@ adapter, fake live reconciliation, safety-gated fake live CLI commands, and an
 Alpaca paper adapter design boundary, Alpaca-shaped mapping helpers for order
 requests, order statuses, order records, fill records, account snapshots, and
 positions, an optional `alpaca-py` dependency boundary that does not load the
-SDK during default imports, and an Alpaca paper client wrapper that can submit
-market orders through fake SDK/client objects in tests. The next step should
-add explicit safety-gated Alpaca paper CLI commands while keeping default
-checks credential-free and network-free.
+SDK during default imports, an Alpaca paper client wrapper that can submit
+market orders through fake SDK/client objects in tests, and explicit
+safety-gated Alpaca paper order/snapshot CLI commands. The next step should
+reconcile local artifacts against Alpaca paper broker state while keeping
+default checks credential-free and network-free.
 
 ## Corrected Near-Term Order
 
@@ -129,6 +131,7 @@ data ingestion
   -> Alpaca optional dependency
   -> Alpaca paper client
   -> Alpaca paper CLI
+  -> Alpaca paper reconciliation
 ```
 
 ## Data Lineage v1 Scope
@@ -276,6 +279,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Alpaca paper mapping | Maps Alpaca-shaped objects without installing the SDK, but no optional dependency or client wrapper exists yet. | Add `alpaca-py` as an optional dependency and verify import boundaries without credentials or network calls. |
 | Alpaca optional dependency | Adds a lazy optional SDK boundary, but no SDK-backed paper client exists yet. | Implement an Alpaca paper client wrapper behind the live broker client protocol without enabling real-money trading. |
 | Alpaca paper client | Wraps the optional SDK behind the live broker client protocol, but has no user-facing command yet. | Add explicit safety-gated Alpaca paper CLI commands and keep generic live broker routing out of scope. |
+| Alpaca paper CLI | Can submit explicit safety-gated paper orders and snapshots, but does not reconcile local artifacts against Alpaca paper state yet. | Add Alpaca paper reconciliation and keep any default tests credential-free and network-free. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -885,3 +889,33 @@ Alpaca account.
 This milestone does not add environment credential loading, CLI commands,
 scheduled Alpaca workflows, broker reconciliation against Alpaca, streaming
 trade updates, or any real-money trading path.
+
+## Alpaca Paper CLI v1 Scope
+
+Introduce:
+
+```text
+quant live alpaca-paper-order
+quant live alpaca-paper-snapshot
+QUANT_ALPACA_PAPER_API_KEY
+QUANT_ALPACA_PAPER_SECRET_KEY
+QUANT_ALPACA_PAPER_ACCOUNT_ID
+QUANT_ALPACA_PAPER_URL_OVERRIDE
+```
+
+The first version exposes the Alpaca paper client through explicit `live`
+subcommands. `alpaca-paper-order` requires the existing live safety gates,
+loads explicit paper-only credentials from environment variables, validates
+order notional against the configured safety limit, submits a market order
+through `AlpacaPaperBrokerClient`, and writes live order, fill, and account
+snapshot artifacts. `alpaca-paper-snapshot` uses the same safety gate and
+credential boundary to fetch and persist a sanitized account snapshot.
+
+Missing safety approval or missing Alpaca paper credentials must fail before
+constructing the Alpaca paper client. Tests use fake clients only; default CI
+does not need Alpaca credentials, an installed optional extra, network access,
+or an Alpaca account.
+
+This milestone does not add a generic broker selector, scheduled Alpaca
+workflows, broker reconciliation against Alpaca, streaming trade updates, or
+any real-money trading path.
