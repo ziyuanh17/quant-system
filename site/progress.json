@@ -2,13 +2,13 @@
   "project": {
     "name": "Quant System",
     "description": "A typed, solo-maintainable quant research and paper-trading system.",
-    "updated": "2026-05-20"
+    "updated": "2026-05-21"
   },
   "summary": {
     "done": 40,
-    "in_review": 1,
+    "in_review": 2,
     "planned": 1,
-    "next": "Alpaca Optional Dependency v1"
+    "next": "Alpaca Paper Client v1"
   },
   "milestones": [
     {
@@ -260,8 +260,14 @@
     {
       "order": 42,
       "name": "Alpaca Optional Dependency v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Add alpaca-py as an optional dependency and verify import boundaries without credentials or network access."
+    },
+    {
+      "order": 43,
+      "name": "Alpaca Paper Client v1",
+      "status": "planned",
+      "purpose": "Wrap the optional Alpaca SDK behind a paper client boundary without enabling real-money trading."
     }
   ],
   "futureMetrics": [

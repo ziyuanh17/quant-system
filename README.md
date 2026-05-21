@@ -140,7 +140,20 @@ See [docs/live_broker_api_research.md](docs/live_broker_api_research.md) for
 the broker API/package research behind the first integration decision.
 
 See [docs/alpaca_paper_adapter.md](docs/alpaca_paper_adapter.md) for the
-Alpaca paper adapter design. The SDK is not yet installed.
+Alpaca paper adapter design. The SDK is optional and is not needed for default
+development or CI checks.
+
+Install Alpaca support only when working on the Alpaca adapter path:
+
+```bash
+python -m pip install -e ".[broker-alpaca]"
+```
+
+With `uv`:
+
+```bash
+uv sync --extra dev --extra broker-alpaca
+```
 
 Record a live-shaped dry-run order without submitting it:
 
