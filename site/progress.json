@@ -6,9 +6,9 @@
   },
   "summary": {
     "done": 40,
-    "in_review": 6,
+    "in_review": 7,
     "planned": 1,
-    "next": "Alpaca Paper Workflow Design v1"
+    "next": "Alpaca Paper Refresh Workflow v1"
   },
   "milestones": [
     {
@@ -290,8 +290,14 @@
     {
       "order": 47,
       "name": "Alpaca Paper Workflow Design v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Design the scheduled Alpaca paper workflow only after the manual smoke runbook is reviewed."
+    },
+    {
+      "order": 48,
+      "name": "Alpaca Paper Refresh Workflow v1",
+      "status": "planned",
+      "purpose": "Implement one finite lock-protected Alpaca paper refresh workflow with fake-driven tests."
     }
   ],
   "futureMetrics": [

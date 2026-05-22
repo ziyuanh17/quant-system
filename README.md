@@ -145,6 +145,9 @@ development or CI checks.
 
 Before placing any Alpaca paper order, follow
 [docs/alpaca_paper_smoke_runbook.md](docs/alpaca_paper_smoke_runbook.md).
+The future scheduled Alpaca paper workflow is designed in
+[docs/alpaca_paper_workflow.md](docs/alpaca_paper_workflow.md), but not
+implemented yet.
 
 Install Alpaca support only when working on the Alpaca adapter path:
 

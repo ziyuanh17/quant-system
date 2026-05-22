@@ -61,6 +61,16 @@ the dry-run workflow lock.
 The older `scripts/run_paper_signal.sh` wrapper still exists for testing a known
 static CSV, but it does not refresh data before generating a signal.
 
+## Alpaca Paper Workflow
+
+The scheduled Alpaca paper workflow is designed but not implemented yet. See
+[alpaca_paper_workflow.md](alpaca_paper_workflow.md) for the proposed
+lock-protected sequence, safety policy, artifact contract, and non-goals.
+
+Do not schedule Alpaca paper broker access until
+[alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) has been
+reviewed and, ideally, run once against the intended paper account.
+
 ## Concurrent Run Safety
 
 The refresh workflow uses a lock file by default:
