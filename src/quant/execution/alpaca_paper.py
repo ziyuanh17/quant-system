@@ -142,12 +142,23 @@ class AlpacaPaperBrokerClient:
                 account_id=self._config.account_id,
             )
             self._orders_by_client_id[client_order_id] = record
+            self._remember_fills(raw_order, order_record=record)
             if record.status not in terminal:
                 records.append(record)
         return tuple(records)
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
+        self.open_orders()
         return tuple(self._fills_by_execution_id.values())
+
+    def remember_order_record(self, record: LiveOrderRecord) -> None:
+        """Keep local request context for later broker polling."""
+        self._orders_by_client_id[record.client_order_id] = record
+        self._order_contexts[record.client_order_id] = _AlpacaOrderContext(
+            request=record.request,
+            reference_price=record.reference_price,
+            safety_check=record.safety_check,
+        )
 
     def _build_trading_client(self) -> AlpacaTradingClientProtocol:
         sdk = self._load_sdk()

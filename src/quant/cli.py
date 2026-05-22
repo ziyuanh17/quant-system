@@ -29,6 +29,7 @@ from quant.execution import (
     execute_latest_signal,
     execute_latest_signal_dry_run,
     latest_json,
+    load_live_order_records,
     load_paper_broker_state,
     load_trading_safety_config_from_env,
     reconcile_live_state,
@@ -709,6 +710,85 @@ def live_alpaca_paper_snapshot(
     typer.echo(f"Buying power: {snapshot.buying_power:,.2f}")
     typer.echo(f"Positions: {len(snapshot.positions)}")
     typer.echo(f"Snapshot: {snapshot_path}")
+
+
+@live_app.command("alpaca-paper-reconcile")
+def live_alpaca_paper_reconcile(
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live-mode broker access."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required live-mode confirmation phrase."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional safety setting."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live-mode broker access."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+    order_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing local live order artifacts."),
+    ] = Path("data/live/orders"),
+    fill_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing local live fill artifacts."),
+    ] = Path("data/live/fills"),
+    snapshot_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing local account snapshots."),
+    ] = Path("data/live/account_snapshots"),
+    output_path: Annotated[
+        Path,
+        typer.Option(help="Path where reconciliation report is written."),
+    ] = Path("data/live/reconciliation/latest.json"),
+    cash_tolerance: Annotated[
+        float,
+        typer.Option(help="Allowed cash and price difference."),
+    ] = 0.01,
+) -> None:
+    """Reconcile local live artifacts against Alpaca paper broker truth."""
+    if cash_tolerance < 0:
+        raise typer.BadParameter("cash-tolerance must be non-negative")
+    _live_safety_check_or_exit(
+        from_env=from_env,
+        live_trading_enabled=live_trading_enabled,
+        live_trading_confirmation=live_trading_confirmation,
+        max_order_notional=max_order_notional,
+        broker_name=broker_name,
+    )
+    config = _load_alpaca_paper_config_from_env()
+    client = AlpacaPaperBrokerClient(config=config)
+    for order_record in load_live_order_records(order_records_dir):
+        client.remember_order_record(order_record)
+    report = reconcile_live_state(
+        client=client,
+        order_records_dir=order_records_dir,
+        fill_records_dir=fill_records_dir,
+        snapshot_records_dir=snapshot_records_dir,
+        cash_tolerance=cash_tolerance,
+    )
+    report_path = write_live_reconciliation_report(report, output_path)
+
+    typer.echo(f"Status: {report.status.value}")
+    typer.echo(f"Differences: {report.difference_count}")
+    for difference in report.differences:
+        typer.echo(
+            f"[{difference.field}] local={difference.local_value} "
+            f"broker={difference.broker_value}: {difference.message}"
+        )
+    typer.echo(f"Report: {report_path}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @app.command()

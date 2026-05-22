@@ -335,12 +335,12 @@ Recommended implementation sequence:
 4. **Alpaca Paper CLI v1**: add explicit safety-gated paper commands.
    Implemented.
 5. **Alpaca Paper Reconciliation v1**: reconcile local artifacts against Alpaca
-   paper account state.
+   paper account state. Implemented.
 
 The mapping-only layer now exists in `src/quant/execution/alpaca_paper.py`,
 and the lazy optional SDK boundary now exists in
 `src/quant/execution/alpaca_sdk.py`. The Alpaca paper client wrapper now exists
 behind the existing live broker protocol. Explicit Alpaca paper order and
-snapshot commands now exist under `quant live`. The next step should reconcile
-local artifacts against Alpaca paper state, while keeping default checks
-credential-free and network-free.
+snapshot commands now exist under `quant live`, and local artifacts can now be
+reconciled against Alpaca paper state. The next step should document a careful
+manual paper smoke run before adding scheduled Alpaca workflows.

@@ -6,9 +6,9 @@
   },
   "summary": {
     "done": 40,
-    "in_review": 4,
+    "in_review": 5,
     "planned": 1,
-    "next": "Alpaca Paper Reconciliation v1"
+    "next": "Alpaca Paper Manual Smoke Runbook v1"
   },
   "milestones": [
     {
@@ -278,8 +278,14 @@
     {
       "order": 45,
       "name": "Alpaca Paper Reconciliation v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Reconcile local live artifacts against Alpaca paper account, order, and fill state."
+    },
+    {
+      "order": 46,
+      "name": "Alpaca Paper Manual Smoke Runbook v1",
+      "status": "planned",
+      "purpose": "Document the exact human-run paper broker smoke test before adding scheduled Alpaca workflows."
     }
   ],
   "futureMetrics": [

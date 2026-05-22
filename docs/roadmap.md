@@ -60,12 +60,13 @@ side discussions.
 | 42 | Alpaca Optional Dependency v1 | In Review | Add `alpaca-py` as an optional dependency and verify import boundaries without requiring credentials or network access in default CI. |
 | 43 | Alpaca Paper Client v1 | In Review | Wrap the optional SDK behind a paper client boundary without enabling real-money trading. |
 | 44 | Alpaca Paper CLI v1 | In Review | Add explicit safety-gated Alpaca paper commands without a generic live broker selector. |
-| 45 | Alpaca Paper Reconciliation v1 | Planned | Reconcile local live artifacts against Alpaca paper account/order/fill state. |
+| 45 | Alpaca Paper Reconciliation v1 | In Review | Reconcile local live artifacts against Alpaca paper account/order/fill state. |
+| 46 | Alpaca Paper Manual Smoke Runbook v1 | Planned | Document the exact human-run paper broker smoke test before adding scheduled Alpaca workflows. |
 
 ## Current Recommendation
 
-The next milestone after Alpaca Paper CLI v1 should be
-**Alpaca Paper Reconciliation v1**.
+The next milestone after Alpaca Paper Reconciliation v1 should be
+**Alpaca Paper Manual Smoke Runbook v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -82,10 +83,10 @@ Alpaca paper adapter design boundary, Alpaca-shaped mapping helpers for order
 requests, order statuses, order records, fill records, account snapshots, and
 positions, an optional `alpaca-py` dependency boundary that does not load the
 SDK during default imports, an Alpaca paper client wrapper that can submit
-market orders through fake SDK/client objects in tests, and explicit
-safety-gated Alpaca paper order/snapshot CLI commands. The next step should
-reconcile local artifacts against Alpaca paper broker state while keeping
-default checks credential-free and network-free.
+market orders through fake SDK/client objects in tests, explicit safety-gated
+Alpaca paper order/snapshot CLI commands, and Alpaca paper reconciliation
+against local live artifacts. The next step should document a careful manual
+paper-broker smoke run before adding scheduled Alpaca workflows.
 
 ## Corrected Near-Term Order
 
@@ -132,6 +133,7 @@ data ingestion
   -> Alpaca paper client
   -> Alpaca paper CLI
   -> Alpaca paper reconciliation
+  -> Alpaca paper manual smoke runbook
 ```
 
 ## Data Lineage v1 Scope
@@ -280,6 +282,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Alpaca optional dependency | Adds a lazy optional SDK boundary, but no SDK-backed paper client exists yet. | Implement an Alpaca paper client wrapper behind the live broker client protocol without enabling real-money trading. |
 | Alpaca paper client | Wraps the optional SDK behind the live broker client protocol, but has no user-facing command yet. | Add explicit safety-gated Alpaca paper CLI commands and keep generic live broker routing out of scope. |
 | Alpaca paper CLI | Can submit explicit safety-gated paper orders and snapshots, but does not reconcile local artifacts against Alpaca paper state yet. | Add Alpaca paper reconciliation and keep any default tests credential-free and network-free. |
+| Alpaca paper reconciliation | Reconciles local artifacts against Alpaca paper state, but no human smoke-test runbook exists yet. | Add a manual runbook for one tiny paper order, snapshot, reconciliation, and artifact review before scheduling Alpaca workflows. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -919,3 +922,31 @@ or an Alpaca account.
 This milestone does not add a generic broker selector, scheduled Alpaca
 workflows, broker reconciliation against Alpaca, streaming trade updates, or
 any real-money trading path.
+
+## Alpaca Paper Reconciliation v1 Scope
+
+Introduce:
+
+```text
+quant live alpaca-paper-reconcile
+AlpacaPaperBrokerClient.remember_order_record
+AlpacaPaperBrokerClient.fills polling refresh
+```
+
+The first version reconciles local live order, fill, and account snapshot
+artifacts against current Alpaca paper broker truth through the existing
+`reconcile_live_state` contract. The CLI command uses the same live safety
+gates and paper-only Alpaca environment variables as the order and snapshot
+commands, writes `data/live/reconciliation/latest.json` by default, prints all
+differences, and exits nonzero when drift is detected.
+
+Because reconciliation usually runs in a fresh process, the Alpaca paper client
+can remember local order-record context before polling Alpaca orders. That
+context lets filled Alpaca orders be mapped back into broker-neutral fill
+records for comparison.
+
+Tests use fake clients only. Default CI does not need Alpaca credentials, an
+installed optional extra, network access, or an Alpaca account.
+
+This milestone does not add scheduled Alpaca workflows, streaming trade
+updates, automated recovery, or any real-money trading path.

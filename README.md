@@ -188,6 +188,16 @@ quant live alpaca-paper-snapshot \
   --broker-name alpaca-paper
 ```
 
+Reconcile local Alpaca paper artifacts against broker state:
+
+```bash
+quant live alpaca-paper-reconcile \
+  --live-trading-enabled \
+  --live-trading-confirmation I_UNDERSTAND_LIVE_TRADING_RISK \
+  --max-order-notional 500 \
+  --broker-name alpaca-paper
+```
+
 Record a live-shaped dry-run order without submitting it:
 
 ```bash

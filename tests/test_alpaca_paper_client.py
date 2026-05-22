@@ -9,6 +9,7 @@ from quant.execution.alpaca_paper import (
 )
 from quant.execution.alpaca_sdk import AlpacaTradingSdk
 from quant.models.execution import (
+    LiveOrderRecord,
     LiveOrderStatus,
     OrderRequest,
     OrderSide,
@@ -173,6 +174,51 @@ def test_alpaca_paper_client_open_orders_maps_known_orders_only() -> None:
     assert len(open_orders) == 1
     assert open_orders[0].client_order_id == "client-1"
     assert open_orders[0].status == LiveOrderStatus.ACCEPTED
+
+
+def test_alpaca_paper_client_refreshes_known_fills_from_polled_orders() -> None:
+    trading_client = FakeTradingClient(
+        api_key="unused",
+        secret_key="unused",
+        paper=True,
+    )
+    request = OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=2)
+    order_record = LiveOrderRecord(
+        client_order_id="client-1",
+        broker_order_id="alpaca-order-1",
+        broker_name="alpaca-paper",
+        account_id="acct-1",
+        broker_environment="paper",
+        request=request,
+        reference_price=100.25,
+        notional=200.5,
+        safety_check=_allowed_live_check(),
+        status=LiveOrderStatus.FILLED,
+    )
+    trading_client.orders.append(
+        SimpleNamespace(
+            id="alpaca-order-1",
+            client_order_id="client-1",
+            status="filled",
+            filled_qty="2",
+            filled_avg_price="100.25",
+        )
+    )
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=trading_client,
+    )
+
+    client.remember_order_record(order_record)
+    fills = client.fills()
+
+    assert len(fills) == 1
+    assert fills[0].client_order_id == "client-1"
+    assert fills[0].notional == 200.5
 
 
 class FakeEnum:
