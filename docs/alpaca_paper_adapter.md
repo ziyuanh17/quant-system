@@ -303,6 +303,10 @@ After `alpaca-py` is added as an optional dependency:
 
 Default CI must not require Alpaca credentials.
 
+Manual broker-connected checks should follow
+[alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) before any
+scheduled Alpaca workflow is added.
+
 ## CLI Boundary
 
 Future commands should stay separate from fake live commands:
@@ -336,11 +340,14 @@ Recommended implementation sequence:
    Implemented.
 5. **Alpaca Paper Reconciliation v1**: reconcile local artifacts against Alpaca
    paper account state. Implemented.
+6. **Alpaca Paper Manual Smoke Runbook v1**: document the human-run paper
+   broker smoke test before scheduled Alpaca workflows. Implemented.
 
 The mapping-only layer now exists in `src/quant/execution/alpaca_paper.py`,
 and the lazy optional SDK boundary now exists in
 `src/quant/execution/alpaca_sdk.py`. The Alpaca paper client wrapper now exists
 behind the existing live broker protocol. Explicit Alpaca paper order and
 snapshot commands now exist under `quant live`, and local artifacts can now be
-reconciled against Alpaca paper state. The next step should document a careful
-manual paper smoke run before adding scheduled Alpaca workflows.
+reconciled against Alpaca paper state. The manual smoke runbook now documents
+the careful broker-connected check that should pass before scheduled Alpaca
+workflows are added.

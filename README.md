@@ -143,6 +143,9 @@ See [docs/alpaca_paper_adapter.md](docs/alpaca_paper_adapter.md) for the
 Alpaca paper adapter design. The SDK is optional and is not needed for default
 development or CI checks.
 
+Before placing any Alpaca paper order, follow
+[docs/alpaca_paper_smoke_runbook.md](docs/alpaca_paper_smoke_runbook.md).
+
 Install Alpaca support only when working on the Alpaca adapter path:
 
 ```bash
