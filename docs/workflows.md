@@ -58,6 +58,17 @@ timestamped log under `logs/`, and uses `QUANT_DRY_RUN_*` paths for dry-run
 orders, dry-run scheduler records, comparison reports, workflow records, and
 the dry-run workflow lock.
 
+For recurring Alpaca paper rehearsals, use:
+
+```bash
+bash scripts/run_alpaca_paper_refresh.sh
+```
+
+This wrapper loads `.env`, runs `quant workflow alpaca-paper-refresh --from-env`,
+writes a timestamped log under `logs/`, and uses `QUANT_ALPACA_PAPER_*` paths
+for workflow records, the Alpaca paper workflow lock, live order/fill/snapshot
+artifacts, and reconciliation output. It does not retry broker submission.
+
 The older `scripts/run_paper_signal.sh` wrapper still exists for testing a known
 static CSV, but it does not refresh data before generating a signal.
 

@@ -85,6 +85,23 @@ It refreshes market data, validates it, runs scheduled dry-run signal
 execution, compares against the latest paper signal when one exists, and can
 publish dashboard health when `QUANT_DRY_RUN_PUBLISH_STATUS_PATH` is set.
 
+For the Alpaca paper rehearsal path, run:
+
+```bash
+bash scripts/run_alpaca_paper_refresh.sh
+```
+
+That wrapper runs:
+
+```bash
+quant workflow alpaca-paper-refresh --from-env
+```
+
+It refreshes market data, validates it, submits one actionable signal to the
+explicit Alpaca paper client, writes live audit artifacts, and fails if
+reconciliation against Alpaca paper broker state does not pass. It does not
+retry broker submission automatically.
+
 ## Cron Example
 
 Use absolute paths when installing a cron entry:
@@ -97,6 +114,12 @@ Dry-run wrapper example:
 
 ```cron
 5 14 * * 1-5 cd /absolute/path/to/quant-system && bash scripts/run_dry_run_refresh.sh
+```
+
+Alpaca paper wrapper example:
+
+```cron
+10 14 * * 1-5 cd /absolute/path/to/quant-system && bash scripts/run_alpaca_paper_refresh.sh
 ```
 
 The example above runs once per weekday. Choose a time that matches the data
@@ -121,6 +144,12 @@ For dry-run rehearsals, change `ExecStart` to:
 
 ```ini
 ExecStart=/usr/bin/bash scripts/run_dry_run_refresh.sh
+```
+
+For Alpaca paper rehearsals, change `ExecStart` to:
+
+```ini
+ExecStart=/usr/bin/bash scripts/run_alpaca_paper_refresh.sh
 ```
 
 Example timer:
@@ -149,6 +178,10 @@ Before enabling a recurring run:
 - `QUANT_STATE_PATH` is unique to the paper account.
 - `QUANT_LOCK_PATH` is unique to the workflow/account being scheduled.
 - dry-run wrappers use distinct `QUANT_DRY_RUN_*` output paths and lock files.
+- Alpaca paper wrappers use distinct `QUANT_ALPACA_PAPER_*` output paths and
+  lock files.
+- Alpaca paper credentials point to the intended paper account, not a
+  real-money account.
 - the first local wrapper run writes logs, data artifacts, workflow records,
   run records, signal records, and state.
 - ignored output directories have enough disk space.

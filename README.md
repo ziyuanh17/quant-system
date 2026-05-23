@@ -250,6 +250,12 @@ against the paper broker from one finite workflow:
 quant workflow alpaca-paper-refresh --symbol AAPL --start 2024-01-01 --from-env
 ```
 
+Run the Alpaca paper workflow through the local/server wrapper:
+
+```bash
+bash scripts/run_alpaca_paper_refresh.sh
+```
+
 ## Scheduled Runs
 
 Run a finite scheduled paper-order loop:

@@ -126,6 +126,12 @@ For the dry-run rehearsal workflow:
 bash scripts/run_dry_run_refresh.sh
 ```
 
+For the Alpaca paper rehearsal workflow:
+
+```bash
+bash scripts/run_alpaca_paper_refresh.sh
+```
+
 Copy `.env.example` to `.env` to configure the wrapper. See
 [deployment.md](deployment.md) for cron and systemd examples.
 
