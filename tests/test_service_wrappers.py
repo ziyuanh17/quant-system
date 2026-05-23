@@ -50,3 +50,26 @@ def test_alpaca_paper_refresh_wrapper_uses_explicit_workflow() -> None:
         'data/live/reconciliation/latest.json}"'
     ) in script
     assert 'log_file="$log_dir/alpaca-paper-refresh-' in script
+
+
+def test_alpaca_paper_refresh_wrapper_can_publish_dashboard_status() -> None:
+    script = Path("scripts/run_alpaca_paper_refresh.sh").read_text()
+
+    assert (
+        'alpaca_paper_publish_status_after_run="${'
+        'QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN:-false}"'
+    ) in script
+    assert (
+        'alpaca_paper_publish_status_path="${'
+        'QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH:-site/status.json}"'
+    ) in script
+    assert '"publish-status"' in script
+    assert '"--check-alpaca-paper"' in script
+    assert (
+        '"--alpaca-paper-workflow-records-dir" '
+        '"$alpaca_paper_workflow_output_dir"'
+    ) in script
+    assert (
+        '"--alpaca-paper-reconciliation-report-path" '
+        '"$alpaca_paper_reconciliation_output_path"'
+    ) in script

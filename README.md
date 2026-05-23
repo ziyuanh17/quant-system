@@ -256,6 +256,9 @@ Run the Alpaca paper workflow through the local/server wrapper:
 bash scripts/run_alpaca_paper_refresh.sh
 ```
 
+Set `QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN=true` to let the wrapper
+refresh the sanitized GitHub Pages status file after the run.
+
 ## Scheduled Runs
 
 Run a finite scheduled paper-order loop:

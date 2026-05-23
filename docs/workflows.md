@@ -68,6 +68,9 @@ This wrapper loads `.env`, runs `quant workflow alpaca-paper-refresh --from-env`
 writes a timestamped log under `logs/`, and uses `QUANT_ALPACA_PAPER_*` paths
 for workflow records, the Alpaca paper workflow lock, live order/fill/snapshot
 artifacts, and reconciliation output. It does not retry broker submission.
+Set `QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN=true` when the wrapper should
+also run `quant ops publish-status --check-alpaca-paper` and refresh
+`QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH`.
 
 The older `scripts/run_paper_signal.sh` wrapper still exists for testing a known
 static CSV, but it does not refresh data before generating a signal.

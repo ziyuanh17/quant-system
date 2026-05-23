@@ -33,6 +33,9 @@ alpaca_paper_fill_output_dir="${QUANT_ALPACA_PAPER_FILL_OUTPUT_DIR:-data/live/fi
 alpaca_paper_snapshot_output_dir="${QUANT_ALPACA_PAPER_SNAPSHOT_OUTPUT_DIR:-data/live/account_snapshots}"
 alpaca_paper_reconciliation_output_path="${QUANT_ALPACA_PAPER_RECONCILIATION_OUTPUT_PATH:-data/live/reconciliation/latest.json}"
 alpaca_paper_cash_tolerance="${QUANT_ALPACA_PAPER_CASH_TOLERANCE:-0.01}"
+alpaca_paper_publish_status_after_run="${QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN:-false}"
+alpaca_paper_publish_status_path="${QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH:-site/status.json}"
+alpaca_paper_publish_status_fail_on_failed="${QUANT_ALPACA_PAPER_PUBLISH_STATUS_FAIL_ON_FAILED:-false}"
 
 mkdir -p "$log_dir"
 log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
@@ -47,6 +50,7 @@ log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
   echo "order_output_dir=$alpaca_paper_order_output_dir"
   echo "reconciliation_output_path=$alpaca_paper_reconciliation_output_path"
   echo "lock_path=$alpaca_paper_lock_path"
+  echo "publish_status_after_run=$alpaca_paper_publish_status_after_run"
 
   command=(
     "$quant_cmd"
@@ -78,6 +82,25 @@ log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
   fi
 
   "${command[@]}"
+
+  if [[ "$alpaca_paper_publish_status_after_run" == "true" ]]; then
+    publish_command=(
+      "$quant_cmd"
+      "ops"
+      "publish-status"
+      "--output-path" "$alpaca_paper_publish_status_path"
+      "--logs-dir" "$log_dir"
+      "--check-alpaca-paper"
+      "--alpaca-paper-workflow-records-dir" "$alpaca_paper_workflow_output_dir"
+      "--alpaca-paper-reconciliation-report-path" "$alpaca_paper_reconciliation_output_path"
+    )
+
+    if [[ "$alpaca_paper_publish_status_fail_on_failed" == "true" ]]; then
+      publish_command+=("--fail-on-failed")
+    fi
+
+    "${publish_command[@]}"
+  fi
 
   echo "completed_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >> "$log_file" 2>&1

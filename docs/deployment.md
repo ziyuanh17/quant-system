@@ -102,6 +102,11 @@ explicit Alpaca paper client, writes live audit artifacts, and fails if
 reconciliation against Alpaca paper broker state does not pass. It does not
 retry broker submission automatically.
 
+Set `QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN=true` to publish the sanitized
+dashboard status after the wrapper finishes. The status file path defaults to
+`site/status.json` and can be changed with
+`QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH`.
+
 ## Cron Example
 
 Use absolute paths when installing a cron entry:

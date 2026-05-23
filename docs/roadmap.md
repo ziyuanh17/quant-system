@@ -66,12 +66,13 @@ side discussions.
 | 48 | Alpaca Paper Refresh Workflow v1 | In Review | Implement one finite lock-protected Alpaca paper refresh workflow with fake-driven tests. |
 | 49 | Alpaca Paper Server Wrapper v1 | In Review | Add an env-driven wrapper for running the Alpaca paper refresh workflow repeatedly on a server. |
 | 50 | Alpaca Paper Operational Health v1 | In Review | Surface Alpaca paper workflow/reconciliation health in the local health command and dashboard status. |
-| 51 | Alpaca Paper Status Publishing Wrapper v1 | Planned | Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks. |
+| 51 | Alpaca Paper Status Publishing Wrapper v1 | In Review | Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks. |
+| 52 | Alpaca Paper Manual Smoke Execution v1 | Planned | Run and document one tiny broker-connected Alpaca paper smoke test before relying on scheduled runs. |
 
 ## Current Recommendation
 
-The next milestone after Alpaca Paper Operational Health v1 should be
-**Alpaca Paper Status Publishing Wrapper v1**.
+The next milestone after Alpaca Paper Status Publishing Wrapper v1 should be
+**Alpaca Paper Manual Smoke Execution v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -96,8 +97,9 @@ Alpaca paper refresh workflow with fake-driven tests and no default network or
 credential requirements in CI, and an env-driven wrapper that runs
 `quant workflow alpaca-paper-refresh` with timestamped logs, and Alpaca paper
 workflow/reconciliation health in local checks and the static dashboard status.
-The next step should let the Alpaca paper wrapper publish sanitized dashboard
-status after the workflow/health check, without adding alert hooks yet.
+The Alpaca paper wrapper can optionally publish sanitized dashboard status after
+the workflow/health check. The next step should run and document one tiny
+broker-connected Alpaca paper smoke test before relying on scheduled runs.
 
 ## Corrected Near-Term Order
 
@@ -1083,3 +1085,21 @@ run `quant ops publish-status --check-alpaca-paper` after the workflow finishes,
 so the GitHub Pages dashboard can show the broker-paper lane without a separate
 manual command. Publishing should remain sanitized and should not send external
 alerts.
+
+This milestone does not enable publishing by default, send external alerts,
+retry broker submissions, or add any real-money trading path.
+
+## Alpaca Paper Manual Smoke Execution v1 Scope
+
+Introduce:
+
+```text
+completed smoke run notes
+artifact review checklist results
+go/no-go note for recurring Alpaca paper scheduling
+```
+
+The first version should execute the existing manual smoke runbook against the
+intended Alpaca paper account, review the generated order/fill/snapshot/
+reconciliation/workflow/status artifacts, and record what happened without
+committing secrets or raw broker payloads.

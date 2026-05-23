@@ -6,9 +6,9 @@
   },
   "summary": {
     "done": 40,
-    "in_review": 10,
+    "in_review": 11,
     "planned": 1,
-    "next": "Alpaca Paper Status Publishing Wrapper v1"
+    "next": "Alpaca Paper Manual Smoke Execution v1"
   },
   "milestones": [
     {
@@ -314,8 +314,14 @@
     {
       "order": 51,
       "name": "Alpaca Paper Status Publishing Wrapper v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks."
+    },
+    {
+      "order": 52,
+      "name": "Alpaca Paper Manual Smoke Execution v1",
+      "status": "planned",
+      "purpose": "Run and document one tiny broker-connected Alpaca paper smoke test before relying on scheduled runs."
     }
   ],
   "futureMetrics": [
