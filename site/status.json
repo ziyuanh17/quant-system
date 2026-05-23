@@ -11,6 +11,9 @@
   "reconciliation_difference_count": null,
   "comparison_status": "skipped",
   "comparison_difference_count": null,
+  "alpaca_paper_workflow_status": "skipped",
+  "alpaca_paper_reconciliation_status": "skipped",
+  "alpaca_paper_reconciliation_difference_count": null,
   "issue_count": 1,
   "issues": [
     {

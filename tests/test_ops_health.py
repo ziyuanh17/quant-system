@@ -7,6 +7,9 @@ from quant.cli import app
 from quant.execution import PaperBroker, save_paper_broker_state
 from quant.execution.artifacts import write_paper_signal_record
 from quant.models.execution import (
+    LiveReconciliationDifference,
+    LiveReconciliationReport,
+    LiveReconciliationStatus,
     OrderRequest,
     OrderSide,
     PaperBrokerState,
@@ -20,6 +23,7 @@ from quant.models.execution import (
 )
 from quant.models.operations import HealthStatus, RunLockRecord
 from quant.models.scheduler import ScheduledRunRecord, ScheduledRunStatus
+from quant.models.workflow import DataRefreshWorkflowRecord, WorkflowRunStatus
 from quant.operations import FileLock, build_health_report
 
 
@@ -279,6 +283,86 @@ def test_ops_health_cli_can_check_comparison_report(tmp_path) -> None:
     assert "Comparison: status=passed differences=0" in result.output
 
 
+def test_health_report_checks_alpaca_paper_workflow_and_reconciliation(
+    tmp_path,
+) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    workflow_records_dir = tmp_path / "workflows" / "alpaca-paper-refresh"
+    reconciliation_path = tmp_path / "live" / "reconciliation" / "latest.json"
+    _write_alpaca_paper_workflow_record(workflow_records_dir, passed=True)
+    _write_live_reconciliation_report(reconciliation_path, passed=True)
+
+    report = build_health_report(
+        **paths,
+        check_alpaca_paper=True,
+        alpaca_paper_workflow_records_dir=workflow_records_dir,
+        alpaca_paper_reconciliation_report_path=reconciliation_path,
+    )
+
+    assert report.status == HealthStatus.HEALTHY
+    assert report.alpaca_paper_workflow_status == "succeeded"
+    assert report.alpaca_paper_reconciliation_status == "passed"
+    assert report.alpaca_paper_reconciliation_difference_count == 0
+
+
+def test_health_report_fails_when_alpaca_paper_reconciliation_failed(
+    tmp_path,
+) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    workflow_records_dir = tmp_path / "workflows" / "alpaca-paper-refresh"
+    reconciliation_path = tmp_path / "live" / "reconciliation" / "latest.json"
+    _write_alpaca_paper_workflow_record(workflow_records_dir, passed=True)
+    _write_live_reconciliation_report(reconciliation_path, passed=False)
+
+    report = build_health_report(
+        **paths,
+        check_alpaca_paper=True,
+        alpaca_paper_workflow_records_dir=workflow_records_dir,
+        alpaca_paper_reconciliation_report_path=reconciliation_path,
+    )
+
+    assert report.status == HealthStatus.FAILED
+    assert report.alpaca_paper_reconciliation_status == "failed"
+    assert report.alpaca_paper_reconciliation_difference_count == 1
+    assert "alpaca_paper_reconciliation_failed" in {
+        issue.code for issue in report.issues
+    }
+
+
+def test_ops_health_cli_can_check_alpaca_paper_health(tmp_path) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    workflow_records_dir = tmp_path / "workflows" / "alpaca-paper-refresh"
+    reconciliation_path = tmp_path / "live" / "reconciliation" / "latest.json"
+    _write_alpaca_paper_workflow_record(workflow_records_dir, passed=True)
+    _write_live_reconciliation_report(reconciliation_path, passed=True)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "health",
+            "--run-records-dir",
+            str(paths["run_records_dir"]),
+            "--signal-records-dir",
+            str(paths["signal_records_dir"]),
+            "--state-path",
+            str(paths["state_path"]),
+            "--logs-dir",
+            str(paths["logs_dir"]),
+            "--check-alpaca-paper",
+            "--alpaca-paper-workflow-records-dir",
+            str(workflow_records_dir),
+            "--alpaca-paper-reconciliation-report-path",
+            str(reconciliation_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Alpaca paper: workflow=succeeded reconciliation=passed" in (
+        result.output
+    )
+
+
 def test_ops_publish_status_writes_sanitized_dashboard_json(tmp_path) -> None:
     paths = _write_reconciled_health_artifacts(tmp_path)
     output_path = tmp_path / "site" / "status.json"
@@ -317,6 +401,50 @@ def test_ops_publish_status_writes_sanitized_dashboard_json(tmp_path) -> None:
     assert payload["comparison_difference_count"] == 0
     assert "state_cash" not in payload
     assert "state_position_count" not in payload
+
+
+def test_ops_publish_status_can_include_sanitized_alpaca_paper_health(
+    tmp_path,
+) -> None:
+    paths = _write_reconciled_health_artifacts(tmp_path)
+    output_path = tmp_path / "site" / "status.json"
+    workflow_records_dir = tmp_path / "workflows" / "alpaca-paper-refresh"
+    reconciliation_path = tmp_path / "live" / "reconciliation" / "latest.json"
+    _write_alpaca_paper_workflow_record(workflow_records_dir, passed=True)
+    _write_live_reconciliation_report(reconciliation_path, passed=True)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "publish-status",
+            "--output-path",
+            str(output_path),
+            "--run-records-dir",
+            str(paths["run_records_dir"]),
+            "--signal-records-dir",
+            str(paths["signal_records_dir"]),
+            "--state-path",
+            str(paths["state_path"]),
+            "--logs-dir",
+            str(paths["logs_dir"]),
+            "--initial-cash",
+            "1000",
+            "--check-alpaca-paper",
+            "--alpaca-paper-workflow-records-dir",
+            str(workflow_records_dir),
+            "--alpaca-paper-reconciliation-report-path",
+            str(reconciliation_path),
+        ],
+    )
+
+    payload = json.loads(output_path.read_text())
+    assert result.exit_code == 0
+    assert payload["alpaca_paper_workflow_status"] == "succeeded"
+    assert payload["alpaca_paper_reconciliation_status"] == "passed"
+    assert payload["alpaca_paper_reconciliation_difference_count"] == 0
+    assert "account_id" not in payload
+    assert "state_cash" not in payload
 
 
 def _write_health_artifacts(
@@ -437,6 +565,58 @@ def _write_comparison_report(path, *, passed: bool) -> None:
         paper_signal_date="2024-01-25",
         difference_tolerance=0.01,
         difference_count=len(differences),
+        differences=differences,
+    )
+    path.write_text(report.model_dump_json(indent=2) + "\n")
+
+
+def _write_alpaca_paper_workflow_record(path, *, passed: bool) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+    record = DataRefreshWorkflowRecord(
+        workflow_name="alpaca-paper-refresh",
+        status=(
+            WorkflowRunStatus.SUCCEEDED
+            if passed
+            else WorkflowRunStatus.FAILED
+        ),
+        started_at=datetime(2024, 1, 25, 10, tzinfo=UTC),
+        provider="fake",
+        symbol="AAPL",
+        request_start="2024-01-01",
+        message="ok" if passed else "boom",
+    )
+    (path / f"{record.workflow_id}.json").write_text(
+        record.model_dump_json(indent=2) + "\n"
+    )
+
+
+def _write_live_reconciliation_report(path, *, passed: bool) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    differences = ()
+    if not passed:
+        differences = (
+            LiveReconciliationDifference(
+                field="fills.count",
+                local_value="1",
+                broker_value="0",
+                message="local and broker fill counts differ",
+            ),
+        )
+    report = LiveReconciliationReport(
+        broker_name="alpaca-paper",
+        account_id="acct-1",
+        broker_environment="paper",
+        local_order_count=1,
+        broker_order_count=1,
+        local_fill_count=1,
+        broker_fill_count=1 if passed else 0,
+        local_position_count=1,
+        broker_position_count=1,
+        status=(
+            LiveReconciliationStatus.PASSED
+            if passed
+            else LiveReconciliationStatus.FAILED
+        ),
         differences=differences,
     )
     path.write_text(report.model_dump_json(indent=2) + "\n")

@@ -25,6 +25,13 @@ def build_dashboard_health_status(
         reconciliation_difference_count=report.reconciliation_difference_count,
         comparison_status=report.comparison_status,
         comparison_difference_count=report.comparison_difference_count,
+        alpaca_paper_workflow_status=report.alpaca_paper_workflow_status,
+        alpaca_paper_reconciliation_status=(
+            report.alpaca_paper_reconciliation_status
+        ),
+        alpaca_paper_reconciliation_difference_count=(
+            report.alpaca_paper_reconciliation_difference_count
+        ),
         issue_count=report.issue_count,
         issues=tuple(
             DashboardHealthIssue(

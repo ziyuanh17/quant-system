@@ -44,6 +44,9 @@ class DashboardHealthStatus(FrozenModel):
     reconciliation_difference_count: int | None = None
     comparison_status: str
     comparison_difference_count: int | None = None
+    alpaca_paper_workflow_status: str = "skipped"
+    alpaca_paper_reconciliation_status: str = "skipped"
+    alpaca_paper_reconciliation_difference_count: int | None = None
     issue_count: int
     issues: tuple[DashboardHealthIssue, ...] = ()
 
@@ -77,6 +80,12 @@ class HealthReport(FrozenModel):
     comparison_status: str = "skipped"
     comparison_difference_count: int | None = None
     comparison_report_path: str | None = None
+    alpaca_paper_workflow_records_dir: str | None = None
+    alpaca_paper_workflow_path: str | None = None
+    alpaca_paper_workflow_status: str = "skipped"
+    alpaca_paper_reconciliation_status: str = "skipped"
+    alpaca_paper_reconciliation_difference_count: int | None = None
+    alpaca_paper_reconciliation_report_path: str | None = None
     issues: tuple[HealthIssue, ...] = ()
 
     @property

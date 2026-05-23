@@ -65,12 +65,13 @@ side discussions.
 | 47 | Alpaca Paper Workflow Design v1 | In Review | Design the scheduled Alpaca paper workflow only after the manual smoke runbook is reviewed. |
 | 48 | Alpaca Paper Refresh Workflow v1 | In Review | Implement one finite lock-protected Alpaca paper refresh workflow with fake-driven tests. |
 | 49 | Alpaca Paper Server Wrapper v1 | In Review | Add an env-driven wrapper for running the Alpaca paper refresh workflow repeatedly on a server. |
-| 50 | Alpaca Paper Operational Health v1 | Planned | Surface Alpaca paper workflow/reconciliation health in the local health command and dashboard status. |
+| 50 | Alpaca Paper Operational Health v1 | In Review | Surface Alpaca paper workflow/reconciliation health in the local health command and dashboard status. |
+| 51 | Alpaca Paper Status Publishing Wrapper v1 | Planned | Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks. |
 
 ## Current Recommendation
 
-The next milestone after Alpaca Paper Server Wrapper v1 should be
-**Alpaca Paper Operational Health v1**.
+The next milestone after Alpaca Paper Operational Health v1 should be
+**Alpaca Paper Status Publishing Wrapper v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -93,9 +94,10 @@ local live artifacts, and a manual smoke runbook for the first broker-connected
 check, a scheduled Alpaca paper workflow design, and a finite lock-protected
 Alpaca paper refresh workflow with fake-driven tests and no default network or
 credential requirements in CI, and an env-driven wrapper that runs
-`quant workflow alpaca-paper-refresh` with timestamped logs. The next step
-should surface Alpaca paper workflow/reconciliation health in local checks and
-the static dashboard status, without adding alert hooks yet.
+`quant workflow alpaca-paper-refresh` with timestamped logs, and Alpaca paper
+workflow/reconciliation health in local checks and the static dashboard status.
+The next step should let the Alpaca paper wrapper publish sanitized dashboard
+status after the workflow/health check, without adding alert hooks yet.
 
 ## Corrected Near-Term Order
 
@@ -147,6 +149,7 @@ data ingestion
   -> Alpaca paper refresh workflow
   -> Alpaca paper server wrapper
   -> Alpaca paper operational health
+  -> Alpaca paper status publishing wrapper
 ```
 
 ## Data Lineage v1 Scope
@@ -300,6 +303,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Alpaca paper workflow design | Defines the scheduled workflow contract, but no workflow command exists yet. | Implement a finite lock-protected workflow command with fake-driven tests and no default broker network access in CI. |
 | Alpaca paper refresh workflow | Adds one finite workflow command, but it still needs an operational wrapper before it is convenient to run frequently. | Add an env-driven wrapper, logs, and docs for server-style recurring execution. |
 | Alpaca paper server wrapper | Provides an env-driven wrapper and logs, but health checks still focus on paper/dry-run status. | Surface Alpaca paper workflow and reconciliation status in operational health and dashboard output. |
+| Alpaca paper operational health | Health and dashboard status can include Alpaca paper workflow/reconciliation status, but the wrapper does not publish status automatically. | Add wrapper-controlled dashboard publishing for the Alpaca paper server path. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -1064,3 +1068,18 @@ The first version should let local health checks and the static dashboard show
 whether the latest Alpaca paper workflow completed, whether reconciliation
 passed, and where the latest safe artifacts live. It should not publish account
 secrets, raw broker payloads, or full account details.
+
+## Alpaca Paper Status Publishing Wrapper v1 Scope
+
+Introduce:
+
+```text
+QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH
+QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN
+```
+
+The first version should let `scripts/run_alpaca_paper_refresh.sh` optionally
+run `quant ops publish-status --check-alpaca-paper` after the workflow finishes,
+so the GitHub Pages dashboard can show the broker-paper lane without a separate
+manual command. Publishing should remain sanitized and should not send external
+alerts.

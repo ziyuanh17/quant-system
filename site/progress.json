@@ -6,9 +6,9 @@
   },
   "summary": {
     "done": 40,
-    "in_review": 9,
+    "in_review": 10,
     "planned": 1,
-    "next": "Alpaca Paper Operational Health v1"
+    "next": "Alpaca Paper Status Publishing Wrapper v1"
   },
   "milestones": [
     {
@@ -308,8 +308,14 @@
     {
       "order": 50,
       "name": "Alpaca Paper Operational Health v1",
-      "status": "planned",
+      "status": "in_review",
       "purpose": "Surface Alpaca paper workflow/reconciliation health in the local health command and dashboard status."
+    },
+    {
+      "order": 51,
+      "name": "Alpaca Paper Status Publishing Wrapper v1",
+      "status": "planned",
+      "purpose": "Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks."
     }
   ],
   "futureMetrics": [
@@ -320,6 +326,7 @@
     "last scheduler run status",
     "latest backtest return",
     "data validation status",
-    "dashboard health status"
+    "dashboard health status",
+    "Alpaca paper reconciliation status"
   ]
 }

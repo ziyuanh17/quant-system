@@ -91,6 +91,10 @@ function renderStatus(status) {
     formatValue(status.reconciliation_status),
   );
   setText("comparison-status", formatValue(status.comparison_status));
+  setText(
+    "alpaca-paper-status",
+    formatValue(status.alpaca_paper_reconciliation_status),
+  );
 
   const issues = document.getElementById("status-issues");
   issues.innerHTML = "";
@@ -125,6 +129,7 @@ function renderStatusError(error) {
   setText("lock-status", "n/a");
   setText("reconciliation-status", "n/a");
   setText("comparison-status", "n/a");
+  setText("alpaca-paper-status", "n/a");
 }
 
 loadProgress()

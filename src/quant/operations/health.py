@@ -8,6 +8,8 @@ from quant.execution.reconciliation import (
     write_paper_state_reconciliation_report,
 )
 from quant.models.execution import (
+    LiveReconciliationReport,
+    LiveReconciliationStatus,
     PaperBrokerState,
     PaperDryRunComparisonReport,
     PaperDryRunComparisonStatus,
@@ -20,6 +22,7 @@ from quant.models.operations import (
     HealthStatus,
 )
 from quant.models.scheduler import ScheduledRunRecord, ScheduledRunStatus
+from quant.models.workflow import DataRefreshWorkflowRecord, WorkflowRunStatus
 from quant.operations.locks import read_lock_record
 
 
@@ -37,6 +40,9 @@ def build_health_report(
     reconciliation_report_path: Path | None = None,
     check_comparison: bool = False,
     comparison_report_path: Path | None = None,
+    check_alpaca_paper: bool = False,
+    alpaca_paper_workflow_records_dir: Path | None = None,
+    alpaca_paper_reconciliation_report_path: Path | None = None,
 ) -> HealthReport:
     """Inspect local service artifacts without mutating account or run state."""
     issues: list[HealthIssue] = []
@@ -222,6 +228,93 @@ def build_health_report(
                         )
                     )
 
+    alpaca_paper_workflow_path: Path | None = None
+    alpaca_paper_workflow_status = "skipped"
+    alpaca_paper_reconciliation_status = "skipped"
+    alpaca_paper_reconciliation_difference_count: int | None = None
+    if check_alpaca_paper:
+        alpaca_paper_workflow_status = "unavailable"
+        alpaca_paper_reconciliation_status = "unavailable"
+
+        if alpaca_paper_workflow_records_dir is None:
+            issues.append(
+                _warning(
+                    "missing_alpaca_paper_workflow_records_dir",
+                    "Alpaca paper check requested without a workflow "
+                    "records directory.",
+                )
+            )
+        else:
+            alpaca_paper_workflow_path = _latest_json(
+                alpaca_paper_workflow_records_dir
+            )
+            if alpaca_paper_workflow_path is None:
+                issues.append(
+                    _warning(
+                        "missing_alpaca_paper_workflow_record",
+                        "No Alpaca paper workflow records found in "
+                        f"{alpaca_paper_workflow_records_dir}.",
+                    )
+                )
+            else:
+                workflow_record = _parse_model(
+                    DataRefreshWorkflowRecord,
+                    alpaca_paper_workflow_path,
+                    issues,
+                    code="invalid_alpaca_paper_workflow_record",
+                )
+                if workflow_record is not None:
+                    alpaca_paper_workflow_status = (
+                        workflow_record.status.value
+                    )
+                    if workflow_record.status == WorkflowRunStatus.FAILED:
+                        issues.append(
+                            _error(
+                                "alpaca_paper_workflow_failed",
+                                "Latest Alpaca paper workflow failed: "
+                                f"{workflow_record.message}",
+                            )
+                        )
+
+        if alpaca_paper_reconciliation_report_path is None:
+            issues.append(
+                _warning(
+                    "missing_alpaca_paper_reconciliation_report_path",
+                    "Alpaca paper check requested without a reconciliation "
+                    "report path.",
+                )
+            )
+        elif not alpaca_paper_reconciliation_report_path.exists():
+            issues.append(
+                _warning(
+                    "missing_alpaca_paper_reconciliation_report",
+                    "Alpaca paper reconciliation report does not exist: "
+                    f"{alpaca_paper_reconciliation_report_path}.",
+                )
+            )
+        else:
+            live_report = _parse_model(
+                LiveReconciliationReport,
+                alpaca_paper_reconciliation_report_path,
+                issues,
+                code="invalid_alpaca_paper_reconciliation_report",
+            )
+            if live_report is not None:
+                alpaca_paper_reconciliation_status = (
+                    live_report.status.value
+                )
+                alpaca_paper_reconciliation_difference_count = (
+                    live_report.difference_count
+                )
+                if live_report.status == LiveReconciliationStatus.FAILED:
+                    issues.append(
+                        _error(
+                            "alpaca_paper_reconciliation_failed",
+                            "Alpaca paper local artifacts diverged from "
+                            "broker state.",
+                        )
+                    )
+
     return HealthReport(
         status=_status_from_issues(issues),
         run_records_dir=str(run_records_dir),
@@ -256,6 +349,28 @@ def build_health_report(
         comparison_report_path=(
             str(comparison_report_path)
             if comparison_report_path is not None
+            else None
+        ),
+        alpaca_paper_workflow_records_dir=(
+            str(alpaca_paper_workflow_records_dir)
+            if alpaca_paper_workflow_records_dir is not None
+            else None
+        ),
+        alpaca_paper_workflow_path=(
+            str(alpaca_paper_workflow_path)
+            if alpaca_paper_workflow_path is not None
+            else None
+        ),
+        alpaca_paper_workflow_status=alpaca_paper_workflow_status,
+        alpaca_paper_reconciliation_status=(
+            alpaca_paper_reconciliation_status
+        ),
+        alpaca_paper_reconciliation_difference_count=(
+            alpaca_paper_reconciliation_difference_count
+        ),
+        alpaca_paper_reconciliation_report_path=(
+            str(alpaca_paper_reconciliation_report_path)
+            if alpaca_paper_reconciliation_report_path is not None
             else None
         ),
         issues=tuple(issues),

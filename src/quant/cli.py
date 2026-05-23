@@ -2017,6 +2017,20 @@ def ops_health(
         Path,
         typer.Option(help="Path to paper-vs-dry-run comparison report."),
     ] = Path("data/dry_run/comparison/latest.json"),
+    check_alpaca_paper: Annotated[
+        bool,
+        typer.Option(help="Check Alpaca paper workflow and reconciliation."),
+    ] = False,
+    alpaca_paper_workflow_records_dir: Annotated[
+        Path,
+        typer.Option(
+            help="Directory containing Alpaca paper workflow records."
+        ),
+    ] = Path("data/workflows/alpaca-paper-refresh"),
+    alpaca_paper_reconciliation_report_path: Annotated[
+        Path,
+        typer.Option(help="Path to Alpaca paper reconciliation report."),
+    ] = Path("data/live/reconciliation/latest.json"),
 ) -> None:
     """Check local service health from durable artifacts."""
     if lock_stale_after_seconds <= 0:
@@ -2040,6 +2054,17 @@ def ops_health(
         check_comparison=check_comparison,
         comparison_report_path=(
             comparison_report_path if check_comparison else None
+        ),
+        check_alpaca_paper=check_alpaca_paper,
+        alpaca_paper_workflow_records_dir=(
+            alpaca_paper_workflow_records_dir
+            if check_alpaca_paper
+            else None
+        ),
+        alpaca_paper_reconciliation_report_path=(
+            alpaca_paper_reconciliation_report_path
+            if check_alpaca_paper
+            else None
         ),
     )
     _print_health_report(report)
@@ -2102,6 +2127,20 @@ def ops_publish_status(
         Path,
         typer.Option(help="Path to paper-vs-dry-run comparison report."),
     ] = Path("data/dry_run/comparison/latest.json"),
+    check_alpaca_paper: Annotated[
+        bool,
+        typer.Option(help="Check Alpaca paper workflow and reconciliation."),
+    ] = False,
+    alpaca_paper_workflow_records_dir: Annotated[
+        Path,
+        typer.Option(
+            help="Directory containing Alpaca paper workflow records."
+        ),
+    ] = Path("data/workflows/alpaca-paper-refresh"),
+    alpaca_paper_reconciliation_report_path: Annotated[
+        Path,
+        typer.Option(help="Path to Alpaca paper reconciliation report."),
+    ] = Path("data/live/reconciliation/latest.json"),
 ) -> None:
     """Publish a sanitized health snapshot for the static dashboard."""
     if lock_stale_after_seconds <= 0:
@@ -2123,6 +2162,17 @@ def ops_publish_status(
         check_comparison=check_comparison,
         comparison_report_path=(
             comparison_report_path if check_comparison else None
+        ),
+        check_alpaca_paper=check_alpaca_paper,
+        alpaca_paper_workflow_records_dir=(
+            alpaca_paper_workflow_records_dir
+            if check_alpaca_paper
+            else None
+        ),
+        alpaca_paper_reconciliation_report_path=(
+            alpaca_paper_reconciliation_report_path
+            if check_alpaca_paper
+            else None
         ),
     )
     status = build_dashboard_health_status(report)
@@ -2319,6 +2369,18 @@ def _print_health_report(report: HealthReport) -> None:
         "differences="
         f"{_format_health_value(report.comparison_difference_count)} "
         f"({_format_health_value(report.comparison_report_path)})"
+    )
+    typer.echo(
+        "Alpaca paper: "
+        f"workflow={report.alpaca_paper_workflow_status} "
+        f"reconciliation={report.alpaca_paper_reconciliation_status} "
+        "differences="
+        f"{_format_health_value(
+            report.alpaca_paper_reconciliation_difference_count
+        )} "
+        f"({_format_health_value(
+            report.alpaca_paper_reconciliation_report_path
+        )})"
     )
     typer.echo(f"Issues: {report.issue_count}")
 
