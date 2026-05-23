@@ -63,12 +63,13 @@ side discussions.
 | 45 | Alpaca Paper Reconciliation v1 | In Review | Reconcile local live artifacts against Alpaca paper account/order/fill state. |
 | 46 | Alpaca Paper Manual Smoke Runbook v1 | In Review | Document the exact human-run paper broker smoke test before adding scheduled Alpaca workflows. |
 | 47 | Alpaca Paper Workflow Design v1 | In Review | Design the scheduled Alpaca paper workflow only after the manual smoke runbook is reviewed. |
-| 48 | Alpaca Paper Refresh Workflow v1 | Planned | Implement one finite lock-protected Alpaca paper refresh workflow with fake-driven tests. |
+| 48 | Alpaca Paper Refresh Workflow v1 | In Review | Implement one finite lock-protected Alpaca paper refresh workflow with fake-driven tests. |
+| 49 | Alpaca Paper Server Wrapper v1 | Planned | Add an env-driven wrapper for running the Alpaca paper refresh workflow repeatedly on a server. |
 
 ## Current Recommendation
 
-The next milestone after Alpaca Paper Workflow Design v1 should be
-**Alpaca Paper Refresh Workflow v1**.
+The next milestone after Alpaca Paper Refresh Workflow v1 should be
+**Alpaca Paper Server Wrapper v1**.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -88,9 +89,11 @@ SDK during default imports, an Alpaca paper client wrapper that can submit
 market orders through fake SDK/client objects in tests, explicit safety-gated
 Alpaca paper order/snapshot CLI commands, Alpaca paper reconciliation against
 local live artifacts, and a manual smoke runbook for the first broker-connected
-check, and a scheduled Alpaca paper workflow design. The next step should
-implement one finite lock-protected Alpaca paper refresh workflow with
-fake-driven tests and no default network or credential requirements in CI.
+check, a scheduled Alpaca paper workflow design, and a finite lock-protected
+Alpaca paper refresh workflow with fake-driven tests and no default network or
+credential requirements in CI. The next step should add a server wrapper that
+runs `quant workflow alpaca-paper-refresh` from environment-driven paths and
+writes timestamped logs, without adding broker retries or generic live trading.
 
 ## Corrected Near-Term Order
 
@@ -140,6 +143,7 @@ data ingestion
   -> Alpaca paper manual smoke runbook
   -> Alpaca paper workflow design
   -> Alpaca paper refresh workflow
+  -> Alpaca paper server wrapper
 ```
 
 ## Data Lineage v1 Scope
@@ -291,6 +295,7 @@ complete. Keep these follow-ups visible when planning future milestones.
 | Alpaca paper reconciliation | Reconciles local artifacts against Alpaca paper state, but no human smoke-test runbook exists yet. | Add a manual runbook for one tiny paper order, snapshot, reconciliation, and artifact review before scheduling Alpaca workflows. |
 | Alpaca paper smoke runbook | Documents the human-run smoke test, but scheduled Alpaca workflows are not designed yet. | Design the scheduled Alpaca paper workflow only after the runbook is reviewed and at least one broker-connected smoke run is understood. |
 | Alpaca paper workflow design | Defines the scheduled workflow contract, but no workflow command exists yet. | Implement a finite lock-protected workflow command with fake-driven tests and no default broker network access in CI. |
+| Alpaca paper refresh workflow | Adds one finite workflow command, but it still needs an operational wrapper before it is convenient to run frequently. | Add an env-driven wrapper, logs, and docs for server-style recurring execution. |
 | CLI workflow | Commands are useful but mostly single-step. | Add composed workflows for ingest, validate, reconcile, feature build, backtest, and paper execution with shared run IDs. |
 | CI and dependency management | CI installs from broad dependency ranges even though `uv.lock` exists. | Make CI use the lockfile or otherwise pin critical tool versions to reduce dependency drift between local and GitHub runs. |
 | Scheduler loop | Runs finite tasks and writes run records, but does not yet supervise a long-running process. | Add retries, idempotency keys, structured logs, failure notifications, and service/cron deployment docs. |
@@ -996,3 +1001,44 @@ milestone.
 This milestone is design-only. It does not add a workflow command, scheduled
 Alpaca execution, automation wrappers, broker retries, or any real-money
 trading path.
+
+## Alpaca Paper Refresh Workflow v1 Scope
+
+Introduce:
+
+```text
+run_alpaca_paper_refresh_workflow
+quant workflow alpaca-paper-refresh
+data/workflows/alpaca-paper-refresh/
+data/locks/alpaca-paper-refresh.lock
+```
+
+The first version refreshes and validates one symbol, derives the latest
+momentum signal, submits one actionable signal through the explicit Alpaca
+paper client boundary, writes live order/fill/account snapshot artifacts, then
+reconciles local artifacts against broker truth. The workflow is finite and
+lock-protected, so a future scheduler can call it repeatedly without embedding
+daemon behavior inside the trading logic.
+
+Tests use fake provider and fake broker clients only. Default CI should not
+need Alpaca credentials, an installed optional extra, network access, or an
+Alpaca account.
+
+This milestone does not add a server wrapper, automatic broker retries,
+dashboard publishing for Alpaca paper health, generic broker selection, or any
+real-money trading path.
+
+## Alpaca Paper Server Wrapper v1 Scope
+
+Introduce:
+
+```text
+scripts/run_alpaca_paper_refresh.sh
+QUANT_ALPACA_PAPER_* workflow path variables
+logs/alpaca-paper-refresh-*.log
+```
+
+The first version should mirror the dry-run server wrapper: load `.env`, run
+`quant workflow alpaca-paper-refresh`, keep paths configurable from
+environment variables, and write timestamped logs. It should remain a wrapper
+around a finite workflow, not a retrying broker daemon.

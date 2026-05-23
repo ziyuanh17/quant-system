@@ -5,19 +5,33 @@ from quant.data import ingest_market_bars, load_price_csv
 from quant.data.providers.base import DataProvider
 from quant.execution import (
     DryRunBrokerAdapter,
+    LiveBrokerAdapter,
+    LiveBrokerClient,
     PaperBrokerAdapter,
     compare_paper_signal_to_dry_run_order,
+    decide_latest_signal,
     evaluate_trading_safety,
     execute_latest_signal,
     execute_latest_signal_dry_run,
     latest_json,
     load_paper_broker_state,
+    reconcile_live_state,
     save_paper_broker_state,
     write_dry_run_order_record,
+    write_live_reconciliation_report,
     write_paper_dry_run_comparison_report,
     write_paper_signal_record,
 )
-from quant.models.execution import Position, TradingMode, TradingSafetyConfig
+from quant.models.execution import (
+    LiveOrderRecord,
+    LiveOrderStatus,
+    OrderRequest,
+    OrderSide,
+    PaperSignalAction,
+    Position,
+    TradingMode,
+    TradingSafetyConfig,
+)
 from quant.models.ingestion import IngestArtifactPaths, IngestRequest
 from quant.models.scheduler import ScheduledRunRecord, ScheduledTaskResult
 from quant.models.workflow import DataRefreshWorkflowRecord, WorkflowRunStatus
@@ -35,6 +49,12 @@ class WorkflowRunFailed(RuntimeError):
     def __init__(self, record: DataRefreshWorkflowRecord) -> None:
         super().__init__(record.message)
         self.record = record
+
+
+class _AlpacaPaperSignalFailed(RuntimeError):
+    def __init__(self, message: str, artifact_paths: tuple[str, ...]) -> None:
+        super().__init__(message)
+        self.artifact_paths = artifact_paths
 
 
 def run_paper_signal_refresh_workflow(
@@ -338,6 +358,144 @@ def run_dry_run_refresh_workflow(
         raise WorkflowRunFailed(record) from exc
 
 
+def run_alpaca_paper_refresh_workflow(
+    *,
+    provider: DataProvider,
+    broker_client: LiveBrokerClient,
+    safety_config: TradingSafetyConfig,
+    symbol: str,
+    start: str,
+    end: str | None,
+    raw_dir: Path,
+    normalized_dir: Path,
+    validation_dir: Path,
+    metadata_dir: Path,
+    workflow_output_dir: Path,
+    strategy: str,
+    quantity: int,
+    min_rows: int,
+    order_output_dir: Path,
+    fill_output_dir: Path,
+    snapshot_output_dir: Path,
+    reconciliation_output_path: Path,
+    cash_tolerance: float = 0.01,
+    lock_path: Path | None = None,
+    lock_stale_after_seconds: int = 7200,
+) -> DataRefreshWorkflowRecord:
+    """Refresh validated data, submit one Alpaca paper signal, and reconcile.
+
+    This workflow is intentionally finite. A scheduler or server wrapper can run
+    it frequently later, while each invocation remains easy to inspect and
+    retry from its durable artifacts.
+    """
+    started_at = datetime.now(UTC)
+    ingest_artifact: IngestArtifactPaths | None = None
+    scheduler_records: tuple[ScheduledRunRecord, ...] = ()
+    extra_artifact_paths: tuple[str, ...] = ()
+    lock_owner: str | None = None
+
+    try:
+        lock = (
+            FileLock(
+                path=lock_path,
+                lock_name="alpaca-paper-refresh",
+                stale_after_seconds=lock_stale_after_seconds,
+            )
+            if lock_path is not None
+            else None
+        )
+        if lock is not None:
+            lock_owner = lock.acquire().owner
+
+        try:
+            if strategy != "momentum":
+                raise ValueError("Only momentum is implemented right now.")
+            if quantity < 1:
+                raise ValueError("quantity must be at least 1")
+            if cash_tolerance < 0:
+                raise ValueError("cash_tolerance must be non-negative")
+
+            request = IngestRequest(symbols=(symbol,), start=start, end=end)
+            artifacts = ingest_market_bars(
+                provider,
+                request,
+                raw_root=raw_dir,
+                normalized_root=normalized_dir,
+                validation_root=validation_dir,
+                metadata_root=metadata_dir,
+                validate=True,
+                min_rows=min_rows,
+            )
+            ingest_artifact = _single_artifact(artifacts)
+            if ingest_artifact.validation_passed is not True:
+                raise ValueError(
+                    "data refresh validation failed; Alpaca paper signal "
+                    "was not run"
+                )
+
+            try:
+                extra_artifact_paths = _run_alpaca_paper_signal_once(
+                    data=Path(ingest_artifact.normalized_path),
+                    symbol=symbol,
+                    quantity=quantity,
+                    broker_client=broker_client,
+                    safety_config=safety_config,
+                    order_output_dir=order_output_dir,
+                    fill_output_dir=fill_output_dir,
+                    snapshot_output_dir=snapshot_output_dir,
+                    reconciliation_output_path=reconciliation_output_path,
+                    cash_tolerance=cash_tolerance,
+                )
+            except _AlpacaPaperSignalFailed as exc:
+                extra_artifact_paths = exc.artifact_paths
+                raise ValueError(str(exc)) from exc
+            message = "data refreshed and Alpaca paper workflow completed"
+            status = WorkflowRunStatus.SUCCEEDED
+        finally:
+            if lock is not None:
+                lock.release()
+
+        record = _build_record(
+            status=status,
+            started_at=started_at,
+            provider=provider.name,
+            symbol=symbol,
+            start=start,
+            end=end,
+            message=message,
+            ingest_artifact=ingest_artifact,
+            scheduler_records=scheduler_records,
+            run_output_dir=workflow_output_dir,
+            lock_path=lock_path,
+            lock_owner=lock_owner,
+            workflow_name="alpaca-paper-refresh",
+            extra_artifact_paths=extra_artifact_paths,
+        )
+        write_data_refresh_workflow_record(record, workflow_output_dir)
+        return record
+    except WorkflowRunFailed:
+        raise
+    except Exception as exc:
+        record = _build_record(
+            status=WorkflowRunStatus.FAILED,
+            started_at=started_at,
+            provider=provider.name,
+            symbol=symbol,
+            start=start,
+            end=end,
+            message=str(exc),
+            ingest_artifact=ingest_artifact,
+            scheduler_records=scheduler_records,
+            run_output_dir=workflow_output_dir,
+            lock_path=lock_path,
+            lock_owner=lock_owner,
+            workflow_name="alpaca-paper-refresh",
+            extra_artifact_paths=extra_artifact_paths,
+        )
+        write_data_refresh_workflow_record(record, workflow_output_dir)
+        raise WorkflowRunFailed(record) from exc
+
+
 def write_data_refresh_workflow_record(
     record: DataRefreshWorkflowRecord,
     output_dir: Path,
@@ -453,6 +611,160 @@ def _run_dry_run_signal_loop(
         iterations=iterations,
         interval_seconds=interval_seconds,
     )
+
+
+def _run_alpaca_paper_signal_once(
+    *,
+    data: Path,
+    symbol: str,
+    quantity: int,
+    broker_client: LiveBrokerClient,
+    safety_config: TradingSafetyConfig,
+    order_output_dir: Path,
+    fill_output_dir: Path,
+    snapshot_output_dir: Path,
+    reconciliation_output_path: Path,
+    cash_tolerance: float,
+) -> tuple[str, ...]:
+    strategy = MomentumStrategy()
+    prices = load_price_csv(data, symbol)
+    signals = strategy.generate_signals(prices)
+    decision = decide_latest_signal(
+        strategy_name=strategy.name,
+        prices=prices,
+        signals=signals,
+    )
+    safety_check = evaluate_trading_safety(safety_config)
+    if not safety_check.allowed:
+        raise ValueError(
+            f"Alpaca paper safety check failed: {safety_check.reason}"
+        )
+
+    _validate_live_order_notional(
+        quantity=quantity,
+        price=decision.market_price,
+        max_order_notional=safety_config.max_order_notional,
+    )
+
+    before_paths = _existing_json_paths(
+        order_output_dir,
+        fill_output_dir,
+        snapshot_output_dir,
+    )
+    adapter = LiveBrokerAdapter(
+        client=broker_client,
+        order_output_dir=order_output_dir,
+        fill_output_dir=fill_output_dir,
+        snapshot_output_dir=snapshot_output_dir,
+    )
+
+    if decision.action != PaperSignalAction.HOLD:
+        side = (
+            OrderSide.BUY
+            if decision.action == PaperSignalAction.BUY
+            else OrderSide.SELL
+        )
+        order = adapter.submit_market_order(
+            OrderRequest(symbol=symbol, side=side, quantity=quantity),
+            reference_price=decision.market_price,
+            client_order_id=decision.idempotency_key,
+            safety_check=safety_check,
+        )
+        if order.status == LiveOrderStatus.REJECTED:
+            raise ValueError(
+                "Alpaca paper order was rejected: "
+                f"{order.rejection_reason or 'no rejection reason provided'}"
+            )
+    adapter.account_snapshot()
+
+    _remember_local_order_contexts(
+        client=broker_client,
+        order_records=tuple(
+            _new_live_order_records(
+                order_output_dir=order_output_dir,
+                before_paths=before_paths,
+            )
+        ),
+    )
+    report = reconcile_live_state(
+        client=broker_client,
+        order_records_dir=order_output_dir,
+        fill_records_dir=fill_output_dir,
+        snapshot_records_dir=snapshot_output_dir,
+        cash_tolerance=cash_tolerance,
+    )
+    report_path = write_live_reconciliation_report(
+        report,
+        reconciliation_output_path,
+    )
+    extra_paths = (
+        *_new_json_paths(order_output_dir, before_paths),
+        *_new_json_paths(fill_output_dir, before_paths),
+        *_new_json_paths(snapshot_output_dir, before_paths),
+        str(report_path),
+    )
+    if not report.passed:
+        raise _AlpacaPaperSignalFailed(
+            "Alpaca paper reconciliation failed",
+            extra_paths,
+        )
+    return extra_paths
+
+
+def _validate_live_order_notional(
+    *,
+    quantity: int,
+    price: float,
+    max_order_notional: float | None,
+) -> None:
+    if price <= 0:
+        raise ValueError("price must be positive")
+    notional = quantity * price
+    if max_order_notional is not None and notional > max_order_notional:
+        raise ValueError("order notional exceeds max_order_notional")
+
+
+def _existing_json_paths(*directories: Path) -> set[Path]:
+    paths: set[Path] = set()
+    for directory in directories:
+        paths.update(directory.glob("*.json"))
+    return paths
+
+
+def _new_json_paths(
+    directory: Path,
+    before_paths: set[Path],
+) -> tuple[str, ...]:
+    return tuple(
+        str(path)
+        for path in sorted(directory.glob("*.json"))
+        if path not in before_paths
+    )
+
+
+def _new_live_order_records(
+    *,
+    order_output_dir: Path,
+    before_paths: set[Path],
+) -> tuple[LiveOrderRecord, ...]:
+    records = []
+    for path in sorted(order_output_dir.glob("*.json")):
+        if path in before_paths:
+            continue
+        records.append(LiveOrderRecord.model_validate_json(path.read_text()))
+    return tuple(records)
+
+
+def _remember_local_order_contexts(
+    *,
+    client: LiveBrokerClient,
+    order_records: tuple[LiveOrderRecord, ...],
+) -> None:
+    remember = getattr(client, "remember_order_record", None)
+    if not callable(remember):
+        return
+    for record in order_records:
+        remember(record)
 
 
 def _compare_latest_paper_and_dry_run(

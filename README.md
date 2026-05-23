@@ -145,9 +145,8 @@ development or CI checks.
 
 Before placing any Alpaca paper order, follow
 [docs/alpaca_paper_smoke_runbook.md](docs/alpaca_paper_smoke_runbook.md).
-The future scheduled Alpaca paper workflow is designed in
-[docs/alpaca_paper_workflow.md](docs/alpaca_paper_workflow.md), but not
-implemented yet.
+The scheduled Alpaca paper workflow is documented in
+[docs/alpaca_paper_workflow.md](docs/alpaca_paper_workflow.md).
 
 Install Alpaca support only when working on the Alpaca adapter path:
 
@@ -243,6 +242,13 @@ bash scripts/run_dry_run_refresh.sh
 
 See [docs/dry_run_trading.md](docs/dry_run_trading.md) for the difference
 between paper trading and dry-run trading.
+
+Refresh market data, submit one actionable Alpaca paper signal, and reconcile
+against the paper broker from one finite workflow:
+
+```bash
+quant workflow alpaca-paper-refresh --symbol AAPL --start 2024-01-01 --from-env
+```
 
 ## Scheduled Runs
 

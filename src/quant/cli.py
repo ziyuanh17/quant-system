@@ -78,6 +78,7 @@ from quant.strategies import (
 )
 from quant.workflows import (
     WorkflowRunFailed,
+    run_alpaca_paper_refresh_workflow,
     run_dry_run_refresh_workflow,
     run_paper_signal_refresh_workflow,
 )
@@ -1798,6 +1799,162 @@ def workflow_dry_run_refresh(
             health_run_records_dir=health_run_records_dir,
             paper_state_path=paper_state_path,
             logs_dir=logs_dir,
+            lock_path=lock_path,
+            lock_stale_after_seconds=lock_stale_after_seconds,
+        )
+    except WorkflowRunFailed as exc:
+        _print_workflow_record(exc.record, workflow_output_dir)
+        raise typer.Exit(code=1) from exc
+
+    _print_workflow_record(record, workflow_output_dir)
+
+
+@workflow_app.command("alpaca-paper-refresh")
+def workflow_alpaca_paper_refresh(
+    symbol: Annotated[
+        str,
+        typer.Option(help="Symbol to refresh and trade."),
+    ] = "AAPL",
+    start: Annotated[
+        str,
+        typer.Option(help="Refresh start date, YYYY-MM-DD."),
+    ] = "2024-01-01",
+    end: Annotated[
+        str | None,
+        typer.Option(help="Optional refresh end date, YYYY-MM-DD."),
+    ] = None,
+    provider: Annotated[
+        str,
+        typer.Option(help="Data provider name."),
+    ] = "yfinance",
+    strategy: Annotated[
+        str,
+        typer.Option(help="Strategy name to run after refresh."),
+    ] = "momentum",
+    quantity: Annotated[
+        int,
+        typer.Option(help="Share quantity for actionable signals."),
+    ] = 1,
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live-mode broker access."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required live-mode confirmation phrase."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional for this paper order."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live-mode broker access."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum row count required by validation."),
+    ] = 1,
+    raw_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for refreshed raw data."),
+    ] = Path("data/raw"),
+    normalized_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for refreshed normalized data."),
+    ] = Path("data/normalized"),
+    validation_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for validation report artifacts."),
+    ] = Path("data/validation"),
+    metadata_dir: Annotated[
+        Path,
+        typer.Option(help="Root directory for dataset metadata artifacts."),
+    ] = Path("data/metadata"),
+    workflow_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory where workflow records are written."),
+    ] = Path("data/workflows/alpaca-paper-refresh"),
+    order_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live order artifacts."),
+    ] = Path("data/live/orders"),
+    fill_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live fill artifacts."),
+    ] = Path("data/live/fills"),
+    snapshot_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live account snapshot artifacts."),
+    ] = Path("data/live/account_snapshots"),
+    reconciliation_output_path: Annotated[
+        Path,
+        typer.Option(help="Path where reconciliation report is written."),
+    ] = Path("data/live/reconciliation/latest.json"),
+    cash_tolerance: Annotated[
+        float,
+        typer.Option(help="Allowed cash and price difference."),
+    ] = 0.01,
+    lock_path: Annotated[
+        Path,
+        typer.Option(help="Lock file that prevents overlapping workflow runs."),
+    ] = Path("data/locks/alpaca-paper-refresh.lock"),
+    lock_stale_after_seconds: Annotated[
+        int,
+        typer.Option(help="Seconds before an existing workflow lock is stale."),
+    ] = 7200,
+) -> None:
+    """Refresh data, submit one Alpaca paper signal, then reconcile."""
+    if strategy != "momentum":
+        raise typer.BadParameter("Only momentum is implemented right now.")
+    if quantity < 1:
+        raise typer.BadParameter("quantity must be at least 1")
+    if cash_tolerance < 0:
+        raise typer.BadParameter("cash-tolerance must be non-negative")
+    if provider != "yfinance":
+        raise typer.BadParameter("Only yfinance is implemented right now.")
+
+    check, resolved_max_order_notional = _live_safety_check_or_exit(
+        from_env=from_env,
+        live_trading_enabled=live_trading_enabled,
+        live_trading_confirmation=live_trading_confirmation,
+        max_order_notional=max_order_notional,
+        broker_name=broker_name,
+    )
+    safety_config = TradingSafetyConfig(
+        mode=check.mode,
+        live_trading_enabled=True,
+        live_trading_confirmation=LIVE_TRADING_CONFIRMATION,
+        max_order_notional=resolved_max_order_notional,
+        broker_name=broker_name or "alpaca-paper",
+    )
+    config = _load_alpaca_paper_config_from_env()
+
+    try:
+        record = run_alpaca_paper_refresh_workflow(
+            provider=YFinanceMarketBarProvider(),
+            broker_client=AlpacaPaperBrokerClient(config=config),
+            safety_config=safety_config,
+            symbol=symbol,
+            start=start,
+            end=end,
+            raw_dir=raw_dir,
+            normalized_dir=normalized_dir,
+            validation_dir=validation_dir,
+            metadata_dir=metadata_dir,
+            workflow_output_dir=workflow_output_dir,
+            strategy=strategy,
+            quantity=quantity,
+            min_rows=min_rows,
+            order_output_dir=order_output_dir,
+            fill_output_dir=fill_output_dir,
+            snapshot_output_dir=snapshot_output_dir,
+            reconciliation_output_path=reconciliation_output_path,
+            cash_tolerance=cash_tolerance,
             lock_path=lock_path,
             lock_stale_after_seconds=lock_stale_after_seconds,
         )

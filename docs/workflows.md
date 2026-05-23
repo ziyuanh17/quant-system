@@ -63,9 +63,35 @@ static CSV, but it does not refresh data before generating a signal.
 
 ## Alpaca Paper Workflow
 
-The scheduled Alpaca paper workflow is designed but not implemented yet. See
-[alpaca_paper_workflow.md](alpaca_paper_workflow.md) for the proposed
-lock-protected sequence, safety policy, artifact contract, and non-goals.
+Run:
+
+```bash
+quant workflow alpaca-paper-refresh --symbol AAPL --start 2024-01-01 --from-env
+```
+
+This workflow performs one ordered sequence:
+
+```text
+fetch provider data
+  -> write raw data
+  -> write normalized market bars
+  -> write validation report and metadata
+  -> stop if validation fails
+  -> generate the latest momentum signal
+  -> submit one actionable signal to Alpaca paper
+  -> write live order, fill, and account snapshot artifacts
+  -> reconcile local artifacts against Alpaca paper broker state
+  -> write workflow record
+```
+
+The workflow record is written under:
+
+```text
+data/workflows/alpaca-paper-refresh/
+```
+
+See [alpaca_paper_workflow.md](alpaca_paper_workflow.md) for the design
+context, safety policy, artifact contract, and non-goals.
 
 Do not schedule Alpaca paper broker access until
 [alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) has been
@@ -78,6 +104,7 @@ The refresh workflow uses a lock file by default:
 ```text
 data/locks/paper-signal-refresh.lock
 data/locks/dry-run-refresh.lock
+data/locks/alpaca-paper-refresh.lock
 ```
 
 If another run already holds the lock, the workflow fails before refreshing data

@@ -1,7 +1,7 @@
 # Alpaca Paper Workflow Design
 
-This document designs the future scheduled Alpaca paper workflow. It is not an
-implementation plan for real-money trading.
+This document records the design for the scheduled Alpaca paper workflow. It is
+not an implementation plan for real-money trading.
 
 The workflow should be implemented only after
 [alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) has been
@@ -60,7 +60,7 @@ QUANT_ALPACA_PAPER_URL_OVERRIDE=...
 
 Use an explicit workflow command:
 
-```text
+```bash
 quant workflow alpaca-paper-refresh
 ```
 
@@ -72,6 +72,10 @@ quant workflow live-refresh --broker alpaca --paper
 
 The explicit command keeps the broker and environment visible while this path
 is young.
+
+This command now exists as Alpaca Paper Refresh Workflow v1. It remains a
+finite workflow command; recurring execution belongs in the next server-wrapper
+milestone.
 
 ## Proposed Options
 
@@ -230,11 +234,20 @@ observed, and reconciled reliably.
 
 ## Implementation Milestone
 
-The next implementation milestone after this design should be:
+The implementation milestone after this design was:
 
 ```text
 Alpaca Paper Refresh Workflow v1
 ```
 
-That milestone should implement one finite command with fake-driven tests and
-no default network or credential requirements in CI.
+It implemented one finite command with fake-driven tests and no default network
+or credential requirements in CI.
+
+The next implementation milestone should be:
+
+```text
+Alpaca Paper Server Wrapper v1
+```
+
+That milestone should add an env-driven shell wrapper, timestamped logs, and
+docs for recurring server-style runs.
