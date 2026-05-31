@@ -398,8 +398,41 @@ def test_live_alpaca_paper_reconcile_fails_on_drift(
     assert payload["differences"][0]["field"].startswith("fills.")
 
 
+def test_live_alpaca_paper_refresh_orders_updates_cancelled_artifact(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        FakeAlpacaPaperBrokerClient,
+    )
+    _set_alpaca_env(monkeypatch)
+    _run_alpaca_paper_order(tmp_path, status=LiveOrderStatus.ACCEPTED)
+    order_path = next((tmp_path / "orders").glob("*.json"))
+    FakeAlpacaPaperBrokerClient.refreshed_status = LiveOrderStatus.CANCELLED
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "live",
+            "alpaca-paper-refresh-orders",
+            *_live_safety_args(broker_name="alpaca-paper"),
+            "--order-records-dir",
+            str(tmp_path / "orders"),
+        ],
+    )
+
+    payload = json.loads(order_path.read_text())
+    assert result.exit_code == 0
+    assert "Refreshed orders: 1" in result.output
+    assert payload["status"] == "cancelled"
+
+
 class FakeAlpacaPaperBrokerClient:
     broker_fills: tuple[LiveFillRecord, ...] = ()
+    next_status: LiveOrderStatus = LiveOrderStatus.FILLED
+    refreshed_status: LiveOrderStatus = LiveOrderStatus.FILLED
 
     def __init__(self, *, config) -> None:
         self.config = config
@@ -422,7 +455,7 @@ class FakeAlpacaPaperBrokerClient:
             reference_price=reference_price,
             notional=request.quantity * reference_price,
             safety_check=safety_check,
-            status=LiveOrderStatus.FILLED,
+            status=type(self).next_status,
             raw_response_ref="alpaca-paper:order:alpaca-order-1",
         )
         type(self).broker_fills = (
@@ -469,6 +502,14 @@ class FakeAlpacaPaperBrokerClient:
     def remember_order_record(self, record: LiveOrderRecord) -> None:
         return None
 
+    def refresh_order_record(
+        self,
+        record: LiveOrderRecord,
+    ) -> LiveOrderRecord:
+        return record.model_copy(
+            update={"status": type(self).refreshed_status},
+        )
+
 
 def _set_alpaca_env(monkeypatch) -> None:
     monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
@@ -476,8 +517,14 @@ def _set_alpaca_env(monkeypatch) -> None:
     monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-1")
 
 
-def _run_alpaca_paper_order(tmp_path) -> None:
+def _run_alpaca_paper_order(
+    tmp_path,
+    *,
+    status: LiveOrderStatus = LiveOrderStatus.FILLED,
+) -> None:
     FakeAlpacaPaperBrokerClient.broker_fills = ()
+    FakeAlpacaPaperBrokerClient.next_status = status
+    FakeAlpacaPaperBrokerClient.refreshed_status = status
     result = CliRunner().invoke(
         app,
         [

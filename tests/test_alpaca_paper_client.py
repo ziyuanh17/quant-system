@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -221,6 +221,50 @@ def test_alpaca_paper_client_refreshes_known_fills_from_polled_orders() -> None:
     assert fills[0].notional == 200.5
 
 
+def test_alpaca_paper_client_refreshes_terminal_order_by_broker_id() -> None:
+    trading_client = FakeTradingClient(
+        api_key="unused",
+        secret_key="unused",
+        paper=True,
+    )
+    request = OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=1)
+    order_record = LiveOrderRecord(
+        client_order_id="client-1",
+        broker_order_id="alpaca-order-1",
+        broker_name="alpaca-paper",
+        account_id="acct-1",
+        broker_environment="paper",
+        request=request,
+        reference_price=100,
+        notional=100,
+        safety_check=_allowed_live_check(),
+        status=LiveOrderStatus.ACCEPTED,
+    )
+    trading_client.orders.append(
+        SimpleNamespace(
+            id="alpaca-order-1",
+            client_order_id="client-1",
+            status="canceled",
+        )
+    )
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=trading_client,
+    )
+
+    client.remember_order_record(order_record)
+    refreshed = client.refresh_order_record(order_record)
+
+    assert refreshed.id == order_record.id
+    assert refreshed.status == LiveOrderStatus.CANCELLED
+    assert refreshed.client_order_id == "client-1"
+    assert refreshed.broker_order_id == "alpaca-order-1"
+
+
 class FakeEnum:
     def __init__(self, value: str) -> None:
         self.value = value
@@ -272,6 +316,13 @@ class FakeTradingClient:
 
     def get_orders(self, filter: object | None = None) -> list[object]:
         return self.orders
+
+    def get_order_by_id(self, order_id: str) -> object:
+        for order in self.orders:
+            order_id_value = cast(Any, order).id
+            if order_id_value == order_id:
+                return order
+        raise ValueError(f"unknown order: {order_id}")
 
     def get_account(self) -> object:
         return self.account

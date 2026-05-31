@@ -37,6 +37,7 @@ from quant.execution import (
     save_paper_broker_state,
     write_dry_run_order_record,
     write_live_account_snapshot,
+    write_live_order_record,
     write_live_reconciliation_report,
     write_paper_dry_run_comparison_report,
     write_paper_signal_record,
@@ -790,6 +791,53 @@ def live_alpaca_paper_reconcile(
 
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@live_app.command("alpaca-paper-refresh-orders")
+def live_alpaca_paper_refresh_orders(
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live-mode broker access."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required live-mode confirmation phrase."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional safety setting."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live-mode broker access."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+    order_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing local live order artifacts."),
+    ] = Path("data/live/orders"),
+) -> None:
+    """Refresh local Alpaca paper order artifacts from broker truth."""
+    _live_safety_check_or_exit(
+        from_env=from_env,
+        live_trading_enabled=live_trading_enabled,
+        live_trading_confirmation=live_trading_confirmation,
+        max_order_notional=max_order_notional,
+        broker_name=broker_name,
+    )
+    config = _load_alpaca_paper_config_from_env()
+    client = AlpacaPaperBrokerClient(config=config)
+    refreshed_count = 0
+    for order_record in load_live_order_records(order_records_dir):
+        refreshed = client.refresh_order_record(order_record)
+        write_live_order_record(refreshed, order_records_dir)
+        refreshed_count += 1
+
+    typer.echo(f"Refreshed orders: {refreshed_count}")
+    typer.echo(f"Order records: {order_records_dir}")
 
 
 @app.command()

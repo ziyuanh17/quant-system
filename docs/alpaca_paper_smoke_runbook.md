@@ -183,6 +183,19 @@ data/live/reconciliation/latest.json
 
 Stop until the drift is explained.
 
+If an order was changed outside this codebase, for example cancelled manually
+from the Alpaca dashboard, refresh local order artifacts before reconciling
+again:
+
+```bash
+quant live alpaca-paper-refresh-orders --from-env
+quant live alpaca-paper-reconcile --from-env
+```
+
+This keeps local audit records aligned with broker truth. A cancelled smoke
+order should reconcile with no open local order, no matching open broker order,
+and zero filled quantity.
+
 ## Artifact Review
 
 Inspect the newest files in:

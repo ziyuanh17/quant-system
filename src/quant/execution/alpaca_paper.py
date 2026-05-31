@@ -39,6 +39,10 @@ class AlpacaTradingClientProtocol(Protocol):
         """Return Alpaca orders, optionally filtered."""
         ...
 
+    def get_order_by_id(self, order_id: str) -> object:
+        """Return one Alpaca order by broker order ID."""
+        ...
+
     def get_account(self) -> object:
         """Return Alpaca account details."""
         ...
@@ -159,6 +163,30 @@ class AlpacaPaperBrokerClient:
             reference_price=record.reference_price,
             safety_check=record.safety_check,
         )
+
+    def refresh_order_record(
+        self,
+        record: LiveOrderRecord,
+    ) -> LiveOrderRecord:
+        """Refresh a known local order from current Alpaca broker truth."""
+        if record.broker_order_id is None:
+            raise ValueError("cannot refresh order without broker_order_id")
+        self.remember_order_record(record)
+        raw_order = self._trading_client.get_order_by_id(
+            record.broker_order_id
+        )
+        context = self._order_contexts[record.client_order_id]
+        refreshed = map_alpaca_order_record(
+            raw_order,
+            request=context.request,
+            reference_price=context.reference_price,
+            safety_check=context.safety_check,
+            account_id=self._config.account_id,
+        )
+        refreshed = refreshed.model_copy(update={"id": record.id})
+        self._orders_by_client_id[refreshed.client_order_id] = refreshed
+        self._remember_fills(raw_order, order_record=refreshed)
+        return refreshed
 
     def _build_trading_client(self) -> AlpacaTradingClientProtocol:
         sdk = self._load_sdk()
