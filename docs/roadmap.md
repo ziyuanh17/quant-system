@@ -70,12 +70,13 @@ side discussions.
 | 52 | Alpaca Paper Manual Smoke Execution v1 | In Review | Ran and documented one tiny broker-connected Alpaca paper smoke test, including manual cancellation refresh and reconciliation. |
 | 53 | Controlled Recurring Alpaca Paper Run v1 | In Review | Add a no-order preflight mode and runbook guidance before enabling recurring Alpaca paper execution. |
 | 54 | Controlled Full Alpaca Paper Wrapper Run v1 | In Review | Ran and documented one full server-style Alpaca paper wrapper cycle with data refresh, broker snapshot, and reconciliation. |
+| 55 | Workflow Decision Visibility v1 | In Review | Add latest signal and broker-submission outcome fields to Alpaca paper workflow records. |
 
 ## Current Recommendation
 
-The current milestone is **Controlled Full Alpaca Paper Wrapper Run v1**. Review
-the sanitized wrapper run note, then improve workflow records so they expose
-the latest strategy decision and broker-submission outcome directly.
+The current milestone is **Workflow Decision Visibility v1**. Review the
+workflow record fields that expose the latest strategy decision and
+broker-submission outcome, then use them in dashboard/status views.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1150,3 +1151,22 @@ be observed in a later controlled wrapper run.
 
 This milestone does not enable recurring execution automatically, increase
 order size, force a trade, retry broker submissions, or add real-money trading.
+
+## Workflow Decision Visibility v1 Scope
+
+Introduce:
+
+```text
+latest_signal_action
+latest_signal_reason
+latest_signal_market_price
+broker_submission_attempted
+broker_submission_skipped_reason
+order/fill/snapshot artifact path groups
+reconciliation_report_path
+```
+
+The first version should make Alpaca paper workflow records self-explanatory.
+A successful workflow can now show whether it held without submitting an order
+or attempted broker submission and reconciled the resulting artifacts. This
+removes the need to infer trading behavior from missing order or fill files.

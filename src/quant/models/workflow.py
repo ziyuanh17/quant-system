@@ -33,6 +33,15 @@ class DataRefreshWorkflowRecord(FrozenModel):
     lock_owner: str | None = None
     scheduler_run_paths: tuple[str, ...] = ()
     artifact_paths: tuple[str, ...] = ()
+    latest_signal_action: str | None = None
+    latest_signal_reason: str | None = None
+    latest_signal_market_price: float | None = None
+    broker_submission_attempted: bool | None = None
+    broker_submission_skipped_reason: str | None = None
+    order_artifact_paths: tuple[str, ...] = ()
+    fill_artifact_paths: tuple[str, ...] = ()
+    snapshot_artifact_paths: tuple[str, ...] = ()
+    reconciliation_report_path: str | None = None
 
     @property
     def duration_seconds(self) -> float:

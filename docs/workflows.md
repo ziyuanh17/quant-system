@@ -114,6 +114,12 @@ The workflow record is written under:
 data/workflows/alpaca-paper-refresh/
 ```
 
+For Alpaca paper runs, that record includes the latest signal action, signal
+reason, market price, whether broker submission was attempted, skip reason when
+submission was not attempted, order/fill/snapshot artifact paths, and the
+reconciliation report path. This lets a successful run distinguish "held with
+no order" from "submitted to the broker and reconciled."
+
 See [alpaca_paper_workflow.md](alpaca_paper_workflow.md) for the design
 context, safety policy, artifact contract, and non-goals.
 

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -52,9 +53,27 @@ class WorkflowRunFailed(RuntimeError):
 
 
 class _AlpacaPaperSignalFailed(RuntimeError):
-    def __init__(self, message: str, artifact_paths: tuple[str, ...]) -> None:
+    def __init__(
+        self,
+        message: str,
+        outcome: "_AlpacaPaperSignalRunOutcome",
+    ) -> None:
         super().__init__(message)
-        self.artifact_paths = artifact_paths
+        self.outcome = outcome
+
+
+@dataclass(frozen=True)
+class _AlpacaPaperSignalRunOutcome:
+    artifact_paths: tuple[str, ...] = ()
+    latest_signal_action: str | None = None
+    latest_signal_reason: str | None = None
+    latest_signal_market_price: float | None = None
+    broker_submission_attempted: bool | None = None
+    broker_submission_skipped_reason: str | None = None
+    order_artifact_paths: tuple[str, ...] = ()
+    fill_artifact_paths: tuple[str, ...] = ()
+    snapshot_artifact_paths: tuple[str, ...] = ()
+    reconciliation_report_path: str | None = None
 
 
 def run_paper_signal_refresh_workflow(
@@ -392,6 +411,7 @@ def run_alpaca_paper_refresh_workflow(
     ingest_artifact: IngestArtifactPaths | None = None
     scheduler_records: tuple[ScheduledRunRecord, ...] = ()
     extra_artifact_paths: tuple[str, ...] = ()
+    alpaca_paper_outcome = _AlpacaPaperSignalRunOutcome()
     lock_owner: str | None = None
 
     try:
@@ -434,7 +454,7 @@ def run_alpaca_paper_refresh_workflow(
                 )
 
             try:
-                extra_artifact_paths = _run_alpaca_paper_signal_once(
+                alpaca_paper_outcome = _run_alpaca_paper_signal_once(
                     data=Path(ingest_artifact.normalized_path),
                     symbol=symbol,
                     quantity=quantity,
@@ -446,8 +466,10 @@ def run_alpaca_paper_refresh_workflow(
                     reconciliation_output_path=reconciliation_output_path,
                     cash_tolerance=cash_tolerance,
                 )
+                extra_artifact_paths = alpaca_paper_outcome.artifact_paths
             except _AlpacaPaperSignalFailed as exc:
-                extra_artifact_paths = exc.artifact_paths
+                alpaca_paper_outcome = exc.outcome
+                extra_artifact_paths = exc.outcome.artifact_paths
                 raise ValueError(str(exc)) from exc
             message = "data refreshed and Alpaca paper workflow completed"
             status = WorkflowRunStatus.SUCCEEDED
@@ -470,6 +492,7 @@ def run_alpaca_paper_refresh_workflow(
             lock_owner=lock_owner,
             workflow_name="alpaca-paper-refresh",
             extra_artifact_paths=extra_artifact_paths,
+            alpaca_paper_outcome=alpaca_paper_outcome,
         )
         write_data_refresh_workflow_record(record, workflow_output_dir)
         return record
@@ -491,6 +514,7 @@ def run_alpaca_paper_refresh_workflow(
             lock_owner=lock_owner,
             workflow_name="alpaca-paper-refresh",
             extra_artifact_paths=extra_artifact_paths,
+            alpaca_paper_outcome=alpaca_paper_outcome,
         )
         write_data_refresh_workflow_record(record, workflow_output_dir)
         raise WorkflowRunFailed(record) from exc
@@ -625,7 +649,7 @@ def _run_alpaca_paper_signal_once(
     snapshot_output_dir: Path,
     reconciliation_output_path: Path,
     cash_tolerance: float,
-) -> tuple[str, ...]:
+) -> _AlpacaPaperSignalRunOutcome:
     strategy = MomentumStrategy()
     prices = load_price_csv(data, symbol)
     signals = strategy.generate_signals(prices)
@@ -658,7 +682,14 @@ def _run_alpaca_paper_signal_once(
         snapshot_output_dir=snapshot_output_dir,
     )
 
-    if decision.action != PaperSignalAction.HOLD:
+    broker_submission_attempted = decision.action != PaperSignalAction.HOLD
+    broker_submission_skipped_reason = (
+        None
+        if broker_submission_attempted
+        else "latest strategy signal is hold"
+    )
+
+    if broker_submission_attempted:
         side = (
             OrderSide.BUY
             if decision.action == PaperSignalAction.BUY
@@ -703,12 +734,27 @@ def _run_alpaca_paper_signal_once(
         *_new_json_paths(snapshot_output_dir, before_paths),
         str(report_path),
     )
+    order_paths = _new_json_paths(order_output_dir, before_paths)
+    fill_paths = _new_json_paths(fill_output_dir, before_paths)
+    snapshot_paths = _new_json_paths(snapshot_output_dir, before_paths)
+    outcome = _AlpacaPaperSignalRunOutcome(
+        artifact_paths=extra_paths,
+        latest_signal_action=decision.action.value,
+        latest_signal_reason=decision.reason,
+        latest_signal_market_price=decision.market_price,
+        broker_submission_attempted=broker_submission_attempted,
+        broker_submission_skipped_reason=broker_submission_skipped_reason,
+        order_artifact_paths=order_paths,
+        fill_artifact_paths=fill_paths,
+        snapshot_artifact_paths=snapshot_paths,
+        reconciliation_report_path=str(report_path),
+    )
     if not report.passed:
         raise _AlpacaPaperSignalFailed(
             "Alpaca paper reconciliation failed",
-            extra_paths,
+            outcome,
         )
-    return extra_paths
+    return outcome
 
 
 def _validate_live_order_notional(
@@ -863,6 +909,7 @@ def _build_record(
     lock_owner: str | None,
     workflow_name: str = "paper-signal-refresh",
     extra_artifact_paths: tuple[str, ...] = (),
+    alpaca_paper_outcome: _AlpacaPaperSignalRunOutcome | None = None,
 ) -> DataRefreshWorkflowRecord:
     scheduler_run_paths = tuple(
         str(run_output_dir / f"{record.run_id}.json")
@@ -899,6 +946,51 @@ def _build_record(
         lock_owner=lock_owner,
         scheduler_run_paths=scheduler_run_paths,
         artifact_paths=artifact_paths,
+        latest_signal_action=(
+            alpaca_paper_outcome.latest_signal_action
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        latest_signal_reason=(
+            alpaca_paper_outcome.latest_signal_reason
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        latest_signal_market_price=(
+            alpaca_paper_outcome.latest_signal_market_price
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        broker_submission_attempted=(
+            alpaca_paper_outcome.broker_submission_attempted
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        broker_submission_skipped_reason=(
+            alpaca_paper_outcome.broker_submission_skipped_reason
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        order_artifact_paths=(
+            alpaca_paper_outcome.order_artifact_paths
+            if alpaca_paper_outcome is not None
+            else ()
+        ),
+        fill_artifact_paths=(
+            alpaca_paper_outcome.fill_artifact_paths
+            if alpaca_paper_outcome is not None
+            else ()
+        ),
+        snapshot_artifact_paths=(
+            alpaca_paper_outcome.snapshot_artifact_paths
+            if alpaca_paper_outcome is not None
+            else ()
+        ),
+        reconciliation_report_path=(
+            alpaca_paper_outcome.reconciliation_report_path
+            if alpaca_paper_outcome is not None
+            else None
+        ),
     )
 
 

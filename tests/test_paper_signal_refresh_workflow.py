@@ -473,10 +473,79 @@ def test_alpaca_paper_refresh_workflow_submits_and_reconciles(
     assert len(snapshot_paths) == 1
     assert reconciliation_path.exists()
     assert str(reconciliation_path) in record.artifact_paths
+    assert record.latest_signal_action == "buy"
+    assert record.latest_signal_reason == "latest strategy signal is entry"
+    assert record.latest_signal_market_price == 20.0
+    assert record.broker_submission_attempted is True
+    assert record.broker_submission_skipped_reason is None
+    assert record.order_artifact_paths == tuple(
+        str(path) for path in order_paths
+    )
+    assert record.fill_artifact_paths == tuple(str(path) for path in fill_paths)
+    assert record.snapshot_artifact_paths == tuple(
+        str(path) for path in snapshot_paths
+    )
+    assert record.reconciliation_report_path == str(reconciliation_path)
     assert not (tmp_path / "locks" / "alpaca-paper-refresh.lock").exists()
     assert client.submitted_client_order_ids == (
         "momentum:AAPL:2024-01-25:buy",
     )
+
+
+def test_alpaca_paper_refresh_workflow_records_hold_without_order(
+    tmp_path,
+) -> None:
+    client = FakeAlpacaPaperWorkflowClient()
+
+    record = run_alpaca_paper_refresh_workflow(
+        provider=FakeFlatMarketBarProvider(),
+        broker_client=client,
+        safety_config=TradingSafetyConfig(
+            mode=TradingMode.LIVE,
+            live_trading_enabled=True,
+            live_trading_confirmation=LIVE_TRADING_CONFIRMATION,
+            max_order_notional=1000,
+            broker_name="alpaca-paper",
+        ),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=2,
+        min_rows=20,
+        order_output_dir=tmp_path / "live" / "orders",
+        fill_output_dir=tmp_path / "live" / "fills",
+        snapshot_output_dir=tmp_path / "live" / "snapshots",
+        reconciliation_output_path=tmp_path
+        / "live"
+        / "reconciliation"
+        / "latest.json",
+        lock_path=tmp_path / "locks" / "alpaca-paper-refresh.lock",
+        lock_stale_after_seconds=60,
+    )
+
+    assert client.submitted_client_order_ids == ()
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert record.latest_signal_action == "hold"
+    assert record.latest_signal_reason == "latest strategy signal is hold"
+    assert record.latest_signal_market_price == 10.0
+    assert record.broker_submission_attempted is False
+    assert (
+        record.broker_submission_skipped_reason
+        == "latest strategy signal is hold"
+    )
+    assert record.order_artifact_paths == ()
+    assert record.fill_artifact_paths == ()
+    assert len(record.snapshot_artifact_paths) == 1
+    assert record.reconciliation_report_path == str(
+        tmp_path / "live" / "reconciliation" / "latest.json"
+    )
+    assert not (tmp_path / "locks" / "alpaca-paper-refresh.lock").exists()
 
 
 def test_alpaca_paper_refresh_workflow_stops_before_broker_on_validation_error(
@@ -754,6 +823,31 @@ class FakeTrendingMarketBarProvider:
                     "Volume": 1000,
                 }
                 for index, close in enumerate(closes, start=1)
+            ],
+        )
+
+
+class FakeFlatMarketBarProvider:
+    name = "fake-flat"
+    modality = DataModality.MARKET_BARS
+
+    def fetch(self, request: IngestRequest) -> RawDataset:
+        return RawDataset(
+            provider=self.name,
+            modality=self.modality,
+            request=request,
+            records=[
+                {
+                    "Date": f"2024-01-{index:02d}",
+                    "symbol": "AAPL",
+                    "Open": 10.0,
+                    "High": 11.0,
+                    "Low": 9.0,
+                    "Close": 10.0,
+                    "Adj Close": 10.0,
+                    "Volume": 1000,
+                }
+                for index in range(1, 26)
             ],
         )
 

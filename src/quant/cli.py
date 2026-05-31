@@ -2469,6 +2469,18 @@ def _print_workflow_record(
     typer.echo(f"Message: {record.message}")
     typer.echo(f"Symbol: {record.symbol}")
     typer.echo(f"Provider: {record.provider}")
+    typer.echo(
+        "Latest signal: "
+        f"{_format_health_value(record.latest_signal_action)}"
+    )
+    typer.echo(
+        "Broker submission attempted: "
+        f"{_format_health_value(record.broker_submission_attempted)}"
+    )
+    typer.echo(
+        "Broker submission skipped reason: "
+        f"{_format_health_value(record.broker_submission_skipped_reason)}"
+    )
     typer.echo(f"Normalized: {_format_health_value(record.normalized_path)}")
     typer.echo(
         "Validation report: "
