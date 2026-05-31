@@ -58,9 +58,23 @@ broker environment is Alpaca paper:
 export QUANT_TRADING_MODE=live
 export QUANT_LIVE_TRADING_ENABLED=true
 export QUANT_LIVE_TRADING_CONFIRMATION=I_UNDERSTAND_LIVE_TRADING_RISK
-export QUANT_MAX_ORDER_NOTIONAL=25
 export QUANT_BROKER=alpaca-paper
 ```
+
+Choose the one-share smoke symbol and a current reference price immediately
+before the order. The reference price is written to the audit record and is
+used by the local notional gate; do not use a placeholder such as `1` for a
+symbol trading materially above `$1`.
+
+```bash
+export QUANT_SMOKE_SYMBOL=AAPL
+export QUANT_SMOKE_REFERENCE_PRICE="..."
+export QUANT_MAX_ORDER_NOTIONAL="..."
+```
+
+Set `QUANT_MAX_ORDER_NOTIONAL` deliberately above one share at the current
+reference price, but no higher than you are comfortable testing in the paper
+account.
 
 Use a unique client order ID for the run:
 
@@ -74,10 +88,10 @@ First confirm the order command fails closed without safety approval:
 
 ```bash
 quant live alpaca-paper-order \
-  --symbol AAPL \
+  --symbol "$QUANT_SMOKE_SYMBOL" \
   --side buy \
   --quantity 1 \
-  --price 1 \
+  --price "$QUANT_SMOKE_REFERENCE_PRICE" \
   --client-order-id blocked-smoke-check
 ```
 
@@ -121,17 +135,16 @@ Submit one very small paper order:
 ```bash
 quant live alpaca-paper-order \
   --from-env \
-  --symbol AAPL \
+  --symbol "$QUANT_SMOKE_SYMBOL" \
   --side buy \
   --quantity 1 \
-  --price 1 \
+  --price "$QUANT_SMOKE_REFERENCE_PRICE" \
   --client-order-id "$QUANT_SMOKE_CLIENT_ORDER_ID"
 ```
 
 The `--price` value is the local reference price for safety and audit records;
 Alpaca executes the paper market order using its own paper market behavior.
-Keep `QUANT_MAX_ORDER_NOTIONAL` low so the local gate prevents accidental large
-orders.
+Use a current price so the local cap and audit record are meaningful.
 
 Expected output includes:
 
