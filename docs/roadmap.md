@@ -69,13 +69,13 @@ side discussions.
 | 51 | Alpaca Paper Status Publishing Wrapper v1 | In Review | Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks. |
 | 52 | Alpaca Paper Manual Smoke Execution v1 | In Review | Ran and documented one tiny broker-connected Alpaca paper smoke test, including manual cancellation refresh and reconciliation. |
 | 53 | Controlled Recurring Alpaca Paper Run v1 | In Review | Add a no-order preflight mode and runbook guidance before enabling recurring Alpaca paper execution. |
+| 54 | Controlled Full Alpaca Paper Wrapper Run v1 | In Review | Ran and documented one full server-style Alpaca paper wrapper cycle with data refresh, broker snapshot, and reconciliation. |
 
 ## Current Recommendation
 
-The current milestone is **Controlled Recurring Alpaca Paper Run v1**. Use the
-no-order preflight path before any recurring broker-connected paper run, then
-review the wrapper log, reconciliation output, and dashboard status after each
-early run.
+The current milestone is **Controlled Full Alpaca Paper Wrapper Run v1**. Review
+the sanitized wrapper run note, then improve workflow records so they expose
+the latest strategy decision and broker-submission outcome directly.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1129,3 +1129,24 @@ first-run checks before enabling broker-connected paper execution.
 
 This milestone does not enable recurring execution automatically, increase
 order size, retry broker submissions, or add real-money trading.
+
+## Controlled Full Alpaca Paper Wrapper Run v1 Scope
+
+Introduce:
+
+```text
+docs/alpaca_paper_wrapper_run.md
+full wrapper log review
+workflow/reconciliation artifact review
+```
+
+The first full wrapper run should execute `scripts/run_alpaca_paper_refresh.sh`
+without preflight, inspect generated logs and artifacts, and record what
+happened without committing local operational data. The first recorded run
+refreshed yfinance market data, wrote an Alpaca paper account snapshot, and
+reconciled successfully with zero differences. No new order or fill artifact was
+created by that run, which means an actionable broker submission still needs to
+be observed in a later controlled wrapper run.
+
+This milestone does not enable recurring execution automatically, increase
+order size, force a trade, retry broker submissions, or add real-money trading.
