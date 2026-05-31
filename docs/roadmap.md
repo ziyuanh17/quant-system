@@ -67,12 +67,13 @@ side discussions.
 | 49 | Alpaca Paper Server Wrapper v1 | In Review | Add an env-driven wrapper for running the Alpaca paper refresh workflow repeatedly on a server. |
 | 50 | Alpaca Paper Operational Health v1 | In Review | Surface Alpaca paper workflow/reconciliation health in the local health command and dashboard status. |
 | 51 | Alpaca Paper Status Publishing Wrapper v1 | In Review | Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks. |
-| 52 | Alpaca Paper Manual Smoke Execution v1 | Planned | Run and document one tiny broker-connected Alpaca paper smoke test before relying on scheduled runs. |
+| 52 | Alpaca Paper Manual Smoke Execution v1 | In Review | Ran and documented one tiny broker-connected Alpaca paper smoke test, including manual cancellation refresh and reconciliation. |
 
 ## Current Recommendation
 
-The next milestone after Alpaca Paper Status Publishing Wrapper v1 should be
-**Alpaca Paper Manual Smoke Execution v1**.
+The current milestone is **Alpaca Paper Manual Smoke Execution v1**. Review
+the sanitized execution note, then move to a controlled recurring Alpaca paper
+run only after the smoke-test findings look correct.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1094,7 +1095,7 @@ retry broker submissions, or add any real-money trading path.
 Introduce:
 
 ```text
-completed smoke run notes
+docs/alpaca_paper_smoke_execution.md
 artifact review checklist results
 go/no-go note for recurring Alpaca paper scheduling
 ```
@@ -1103,3 +1104,8 @@ The first version should execute the existing manual smoke runbook against the
 intended Alpaca paper account, review the generated order/fill/snapshot/
 reconciliation/workflow/status artifacts, and record what happened without
 committing secrets or raw broker payloads.
+
+The first execution submitted one tiny Alpaca paper order, observed manual
+dashboard cancellation before any fill, added a broker-state refresh command
+for externally changed orders, and confirmed reconciliation passes after local
+artifacts are refreshed from broker truth.
