@@ -107,6 +107,17 @@ dashboard status after the wrapper finishes. The status file path defaults to
 `site/status.json` and can be changed with
 `QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH`.
 
+Before installing a recurring paper run, use preflight mode:
+
+```bash
+QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true bash scripts/run_alpaca_paper_refresh.sh
+```
+
+Preflight mode writes the resolved log header and exits before refreshing data,
+contacting Alpaca, or submitting a paper order. Use it after editing `.env`,
+cron, systemd, or path variables so the first broker-connected run is not also
+the first configuration check.
+
 ## Cron Example
 
 Use absolute paths when installing a cron entry:

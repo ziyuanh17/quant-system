@@ -72,6 +72,16 @@ Set `QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN=true` when the wrapper should
 also run `quant ops publish-status --check-alpaca-paper` and refresh
 `QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH`.
 
+For a no-order configuration check, run:
+
+```bash
+QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true bash scripts/run_alpaca_paper_refresh.sh
+```
+
+This writes the wrapper log with resolved paths and exits before data refresh or
+broker submission. It is the first command to run after installing the wrapper
+on a new machine or changing recurring-run environment variables.
+
 The older `scripts/run_paper_signal.sh` wrapper still exists for testing a known
 static CSV, but it does not refresh data before generating a signal.
 

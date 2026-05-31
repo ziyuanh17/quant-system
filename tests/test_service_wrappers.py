@@ -73,3 +73,15 @@ def test_alpaca_paper_refresh_wrapper_can_publish_dashboard_status() -> None:
         '"--alpaca-paper-reconciliation-report-path" '
         '"$alpaca_paper_reconciliation_output_path"'
     ) in script
+
+
+def test_alpaca_paper_refresh_wrapper_has_preflight_only_mode() -> None:
+    script = Path("scripts/run_alpaca_paper_refresh.sh").read_text()
+
+    assert (
+        'alpaca_paper_preflight_only="${'
+        'QUANT_ALPACA_PAPER_PREFLIGHT_ONLY:-false}"'
+    ) in script
+    assert 'preflight_only=$alpaca_paper_preflight_only' in script
+    assert 'if [[ "$alpaca_paper_preflight_only" == "true" ]]; then' in script
+    assert "preflight completed without broker submission" in script

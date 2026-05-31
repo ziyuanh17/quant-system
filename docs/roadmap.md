@@ -68,12 +68,14 @@ side discussions.
 | 50 | Alpaca Paper Operational Health v1 | In Review | Surface Alpaca paper workflow/reconciliation health in the local health command and dashboard status. |
 | 51 | Alpaca Paper Status Publishing Wrapper v1 | In Review | Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks. |
 | 52 | Alpaca Paper Manual Smoke Execution v1 | In Review | Ran and documented one tiny broker-connected Alpaca paper smoke test, including manual cancellation refresh and reconciliation. |
+| 53 | Controlled Recurring Alpaca Paper Run v1 | In Review | Add a no-order preflight mode and runbook guidance before enabling recurring Alpaca paper execution. |
 
 ## Current Recommendation
 
-The current milestone is **Alpaca Paper Manual Smoke Execution v1**. Review
-the sanitized execution note, then move to a controlled recurring Alpaca paper
-run only after the smoke-test findings look correct.
+The current milestone is **Controlled Recurring Alpaca Paper Run v1**. Use the
+no-order preflight path before any recurring broker-connected paper run, then
+review the wrapper log, reconciliation output, and dashboard status after each
+early run.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1109,3 +1111,21 @@ The first execution submitted one tiny Alpaca paper order, observed manual
 dashboard cancellation before any fill, added a broker-state refresh command
 for externally changed orders, and confirmed reconciliation passes after local
 artifacts are refreshed from broker truth.
+
+## Controlled Recurring Alpaca Paper Run v1 Scope
+
+Introduce:
+
+```text
+QUANT_ALPACA_PAPER_PREFLIGHT_ONLY
+preflight wrapper log
+controlled recurring run guidance
+```
+
+The first version should let the Alpaca paper server wrapper prove its resolved
+configuration without contacting Alpaca or submitting a paper order. The
+preflight command is intended for cron/systemd/path changes, server moves, and
+first-run checks before enabling broker-connected paper execution.
+
+This milestone does not enable recurring execution automatically, increase
+order size, retry broker submissions, or add real-money trading.
