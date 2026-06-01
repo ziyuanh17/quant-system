@@ -104,6 +104,8 @@ configs/launchd/com.quant-system.alpaca-paper-refresh.plist.example
 It is disabled and uses `/absolute/path/to/quant-system` placeholders. Copy it
 to a local plist, replace every placeholder with the actual repo path, run
 preflight, and review the dashboard before loading it with launchd.
+Follow [launchd_localization.md](launchd_localization.md) for the exact local
+copy, validation, load, and unload commands.
 
 Draft policy:
 

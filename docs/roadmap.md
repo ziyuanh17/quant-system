@@ -75,12 +75,13 @@ side discussions.
 | 57 | Paper/Scheduler Status Cleanup v1 | In Review | Let dashboard publishing disable inactive paper scheduler/signal checks so Alpaca paper status is not hidden by stale lanes. |
 | 58 | Recurring Alpaca Paper Schedule Design v1 | In Review | Document the first daily Alpaca paper schedule policy without enabling automation. |
 | 59 | Alpaca Paper launchd Template v1 | In Review | Add a disabled macOS launchd template for reviewed recurring Alpaca paper runs. |
+| 60 | Launchd Localization Runbook v1 | In Review | Document how to safely localize, validate, load, unload, and ignore machine-specific launchd plists. |
 
 ## Current Recommendation
 
-The current milestone is **Alpaca Paper launchd Template v1**. Review the
-disabled macOS launchd template before adapting it locally or loading any
-recurring job.
+The current milestone is **Launchd Localization Runbook v1**. Review the local
+plist copy, validation, load, and unload instructions before adapting the
+launchd template on this machine.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1238,3 +1239,18 @@ template review instructions
 The first version should provide a disabled macOS launchd plist template that
 uses placeholder absolute paths and the reviewed weekday 12:55 PM local policy.
 It must not install, load, or enable the recurring job.
+
+## Launchd Localization Runbook v1 Scope
+
+Introduce:
+
+```text
+docs/launchd_localization.md
+configs/launchd/*.local.plist gitignore rule
+launchd load/unload safety commands
+```
+
+The first version should document how to copy the disabled launchd example to a
+local untracked plist, replace machine-specific paths, validate with `plutil`,
+run wrapper preflight, and later load or unload launchd only after explicit
+review.

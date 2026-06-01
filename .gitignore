@@ -21,3 +21,4 @@ data/locks/
 # Generated feature artifacts are reproducible from normalized data.
 data/features/
 data/results/
+configs/launchd/*.local.plist
