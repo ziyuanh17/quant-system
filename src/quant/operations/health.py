@@ -230,6 +230,14 @@ def build_health_report(
 
     alpaca_paper_workflow_path: Path | None = None
     alpaca_paper_workflow_status = "skipped"
+    alpaca_paper_latest_signal_action: str | None = None
+    alpaca_paper_latest_signal_reason: str | None = None
+    alpaca_paper_latest_signal_market_price: float | None = None
+    alpaca_paper_broker_submission_attempted: bool | None = None
+    alpaca_paper_broker_submission_skipped_reason: str | None = None
+    alpaca_paper_order_artifact_count: int | None = None
+    alpaca_paper_fill_artifact_count: int | None = None
+    alpaca_paper_snapshot_artifact_count: int | None = None
     alpaca_paper_reconciliation_status = "skipped"
     alpaca_paper_reconciliation_difference_count: int | None = None
     if check_alpaca_paper:
@@ -266,6 +274,30 @@ def build_health_report(
                 if workflow_record is not None:
                     alpaca_paper_workflow_status = (
                         workflow_record.status.value
+                    )
+                    alpaca_paper_latest_signal_action = (
+                        workflow_record.latest_signal_action
+                    )
+                    alpaca_paper_latest_signal_reason = (
+                        workflow_record.latest_signal_reason
+                    )
+                    alpaca_paper_latest_signal_market_price = (
+                        workflow_record.latest_signal_market_price
+                    )
+                    alpaca_paper_broker_submission_attempted = (
+                        workflow_record.broker_submission_attempted
+                    )
+                    alpaca_paper_broker_submission_skipped_reason = (
+                        workflow_record.broker_submission_skipped_reason
+                    )
+                    alpaca_paper_order_artifact_count = len(
+                        workflow_record.order_artifact_paths
+                    )
+                    alpaca_paper_fill_artifact_count = len(
+                        workflow_record.fill_artifact_paths
+                    )
+                    alpaca_paper_snapshot_artifact_count = len(
+                        workflow_record.snapshot_artifact_paths
                     )
                     if workflow_record.status == WorkflowRunStatus.FAILED:
                         issues.append(
@@ -362,6 +394,28 @@ def build_health_report(
             else None
         ),
         alpaca_paper_workflow_status=alpaca_paper_workflow_status,
+        alpaca_paper_latest_signal_action=(
+            alpaca_paper_latest_signal_action
+        ),
+        alpaca_paper_latest_signal_reason=(
+            alpaca_paper_latest_signal_reason
+        ),
+        alpaca_paper_latest_signal_market_price=(
+            alpaca_paper_latest_signal_market_price
+        ),
+        alpaca_paper_broker_submission_attempted=(
+            alpaca_paper_broker_submission_attempted
+        ),
+        alpaca_paper_broker_submission_skipped_reason=(
+            alpaca_paper_broker_submission_skipped_reason
+        ),
+        alpaca_paper_order_artifact_count=(
+            alpaca_paper_order_artifact_count
+        ),
+        alpaca_paper_fill_artifact_count=alpaca_paper_fill_artifact_count,
+        alpaca_paper_snapshot_artifact_count=(
+            alpaca_paper_snapshot_artifact_count
+        ),
         alpaca_paper_reconciliation_status=(
             alpaca_paper_reconciliation_status
         ),

@@ -443,6 +443,18 @@ def test_ops_publish_status_can_include_sanitized_alpaca_paper_health(
     assert payload["alpaca_paper_workflow_status"] == "succeeded"
     assert payload["alpaca_paper_reconciliation_status"] == "passed"
     assert payload["alpaca_paper_reconciliation_difference_count"] == 0
+    assert payload["alpaca_paper_latest_signal_action"] == "hold"
+    assert payload["alpaca_paper_latest_signal_reason"] == (
+        "latest strategy signal is hold"
+    )
+    assert payload["alpaca_paper_latest_signal_market_price"] == 10.0
+    assert payload["alpaca_paper_broker_submission_attempted"] is False
+    assert payload["alpaca_paper_broker_submission_skipped_reason"] == (
+        "latest strategy signal is hold"
+    )
+    assert payload["alpaca_paper_order_artifact_count"] == 0
+    assert payload["alpaca_paper_fill_artifact_count"] == 0
+    assert payload["alpaca_paper_snapshot_artifact_count"] == 1
     assert "account_id" not in payload
     assert "state_cash" not in payload
 
@@ -584,6 +596,13 @@ def _write_alpaca_paper_workflow_record(path, *, passed: bool) -> None:
         symbol="AAPL",
         request_start="2024-01-01",
         message="ok" if passed else "boom",
+        latest_signal_action="hold",
+        latest_signal_reason="latest strategy signal is hold",
+        latest_signal_market_price=10.0,
+        broker_submission_attempted=False,
+        broker_submission_skipped_reason="latest strategy signal is hold",
+        snapshot_artifact_paths=("data/live/account_snapshots/snapshot.json",),
+        reconciliation_report_path="data/live/reconciliation/latest.json",
     )
     (path / f"{record.workflow_id}.json").write_text(
         record.model_dump_json(indent=2) + "\n"

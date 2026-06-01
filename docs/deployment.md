@@ -238,8 +238,11 @@ quant ops publish-status --initial-cash 100000
 ```
 
 The file is intentionally sanitized for GitHub Pages. It includes health,
-latest run, latest signal, lock, reconciliation, and issue summaries, but not
-cash, positions, or order-level account details.
+latest run, latest signal, lock, reconciliation, issue summaries, and Alpaca
+paper decision status when requested with `--check-alpaca-paper`. Alpaca paper
+status includes signal action, broker-submission outcome, and artifact counts,
+but not cash, positions, account IDs, secrets, raw broker payloads, or raw order
+details.
 
 If a server job commits and pushes changes under `site/`, the existing GitHub
 Pages workflow can publish the updated dashboard. Keep that publishing step

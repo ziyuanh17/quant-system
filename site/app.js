@@ -25,6 +25,27 @@ function formatValue(value) {
   return String(value).replaceAll("_", " ");
 }
 
+function formatAlpacaSubmission(status) {
+  const attempted = status.alpaca_paper_broker_submission_attempted;
+  if (attempted === true) {
+    return "attempted";
+  }
+  if (attempted === false) {
+    const reason = formatValue(
+      status.alpaca_paper_broker_submission_skipped_reason,
+    );
+    return `skipped: ${reason}`;
+  }
+  return "n/a";
+}
+
+function formatAlpacaArtifacts(status) {
+  const orders = formatValue(status.alpaca_paper_order_artifact_count);
+  const fills = formatValue(status.alpaca_paper_fill_artifact_count);
+  const snapshots = formatValue(status.alpaca_paper_snapshot_artifact_count);
+  return `orders ${orders} / fills ${fills} / snapshots ${snapshots}`;
+}
+
 function renderSummary(progress) {
   setText("project-name", progress.project.name);
   setText("project-description", progress.project.description);
@@ -95,6 +116,12 @@ function renderStatus(status) {
     "alpaca-paper-status",
     formatValue(status.alpaca_paper_reconciliation_status),
   );
+  setText(
+    "alpaca-paper-signal",
+    formatValue(status.alpaca_paper_latest_signal_action),
+  );
+  setText("alpaca-paper-submission", formatAlpacaSubmission(status));
+  setText("alpaca-paper-artifacts", formatAlpacaArtifacts(status));
 
   const issues = document.getElementById("status-issues");
   issues.innerHTML = "";
@@ -130,6 +157,9 @@ function renderStatusError(error) {
   setText("reconciliation-status", "n/a");
   setText("comparison-status", "n/a");
   setText("alpaca-paper-status", "n/a");
+  setText("alpaca-paper-signal", "n/a");
+  setText("alpaca-paper-submission", "n/a");
+  setText("alpaca-paper-artifacts", "n/a");
 }
 
 loadProgress()

@@ -71,12 +71,13 @@ side discussions.
 | 53 | Controlled Recurring Alpaca Paper Run v1 | In Review | Add a no-order preflight mode and runbook guidance before enabling recurring Alpaca paper execution. |
 | 54 | Controlled Full Alpaca Paper Wrapper Run v1 | In Review | Ran and documented one full server-style Alpaca paper wrapper cycle with data refresh, broker snapshot, and reconciliation. |
 | 55 | Workflow Decision Visibility v1 | In Review | Add latest signal and broker-submission outcome fields to Alpaca paper workflow records. |
+| 56 | Dashboard Decision Visibility v1 | In Review | Publish sanitized Alpaca paper decision and broker-submission status to the dashboard. |
 
 ## Current Recommendation
 
-The current milestone is **Workflow Decision Visibility v1**. Review the
-workflow record fields that expose the latest strategy decision and
-broker-submission outcome, then use them in dashboard/status views.
+The current milestone is **Dashboard Decision Visibility v1**. Review the
+sanitized dashboard fields for Alpaca paper signal action, broker submission,
+artifact counts, and reconciliation status.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1170,3 +1171,21 @@ The first version should make Alpaca paper workflow records self-explanatory.
 A successful workflow can now show whether it held without submitting an order
 or attempted broker submission and reconciled the resulting artifacts. This
 removes the need to infer trading behavior from missing order or fill files.
+
+## Dashboard Decision Visibility v1 Scope
+
+Introduce:
+
+```text
+alpaca_paper_latest_signal_action
+alpaca_paper_latest_signal_reason
+alpaca_paper_latest_signal_market_price
+alpaca_paper_broker_submission_attempted
+alpaca_paper_broker_submission_skipped_reason
+alpaca_paper_order/fill/snapshot artifact counts
+```
+
+The first version should copy sanitized Alpaca paper decision fields from the
+latest workflow record into `site/status.json` and render them on the static
+dashboard. It should publish counts and decision status, not account IDs,
+secrets, cash, positions, raw broker payloads, or raw order details.

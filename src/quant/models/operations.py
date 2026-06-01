@@ -45,6 +45,14 @@ class DashboardHealthStatus(FrozenModel):
     comparison_status: str
     comparison_difference_count: int | None = None
     alpaca_paper_workflow_status: str = "skipped"
+    alpaca_paper_latest_signal_action: str | None = None
+    alpaca_paper_latest_signal_reason: str | None = None
+    alpaca_paper_latest_signal_market_price: float | None = None
+    alpaca_paper_broker_submission_attempted: bool | None = None
+    alpaca_paper_broker_submission_skipped_reason: str | None = None
+    alpaca_paper_order_artifact_count: int | None = None
+    alpaca_paper_fill_artifact_count: int | None = None
+    alpaca_paper_snapshot_artifact_count: int | None = None
     alpaca_paper_reconciliation_status: str = "skipped"
     alpaca_paper_reconciliation_difference_count: int | None = None
     issue_count: int
@@ -83,6 +91,14 @@ class HealthReport(FrozenModel):
     alpaca_paper_workflow_records_dir: str | None = None
     alpaca_paper_workflow_path: str | None = None
     alpaca_paper_workflow_status: str = "skipped"
+    alpaca_paper_latest_signal_action: str | None = None
+    alpaca_paper_latest_signal_reason: str | None = None
+    alpaca_paper_latest_signal_market_price: float | None = None
+    alpaca_paper_broker_submission_attempted: bool | None = None
+    alpaca_paper_broker_submission_skipped_reason: str | None = None
+    alpaca_paper_order_artifact_count: int | None = None
+    alpaca_paper_fill_artifact_count: int | None = None
+    alpaca_paper_snapshot_artifact_count: int | None = None
     alpaca_paper_reconciliation_status: str = "skipped"
     alpaca_paper_reconciliation_difference_count: int | None = None
     alpaca_paper_reconciliation_report_path: str | None = None

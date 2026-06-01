@@ -26,6 +26,30 @@ def build_dashboard_health_status(
         comparison_status=report.comparison_status,
         comparison_difference_count=report.comparison_difference_count,
         alpaca_paper_workflow_status=report.alpaca_paper_workflow_status,
+        alpaca_paper_latest_signal_action=(
+            report.alpaca_paper_latest_signal_action
+        ),
+        alpaca_paper_latest_signal_reason=(
+            report.alpaca_paper_latest_signal_reason
+        ),
+        alpaca_paper_latest_signal_market_price=(
+            report.alpaca_paper_latest_signal_market_price
+        ),
+        alpaca_paper_broker_submission_attempted=(
+            report.alpaca_paper_broker_submission_attempted
+        ),
+        alpaca_paper_broker_submission_skipped_reason=(
+            report.alpaca_paper_broker_submission_skipped_reason
+        ),
+        alpaca_paper_order_artifact_count=(
+            report.alpaca_paper_order_artifact_count
+        ),
+        alpaca_paper_fill_artifact_count=(
+            report.alpaca_paper_fill_artifact_count
+        ),
+        alpaca_paper_snapshot_artifact_count=(
+            report.alpaca_paper_snapshot_artifact_count
+        ),
         alpaca_paper_reconciliation_status=(
             report.alpaca_paper_reconciliation_status
         ),
