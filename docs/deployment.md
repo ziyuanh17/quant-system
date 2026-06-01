@@ -237,6 +237,16 @@ Generate that file with:
 quant ops publish-status --initial-cash 100000
 ```
 
+When the original local paper scheduler/signal lane is intentionally inactive
+and the dashboard should show only the Alpaca paper lane, publish with:
+
+```bash
+quant ops publish-status \
+  --no-check-paper-service \
+  --no-check-comparison \
+  --check-alpaca-paper
+```
+
 The file is intentionally sanitized for GitHub Pages. It includes health,
 latest run, latest signal, lock, reconciliation, issue summaries, and Alpaca
 paper decision status when requested with `--check-alpaca-paper`. Alpaca paper

@@ -2057,6 +2057,12 @@ def ops_health(
             help="Path where reconciliation health report is written."
         ),
     ] = Path("data/paper/reconciliation/health-state.json"),
+    check_paper_service: Annotated[
+        bool,
+        typer.Option(
+            help="Check the original paper scheduler/signal/state lane."
+        ),
+    ] = True,
     check_comparison: Annotated[
         bool,
         typer.Option(help="Check paper-vs-dry-run comparison report."),
@@ -2099,6 +2105,7 @@ def ops_health(
         reconciliation_report_path=(
             reconciliation_report_path if reconcile_state else None
         ),
+        check_paper_service=check_paper_service,
         check_comparison=check_comparison,
         comparison_report_path=(
             comparison_report_path if check_comparison else None
@@ -2167,6 +2174,12 @@ def ops_publish_status(
         bool,
         typer.Option(help="Exit nonzero after writing failed status."),
     ] = False,
+    check_paper_service: Annotated[
+        bool,
+        typer.Option(
+            help="Check the original paper scheduler/signal/state lane."
+        ),
+    ] = True,
     check_comparison: Annotated[
         bool,
         typer.Option(help="Check paper-vs-dry-run comparison report."),
@@ -2207,6 +2220,7 @@ def ops_publish_status(
         initial_cash=initial_cash,
         cash_tolerance=cash_tolerance,
         reconciliation_report_path=None,
+        check_paper_service=check_paper_service,
         check_comparison=check_comparison,
         comparison_report_path=(
             comparison_report_path if check_comparison else None

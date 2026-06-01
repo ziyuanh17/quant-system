@@ -97,6 +97,16 @@ Publish the same operational health signal to the static dashboard:
 quant ops publish-status --initial-cash 100000
 ```
 
+If the original local paper scheduler/signal lane is not active, keep the
+dashboard quiet about that lane and publish only active checks:
+
+```bash
+quant ops publish-status \
+  --no-check-paper-service \
+  --no-check-comparison \
+  --check-alpaca-paper
+```
+
 This writes:
 
 ```text

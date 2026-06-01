@@ -38,6 +38,7 @@ def build_health_report(
     initial_cash: float = 100_000,
     cash_tolerance: float = 0.01,
     reconciliation_report_path: Path | None = None,
+    check_paper_service: bool = True,
     check_comparison: bool = False,
     comparison_report_path: Path | None = None,
     check_alpaca_paper: bool = False,
@@ -49,10 +50,14 @@ def build_health_report(
 
     # The latest scheduler record tells us whether the recurring job itself is
     # completing. A failed latest run is a hard operational failure.
-    latest_run_path = _latest_json(run_records_dir)
+    latest_run_path = (
+        _latest_json(run_records_dir) if check_paper_service else None
+    )
     latest_run_status: str | None = None
     latest_run_completed_at = None
-    if latest_run_path is None:
+    if not check_paper_service:
+        pass
+    elif latest_run_path is None:
         issues.append(
             _warning(
                 "missing_scheduler_run",
@@ -77,14 +82,18 @@ def build_health_report(
                     )
                 )
 
-    latest_signal_path = _latest_json(signal_records_dir)
+    latest_signal_path = (
+        _latest_json(signal_records_dir) if check_paper_service else None
+    )
     latest_signal_action: str | None = None
     latest_signal_date: str | None = None
     latest_signal_skipped: bool | None = None
     # Signal records are the audit trail between strategy output and broker
     # intent. Missing records are a warning because a brand-new service may not
     # have emitted its first signal yet.
-    if latest_signal_path is None:
+    if not check_paper_service:
+        pass
+    elif latest_signal_path is None:
         issues.append(
             _warning(
                 "missing_paper_signal",
@@ -108,7 +117,9 @@ def build_health_report(
     state_position_count: int | None = None
     # Paper state is critical: without it, scheduled invocations cannot behave
     # like one continuous account, so missing or invalid state is failed health.
-    if not state_path.exists():
+    if not check_paper_service:
+        pass
+    elif not state_path.exists():
         issues.append(
             _error(
                 "missing_paper_state",
@@ -141,10 +152,10 @@ def build_health_report(
             _warning("missing_logs", f"No log files found in {logs_dir}.")
         )
 
-    lock_status = "not_checked"
+    lock_status = "skipped" if not check_paper_service else "not_checked"
     lock_owner: str | None = None
     lock_expires_at = None
-    if lock_path is not None:
+    if check_paper_service and lock_path is not None:
         lock_status, lock_owner, lock_expires_at = _check_lock(
             lock_path=lock_path,
             lock_stale_after_seconds=lock_stale_after_seconds,
@@ -153,7 +164,7 @@ def build_health_report(
 
     reconciliation_status = "skipped"
     reconciliation_difference_count: int | None = None
-    if reconcile_state:
+    if reconcile_state and check_paper_service:
         reconciliation_status = "unavailable"
         if state is not None:
             try:

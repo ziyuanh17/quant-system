@@ -72,12 +72,13 @@ side discussions.
 | 54 | Controlled Full Alpaca Paper Wrapper Run v1 | In Review | Ran and documented one full server-style Alpaca paper wrapper cycle with data refresh, broker snapshot, and reconciliation. |
 | 55 | Workflow Decision Visibility v1 | In Review | Add latest signal and broker-submission outcome fields to Alpaca paper workflow records. |
 | 56 | Dashboard Decision Visibility v1 | In Review | Publish sanitized Alpaca paper decision and broker-submission status to the dashboard. |
+| 57 | Paper/Scheduler Status Cleanup v1 | In Review | Let dashboard publishing disable inactive paper scheduler/signal checks so Alpaca paper status is not hidden by stale lanes. |
 
 ## Current Recommendation
 
-The current milestone is **Dashboard Decision Visibility v1**. Review the
-sanitized dashboard fields for Alpaca paper signal action, broker submission,
-artifact counts, and reconciliation status.
+The current milestone is **Paper/Scheduler Status Cleanup v1**. Review the
+dashboard publishing mode that disables inactive local paper scheduler/signal
+checks while keeping the Alpaca paper lane active.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1189,3 +1190,19 @@ The first version should copy sanitized Alpaca paper decision fields from the
 latest workflow record into `site/status.json` and render them on the static
 dashboard. It should publish counts and decision status, not account IDs,
 secrets, cash, positions, raw broker payloads, or raw order details.
+
+## Paper/Scheduler Status Cleanup v1 Scope
+
+Introduce:
+
+```text
+check_paper_service
+--no-check-paper-service
+Alpaca-only dashboard publishing mode
+```
+
+The first version should let `quant ops publish-status` intentionally skip the
+older local paper scheduler/signal/state lane when it is not the active
+operational path. This keeps inactive or stale fixtures from making the
+dashboard look failed while Alpaca paper workflow and reconciliation checks are
+healthy.

@@ -459,6 +459,45 @@ def test_ops_publish_status_can_include_sanitized_alpaca_paper_health(
     assert "state_cash" not in payload
 
 
+def test_ops_publish_status_can_disable_inactive_paper_lane(
+    tmp_path,
+) -> None:
+    output_path = tmp_path / "site" / "status.json"
+    workflow_records_dir = tmp_path / "workflows" / "alpaca-paper-refresh"
+    reconciliation_path = tmp_path / "live" / "reconciliation" / "latest.json"
+    _write_alpaca_paper_workflow_record(workflow_records_dir, passed=True)
+    _write_live_reconciliation_report(reconciliation_path, passed=True)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "publish-status",
+            "--output-path",
+            str(output_path),
+            "--no-check-paper-service",
+            "--no-check-comparison",
+            "--check-alpaca-paper",
+            "--alpaca-paper-workflow-records-dir",
+            str(workflow_records_dir),
+            "--alpaca-paper-reconciliation-report-path",
+            str(reconciliation_path),
+        ],
+    )
+
+    payload = json.loads(output_path.read_text())
+    assert result.exit_code == 0
+    assert payload["status"] == "healthy"
+    assert payload["latest_run_status"] is None
+    assert payload["latest_signal_action"] is None
+    assert payload["lock_status"] == "skipped"
+    assert payload["reconciliation_status"] == "skipped"
+    assert payload["comparison_status"] == "skipped"
+    assert payload["alpaca_paper_workflow_status"] == "succeeded"
+    assert payload["alpaca_paper_reconciliation_status"] == "passed"
+    assert payload["issue_count"] == 0
+
+
 def _write_health_artifacts(
     tmp_path,
     *,

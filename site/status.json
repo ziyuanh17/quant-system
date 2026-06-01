@@ -1,25 +1,27 @@
 {
-  "generated_at": "2026-05-15T00:00:00Z",
-  "status": "degraded",
+  "generated_at": "2026-06-01T05:03:56.045171Z",
+  "status": "healthy",
   "latest_run_status": null,
   "latest_run_completed_at": null,
   "latest_signal_action": null,
   "latest_signal_date": null,
   "latest_signal_skipped": null,
-  "lock_status": "missing",
+  "lock_status": "skipped",
   "reconciliation_status": "skipped",
   "reconciliation_difference_count": null,
   "comparison_status": "skipped",
   "comparison_difference_count": null,
-  "alpaca_paper_workflow_status": "skipped",
-  "alpaca_paper_reconciliation_status": "skipped",
-  "alpaca_paper_reconciliation_difference_count": null,
-  "issue_count": 1,
-  "issues": [
-    {
-      "code": "dashboard_status_not_published",
-      "severity": "warning",
-      "message": "No live status has been published yet."
-    }
-  ]
+  "alpaca_paper_workflow_status": "succeeded",
+  "alpaca_paper_latest_signal_action": "hold",
+  "alpaca_paper_latest_signal_reason": "latest strategy signal is hold",
+  "alpaca_paper_latest_signal_market_price": 312.05999755859375,
+  "alpaca_paper_broker_submission_attempted": false,
+  "alpaca_paper_broker_submission_skipped_reason": "latest strategy signal is hold",
+  "alpaca_paper_order_artifact_count": 0,
+  "alpaca_paper_fill_artifact_count": 0,
+  "alpaca_paper_snapshot_artifact_count": 1,
+  "alpaca_paper_reconciliation_status": "passed",
+  "alpaca_paper_reconciliation_difference_count": 0,
+  "issue_count": 0,
+  "issues": []
 }
