@@ -138,9 +138,12 @@ Alpaca paper wrapper example:
 10 14 * * 1-5 cd /absolute/path/to/quant-system && bash scripts/run_alpaca_paper_refresh.sh
 ```
 
-The example above runs once per weekday. Choose a time that matches the data
-refresh policy for the input CSV. Do not schedule paper execution before the
-data file has been refreshed and validated.
+The examples above are generic templates. For the first Alpaca paper recurring
+setup, use the reviewed policy in
+[alpaca_paper_schedule.md](alpaca_paper_schedule.md) instead of installing a
+schedule directly from this page. Do not schedule paper execution before
+preflight, one manual wrapper run, reconciliation, and dashboard publishing have
+all been reviewed.
 
 ## systemd Example
 
@@ -167,6 +170,16 @@ For Alpaca paper rehearsals, change `ExecStart` to:
 ```ini
 ExecStart=/usr/bin/bash scripts/run_alpaca_paper_refresh.sh
 ```
+
+On macOS, a disabled launchd template is available at:
+
+```text
+configs/launchd/com.quant-system.alpaca-paper-refresh.plist.example
+```
+
+Do not load it directly. Copy it to a local plist, replace the placeholder repo
+path, keep it disabled until preflight and one manual wrapper run pass, then
+load it only after review.
 
 Example timer:
 

@@ -126,6 +126,9 @@ context, safety policy, artifact contract, and non-goals.
 Do not schedule Alpaca paper broker access until
 [alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) has been
 reviewed and, ideally, run once against the intended paper account.
+The first recurring schedule policy is documented in
+[alpaca_paper_schedule.md](alpaca_paper_schedule.md); treat it as a review
+checkpoint, not an enabled schedule.
 
 ## Concurrent Run Safety
 

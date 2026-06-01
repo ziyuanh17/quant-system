@@ -73,12 +73,14 @@ side discussions.
 | 55 | Workflow Decision Visibility v1 | In Review | Add latest signal and broker-submission outcome fields to Alpaca paper workflow records. |
 | 56 | Dashboard Decision Visibility v1 | In Review | Publish sanitized Alpaca paper decision and broker-submission status to the dashboard. |
 | 57 | Paper/Scheduler Status Cleanup v1 | In Review | Let dashboard publishing disable inactive paper scheduler/signal checks so Alpaca paper status is not hidden by stale lanes. |
+| 58 | Recurring Alpaca Paper Schedule Design v1 | In Review | Document the first daily Alpaca paper schedule policy without enabling automation. |
+| 59 | Alpaca Paper launchd Template v1 | In Review | Add a disabled macOS launchd template for reviewed recurring Alpaca paper runs. |
 
 ## Current Recommendation
 
-The current milestone is **Paper/Scheduler Status Cleanup v1**. Review the
-dashboard publishing mode that disables inactive local paper scheduler/signal
-checks while keeping the Alpaca paper lane active.
+The current milestone is **Alpaca Paper launchd Template v1**. Review the
+disabled macOS launchd template before adapting it locally or loading any
+recurring job.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1206,3 +1208,33 @@ older local paper scheduler/signal/state lane when it is not the active
 operational path. This keeps inactive or stale fixtures from making the
 dashboard look failed while Alpaca paper workflow and reconciliation checks are
 healthy.
+
+## Recurring Alpaca Paper Schedule Design v1 Scope
+
+Introduce:
+
+```text
+docs/alpaca_paper_schedule.md
+daily paper rehearsal policy
+pre-enable checklist
+cron/launchd drafts
+```
+
+The first version should document when and how the Alpaca paper wrapper may be
+scheduled without enabling any recurring job. The recommended first policy is
+one paper-only run per market weekday near the end of the regular US market
+session, with dashboard publishing enabled and tiny order sizing.
+
+## Alpaca Paper launchd Template v1 Scope
+
+Introduce:
+
+```text
+configs/launchd/com.quant-system.alpaca-paper-refresh.plist.example
+launchd template validation test
+template review instructions
+```
+
+The first version should provide a disabled macOS launchd plist template that
+uses placeholder absolute paths and the reviewed weekday 12:55 PM local policy.
+It must not install, load, or enable the recurring job.

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.quant-system.alpaca-paper-refresh</string>
+
+  <key>Disabled</key>
+  <true/>
+
+  <key>WorkingDirectory</key>
+  <string>/absolute/path/to/quant-system</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/absolute/path/to/quant-system/scripts/run_alpaca_paper_refresh.sh</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <array>
+      <integer>1</integer>
+      <integer>2</integer>
+      <integer>3</integer>
+      <integer>4</integer>
+      <integer>5</integer>
+    </array>
+    <key>Hour</key>
+    <integer>12</integer>
+    <key>Minute</key>
+    <integer>55</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/absolute/path/to/quant-system/logs/launchd-alpaca-paper-refresh.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/absolute/path/to/quant-system/logs/launchd-alpaca-paper-refresh.err.log</string>
+</dict>
+</plist>
