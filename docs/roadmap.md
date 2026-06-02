@@ -56,32 +56,40 @@ side discussions.
 | 38 | Fake Live Reconciliation v1 | Done | Compare local live artifacts against fake broker account/order/fill state before any real SDK integration. |
 | 39 | Fake Live CLI v1 | Done | Add safety-gated fake live commands for order submission and reconciliation without real broker SDKs. |
 | 40 | Alpaca Paper Adapter Design v1 | Done | Design the first external paper-broker adapter and dependency boundary before adding the Alpaca SDK. |
-| 41 | Alpaca Paper Mapping v1 | In Review | Add Alpaca-shaped mapping helpers and tests without installing the Alpaca SDK. |
-| 42 | Alpaca Optional Dependency v1 | In Review | Add `alpaca-py` as an optional dependency and verify import boundaries without requiring credentials or network access in default CI. |
-| 43 | Alpaca Paper Client v1 | In Review | Wrap the optional SDK behind a paper client boundary without enabling real-money trading. |
-| 44 | Alpaca Paper CLI v1 | In Review | Add explicit safety-gated Alpaca paper commands without a generic live broker selector. |
-| 45 | Alpaca Paper Reconciliation v1 | In Review | Reconcile local live artifacts against Alpaca paper account/order/fill state. |
-| 46 | Alpaca Paper Manual Smoke Runbook v1 | In Review | Document the exact human-run paper broker smoke test before adding scheduled Alpaca workflows. |
-| 47 | Alpaca Paper Workflow Design v1 | In Review | Design the scheduled Alpaca paper workflow only after the manual smoke runbook is reviewed. |
-| 48 | Alpaca Paper Refresh Workflow v1 | In Review | Implement one finite lock-protected Alpaca paper refresh workflow with fake-driven tests. |
-| 49 | Alpaca Paper Server Wrapper v1 | In Review | Add an env-driven wrapper for running the Alpaca paper refresh workflow repeatedly on a server. |
-| 50 | Alpaca Paper Operational Health v1 | In Review | Surface Alpaca paper workflow/reconciliation health in the local health command and dashboard status. |
-| 51 | Alpaca Paper Status Publishing Wrapper v1 | In Review | Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks. |
-| 52 | Alpaca Paper Manual Smoke Execution v1 | In Review | Ran and documented one tiny broker-connected Alpaca paper smoke test, including manual cancellation refresh and reconciliation. |
-| 53 | Controlled Recurring Alpaca Paper Run v1 | In Review | Add a no-order preflight mode and runbook guidance before enabling recurring Alpaca paper execution. |
-| 54 | Controlled Full Alpaca Paper Wrapper Run v1 | In Review | Ran and documented one full server-style Alpaca paper wrapper cycle with data refresh, broker snapshot, and reconciliation. |
-| 55 | Workflow Decision Visibility v1 | In Review | Add latest signal and broker-submission outcome fields to Alpaca paper workflow records. |
-| 56 | Dashboard Decision Visibility v1 | In Review | Publish sanitized Alpaca paper decision and broker-submission status to the dashboard. |
-| 57 | Paper/Scheduler Status Cleanup v1 | In Review | Let dashboard publishing disable inactive paper scheduler/signal checks so Alpaca paper status is not hidden by stale lanes. |
-| 58 | Recurring Alpaca Paper Schedule Design v1 | In Review | Document the first daily Alpaca paper schedule policy without enabling automation. |
-| 59 | Alpaca Paper launchd Template v1 | In Review | Add a disabled macOS launchd template for reviewed recurring Alpaca paper runs. |
-| 60 | Launchd Localization Runbook v1 | In Review | Document how to safely localize, validate, load, unload, and ignore machine-specific launchd plists. |
+| 41 | Alpaca Paper Mapping v1 | Done | Add Alpaca-shaped mapping helpers and tests without installing the Alpaca SDK. |
+| 42 | Alpaca Optional Dependency v1 | Done | Add `alpaca-py` as an optional dependency and verify import boundaries without requiring credentials or network access in default CI. |
+| 43 | Alpaca Paper Client v1 | Done | Wrap the optional SDK behind a paper client boundary without enabling real-money trading. |
+| 44 | Alpaca Paper CLI v1 | Done | Add explicit safety-gated Alpaca paper commands without a generic live broker selector. |
+| 45 | Alpaca Paper Reconciliation v1 | Done | Reconcile local live artifacts against Alpaca paper account/order/fill state. |
+| 46 | Alpaca Paper Manual Smoke Runbook v1 | Done | Document the exact human-run paper broker smoke test before adding scheduled Alpaca workflows. |
+| 47 | Alpaca Paper Workflow Design v1 | Done | Design the scheduled Alpaca paper workflow only after the manual smoke runbook is reviewed. |
+| 48 | Alpaca Paper Refresh Workflow v1 | Done | Implement one finite lock-protected Alpaca paper refresh workflow with fake-driven tests. |
+| 49 | Alpaca Paper Server Wrapper v1 | Done | Add an env-driven wrapper for running the Alpaca paper refresh workflow repeatedly on a server. |
+| 50 | Alpaca Paper Operational Health v1 | Done | Surface Alpaca paper workflow/reconciliation health in the local health command and dashboard status. |
+| 51 | Alpaca Paper Status Publishing Wrapper v1 | Done | Let the Alpaca paper server wrapper publish sanitized dashboard status after successful health checks. |
+| 52 | Alpaca Paper Manual Smoke Execution v1 | Done | Ran and documented one tiny broker-connected Alpaca paper smoke test, including manual cancellation refresh and reconciliation. |
+| 53 | Controlled Recurring Alpaca Paper Run v1 | Done | Add a no-order preflight mode and runbook guidance before enabling recurring Alpaca paper execution. |
+| 54 | Controlled Full Alpaca Paper Wrapper Run v1 | Done | Ran and documented one full server-style Alpaca paper wrapper cycle with data refresh, broker snapshot, and reconciliation. |
+| 55 | Workflow Decision Visibility v1 | Done | Add latest signal and broker-submission outcome fields to Alpaca paper workflow records. |
+| 56 | Dashboard Decision Visibility v1 | Done | Publish sanitized Alpaca paper decision and broker-submission status to the dashboard. |
+| 57 | Paper/Scheduler Status Cleanup v1 | Done | Let dashboard publishing disable inactive paper scheduler/signal checks so Alpaca paper status is not hidden by stale lanes. |
+| 58 | Recurring Alpaca Paper Schedule Design v1 | Done | Document the first daily Alpaca paper schedule policy without enabling automation. |
+| 59 | Alpaca Paper launchd Template v1 | Done | Add a disabled macOS launchd template for reviewed recurring Alpaca paper runs. |
+| 60 | Launchd Localization Runbook v1 | Done | Document how to safely localize, validate, load, unload, and ignore machine-specific launchd plists. |
+| 61 | Launchd Local Preflight v1 | Planned | Create and validate a local untracked launchd plist copy, then run preflight without loading the recurring job. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Localization Runbook v1**. Review the local
-plist copy, validation, load, and unload instructions before adapting the
-launchd template on this machine.
+The current milestone is **Launchd Local Preflight v1**. Create and validate a
+local untracked launchd plist copy, then run wrapper preflight without loading
+or enabling the recurring job.
+
+## Status Convention
+
+- `Planned`: not started yet.
+- `In Review`: implemented or documented in the working tree, checks pass, and
+  the change is waiting for human review or check-in.
+- `Done`: reviewed and committed into the project history.
 
 The server path now has data refresh, validation, paper execution, and health
 checks, lock files that prevent overlapping workflow runs, atomic paper state
@@ -1254,3 +1262,19 @@ The first version should document how to copy the disabled launchd example to a
 local untracked plist, replace machine-specific paths, validate with `plutil`,
 run wrapper preflight, and later load or unload launchd only after explicit
 review.
+
+## Launchd Local Preflight v1 Scope
+
+Introduce:
+
+```text
+local untracked launchd plist copy
+plutil validation output
+wrapper preflight output
+no launchd load or enable action
+```
+
+The first version should create the local machine-specific plist from the
+checked-in example, verify that git ignores it, validate it with `plutil`, and
+run `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true bash scripts/run_alpaca_paper_refresh.sh`.
+It must not load, enable, or kickstart launchd.
