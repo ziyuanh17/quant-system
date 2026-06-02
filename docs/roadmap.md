@@ -76,13 +76,13 @@ side discussions.
 | 58 | Recurring Alpaca Paper Schedule Design v1 | Done | Document the first daily Alpaca paper schedule policy without enabling automation. |
 | 59 | Alpaca Paper launchd Template v1 | Done | Add a disabled macOS launchd template for reviewed recurring Alpaca paper runs. |
 | 60 | Launchd Localization Runbook v1 | Done | Document how to safely localize, validate, load, unload, and ignore machine-specific launchd plists. |
-| 61 | Launchd Local Preflight v1 | Planned | Create and validate a local untracked launchd plist copy, then run preflight without loading the recurring job. |
+| 61 | Launchd Local Preflight v1 | In Review | Created and validated a local untracked launchd plist copy, then ran preflight without loading the recurring job. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Local Preflight v1**. Create and validate a
-local untracked launchd plist copy, then run wrapper preflight without loading
-or enabling the recurring job.
+The current milestone is **Launchd Local Preflight v1**. Review the local
+preflight note, then run one manual full wrapper cycle and dashboard review
+before any launchd load or enable action.
 
 ## Status Convention
 
@@ -1272,6 +1272,7 @@ local untracked launchd plist copy
 plutil validation output
 wrapper preflight output
 no launchd load or enable action
+docs/launchd_local_preflight.md
 ```
 
 The first version should create the local machine-specific plist from the
