@@ -56,7 +56,8 @@ perl -pi -e "s#/absolute/path/to/quant-system#$repo_root#g" \
 ```
 
 Keep `Disabled` set to `true` until the preflight and one manual wrapper run
-have both passed.
+have both passed. Do not attempt `launchctl bootstrap` while this key is still
+`true`; launchd treats that as disabled state and can reject the load.
 
 ## Validate
 
@@ -108,7 +109,8 @@ cp \
 ```
 
 Edit the copied file under `~/Library/LaunchAgents/` and set `Disabled` to
-`false`.
+`false`. This changes the plist from review-only to loadable. It does not
+itself run the job.
 
 Then load it:
 
@@ -117,7 +119,7 @@ launchctl bootstrap gui/$(id -u) \
   ~/Library/LaunchAgents/com.quant-system.alpaca-paper-refresh.plist
 ```
 
-Kick off one manual launchd run:
+Only after a separate review, kick off one manual launchd run:
 
 ```bash
 launchctl kickstart \
@@ -164,5 +166,10 @@ Do not remove local logs or artifacts until they have been reviewed.
 - Do not commit the localized plist.
 - Do not enable launchd before preflight, one manual full wrapper run, and
   dashboard review.
+- Do not bootstrap the plist while `Disabled=true`; switch it to
+  `Disabled=false` only when you are ready for launchd to register the
+  scheduled job.
+- Bootstrapping registers the calendar schedule. It should not submit an order
+  immediately unless a run trigger fires or `kickstart` is explicitly used.
 - Stop and inspect if reconciliation fails or if Alpaca shows an unexpected
   open paper order.

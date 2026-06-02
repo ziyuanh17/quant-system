@@ -178,8 +178,8 @@ configs/launchd/com.quant-system.alpaca-paper-refresh.plist.example
 ```
 
 Do not load it directly. Copy it to a local plist, replace the placeholder repo
-path, keep it disabled until preflight and one manual wrapper run pass, then
-load it only after review. See
+path, keep it `Disabled=true` until preflight and one manual wrapper run pass,
+then change it to `Disabled=false` before loading it after review. See
 [launchd_localization.md](launchd_localization.md) for the full local setup and
 unload procedure.
 

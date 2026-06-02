@@ -16,8 +16,7 @@ def test_alpaca_paper_launchd_template_is_review_only() -> None:
         "/bin/bash",
         "/absolute/path/to/quant-system/scripts/run_alpaca_paper_refresh.sh",
     ]
-    assert payload["StartCalendarInterval"] == {
-        "Weekday": [1, 2, 3, 4, 5],
-        "Hour": 12,
-        "Minute": 55,
-    }
+    assert payload["StartCalendarInterval"] == [
+        {"Weekday": weekday, "Hour": 12, "Minute": 55}
+        for weekday in [1, 2, 3, 4, 5]
+    ]

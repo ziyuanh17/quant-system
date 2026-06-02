@@ -101,9 +101,11 @@ The checked-in template is:
 configs/launchd/com.quant-system.alpaca-paper-refresh.plist.example
 ```
 
-It is disabled and uses `/absolute/path/to/quant-system` placeholders. Copy it
-to a local plist, replace every placeholder with the actual repo path, run
-preflight, and review the dashboard before loading it with launchd.
+It starts as a review-only template with `Disabled=true` and
+`/absolute/path/to/quant-system` placeholders. Copy it to a local plist, replace
+every placeholder with the actual repo path, run preflight, and review the
+dashboard. Before loading it with launchd, change `Disabled` to `false`; launchd
+cannot bootstrap the job while it remains `true`.
 Follow [launchd_localization.md](launchd_localization.md) for the exact local
 copy, validation, load, and unload commands.
 

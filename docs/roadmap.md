@@ -77,13 +77,16 @@ side discussions.
 | 59 | Alpaca Paper launchd Template v1 | Done | Add a disabled macOS launchd template for reviewed recurring Alpaca paper runs. |
 | 60 | Launchd Localization Runbook v1 | Done | Document how to safely localize, validate, load, unload, and ignore machine-specific launchd plists. |
 | 61 | Launchd Local Preflight v1 | Done | Created and validated a local untracked launchd plist copy, then ran preflight without loading the recurring job. |
-| 62 | Launchd Manual Full Wrapper Review v1 | In Review | Ran one manual full wrapper cycle and dashboard publish using the launchd-localized setup before loading launchd. |
+| 62 | Launchd Manual Full Wrapper Review v1 | Done | Ran one manual full wrapper cycle and dashboard publish using the launchd-localized setup before loading launchd. |
+| 63 | Launchd Disabled Load Rehearsal v1 | In Review | Correct the launchd calendar shape and document the disabled bootstrap failure; no job was enabled, kickstarted, or left loaded. |
+| 64 | Launchd Bootstrap Failure Diagnosis v1 | In Review | Diagnose launchctl bootstrap error 5 and document that `Disabled=true` prevents bootstrap on this macOS setup. |
+| 65 | Launchd Controlled Load Rehearsal v1 | Next | Load the actual Alpaca paper launchd plist only after setting `Disabled=false`, inspect state, and unload without kickstart. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Manual Full Wrapper Review v1**. Review the
-manual wrapper note and healthy dashboard status before any launchd load or
-enable action.
+The current milestone is **Launchd Controlled Load Rehearsal v1**. Convert the
+localized Alpaca paper plist from review-only to loadable by setting
+`Disabled=false`, then bootstrap, inspect, and unload it without kickstart.
 
 ## Status Convention
 
@@ -170,6 +173,20 @@ data ingestion
   -> Alpaca paper server wrapper
   -> Alpaca paper operational health
   -> Alpaca paper status publishing wrapper
+  -> Alpaca paper manual smoke execution
+  -> controlled recurring Alpaca paper run
+  -> controlled full Alpaca paper wrapper run
+  -> workflow decision visibility
+  -> dashboard decision visibility
+  -> paper/scheduler status cleanup
+  -> recurring Alpaca paper schedule design
+  -> Alpaca paper launchd template
+  -> launchd localization runbook
+  -> launchd local preflight
+  -> launchd manual full wrapper review
+  -> launchd disabled load rehearsal
+  -> launchd bootstrap failure diagnosis
+  -> launchd controlled load rehearsal
 ```
 
 ## Data Lineage v1 Scope
@@ -1297,3 +1314,64 @@ the localized repo environment, publish dashboard status with
 `--no-check-paper-service --no-check-comparison --check-alpaca-paper`, and
 review the generated workflow/reconciliation/status artifacts. It must not
 load, enable, or kickstart launchd.
+
+## Launchd Disabled Load Rehearsal v1 Scope
+
+Introduce:
+
+```text
+launchctl bootstrap with Disabled=true
+launchctl print inspection
+launchctl bootout cleanup
+no enable action
+no scheduled run
+docs/launchd_disabled_load_rehearsal.md
+```
+
+The first version should confirm that launchd can parse and register the local
+plist while it remains disabled. It should inspect launchctl state, unload the
+job, and record the outcome. It must not enable the job or leave it loaded.
+
+Current outcome: launchd returned bootstrap error 5 for both the repo-local
+plist and the copy installed under `~/Library/LaunchAgents`. The service was
+not loaded, the installed copy was removed, and the recurring schedule remains
+disabled.
+
+## Launchd Bootstrap Failure Diagnosis v1 Scope
+
+Introduce:
+
+```text
+minimal launchd control plist
+wrapper-free launchd command probe
+launchd stderr/stdout path validation
+background task management diagnostics
+documented root cause or narrowed blocker
+```
+
+The first version should isolate whether bootstrap error 5 comes from the plist
+shape, the wrapper path, log path permissions, macOS Background Task Management,
+or another launchd requirement. It must keep the Alpaca paper job disabled and
+must not submit orders through launchd.
+
+Current outcome: the root cause was `Disabled=true`. Minimal and real-shaped
+diagnostic plists loaded when `Disabled` was absent or set to `false`, and
+reported `runs = 0` before being unloaded.
+
+## Launchd Controlled Load Rehearsal v1 Scope
+
+Introduce:
+
+```text
+installed launchd plist with Disabled=false
+launchctl bootstrap actual label
+launchctl print inspection
+launchctl bootout cleanup
+no kickstart action
+no immediate order submission
+```
+
+The first version should prove the actual Alpaca paper launchd label can be
+registered once the plist is intentionally made loadable. It should inspect
+the registered calendar triggers and unload the job before the schedule is
+left active. It must not call `launchctl kickstart`.
