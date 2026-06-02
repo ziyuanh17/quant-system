@@ -76,13 +76,14 @@ side discussions.
 | 58 | Recurring Alpaca Paper Schedule Design v1 | Done | Document the first daily Alpaca paper schedule policy without enabling automation. |
 | 59 | Alpaca Paper launchd Template v1 | Done | Add a disabled macOS launchd template for reviewed recurring Alpaca paper runs. |
 | 60 | Launchd Localization Runbook v1 | Done | Document how to safely localize, validate, load, unload, and ignore machine-specific launchd plists. |
-| 61 | Launchd Local Preflight v1 | In Review | Created and validated a local untracked launchd plist copy, then ran preflight without loading the recurring job. |
+| 61 | Launchd Local Preflight v1 | Done | Created and validated a local untracked launchd plist copy, then ran preflight without loading the recurring job. |
+| 62 | Launchd Manual Full Wrapper Review v1 | In Review | Ran one manual full wrapper cycle and dashboard publish using the launchd-localized setup before loading launchd. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Local Preflight v1**. Review the local
-preflight note, then run one manual full wrapper cycle and dashboard review
-before any launchd load or enable action.
+The current milestone is **Launchd Manual Full Wrapper Review v1**. Review the
+manual wrapper note and healthy dashboard status before any launchd load or
+enable action.
 
 ## Status Convention
 
@@ -1279,3 +1280,20 @@ The first version should create the local machine-specific plist from the
 checked-in example, verify that git ignores it, validate it with `plutil`, and
 run `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true bash scripts/run_alpaca_paper_refresh.sh`.
 It must not load, enable, or kickstart launchd.
+
+## Launchd Manual Full Wrapper Review v1 Scope
+
+Introduce:
+
+```text
+manual full wrapper output
+fresh Alpaca-only dashboard status
+local launchd plist remains disabled and unloaded
+docs/launchd_manual_wrapper_review.md
+```
+
+The first version should run `bash scripts/run_alpaca_paper_refresh.sh` from
+the localized repo environment, publish dashboard status with
+`--no-check-paper-service --no-check-comparison --check-alpaca-paper`, and
+review the generated workflow/reconciliation/status artifacts. It must not
+load, enable, or kickstart launchd.

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-01T05:03:56.045171Z",
+  "generated_at": "2026-06-02T05:14:44.107074Z",
   "status": "healthy",
   "latest_run_status": null,
   "latest_run_completed_at": null,
@@ -14,7 +14,7 @@
   "alpaca_paper_workflow_status": "succeeded",
   "alpaca_paper_latest_signal_action": "hold",
   "alpaca_paper_latest_signal_reason": "latest strategy signal is hold",
-  "alpaca_paper_latest_signal_market_price": 312.05999755859375,
+  "alpaca_paper_latest_signal_market_price": 306.30999755859375,
   "alpaca_paper_broker_submission_attempted": false,
   "alpaca_paper_broker_submission_skipped_reason": "latest strategy signal is hold",
   "alpaca_paper_order_artifact_count": 0,
