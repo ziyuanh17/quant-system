@@ -119,7 +119,9 @@ launchctl bootstrap gui/$(id -u) \
   ~/Library/LaunchAgents/com.quant-system.alpaca-paper-refresh.plist
 ```
 
-Only after a separate review, kick off one manual launchd run:
+Only after a separate review, kick off one manual launchd run. The first
+triggered execution should be preflight-only; see
+[launchd_triggered_execution_rehearsal_design.md](launchd_triggered_execution_rehearsal_design.md).
 
 ```bash
 launchctl kickstart \
@@ -171,5 +173,8 @@ Do not remove local logs or artifacts until they have been reviewed.
   scheduled job.
 - Bootstrapping registers the calendar schedule. It should not submit an order
   immediately unless a run trigger fires or `kickstart` is explicitly used.
+- The first `kickstart` rehearsal should inject
+  `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true` through the installed plist's
+  launchd environment, then unload and remove the plist after inspection.
 - Stop and inspect if reconciliation fails or if Alpaca shows an unexpected
   open paper order.

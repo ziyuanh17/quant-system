@@ -78,16 +78,17 @@ side discussions.
 | 60 | Launchd Localization Runbook v1 | Done | Document how to safely localize, validate, load, unload, and ignore machine-specific launchd plists. |
 | 61 | Launchd Local Preflight v1 | Done | Created and validated a local untracked launchd plist copy, then ran preflight without loading the recurring job. |
 | 62 | Launchd Manual Full Wrapper Review v1 | Done | Ran one manual full wrapper cycle and dashboard publish using the launchd-localized setup before loading launchd. |
-| 63 | Launchd Disabled Load Rehearsal v1 | In Review | Correct the launchd calendar shape and document the disabled bootstrap failure; no job was enabled, kickstarted, or left loaded. |
-| 64 | Launchd Bootstrap Failure Diagnosis v1 | In Review | Diagnose launchctl bootstrap error 5 and document that `Disabled=true` prevents bootstrap on this macOS setup. |
-| 65 | Launchd Controlled Load Rehearsal v1 | In Review | Loaded the actual Alpaca paper launchd label with `Disabled=false`, confirmed `runs = 0`, then unloaded and removed the installed plist. |
-| 66 | Launchd Triggered Execution Rehearsal Design v1 | Next | Design a safe launchd-triggered execution rehearsal before using `kickstart` on the real wrapper. |
+| 63 | Launchd Disabled Load Rehearsal v1 | Done | Correct the launchd calendar shape and document the disabled bootstrap failure; no job was enabled, kickstarted, or left loaded. |
+| 64 | Launchd Bootstrap Failure Diagnosis v1 | Done | Diagnose launchctl bootstrap error 5 and document that `Disabled=true` prevents bootstrap on this macOS setup. |
+| 65 | Launchd Controlled Load Rehearsal v1 | Done | Loaded the actual Alpaca paper launchd label with `Disabled=false`, confirmed `runs = 0`, then unloaded and removed the installed plist. |
+| 66 | Launchd Triggered Execution Rehearsal Design v1 | In Review | Design a preflight-only launchd-triggered execution rehearsal before using `kickstart` on the real wrapper. |
+| 67 | Launchd Preflight Kickstart Rehearsal v1 | Next | Run one launchd `kickstart` with `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true`, then inspect logs and unload. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Triggered Execution Rehearsal Design v1**.
-Design how to safely test a launchd-triggered run before using `kickstart` on
-the real Alpaca paper wrapper.
+The current milestone is **Launchd Preflight Kickstart Rehearsal v1**. Run one
+launchd-triggered wrapper preflight with `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true`,
+inspect logs and launchd state, then unload and remove the installed plist.
 
 ## Status Convention
 
@@ -189,6 +190,7 @@ data ingestion
   -> launchd bootstrap failure diagnosis
   -> launchd controlled load rehearsal
   -> launchd triggered execution rehearsal design
+  -> launchd preflight kickstart rehearsal
 ```
 
 ## Data Lineage v1 Scope
@@ -1394,9 +1396,35 @@ preflight-only launchd execution option
 manual kickstart guardrails
 artifact and dashboard review checklist
 explicit no-real-money boundary
+docs/launchd_triggered_execution_rehearsal_design.md
 ```
 
 The first version should decide how to test execution through launchd without
 surprising order submission. It should likely prefer a preflight-only launchd
 environment first, then require a separate review before any real wrapper
 `kickstart`.
+
+Current outcome: the design selects a preflight-only `kickstart` using
+`EnvironmentVariables:QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true` in the installed
+plist. The expected result is one wrapper log and no data refresh, broker
+access, order artifacts, reconciliation artifacts, or dashboard publish.
+
+## Launchd Preflight Kickstart Rehearsal v1 Scope
+
+Introduce:
+
+```text
+installed launchd plist with Disabled=false
+launchd EnvironmentVariables preflight guard
+launchctl bootstrap actual label
+launchctl kickstart actual label
+launchctl print inspection after run
+preflight log review
+launchctl bootout cleanup
+no full workflow execution
+```
+
+The first version should run launchd through the wrapper process boundary with
+`QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true`. It should verify the log contains
+`preflight completed without broker submission`, confirm no order or workflow
+artifacts were created, then unload and remove the installed plist.
