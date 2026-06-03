@@ -80,13 +80,14 @@ side discussions.
 | 62 | Launchd Manual Full Wrapper Review v1 | Done | Ran one manual full wrapper cycle and dashboard publish using the launchd-localized setup before loading launchd. |
 | 63 | Launchd Disabled Load Rehearsal v1 | In Review | Correct the launchd calendar shape and document the disabled bootstrap failure; no job was enabled, kickstarted, or left loaded. |
 | 64 | Launchd Bootstrap Failure Diagnosis v1 | In Review | Diagnose launchctl bootstrap error 5 and document that `Disabled=true` prevents bootstrap on this macOS setup. |
-| 65 | Launchd Controlled Load Rehearsal v1 | Next | Load the actual Alpaca paper launchd plist only after setting `Disabled=false`, inspect state, and unload without kickstart. |
+| 65 | Launchd Controlled Load Rehearsal v1 | In Review | Loaded the actual Alpaca paper launchd label with `Disabled=false`, confirmed `runs = 0`, then unloaded and removed the installed plist. |
+| 66 | Launchd Triggered Execution Rehearsal Design v1 | Next | Design a safe launchd-triggered execution rehearsal before using `kickstart` on the real wrapper. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Controlled Load Rehearsal v1**. Convert the
-localized Alpaca paper plist from review-only to loadable by setting
-`Disabled=false`, then bootstrap, inspect, and unload it without kickstart.
+The current milestone is **Launchd Triggered Execution Rehearsal Design v1**.
+Design how to safely test a launchd-triggered run before using `kickstart` on
+the real Alpaca paper wrapper.
 
 ## Status Convention
 
@@ -187,6 +188,7 @@ data ingestion
   -> launchd disabled load rehearsal
   -> launchd bootstrap failure diagnosis
   -> launchd controlled load rehearsal
+  -> launchd triggered execution rehearsal design
 ```
 
 ## Data Lineage v1 Scope
@@ -1369,9 +1371,32 @@ launchctl print inspection
 launchctl bootout cleanup
 no kickstart action
 no immediate order submission
+docs/launchd_controlled_load_rehearsal.md
 ```
 
 The first version should prove the actual Alpaca paper launchd label can be
 registered once the plist is intentionally made loadable. It should inspect
 the registered calendar triggers and unload the job before the schedule is
 left active. It must not call `launchctl kickstart`.
+
+Current outcome: the actual label loaded successfully from
+`~/Library/LaunchAgents`, launchd reported `state = not running`, `runs = 0`,
+and five weekday calendar triggers. The job was unloaded and the installed
+plist was removed.
+
+## Launchd Triggered Execution Rehearsal Design v1 Scope
+
+Introduce:
+
+```text
+launchd-triggered execution risk review
+preflight-only launchd execution option
+manual kickstart guardrails
+artifact and dashboard review checklist
+explicit no-real-money boundary
+```
+
+The first version should decide how to test execution through launchd without
+surprising order submission. It should likely prefer a preflight-only launchd
+environment first, then require a separate review before any real wrapper
+`kickstart`.
