@@ -179,9 +179,19 @@ configs/launchd/com.quant-system.alpaca-paper-refresh.plist.example
 
 Do not load it directly. Copy it to a local plist, replace the placeholder repo
 path, keep it `Disabled=true` until preflight and one manual wrapper run pass,
-then change it to `Disabled=false` before loading it after review. See
-[launchd_localization.md](launchd_localization.md) for the full local setup and
-unload procedure.
+then change it to `Disabled=false` before loading it after review.
+
+On the current macOS setup, launchd should run from the runtime clone outside
+`Documents`:
+
+```text
+/Users/ziyuan/Code/quant-system-runtime
+```
+
+See [launchd_localization.md](launchd_localization.md) for the full local setup
+and unload procedure, and
+[launchd_filesystem_permission_diagnosis.md](launchd_filesystem_permission_diagnosis.md)
+for why the runtime clone exists.
 
 Example timer:
 

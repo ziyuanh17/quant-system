@@ -37,6 +37,17 @@ configs/launchd/com.quant-system.alpaca-paper-refresh.local.plist
 
 The local copy is ignored by git.
 
+For launchd execution on macOS, prefer a runtime clone outside protected
+folders such as `Documents`. The current local runtime path is:
+
+```text
+/Users/ziyuan/Code/quant-system-runtime
+```
+
+See
+[launchd_filesystem_permission_diagnosis.md](launchd_filesystem_permission_diagnosis.md)
+for the reason and setup details.
+
 ## Localize
 
 From the repo root:
@@ -53,6 +64,12 @@ Replace every placeholder path with this repo's absolute path:
 repo_root="$(pwd)"
 perl -pi -e "s#/absolute/path/to/quant-system#$repo_root#g" \
   configs/launchd/com.quant-system.alpaca-paper-refresh.local.plist
+```
+
+When preparing the launchd runtime clone, run this from:
+
+```text
+/Users/ziyuan/Code/quant-system-runtime
 ```
 
 Keep `Disabled` set to `true` until the preflight and one manual wrapper run
@@ -166,6 +183,8 @@ Do not remove local logs or artifacts until they have been reviewed.
 - Do not put API keys into the plist.
 - Keep secrets in `.env`.
 - Do not commit the localized plist.
+- Do not point launchd at the Codex workspace under `Documents`; use the
+  runtime clone outside protected folders.
 - Do not enable launchd before preflight, one manual full wrapper run, and
   dashboard review.
 - Do not bootstrap the plist while `Disabled=true`; switch it to
@@ -176,5 +195,8 @@ Do not remove local logs or artifacts until they have been reviewed.
 - The first `kickstart` rehearsal should inject
   `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true` through the installed plist's
   launchd environment, then unload and remove the plist after inspection.
+- After the preflight kickstart passes from the runtime clone, review
+  [launchd_full_wrapper_rehearsal_design.md](launchd_full_wrapper_rehearsal_design.md)
+  before any non-preflight launchd `kickstart`.
 - Stop and inspect if reconciliation fails or if Alpaca shows an unexpected
   open paper order.

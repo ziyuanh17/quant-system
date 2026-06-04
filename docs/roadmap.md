@@ -81,14 +81,17 @@ side discussions.
 | 63 | Launchd Disabled Load Rehearsal v1 | Done | Correct the launchd calendar shape and document the disabled bootstrap failure; no job was enabled, kickstarted, or left loaded. |
 | 64 | Launchd Bootstrap Failure Diagnosis v1 | Done | Diagnose launchctl bootstrap error 5 and document that `Disabled=true` prevents bootstrap on this macOS setup. |
 | 65 | Launchd Controlled Load Rehearsal v1 | Done | Loaded the actual Alpaca paper launchd label with `Disabled=false`, confirmed `runs = 0`, then unloaded and removed the installed plist. |
-| 66 | Launchd Triggered Execution Rehearsal Design v1 | In Review | Design a preflight-only launchd-triggered execution rehearsal before using `kickstart` on the real wrapper. |
-| 67 | Launchd Preflight Kickstart Rehearsal v1 | Next | Run one launchd `kickstart` with `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true`, then inspect logs and unload. |
+| 66 | Launchd Triggered Execution Rehearsal Design v1 | Done | Design a preflight-only launchd-triggered execution rehearsal before using `kickstart` on the real wrapper. |
+| 67 | Launchd Preflight Kickstart Rehearsal v1 | In Review | Attempted one preflight-only launchd `kickstart`; the Codex path failed under `Documents`, then the runtime clone succeeded with exit code 0. |
+| 68 | Launchd Filesystem Permission Diagnosis v1 | In Review | Create a launchd runtime clone outside `Documents`, rebuild local dependencies there, and verify preflight-only kickstart succeeds. |
+| 69 | Launchd Full Wrapper Rehearsal Design v1 | In Review | Design the first non-preflight launchd-triggered Alpaca paper wrapper run from the runtime clone before executing it. |
+| 70 | Launchd Full Wrapper Rehearsal v1 | Next | Run exactly one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime clone, then unload and review artifacts. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Preflight Kickstart Rehearsal v1**. Run one
-launchd-triggered wrapper preflight with `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true`,
-inspect logs and launchd state, then unload and remove the installed plist.
+The current milestone is **Launchd Full Wrapper Rehearsal v1**. Run exactly
+one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime
+clone, then unload and review artifacts.
 
 ## Status Convention
 
@@ -191,6 +194,9 @@ data ingestion
   -> launchd controlled load rehearsal
   -> launchd triggered execution rehearsal design
   -> launchd preflight kickstart rehearsal
+  -> launchd filesystem permission diagnosis
+  -> launchd full wrapper rehearsal design
+  -> launchd full wrapper rehearsal
 ```
 
 ## Data Lineage v1 Scope
@@ -1422,9 +1428,80 @@ launchctl print inspection after run
 preflight log review
 launchctl bootout cleanup
 no full workflow execution
+docs/launchd_preflight_kickstart_rehearsal.md
 ```
 
 The first version should run launchd through the wrapper process boundary with
 `QUANT_ALPACA_PAPER_PREFLIGHT_ONLY=true`. It should verify the log contains
 `preflight completed without broker submission`, confirm no order or workflow
 artifacts were created, then unload and remove the installed plist.
+
+Current outcome: launchd executed one `kickstart`, but `/bin/bash` exited with
+code `126` before the wrapper ran because macOS returned `Operation not
+permitted` for the repo path under `Documents`. No wrapper log or trading
+artifacts were created.
+
+## Launchd Filesystem Permission Diagnosis v1 Scope
+
+Introduce:
+
+```text
+macOS protected-folder access diagnosis
+minimal launchd script execution probe
+repo path relocation or permission options
+preflight-only retry plan
+no full workflow execution
+```
+
+The first version should determine whether macOS privacy controls for
+`Documents`, launchd's execution context, or another filesystem permission is
+blocking `/bin/bash` from reading the wrapper script. It should recommend the
+least surprising fix before retrying launchd execution.
+
+Current outcome: a runtime clone at `/Users/ziyuan/Code/quant-system-runtime`
+was created with its own Git remote, `.env`, localized launchd plist, and fresh
+virtualenv. Launchd preflight kickstart from that runtime clone succeeded with
+`runs = 1`, `last exit code = 0`, and no trading artifacts.
+
+## Launchd Full Wrapper Rehearsal Design v1 Scope
+
+Introduce:
+
+```text
+non-preflight launchd risk review
+runtime clone readiness checklist
+artifact baseline checklist
+Alpaca paper-only boundary
+post-run reconciliation and dashboard review
+bootout cleanup plan
+docs/launchd_full_wrapper_rehearsal_design.md
+```
+
+The first version should decide how to run one launchd-triggered full wrapper
+cycle from `/Users/ziyuan/Code/quant-system-runtime` without leaving a schedule
+loaded. It must remain Alpaca paper only and require review before the actual
+non-preflight `kickstart`.
+
+Current outcome: the design requires a runtime-clone readiness check, paper-only
+environment review, artifact baselines, exactly one `kickstart`, reconciliation
+review, and immediate unload/removal of the installed plist.
+
+## Launchd Full Wrapper Rehearsal v1 Scope
+
+Introduce:
+
+```text
+runtime clone readiness check
+artifact baseline before launchd run
+installed plist with Disabled=false
+no preflight environment override
+exactly one launchctl kickstart
+workflow and reconciliation review
+launchctl bootout cleanup
+docs/launchd_full_wrapper_rehearsal.md
+```
+
+The first version should execute the reviewed full-wrapper design once from
+`/Users/ziyuan/Code/quant-system-runtime`. It should remain Alpaca paper only,
+record the launchd and artifact outcome, unload the job, and remove the
+installed plist.
