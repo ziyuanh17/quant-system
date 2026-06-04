@@ -86,14 +86,15 @@ side discussions.
 | 68 | Launchd Filesystem Permission Diagnosis v1 | Done | Create a launchd runtime clone outside `Documents`, rebuild local dependencies there, and verify preflight-only kickstart succeeds. |
 | 69 | Launchd Full Wrapper Rehearsal Design v1 | Done | Design the first non-preflight launchd-triggered Alpaca paper wrapper run from the runtime clone before executing it. |
 | 70 | Launchd Full Wrapper Rehearsal v1 | Done | Ran exactly one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime clone, then unloaded and reviewed artifacts. |
-| 71 | Launchd Recurring Schedule Activation Design v1 | In Review | Design when and how to leave the Alpaca paper launchd schedule loaded for recurring runs, including monitoring and rollback. |
-| 72 | Launchd Recurring Schedule Activation v1 | Next | Activate the Alpaca paper launchd schedule from the runtime clone and leave it loaded for the first natural scheduled run. |
+| 71 | Launchd Recurring Schedule Activation Design v1 | Done | Design when and how to leave the Alpaca paper launchd schedule loaded for recurring runs, including monitoring and rollback. |
+| 72 | Launchd Recurring Schedule Activation v1 | In Review | Activated the Alpaca paper launchd schedule from the runtime clone and left it loaded for the first natural scheduled run. |
+| 73 | First Natural Scheduled Run Review v1 | Next | Review the first natural weekday 12:55 PM Alpaca paper launchd run, then decide whether to keep the schedule loaded. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Recurring Schedule Activation v1**. Activate
-the Alpaca paper launchd schedule from the runtime clone and leave it loaded for
-the first natural scheduled run.
+The current milestone is **First Natural Scheduled Run Review v1**. Review the
+first natural weekday 12:55 PM Alpaca paper launchd run, then decide whether to
+keep the schedule loaded.
 
 ## Status Convention
 
@@ -201,6 +202,7 @@ data ingestion
   -> launchd full wrapper rehearsal
   -> launchd recurring schedule activation design
   -> launchd recurring schedule activation
+  -> first natural scheduled run review
 ```
 
 ## Data Lineage v1 Scope
@@ -1555,3 +1557,26 @@ docs/launchd_recurring_schedule_activation.md
 The first version should activate the schedule from
 `/Users/ziyuan/Code/quant-system-runtime` and leave it loaded for the next
 natural weekday 12:55 PM run. It must not call `kickstart` during activation.
+
+Current outcome: launchd loaded the runtime-clone plist successfully and is
+waiting idle with `runs = 0`, `last exit code = (never exited)`, and weekday
+12:55 calendar triggers. No `kickstart` was run.
+
+## First Natural Scheduled Run Review v1 Scope
+
+Introduce:
+
+```text
+launchctl state after natural run
+launchd stdout/stderr review
+latest wrapper log review
+workflow record review
+reconciliation review
+dashboard status review
+keep-loaded or rollback decision
+```
+
+The first version should inspect the first scheduled launchd run after
+activation. It should verify launchd exit code, workflow status,
+reconciliation status, broker submission outcome, and dashboard status before
+deciding whether to keep the schedule loaded.

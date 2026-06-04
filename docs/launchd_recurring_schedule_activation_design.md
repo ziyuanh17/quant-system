@@ -290,3 +290,13 @@ Activation is successful only if:
 - the user reviews the first scheduled run artifacts
 
 If any condition fails, unload the job and return to one-shot rehearsals.
+
+## Follow-Up Activation
+
+The first recurring schedule activation loaded the job from the runtime clone
+without running `kickstart`. launchd reported `runs = 0`, `last exit code =
+(never exited)`, and the weekday 12:55 calendar triggers. The installed plist
+remains in `~/Library/LaunchAgents` so the first natural scheduled run can
+occur.
+
+See [launchd_recurring_schedule_activation.md](launchd_recurring_schedule_activation.md).
