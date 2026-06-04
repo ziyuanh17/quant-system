@@ -287,3 +287,12 @@ This rehearsal passes only if:
 
 After this design is reviewed, the next milestone can execute exactly one full
 launchd-triggered wrapper rehearsal from the runtime clone.
+
+## Follow-Up Result
+
+The first full launchd-triggered wrapper rehearsal succeeded from the runtime
+clone. It exited with code `0`, wrote a workflow record, produced an Alpaca
+paper account snapshot, passed reconciliation, and skipped broker submission
+because the latest signal was `hold`.
+
+See [launchd_full_wrapper_rehearsal.md](launchd_full_wrapper_rehearsal.md).

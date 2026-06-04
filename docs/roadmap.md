@@ -85,13 +85,14 @@ side discussions.
 | 67 | Launchd Preflight Kickstart Rehearsal v1 | In Review | Attempted one preflight-only launchd `kickstart`; the Codex path failed under `Documents`, then the runtime clone succeeded with exit code 0. |
 | 68 | Launchd Filesystem Permission Diagnosis v1 | In Review | Create a launchd runtime clone outside `Documents`, rebuild local dependencies there, and verify preflight-only kickstart succeeds. |
 | 69 | Launchd Full Wrapper Rehearsal Design v1 | In Review | Design the first non-preflight launchd-triggered Alpaca paper wrapper run from the runtime clone before executing it. |
-| 70 | Launchd Full Wrapper Rehearsal v1 | Next | Run exactly one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime clone, then unload and review artifacts. |
+| 70 | Launchd Full Wrapper Rehearsal v1 | In Review | Ran exactly one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime clone, then unloaded and reviewed artifacts. |
+| 71 | Launchd Recurring Schedule Activation Design v1 | Next | Design when and how to leave the Alpaca paper launchd schedule loaded for recurring runs, including monitoring and rollback. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Full Wrapper Rehearsal v1**. Run exactly
-one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime
-clone, then unload and review artifacts.
+The current milestone is **Launchd Recurring Schedule Activation Design v1**.
+Design when and how to leave the Alpaca paper launchd schedule loaded for
+recurring runs, including monitoring and rollback.
 
 ## Status Convention
 
@@ -197,6 +198,7 @@ data ingestion
   -> launchd filesystem permission diagnosis
   -> launchd full wrapper rehearsal design
   -> launchd full wrapper rehearsal
+  -> launchd recurring schedule activation design
 ```
 
 ## Data Lineage v1 Scope
@@ -1505,3 +1507,26 @@ The first version should execute the reviewed full-wrapper design once from
 `/Users/ziyuan/Code/quant-system-runtime`. It should remain Alpaca paper only,
 record the launchd and artifact outcome, unload the job, and remove the
 installed plist.
+
+Current outcome: the launchd-triggered full wrapper run succeeded with
+`runs = 1`, `last exit code = 0`, `preflight_only=false`, workflow status
+`succeeded`, latest signal `hold`, no broker submission, one account snapshot,
+and reconciliation `passed` with zero differences. The job was unloaded and the
+installed plist removed.
+
+## Launchd Recurring Schedule Activation Design v1 Scope
+
+Introduce:
+
+```text
+recurring schedule activation risk review
+runtime clone update policy
+installed plist ownership and rollback rules
+post-run monitoring checklist
+dashboard/status publication decision
+missed-run and failed-run response plan
+```
+
+The first version should decide the exact conditions for leaving the launchd
+job loaded so the weekday 12:55 schedule can run unattended. It should remain
+Alpaca paper only and require a separate review before activation.
