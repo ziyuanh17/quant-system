@@ -108,6 +108,9 @@ dashboard. Before loading it with launchd, change `Disabled` to `false`; launchd
 cannot bootstrap the job while it remains `true`.
 Follow [launchd_localization.md](launchd_localization.md) for the exact local
 copy, validation, load, and unload commands.
+Follow
+[launchd_recurring_schedule_activation_design.md](launchd_recurring_schedule_activation_design.md)
+before leaving the job loaded for unattended recurring runs.
 
 Draft policy:
 

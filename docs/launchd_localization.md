@@ -198,5 +198,8 @@ Do not remove local logs or artifacts until they have been reviewed.
 - After the preflight kickstart passes from the runtime clone, review
   [launchd_full_wrapper_rehearsal_design.md](launchd_full_wrapper_rehearsal_design.md)
   before any non-preflight launchd `kickstart`.
+- After the full wrapper rehearsal passes, review
+  [launchd_recurring_schedule_activation_design.md](launchd_recurring_schedule_activation_design.md)
+  before leaving launchd loaded for recurring runs.
 - Stop and inspect if reconciliation fails or if Alpaca shows an unexpected
   open paper order.

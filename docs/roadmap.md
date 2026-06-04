@@ -82,17 +82,18 @@ side discussions.
 | 64 | Launchd Bootstrap Failure Diagnosis v1 | Done | Diagnose launchctl bootstrap error 5 and document that `Disabled=true` prevents bootstrap on this macOS setup. |
 | 65 | Launchd Controlled Load Rehearsal v1 | Done | Loaded the actual Alpaca paper launchd label with `Disabled=false`, confirmed `runs = 0`, then unloaded and removed the installed plist. |
 | 66 | Launchd Triggered Execution Rehearsal Design v1 | Done | Design a preflight-only launchd-triggered execution rehearsal before using `kickstart` on the real wrapper. |
-| 67 | Launchd Preflight Kickstart Rehearsal v1 | In Review | Attempted one preflight-only launchd `kickstart`; the Codex path failed under `Documents`, then the runtime clone succeeded with exit code 0. |
-| 68 | Launchd Filesystem Permission Diagnosis v1 | In Review | Create a launchd runtime clone outside `Documents`, rebuild local dependencies there, and verify preflight-only kickstart succeeds. |
-| 69 | Launchd Full Wrapper Rehearsal Design v1 | In Review | Design the first non-preflight launchd-triggered Alpaca paper wrapper run from the runtime clone before executing it. |
-| 70 | Launchd Full Wrapper Rehearsal v1 | In Review | Ran exactly one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime clone, then unloaded and reviewed artifacts. |
-| 71 | Launchd Recurring Schedule Activation Design v1 | Next | Design when and how to leave the Alpaca paper launchd schedule loaded for recurring runs, including monitoring and rollback. |
+| 67 | Launchd Preflight Kickstart Rehearsal v1 | Done | Attempted one preflight-only launchd `kickstart`; the Codex path failed under `Documents`, then the runtime clone succeeded with exit code 0. |
+| 68 | Launchd Filesystem Permission Diagnosis v1 | Done | Create a launchd runtime clone outside `Documents`, rebuild local dependencies there, and verify preflight-only kickstart succeeds. |
+| 69 | Launchd Full Wrapper Rehearsal Design v1 | Done | Design the first non-preflight launchd-triggered Alpaca paper wrapper run from the runtime clone before executing it. |
+| 70 | Launchd Full Wrapper Rehearsal v1 | Done | Ran exactly one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime clone, then unloaded and reviewed artifacts. |
+| 71 | Launchd Recurring Schedule Activation Design v1 | In Review | Design when and how to leave the Alpaca paper launchd schedule loaded for recurring runs, including monitoring and rollback. |
+| 72 | Launchd Recurring Schedule Activation v1 | Next | Activate the Alpaca paper launchd schedule from the runtime clone and leave it loaded for the first natural scheduled run. |
 
 ## Current Recommendation
 
-The current milestone is **Launchd Recurring Schedule Activation Design v1**.
-Design when and how to leave the Alpaca paper launchd schedule loaded for
-recurring runs, including monitoring and rollback.
+The current milestone is **Launchd Recurring Schedule Activation v1**. Activate
+the Alpaca paper launchd schedule from the runtime clone and leave it loaded for
+the first natural scheduled run.
 
 ## Status Convention
 
@@ -199,6 +200,7 @@ data ingestion
   -> launchd full wrapper rehearsal design
   -> launchd full wrapper rehearsal
   -> launchd recurring schedule activation design
+  -> launchd recurring schedule activation
 ```
 
 ## Data Lineage v1 Scope
@@ -1530,3 +1532,26 @@ missed-run and failed-run response plan
 The first version should decide the exact conditions for leaving the launchd
 job loaded so the weekday 12:55 schedule can run unattended. It should remain
 Alpaca paper only and require a separate review before activation.
+
+Current outcome: the activation design defines runtime-clone update policy,
+paper-only preconditions, activation commands, first scheduled-run review,
+monitoring checklist, rollback commands, stop conditions, dashboard publishing
+policy, and missed-run handling.
+
+## Launchd Recurring Schedule Activation v1 Scope
+
+Introduce:
+
+```text
+runtime clone readiness check
+installed plist with Disabled=false
+launchctl bootstrap without kickstart
+launchctl print activation inspection
+first scheduled-run review plan
+rollback commands ready
+docs/launchd_recurring_schedule_activation.md
+```
+
+The first version should activate the schedule from
+`/Users/ziyuan/Code/quant-system-runtime` and leave it loaded for the next
+natural weekday 12:55 PM run. It must not call `kickstart` during activation.
