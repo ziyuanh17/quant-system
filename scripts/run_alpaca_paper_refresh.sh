@@ -97,6 +97,11 @@ log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
         "publish-status"
         "--output-path" "$alpaca_paper_publish_status_path"
         "--logs-dir" "$log_dir"
+        # This wrapper is the Alpaca paper lane. Skip older local
+        # paper/dry-run checks so inactive artifacts do not mask a healthy
+        # broker-connected paper run.
+        "--no-check-paper-service"
+        "--no-check-comparison"
         "--check-alpaca-paper"
         "--alpaca-paper-workflow-records-dir" "$alpaca_paper_workflow_output_dir"
         "--alpaca-paper-reconciliation-report-path" "$alpaca_paper_reconciliation_output_path"

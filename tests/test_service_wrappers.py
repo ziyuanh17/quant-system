@@ -65,6 +65,8 @@ def test_alpaca_paper_refresh_wrapper_can_publish_dashboard_status() -> None:
     ) in script
     assert '"publish-status"' in script
     assert '"--check-alpaca-paper"' in script
+    assert '"--no-check-paper-service"' in script
+    assert '"--no-check-comparison"' in script
     assert (
         '"--alpaca-paper-workflow-records-dir" '
         '"$alpaca_paper_workflow_output_dir"'
