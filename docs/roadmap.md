@@ -87,14 +87,16 @@ side discussions.
 | 69 | Launchd Full Wrapper Rehearsal Design v1 | Done | Design the first non-preflight launchd-triggered Alpaca paper wrapper run from the runtime clone before executing it. |
 | 70 | Launchd Full Wrapper Rehearsal v1 | Done | Ran exactly one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime clone, then unloaded and reviewed artifacts. |
 | 71 | Launchd Recurring Schedule Activation Design v1 | Done | Design when and how to leave the Alpaca paper launchd schedule loaded for recurring runs, including monitoring and rollback. |
-| 72 | Launchd Recurring Schedule Activation v1 | In Review | Activated the Alpaca paper launchd schedule from the runtime clone and left it loaded for the first natural scheduled run. |
-| 73 | First Natural Scheduled Run Review v1 | Next | Review the first natural weekday 12:55 PM Alpaca paper launchd run, then decide whether to keep the schedule loaded. |
+| 72 | Launchd Recurring Schedule Activation v1 | Done | Activated the Alpaca paper launchd schedule from the runtime clone and left it loaded for the first natural scheduled run. |
+| 73 | First Natural Scheduled Run Review v1 | In Review | Reviewed the first natural Alpaca paper launchd run: launchd exited 0, the workflow succeeded, reconciliation passed, and dashboard health exposed stale inactive-lane checks. |
+| 74 | Alpaca Paper Dashboard Health Scope v1 | Next | Align scheduled Alpaca paper dashboard publishing so stale inactive paper/dry-run lanes do not make a successful Alpaca paper run look failed. |
 
 ## Current Recommendation
 
-The current milestone is **First Natural Scheduled Run Review v1**. Review the
-first natural weekday 12:55 PM Alpaca paper launchd run, then decide whether to
-keep the schedule loaded.
+The current milestone is **Alpaca Paper Dashboard Health Scope v1**. Align the
+scheduled Alpaca paper dashboard publishing path so the dashboard reflects the
+active Alpaca paper lane instead of failing on stale inactive paper/dry-run
+artifacts.
 
 ## Status Convention
 
@@ -1580,3 +1582,34 @@ The first version should inspect the first scheduled launchd run after
 activation. It should verify launchd exit code, workflow status,
 reconciliation status, broker submission outcome, and dashboard status before
 deciding whether to keep the schedule loaded.
+
+Current outcome: launchd reported `runs = 1` and `last exit code = 0` after
+the natural scheduled run. The wrapper ran from
+`/Users/ziyuan/Code/quant-system-runtime`, produced
+`logs/alpaca-paper-refresh-20260604T200614Z.log`, wrote workflow record
+`data/workflows/alpaca-paper-refresh/45d8388c-2021-4562-9077-a3d335f121f5.json`,
+and completed the Alpaca paper refresh workflow successfully. The strategy
+signal was `hold`, so broker submission was skipped. Alpaca paper
+reconciliation passed with zero differences and no stderr output.
+
+The dashboard publish completed, but the generated `site/status.json` was
+marked `failed` because older inactive scheduler/paper-signal/dry-run health
+checks still contributed issues while the active Alpaca paper lane itself was
+healthy. Keep the launchd schedule loaded, and fix the dashboard health scope
+next.
+
+## Alpaca Paper Dashboard Health Scope v1 Scope
+
+Introduce:
+
+```text
+scheduled Alpaca paper status-publish health scope review
+inactive paper scheduler/signal/dry-run lane suppression
+dashboard status regression test
+runtime wrapper environment guidance
+```
+
+The first version should make a successful scheduled Alpaca paper refresh show
+as healthy when the Alpaca paper workflow and reconciliation pass, even if the
+older local paper/dry-run lanes are inactive. It should preserve the option to
+re-enable those checks when those lanes are intentionally active again.
