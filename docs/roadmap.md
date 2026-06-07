@@ -88,15 +88,16 @@ side discussions.
 | 70 | Launchd Full Wrapper Rehearsal v1 | Done | Ran exactly one non-preflight launchd-triggered Alpaca paper wrapper cycle from the runtime clone, then unloaded and reviewed artifacts. |
 | 71 | Launchd Recurring Schedule Activation Design v1 | Done | Design when and how to leave the Alpaca paper launchd schedule loaded for recurring runs, including monitoring and rollback. |
 | 72 | Launchd Recurring Schedule Activation v1 | Done | Activated the Alpaca paper launchd schedule from the runtime clone and left it loaded for the first natural scheduled run. |
-| 73 | First Natural Scheduled Run Review v1 | In Review | Reviewed the first natural Alpaca paper launchd run: launchd exited 0, the workflow succeeded, reconciliation passed, and dashboard health exposed stale inactive-lane checks. |
-| 74 | Alpaca Paper Dashboard Health Scope v1 | In Review | Align scheduled Alpaca paper dashboard publishing so stale inactive paper/dry-run lanes do not make a successful Alpaca paper run look failed. |
-| 75 | Runtime Clone Sync v1 | Next | Sync reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
+| 73 | First Natural Scheduled Run Review v1 | Done | Reviewed the first natural Alpaca paper launchd run: launchd exited 0, the workflow succeeded, reconciliation passed, and dashboard health exposed stale inactive-lane checks. |
+| 74 | Alpaca Paper Dashboard Health Scope v1 | Done | Align scheduled Alpaca paper dashboard publishing so stale inactive paper/dry-run lanes do not make a successful Alpaca paper run look failed. |
+| 75 | Runtime Clone Sync v1 | In Review | Synced reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
+| 76 | Next Scheduled Dashboard Review v1 | Next | Review the next natural Alpaca paper launchd run and confirm the dashboard status is healthy under the corrected Alpaca-only health scope. |
 
 ## Current Recommendation
 
-The current milestone is **Runtime Clone Sync v1**. After reviewing and
-checking in the dashboard health-scope fix, sync the runtime clone so the
-loaded launchd job uses the updated Alpaca paper wrapper.
+The current milestone is **Next Scheduled Dashboard Review v1**. Review the
+next natural Alpaca paper launchd run and confirm the dashboard status is
+healthy under the corrected Alpaca-only health scope.
 
 ## Status Convention
 
@@ -1635,3 +1636,28 @@ The first version should update `/Users/ziyuan/Code/quant-system-runtime` only
 after the source change is reviewed and checked in. The loaded launchd job
 already points at that runtime clone, so syncing it is what makes the next
 natural scheduled run use the corrected dashboard health scope.
+
+Current outcome: the runtime clone fast-forwarded from `4622736` to
+`e0191d2`, matching the reviewed source commit. The runtime wrapper now
+contains `--no-check-paper-service`, `--no-check-comparison`, and
+`--check-alpaca-paper`. launchd remains loaded and points at
+`/Users/ziyuan/Code/quant-system-runtime/scripts/run_alpaca_paper_refresh.sh`.
+The runtime clone still has a local generated `site/status.json` modification
+from the previous scheduled run, which should be refreshed by the next
+scheduled wrapper execution.
+
+## Next Scheduled Dashboard Review v1 Scope
+
+Introduce:
+
+```text
+next natural launchd run inspection
+wrapper log review
+site/status.json health review
+Alpaca-only dashboard status confirmation
+runtime generated status cleanup decision
+```
+
+The first version should wait for the next natural launchd execution after the
+runtime sync, then verify the dashboard status no longer fails on inactive
+paper scheduler, paper signal, paper state, or dry-run comparison artifacts.
