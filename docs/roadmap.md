@@ -90,14 +90,16 @@ side discussions.
 | 72 | Launchd Recurring Schedule Activation v1 | Done | Activated the Alpaca paper launchd schedule from the runtime clone and left it loaded for the first natural scheduled run. |
 | 73 | First Natural Scheduled Run Review v1 | Done | Reviewed the first natural Alpaca paper launchd run: launchd exited 0, the workflow succeeded, reconciliation passed, and dashboard health exposed stale inactive-lane checks. |
 | 74 | Alpaca Paper Dashboard Health Scope v1 | Done | Align scheduled Alpaca paper dashboard publishing so stale inactive paper/dry-run lanes do not make a successful Alpaca paper run look failed. |
-| 75 | Runtime Clone Sync v1 | In Review | Synced reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
-| 76 | Next Scheduled Dashboard Review v1 | Next | Review the next natural Alpaca paper launchd run and confirm the dashboard status is healthy under the corrected Alpaca-only health scope. |
+| 75 | Runtime Clone Sync v1 | Done | Synced reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
+| 76 | Next Scheduled Dashboard Review v1 | In Review | Reviewed the next natural launchd run: the Alpaca paper workflow succeeded, reconciliation passed, and the corrected dashboard status was healthy with zero issues. |
+| 77 | Strategy Evaluation Harness Design v1 | Next | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
 
 ## Current Recommendation
 
-The current milestone is **Next Scheduled Dashboard Review v1**. Review the
-next natural Alpaca paper launchd run and confirm the dashboard status is
-healthy under the corrected Alpaca-only health scope.
+The current milestone is **Strategy Evaluation Harness Design v1**. Design a
+repeatable research-to-paper workflow for defining, backtesting, comparing,
+and promoting candidate strategies without weakening the now-proven paper
+operations path.
 
 ## Status Convention
 
@@ -1661,3 +1663,30 @@ runtime generated status cleanup decision
 The first version should wait for the next natural launchd execution after the
 runtime sync, then verify the dashboard status no longer fails on inactive
 paper scheduler, paper signal, paper state, or dry-run comparison artifacts.
+
+Current outcome: launchd reported `runs = 2` and `last exit code = 0`. The
+second natural run completed on June 5, 2026 and wrote
+`logs/alpaca-paper-refresh-20260605T200238Z.log`. The Alpaca paper workflow
+succeeded with a `hold` signal, so no broker order was submitted.
+Reconciliation passed with zero differences. The corrected Alpaca-only
+dashboard publish reported `status = healthy`, `issue_count = 0`, and skipped
+the inactive local paper and dry-run lanes as intended.
+
+## Strategy Evaluation Harness Design v1 Scope
+
+Introduce:
+
+```text
+typed strategy configuration and identity
+candidate strategy registry boundary
+repeatable VectorBT evaluation runs
+comparable metrics and result artifacts
+data/feature lineage requirements
+research-to-paper promotion checklist
+```
+
+The first version should design how candidate strategies are defined,
+evaluated against reviewed datasets, compared using durable artifacts, and
+explicitly promoted into the scheduled Alpaca paper workflow. It should keep
+research experiments separate from the production paper strategy selection
+and preserve reproducibility through typed configuration and artifact lineage.
