@@ -92,14 +92,16 @@ side discussions.
 | 74 | Alpaca Paper Dashboard Health Scope v1 | Done | Align scheduled Alpaca paper dashboard publishing so stale inactive paper/dry-run lanes do not make a successful Alpaca paper run look failed. |
 | 75 | Runtime Clone Sync v1 | Done | Synced reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
 | 76 | Next Scheduled Dashboard Review v1 | In Review | Reviewed the next natural launchd run: the Alpaca paper workflow succeeded, reconciliation passed, and the corrected dashboard status was healthy with zero issues. |
-| 77 | Strategy Evaluation Harness Design v1 | Next | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
+| 77 | Strategy Evaluation Harness Design v1 | Planned | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
+| 78 | Mac Studio Migration | Planned | Complete the dedicated finite migration roadmap in `docs/mac_studio_migration_roadmap.md` before resuming strategy work. |
+| 79 | Actionable Alpaca Paper Order Incident Review | In Review | Contain and document the first scheduled actionable paper order, its unexpected short position, and reconciliation failure. |
+| 80 | Alpaca Paper Actionable-Order Safety Remediation | Next | Add no-short policy, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
 
 ## Current Recommendation
 
-The current milestone is **Strategy Evaluation Harness Design v1**. Design a
-repeatable research-to-paper workflow for defining, backtesting, comparing,
-and promoting candidate strategies without weakening the now-proven paper
-operations path.
+The current milestone is **Alpaca Paper Actionable-Order Safety Remediation**.
+Fix the controls exposed by the first scheduled actionable Alpaca paper order
+before re-enabling scheduling or continuing the Mac Studio runtime cutover.
 
 ## Status Convention
 
