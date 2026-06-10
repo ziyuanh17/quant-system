@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 
 
@@ -87,3 +88,43 @@ def test_alpaca_paper_refresh_wrapper_has_preflight_only_mode() -> None:
     assert 'preflight_only=$alpaca_paper_preflight_only' in script
     assert 'if [[ "$alpaca_paper_preflight_only" == "true" ]]; then' in script
     assert "preflight completed without broker submission" in script
+
+
+def test_alpaca_paper_refresh_wrapper_publishes_status_after_failure(
+    tmp_path,
+) -> None:
+    wrapper_path = tmp_path / "scripts" / "run_alpaca_paper_refresh.sh"
+    wrapper_path.parent.mkdir()
+    wrapper_path.write_text(
+        Path("scripts/run_alpaca_paper_refresh.sh").read_text()
+    )
+    fake_quant = tmp_path / "fake-quant.sh"
+    calls_path = tmp_path / "calls.log"
+    fake_quant.write_text(
+        "#!/usr/bin/env bash\n"
+        'printf "%s\\n" "$*" >> "$CALLS_PATH"\n'
+        '[[ "$*" == *"workflow alpaca-paper-refresh"* ]] && exit 1\n'
+        "exit 0\n"
+    )
+    fake_quant.chmod(0o755)
+
+    result = subprocess.run(
+        ["bash", str(wrapper_path)],
+        env={
+            "PATH": "/usr/bin:/bin",
+            "CALLS_PATH": str(calls_path),
+            "QUANT_CMD": str(fake_quant),
+            "QUANT_LOG_DIR": str(tmp_path / "logs"),
+            "QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN": "true",
+            "QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH": str(
+                tmp_path / "site" / "status.json"
+            ),
+        },
+        capture_output=True,
+        text=True,
+    )
+
+    calls = calls_path.read_text()
+    assert result.returncode == 1
+    assert "workflow alpaca-paper-refresh" in calls
+    assert "ops publish-status" in calls

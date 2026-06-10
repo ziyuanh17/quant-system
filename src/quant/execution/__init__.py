@@ -44,7 +44,7 @@ from quant.execution.reconciliation import (
     reconcile_paper_state,
     write_paper_state_reconciliation_report,
 )
-from quant.execution.risk import check_order_risk
+from quant.execution.risk import check_order_risk, check_projected_order_risk
 from quant.execution.safety import (
     LIVE_TRADING_CONFIRMATION,
     LiveTradingNotAllowedError,
@@ -78,6 +78,7 @@ __all__ = [
     "PaperBrokerAdapter",
     "SignalExecutionBroker",
     "check_order_risk",
+    "check_projected_order_risk",
     "compare_paper_signal_to_dry_run_order",
     "assert_trading_allowed",
     "decide_latest_signal",

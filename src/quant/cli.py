@@ -37,7 +37,6 @@ from quant.execution import (
     save_paper_broker_state,
     write_dry_run_order_record,
     write_live_account_snapshot,
-    write_live_order_record,
     write_live_reconciliation_report,
     write_paper_dry_run_comparison_report,
     write_paper_signal_record,
@@ -401,7 +400,7 @@ def live_fake_order(
     ] = Path("data/live/account_snapshots"),
 ) -> None:
     """Submit a safety-gated fake live order with no broker network calls."""
-    check, resolved_max_order_notional = _live_safety_check_or_exit(
+    check, resolved_safety_config = _live_safety_check_or_exit(
         from_env=from_env,
         live_trading_enabled=live_trading_enabled,
         live_trading_confirmation=live_trading_confirmation,
@@ -411,7 +410,7 @@ def live_fake_order(
     _validate_live_order_notional(
         quantity=quantity,
         price=price,
-        max_order_notional=resolved_max_order_notional,
+        max_order_notional=resolved_safety_config.max_order_notional,
     )
     client = FakeLiveBrokerClient(
         initial_cash=initial_cash,
@@ -518,7 +517,7 @@ def live_fake_reconcile(
     """Reconcile local live artifacts against fake broker truth."""
     if cash_tolerance < 0:
         raise typer.BadParameter("cash-tolerance must be non-negative")
-    check, resolved_max_order_notional = _live_safety_check_or_exit(
+    check, resolved_safety_config = _live_safety_check_or_exit(
         from_env=from_env,
         live_trading_enabled=live_trading_enabled,
         live_trading_confirmation=live_trading_confirmation,
@@ -528,7 +527,7 @@ def live_fake_reconcile(
     _validate_live_order_notional(
         quantity=quantity,
         price=price,
-        max_order_notional=resolved_max_order_notional,
+        max_order_notional=resolved_safety_config.max_order_notional,
     )
     client = FakeLiveBrokerClient(
         initial_cash=initial_cash,
@@ -615,7 +614,7 @@ def live_alpaca_paper_order(
     ] = Path("data/live/account_snapshots"),
 ) -> None:
     """Submit a safety-gated Alpaca paper market order."""
-    check, resolved_max_order_notional = _live_safety_check_or_exit(
+    check, resolved_safety_config = _live_safety_check_or_exit(
         from_env=from_env,
         live_trading_enabled=live_trading_enabled,
         live_trading_confirmation=live_trading_confirmation,
@@ -625,7 +624,7 @@ def live_alpaca_paper_order(
     _validate_live_order_notional(
         quantity=quantity,
         price=price,
-        max_order_notional=resolved_max_order_notional,
+        max_order_notional=resolved_safety_config.max_order_notional,
     )
     config = _load_alpaca_paper_config_from_env()
     adapter = LiveBrokerAdapter(
@@ -819,6 +818,10 @@ def live_alpaca_paper_refresh_orders(
         Path,
         typer.Option(help="Directory containing local live order artifacts."),
     ] = Path("data/live/orders"),
+    fill_records_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for fills discovered during refresh."),
+    ] = Path("data/live/fills"),
 ) -> None:
     """Refresh local Alpaca paper order artifacts from broker truth."""
     _live_safety_check_or_exit(
@@ -830,14 +833,19 @@ def live_alpaca_paper_refresh_orders(
     )
     config = _load_alpaca_paper_config_from_env()
     client = AlpacaPaperBrokerClient(config=config)
+    adapter = LiveBrokerAdapter(
+        client=client,
+        order_output_dir=order_records_dir,
+        fill_output_dir=fill_records_dir,
+    )
     refreshed_count = 0
     for order_record in load_live_order_records(order_records_dir):
-        refreshed = client.refresh_order_record(order_record)
-        write_live_order_record(refreshed, order_records_dir)
+        adapter.refresh_order_record(order_record)
         refreshed_count += 1
 
     typer.echo(f"Refreshed orders: {refreshed_count}")
     typer.echo(f"Order records: {order_records_dir}")
+    typer.echo(f"Fill records: {fill_records_dir}")
 
 
 @app.command()
@@ -1947,6 +1955,14 @@ def workflow_alpaca_paper_refresh(
         float,
         typer.Option(help="Allowed cash and price difference."),
     ] = 0.01,
+    order_poll_attempts: Annotated[
+        int,
+        typer.Option(help="Maximum broker order refresh attempts."),
+    ] = 5,
+    order_poll_interval_seconds: Annotated[
+        float,
+        typer.Option(help="Seconds between broker order refresh attempts."),
+    ] = 1,
     lock_path: Annotated[
         Path,
         typer.Option(help="Lock file that prevents overlapping workflow runs."),
@@ -1963,22 +1979,29 @@ def workflow_alpaca_paper_refresh(
         raise typer.BadParameter("quantity must be at least 1")
     if cash_tolerance < 0:
         raise typer.BadParameter("cash-tolerance must be non-negative")
+    if order_poll_attempts < 1:
+        raise typer.BadParameter("order-poll-attempts must be at least 1")
+    if order_poll_interval_seconds < 0:
+        raise typer.BadParameter(
+            "order-poll-interval-seconds must be non-negative"
+        )
     if provider != "yfinance":
         raise typer.BadParameter("Only yfinance is implemented right now.")
 
-    check, resolved_max_order_notional = _live_safety_check_or_exit(
+    check, resolved_safety_config = _live_safety_check_or_exit(
         from_env=from_env,
         live_trading_enabled=live_trading_enabled,
         live_trading_confirmation=live_trading_confirmation,
         max_order_notional=max_order_notional,
         broker_name=broker_name,
     )
-    safety_config = TradingSafetyConfig(
-        mode=check.mode,
-        live_trading_enabled=True,
-        live_trading_confirmation=LIVE_TRADING_CONFIRMATION,
-        max_order_notional=resolved_max_order_notional,
-        broker_name=broker_name or "alpaca-paper",
+    safety_config = resolved_safety_config.model_copy(
+        update={
+            "mode": check.mode,
+            "live_trading_enabled": True,
+            "live_trading_confirmation": LIVE_TRADING_CONFIRMATION,
+            "broker_name": broker_name or resolved_safety_config.broker_name,
+        }
     )
     config = _load_alpaca_paper_config_from_env()
 
@@ -2003,6 +2026,8 @@ def workflow_alpaca_paper_refresh(
             snapshot_output_dir=snapshot_output_dir,
             reconciliation_output_path=reconciliation_output_path,
             cash_tolerance=cash_tolerance,
+            order_poll_attempts=order_poll_attempts,
+            order_poll_interval_seconds=order_poll_interval_seconds,
             lock_path=lock_path,
             lock_stale_after_seconds=lock_stale_after_seconds,
         )
@@ -2278,7 +2303,7 @@ def _live_safety_check_or_exit(
     live_trading_confirmation: str | None,
     max_order_notional: float | None,
     broker_name: str | None,
-) -> tuple[TradingSafetyCheck, float | None]:
+) -> tuple[TradingSafetyCheck, TradingSafetyConfig]:
     if from_env:
         try:
             config = load_trading_safety_config_from_env()
@@ -2300,7 +2325,7 @@ def _live_safety_check_or_exit(
             typer.echo(f"- {issue}")
         typer.echo(f"Required confirmation: {LIVE_TRADING_CONFIRMATION}")
         raise typer.Exit(code=1)
-    return check, config.max_order_notional
+    return check, config
 
 
 def _validate_live_order_notional(

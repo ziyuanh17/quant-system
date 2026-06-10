@@ -176,6 +176,31 @@ def test_alpaca_paper_client_open_orders_maps_known_orders_only() -> None:
     assert open_orders[0].status == LiveOrderStatus.ACCEPTED
 
 
+def test_alpaca_paper_client_detects_unknown_open_broker_orders() -> None:
+    trading_client = FakeTradingClient(
+        api_key="unused",
+        secret_key="unused",
+        paper=True,
+    )
+    trading_client.orders.append(
+        SimpleNamespace(
+            id="unknown-order",
+            client_order_id="unknown-client-id",
+            status="accepted",
+        )
+    )
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=trading_client,
+    )
+
+    assert client.has_open_orders() is True
+
+
 def test_alpaca_paper_client_refreshes_known_fills_from_polled_orders() -> None:
     trading_client = FakeTradingClient(
         api_key="unused",

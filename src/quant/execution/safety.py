@@ -2,6 +2,7 @@ import os
 from collections.abc import Mapping
 
 from quant.models.execution import (
+    ShortSellingPolicy,
     TradingMode,
     TradingSafetyCheck,
     TradingSafetyConfig,
@@ -71,6 +72,23 @@ def load_trading_safety_config_from_env(
             else None
         ),
         broker_name=source.get("QUANT_BROKER"),
+        short_selling_policy=ShortSellingPolicy(
+            enabled=_parse_bool(
+                source.get("QUANT_SHORT_SELLING_ENABLED", "false")
+            ),
+            max_short_position_notional=_optional_float(
+                source.get("QUANT_MAX_SHORT_POSITION_NOTIONAL")
+            ),
+            max_total_short_exposure_pct_equity=_optional_float(
+                source.get("QUANT_MAX_TOTAL_SHORT_EXPOSURE_PCT_EQUITY")
+            ),
+            max_gross_exposure_pct_equity=_optional_float(
+                source.get("QUANT_MAX_GROSS_EXPOSURE_PCT_EQUITY")
+            ),
+            min_buying_power_buffer_pct=_optional_float(
+                source.get("QUANT_MIN_BUYING_POWER_BUFFER_PCT")
+            ),
+        ),
     )
 
 
@@ -81,3 +99,7 @@ def _parse_bool(value: str) -> bool:
     if normalized in {"0", "false", "no", "off"}:
         return False
     raise ValueError(f"invalid boolean value: {value}")
+
+
+def _optional_float(value: str | None) -> float | None:
+    return float(value) if value not in (None, "") else None

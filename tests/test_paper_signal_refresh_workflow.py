@@ -17,7 +17,9 @@ from quant.models.execution import (
     PaperSignalDecision,
     PaperSignalRecord,
     Position,
+    ShortSellingPolicy,
     TradingMode,
+    TradingSafetyCheck,
     TradingSafetyConfig,
 )
 from quant.models.ingestion import DataModality, IngestRequest, RawDataset
@@ -548,6 +550,229 @@ def test_alpaca_paper_refresh_workflow_records_hold_without_order(
     assert not (tmp_path / "locks" / "alpaca-paper-refresh.lock").exists()
 
 
+def test_alpaca_paper_refresh_workflow_rejects_sell_without_position(
+    tmp_path,
+) -> None:
+    client = FakeAlpacaPaperWorkflowClient()
+
+    try:
+        run_alpaca_paper_refresh_workflow(
+            provider=FakeFallingMarketBarProvider(),
+            broker_client=client,
+            safety_config=_alpaca_paper_safety_config(),
+            symbol="AAPL",
+            start="2024-01-01",
+            end="2024-02-01",
+            raw_dir=tmp_path / "raw",
+            normalized_dir=tmp_path / "normalized",
+            validation_dir=tmp_path / "validation",
+            metadata_dir=tmp_path / "metadata",
+            workflow_output_dir=tmp_path / "workflows",
+            strategy="momentum",
+            quantity=1,
+            min_rows=20,
+            order_output_dir=tmp_path / "live" / "orders",
+            fill_output_dir=tmp_path / "live" / "fills",
+            snapshot_output_dir=tmp_path / "live" / "snapshots",
+            reconciliation_output_path=tmp_path
+            / "live"
+            / "reconciliation"
+            / "latest.json",
+        )
+    except WorkflowRunFailed as exc:
+        record = exc.record
+    else:
+        raise AssertionError("expected naked sell to fail before submission")
+
+    assert record.status == WorkflowRunStatus.FAILED
+    assert "short selling is not enabled" in record.message
+    assert client.submitted_client_order_ids == ()
+
+
+def test_alpaca_paper_refresh_workflow_allows_bounded_short(
+    tmp_path,
+) -> None:
+    client = FakeAlpacaPaperWorkflowClient()
+
+    record = run_alpaca_paper_refresh_workflow(
+        provider=FakeFallingMarketBarProvider(),
+        broker_client=client,
+        safety_config=_alpaca_paper_safety_config(
+            short_selling_policy=ShortSellingPolicy(
+                enabled=True,
+                max_short_position_notional=100,
+                max_total_short_exposure_pct_equity=0.1,
+                max_gross_exposure_pct_equity=0.2,
+                min_buying_power_buffer_pct=0.5,
+            )
+        ),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=1,
+        min_rows=20,
+        order_output_dir=tmp_path / "live" / "orders",
+        fill_output_dir=tmp_path / "live" / "fills",
+        snapshot_output_dir=tmp_path / "live" / "snapshots",
+        reconciliation_output_path=tmp_path
+        / "live"
+        / "reconciliation"
+        / "latest.json",
+    )
+
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert len(client.submitted_client_order_ids) == 1
+    assert client.account_snapshot().positions[0].quantity == -1
+
+
+def test_alpaca_paper_refresh_workflow_rejects_submission_with_open_order(
+    tmp_path,
+) -> None:
+    client = FakeAlpacaPaperWorkflowClient()
+    client.existing_open_orders = (
+        LiveOrderRecord(
+            client_order_id="existing-open-order",
+            broker_order_id="alpaca-order-existing",
+            broker_name="alpaca-paper",
+            account_id="acct-1",
+            broker_environment="paper",
+            request=OrderRequest(
+                symbol="AAPL",
+                side=OrderSide.BUY,
+                quantity=1,
+            ),
+            reference_price=100,
+            notional=100,
+            safety_check=TradingSafetyCheck(
+                mode=TradingMode.LIVE,
+                allowed=True,
+            ),
+            status=LiveOrderStatus.ACCEPTED,
+        ),
+    )
+
+    try:
+        run_alpaca_paper_refresh_workflow(
+            provider=FakeTrendingMarketBarProvider(),
+            broker_client=client,
+            safety_config=_alpaca_paper_safety_config(),
+            symbol="AAPL",
+            start="2024-01-01",
+            end="2024-02-01",
+            raw_dir=tmp_path / "raw",
+            normalized_dir=tmp_path / "normalized",
+            validation_dir=tmp_path / "validation",
+            metadata_dir=tmp_path / "metadata",
+            workflow_output_dir=tmp_path / "workflows",
+            strategy="momentum",
+            quantity=1,
+            min_rows=20,
+            order_output_dir=tmp_path / "live" / "orders",
+            fill_output_dir=tmp_path / "live" / "fills",
+            snapshot_output_dir=tmp_path / "live" / "snapshots",
+            reconciliation_output_path=tmp_path
+            / "live"
+            / "reconciliation"
+            / "latest.json",
+        )
+    except WorkflowRunFailed as exc:
+        record = exc.record
+    else:
+        raise AssertionError("expected open broker order to block submission")
+
+    assert record.status == WorkflowRunStatus.FAILED
+    assert "open broker order" in record.message
+    assert client.submitted_client_order_ids == ()
+
+
+def test_alpaca_paper_refresh_workflow_refreshes_order_before_reconcile(
+    tmp_path,
+) -> None:
+    client = DelayedFillAlpacaPaperWorkflowClient()
+
+    record = run_alpaca_paper_refresh_workflow(
+        provider=FakeTrendingMarketBarProvider(),
+        broker_client=client,
+        safety_config=_alpaca_paper_safety_config(),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=1,
+        min_rows=20,
+        order_output_dir=tmp_path / "live" / "orders",
+        fill_output_dir=tmp_path / "live" / "fills",
+        snapshot_output_dir=tmp_path / "live" / "snapshots",
+        reconciliation_output_path=tmp_path
+        / "live"
+        / "reconciliation"
+        / "latest.json",
+        order_poll_attempts=2,
+        order_poll_interval_seconds=0,
+    )
+
+    order_path = next((tmp_path / "live" / "orders").glob("*.json"))
+    order_payload = json.loads(order_path.read_text())
+    fill_paths = list((tmp_path / "live" / "fills").glob("*.json"))
+
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert client.refresh_calls == 1
+    assert order_payload["status"] == "filled"
+    assert len(fill_paths) == 1
+    assert len(record.fill_artifact_paths) == 1
+
+
+def test_alpaca_paper_refresh_workflow_fails_when_refreshed_order_is_cancelled(
+    tmp_path,
+) -> None:
+    client = CancelledAlpacaPaperWorkflowClient()
+
+    try:
+        run_alpaca_paper_refresh_workflow(
+            provider=FakeTrendingMarketBarProvider(),
+            broker_client=client,
+            safety_config=_alpaca_paper_safety_config(),
+            symbol="AAPL",
+            start="2024-01-01",
+            end="2024-02-01",
+            raw_dir=tmp_path / "raw",
+            normalized_dir=tmp_path / "normalized",
+            validation_dir=tmp_path / "validation",
+            metadata_dir=tmp_path / "metadata",
+            workflow_output_dir=tmp_path / "workflows",
+            strategy="momentum",
+            quantity=1,
+            min_rows=20,
+            order_output_dir=tmp_path / "live" / "orders",
+            fill_output_dir=tmp_path / "live" / "fills",
+            snapshot_output_dir=tmp_path / "live" / "snapshots",
+            reconciliation_output_path=tmp_path
+            / "live"
+            / "reconciliation"
+            / "latest.json",
+            order_poll_attempts=2,
+            order_poll_interval_seconds=0,
+        )
+    except WorkflowRunFailed as exc:
+        record = exc.record
+    else:
+        raise AssertionError("expected cancelled actionable order to fail")
+
+    assert record.status == WorkflowRunStatus.FAILED
+    assert "ended with status cancelled" in record.message
+
+
 def test_alpaca_paper_refresh_workflow_stops_before_broker_on_validation_error(
     tmp_path,
 ) -> None:
@@ -852,6 +1077,32 @@ class FakeFlatMarketBarProvider:
         )
 
 
+class FakeFallingMarketBarProvider:
+    name = "fake-falling"
+    modality = DataModality.MARKET_BARS
+
+    def fetch(self, request: IngestRequest) -> RawDataset:
+        closes = [20.0] * 19 + [22.0] * 5 + [8.0]
+        return RawDataset(
+            provider=self.name,
+            modality=self.modality,
+            request=request,
+            records=[
+                {
+                    "Date": f"2024-01-{index:02d}",
+                    "symbol": "AAPL",
+                    "Open": close,
+                    "High": close + 1,
+                    "Low": close - 1,
+                    "Close": close,
+                    "Adj Close": close,
+                    "Volume": 1000,
+                }
+                for index, close in enumerate(closes, start=1)
+            ],
+        )
+
+
 class BadMarketBarProvider:
     name = "bad"
     modality = DataModality.MARKET_BARS
@@ -888,6 +1139,7 @@ class FakeAlpacaPaperWorkflowClient:
         self._fill_calls = 0
         self._cash = 1000.0
         self._positions: dict[str, Position] = {}
+        self.existing_open_orders: tuple[LiveOrderRecord, ...] = ()
 
     def submit_market_order(
         self,
@@ -944,7 +1196,10 @@ class FakeAlpacaPaperWorkflowClient:
         )
 
     def open_orders(self) -> tuple[LiveOrderRecord, ...]:
-        return ()
+        return self.existing_open_orders
+
+    def has_open_orders(self) -> bool:
+        return bool(self.existing_open_orders)
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
         self._fill_calls += 1
@@ -964,3 +1219,78 @@ class FakeAlpacaPaperWorkflowClient:
                 average_price=fill.price,
                 last_price=fill.price,
             )
+            return
+        self._cash += fill.notional
+        self._positions[fill.symbol] = Position(
+            symbol=fill.symbol,
+            quantity=-fill.quantity,
+            average_price=fill.price,
+            last_price=fill.price,
+        )
+
+    def refresh_order_record(
+        self,
+        record: LiveOrderRecord,
+    ) -> LiveOrderRecord:
+        return record
+
+
+class DelayedFillAlpacaPaperWorkflowClient(FakeAlpacaPaperWorkflowClient):
+    def __init__(self) -> None:
+        super().__init__()
+        self.refresh_calls = 0
+        self._pending_fill: LiveFillRecord | None = None
+
+    def submit_market_order(
+        self,
+        request,
+        *,
+        reference_price,
+        client_order_id,
+        safety_check,
+    ) -> LiveOrderRecord:
+        record = super().submit_market_order(
+            request,
+            reference_price=reference_price,
+            client_order_id=client_order_id,
+            safety_check=safety_check,
+        )
+        self._pending_fill = self._fills.pop()
+        self._cash = 1000.0
+        self._positions = {}
+        return record.model_copy(update={"status": LiveOrderStatus.ACCEPTED})
+
+    def refresh_order_record(
+        self,
+        record: LiveOrderRecord,
+    ) -> LiveOrderRecord:
+        self.refresh_calls += 1
+        if self._pending_fill is not None:
+            fill = self._pending_fill
+            self._pending_fill = None
+            self._fills.append(fill)
+            self._apply_fill(fill)
+        return record.model_copy(update={"status": LiveOrderStatus.FILLED})
+
+
+class CancelledAlpacaPaperWorkflowClient(DelayedFillAlpacaPaperWorkflowClient):
+    def refresh_order_record(
+        self,
+        record: LiveOrderRecord,
+    ) -> LiveOrderRecord:
+        self.refresh_calls += 1
+        return record.model_copy(update={"status": LiveOrderStatus.CANCELLED})
+
+
+def _alpaca_paper_safety_config(
+    *,
+    short_selling_policy: ShortSellingPolicy | None = None,
+) -> TradingSafetyConfig:
+    return TradingSafetyConfig(
+        mode=TradingMode.LIVE,
+        live_trading_enabled=True,
+        live_trading_confirmation=LIVE_TRADING_CONFIRMATION,
+        max_order_notional=1000,
+        broker_name="alpaca-paper",
+        short_selling_policy=short_selling_policy or ShortSellingPolicy(),
+    )

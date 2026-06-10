@@ -398,7 +398,7 @@ def test_live_alpaca_paper_reconcile_fails_on_drift(
     assert payload["differences"][0]["field"].startswith("fills.")
 
 
-def test_live_alpaca_paper_refresh_orders_updates_cancelled_artifact(
+def test_live_alpaca_paper_refresh_orders_persists_refreshed_order_and_fill(
     monkeypatch,
     tmp_path,
 ) -> None:
@@ -410,7 +410,9 @@ def test_live_alpaca_paper_refresh_orders_updates_cancelled_artifact(
     _set_alpaca_env(monkeypatch)
     _run_alpaca_paper_order(tmp_path, status=LiveOrderStatus.ACCEPTED)
     order_path = next((tmp_path / "orders").glob("*.json"))
-    FakeAlpacaPaperBrokerClient.refreshed_status = LiveOrderStatus.CANCELLED
+    for fill_path in (tmp_path / "fills").glob("*.json"):
+        fill_path.unlink()
+    FakeAlpacaPaperBrokerClient.refreshed_status = LiveOrderStatus.FILLED
 
     result = CliRunner().invoke(
         app,
@@ -420,13 +422,17 @@ def test_live_alpaca_paper_refresh_orders_updates_cancelled_artifact(
             *_live_safety_args(broker_name="alpaca-paper"),
             "--order-records-dir",
             str(tmp_path / "orders"),
+            "--fill-records-dir",
+            str(tmp_path / "fills"),
         ],
     )
 
     payload = json.loads(order_path.read_text())
+    fill_paths = list((tmp_path / "fills").glob("*.json"))
     assert result.exit_code == 0
     assert "Refreshed orders: 1" in result.output
-    assert payload["status"] == "cancelled"
+    assert payload["status"] == "filled"
+    assert len(fill_paths) == 1
 
 
 class FakeAlpacaPaperBrokerClient:
@@ -495,6 +501,9 @@ class FakeAlpacaPaperBrokerClient:
 
     def open_orders(self) -> tuple[LiveOrderRecord, ...]:
         return ()
+
+    def has_open_orders(self) -> bool:
+        return False
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
         return type(self).broker_fills

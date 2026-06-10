@@ -128,15 +128,23 @@ The wrapper publishes dashboard status only after a successful workflow
 command. When the workflow exits nonzero, the dashboard remains at the prior
 healthy status instead of exposing the latest failure.
 
-## Required Remediation Before Re-Enabling Schedule
+## Remediation Outcome
 
-1. Add an explicit no-short-selling policy for Alpaca paper strategy orders.
-2. Refresh or poll submitted orders before snapshot and reconciliation.
-3. Persist fills discovered while refreshing broker orders.
-4. Publish failed workflow health to the dashboard.
-5. Add regression tests for all four behaviors.
-6. Decide whether to close the current one-share AAPL paper short.
+The required code controls and regression tests are implemented in the local
+review bundle:
 
-Do not reload the recurring schedule until these controls are reviewed and the
-paper account reconciles cleanly.
+1. position-aware risk checks reject naked sells before submission,
+2. any unsettled Alpaca broker order blocks a new strategy submission,
+3. submitted orders are polled to terminal state before snapshot and
+   reconciliation,
+4. fills discovered during order refresh are persisted,
+5. failed workflows still publish dashboard status and preserve a nonzero
+   wrapper exit code.
 
+The existing one-share AAPL paper short is intentionally left open at the
+owner's request. No recovery order is required for this remediation.
+
+See `docs/alpaca_paper_actionable_order_safety_remediation.md` for the control
+details and schedule-reactivation gate. Do not reload the recurring schedule
+until the remediation is reviewed and a controlled rehearsal is explicitly
+approved.

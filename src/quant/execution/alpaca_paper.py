@@ -151,6 +151,19 @@ class AlpacaPaperBrokerClient:
                 records.append(record)
         return tuple(records)
 
+    def has_open_orders(self) -> bool:
+        """Detect unsettled broker orders, including orders from older runs."""
+        terminal = {
+            LiveOrderStatus.CANCELLED,
+            LiveOrderStatus.FILLED,
+            LiveOrderStatus.REJECTED,
+        }
+        return any(
+            map_alpaca_order_status(_required_attr(raw_order, "status"))
+            not in terminal
+            for raw_order in self._trading_client.get_orders()
+        )
+
     def fills(self) -> tuple[LiveFillRecord, ...]:
         self.open_orders()
         return tuple(self._fills_by_execution_id.values())

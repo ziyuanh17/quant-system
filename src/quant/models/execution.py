@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import uuid4
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from quant.models.base import FrozenModel
 
@@ -129,6 +129,50 @@ class TradingSafetyConfig(FrozenModel):
     live_trading_confirmation: str | None = None
     max_order_notional: float | None = Field(default=None, gt=0)
     broker_name: str | None = None
+    short_selling_policy: "ShortSellingPolicy" = Field(
+        default_factory=lambda: ShortSellingPolicy()
+    )
+
+
+class ShortSellingPolicy(FrozenModel):
+    """Fail-closed limits for intentionally opening short positions."""
+
+    enabled: bool = False
+    max_short_position_notional: float | None = Field(default=None, gt=0)
+    max_total_short_exposure_pct_equity: float | None = Field(
+        default=None,
+        gt=0,
+    )
+    max_gross_exposure_pct_equity: float | None = Field(default=None, gt=0)
+    min_buying_power_buffer_pct: float | None = Field(
+        default=None,
+        ge=0,
+        lt=1,
+    )
+
+    @model_validator(mode="after")
+    def require_limits_when_enabled(self) -> "ShortSellingPolicy":
+        if not self.enabled:
+            return self
+        required_limits = {
+            "max_short_position_notional": self.max_short_position_notional,
+            "max_total_short_exposure_pct_equity": (
+                self.max_total_short_exposure_pct_equity
+            ),
+            "max_gross_exposure_pct_equity": (
+                self.max_gross_exposure_pct_equity
+            ),
+            "min_buying_power_buffer_pct": self.min_buying_power_buffer_pct,
+        }
+        missing = [
+            name for name, value in required_limits.items() if value is None
+        ]
+        if missing:
+            raise ValueError(
+                "enabled short selling requires explicit limits: "
+                + ", ".join(missing)
+            )
+        return self
 
 
 class TradingSafetyCheck(FrozenModel):

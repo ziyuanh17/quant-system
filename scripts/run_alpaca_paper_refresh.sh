@@ -33,6 +33,8 @@ alpaca_paper_fill_output_dir="${QUANT_ALPACA_PAPER_FILL_OUTPUT_DIR:-data/live/fi
 alpaca_paper_snapshot_output_dir="${QUANT_ALPACA_PAPER_SNAPSHOT_OUTPUT_DIR:-data/live/account_snapshots}"
 alpaca_paper_reconciliation_output_path="${QUANT_ALPACA_PAPER_RECONCILIATION_OUTPUT_PATH:-data/live/reconciliation/latest.json}"
 alpaca_paper_cash_tolerance="${QUANT_ALPACA_PAPER_CASH_TOLERANCE:-0.01}"
+alpaca_paper_order_poll_attempts="${QUANT_ALPACA_PAPER_ORDER_POLL_ATTEMPTS:-5}"
+alpaca_paper_order_poll_interval_seconds="${QUANT_ALPACA_PAPER_ORDER_POLL_INTERVAL_SECONDS:-1}"
 alpaca_paper_publish_status_after_run="${QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN:-false}"
 alpaca_paper_publish_status_path="${QUANT_ALPACA_PAPER_PUBLISH_STATUS_PATH:-site/status.json}"
 alpaca_paper_publish_status_fail_on_failed="${QUANT_ALPACA_PAPER_PUBLISH_STATUS_FAIL_ON_FAILED:-false}"
@@ -40,6 +42,7 @@ alpaca_paper_preflight_only="${QUANT_ALPACA_PAPER_PREFLIGHT_ONLY:-false}"
 
 mkdir -p "$log_dir"
 log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
+wrapper_exit_code=0
 
 {
   echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -80,6 +83,8 @@ log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
       "--snapshot-output-dir" "$alpaca_paper_snapshot_output_dir"
       "--reconciliation-output-path" "$alpaca_paper_reconciliation_output_path"
       "--cash-tolerance" "$alpaca_paper_cash_tolerance"
+      "--order-poll-attempts" "$alpaca_paper_order_poll_attempts"
+      "--order-poll-interval-seconds" "$alpaca_paper_order_poll_interval_seconds"
       "--lock-path" "$alpaca_paper_lock_path"
       "--lock-stale-after-seconds" "$lock_stale_after_seconds"
     )
@@ -88,7 +93,7 @@ log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
       command+=("--end" "$end")
     fi
 
-    "${command[@]}"
+    "${command[@]}" || wrapper_exit_code=$?
 
     if [[ "$alpaca_paper_publish_status_after_run" == "true" ]]; then
       publish_command=(
@@ -111,7 +116,11 @@ log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
         publish_command+=("--fail-on-failed")
       fi
 
-      "${publish_command[@]}"
+      publish_exit_code=0
+      "${publish_command[@]}" || publish_exit_code=$?
+      if [[ "$wrapper_exit_code" -eq 0 && "$publish_exit_code" -ne 0 ]]; then
+        wrapper_exit_code="$publish_exit_code"
+      fi
     fi
   fi
 
@@ -119,3 +128,4 @@ log_file="$log_dir/alpaca-paper-refresh-$(date -u +%Y%m%dT%H%M%SZ).log"
 } >> "$log_file" 2>&1
 
 cat "$log_file"
+exit "$wrapper_exit_code"

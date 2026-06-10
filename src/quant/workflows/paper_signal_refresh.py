@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from time import sleep
 
 from quant.data import ingest_market_bars, load_price_csv
 from quant.data.providers.base import DataProvider
@@ -9,6 +10,7 @@ from quant.execution import (
     LiveBrokerAdapter,
     LiveBrokerClient,
     PaperBrokerAdapter,
+    check_projected_order_risk,
     compare_paper_signal_to_dry_run_order,
     decide_latest_signal,
     evaluate_trading_safety,
@@ -398,6 +400,8 @@ def run_alpaca_paper_refresh_workflow(
     snapshot_output_dir: Path,
     reconciliation_output_path: Path,
     cash_tolerance: float = 0.01,
+    order_poll_attempts: int = 5,
+    order_poll_interval_seconds: float = 1,
     lock_path: Path | None = None,
     lock_stale_after_seconds: int = 7200,
 ) -> DataRefreshWorkflowRecord:
@@ -434,6 +438,12 @@ def run_alpaca_paper_refresh_workflow(
                 raise ValueError("quantity must be at least 1")
             if cash_tolerance < 0:
                 raise ValueError("cash_tolerance must be non-negative")
+            if order_poll_attempts < 1:
+                raise ValueError("order_poll_attempts must be at least 1")
+            if order_poll_interval_seconds < 0:
+                raise ValueError(
+                    "order_poll_interval_seconds must be non-negative"
+                )
 
             request = IngestRequest(symbols=(symbol,), start=start, end=end)
             artifacts = ingest_market_bars(
@@ -465,6 +475,8 @@ def run_alpaca_paper_refresh_workflow(
                     snapshot_output_dir=snapshot_output_dir,
                     reconciliation_output_path=reconciliation_output_path,
                     cash_tolerance=cash_tolerance,
+                    order_poll_attempts=order_poll_attempts,
+                    order_poll_interval_seconds=order_poll_interval_seconds,
                 )
                 extra_artifact_paths = alpaca_paper_outcome.artifact_paths
             except _AlpacaPaperSignalFailed as exc:
@@ -649,6 +661,8 @@ def _run_alpaca_paper_signal_once(
     snapshot_output_dir: Path,
     reconciliation_output_path: Path,
     cash_tolerance: float,
+    order_poll_attempts: int,
+    order_poll_interval_seconds: float,
 ) -> _AlpacaPaperSignalRunOutcome:
     strategy = MomentumStrategy()
     prices = load_price_csv(data, symbol)
@@ -690,13 +704,35 @@ def _run_alpaca_paper_signal_once(
     )
 
     if broker_submission_attempted:
+        # Fail closed while another broker order is unsettled. The account
+        # snapshot can still show cash or positions reserved by that order,
+        # which would make a second local risk check incorrectly approve.
+        if broker_client.has_open_orders():
+            raise ValueError(
+                "Alpaca paper order risk check failed: "
+                "open broker order(s) must settle first"
+            )
         side = (
             OrderSide.BUY
             if decision.action == PaperSignalAction.BUY
             else OrderSide.SELL
         )
+        request = OrderRequest(symbol=symbol, side=side, quantity=quantity)
+        account_before_order = broker_client.account_snapshot()
+        risk = check_projected_order_risk(
+            request,
+            account=account_before_order,
+            market_price=decision.market_price,
+            short_policy=safety_config.short_selling_policy,
+        )
+        if not risk.approved:
+            raise ValueError(
+                "Alpaca paper order risk check failed: "
+                f"{risk.reason or 'no rejection reason provided'}"
+            )
+
         order = adapter.submit_market_order(
-            OrderRequest(symbol=symbol, side=side, quantity=quantity),
+            request,
             reference_price=decision.market_price,
             client_order_id=decision.idempotency_key,
             safety_check=safety_check,
@@ -705,6 +741,22 @@ def _run_alpaca_paper_signal_once(
             raise ValueError(
                 "Alpaca paper order was rejected: "
                 f"{order.rejection_reason or 'no rejection reason provided'}"
+            )
+        order = _refresh_order_until_terminal(
+            adapter=adapter,
+            order=order,
+            attempts=order_poll_attempts,
+            interval_seconds=order_poll_interval_seconds,
+        )
+        if order.status not in _TERMINAL_LIVE_ORDER_STATUSES:
+            raise ValueError(
+                "Alpaca paper order did not reach a terminal state before "
+                "reconciliation"
+            )
+        if order.status != LiveOrderStatus.FILLED:
+            raise ValueError(
+                "Alpaca paper actionable order ended with status "
+                f"{order.status.value}"
             )
     adapter.account_snapshot()
 
@@ -755,6 +807,30 @@ def _run_alpaca_paper_signal_once(
             outcome,
         )
     return outcome
+
+
+_TERMINAL_LIVE_ORDER_STATUSES = {
+    LiveOrderStatus.CANCELLED,
+    LiveOrderStatus.FILLED,
+    LiveOrderStatus.REJECTED,
+}
+
+
+def _refresh_order_until_terminal(
+    *,
+    adapter: LiveBrokerAdapter,
+    order: LiveOrderRecord,
+    attempts: int,
+    interval_seconds: float,
+) -> LiveOrderRecord:
+    refreshed = order
+    for attempt in range(attempts):
+        if refreshed.status in _TERMINAL_LIVE_ORDER_STATUSES:
+            return refreshed
+        if attempt > 0 and interval_seconds > 0:
+            sleep(interval_seconds)
+        refreshed = adapter.refresh_order_record(refreshed)
+    return refreshed
 
 
 def _validate_live_order_notional(

@@ -42,8 +42,19 @@ class LiveBrokerClient(Protocol):
         """Return broker orders that are not terminal."""
         ...
 
+    def has_open_orders(self) -> bool:
+        """Return whether any broker order is not terminal."""
+        ...
+
     def fills(self) -> tuple[LiveFillRecord, ...]:
         """Return broker fills known to the client."""
+        ...
+
+    def refresh_order_record(
+        self,
+        record: LiveOrderRecord,
+    ) -> LiveOrderRecord:
+        """Refresh one known order from current broker truth."""
         ...
 
 
@@ -148,8 +159,17 @@ class FakeLiveBrokerClient:
             if order.status not in terminal
         )
 
+    def has_open_orders(self) -> bool:
+        return bool(self.open_orders())
+
     def fills(self) -> tuple[LiveFillRecord, ...]:
         return tuple(self._fills)
+
+    def refresh_order_record(
+        self,
+        record: LiveOrderRecord,
+    ) -> LiveOrderRecord:
+        return self._orders.get(record.client_order_id, record)
 
     def _risk_rejection_reason(
         self,
@@ -312,6 +332,16 @@ class LiveBrokerAdapter:
         fills = self._client.fills()
         self._write_new_fills(fills)
         return fills
+
+    def refresh_order_record(
+        self,
+        record: LiveOrderRecord,
+    ) -> LiveOrderRecord:
+        refreshed = self._client.refresh_order_record(record)
+        if self._order_output_dir is not None:
+            write_live_order_record(refreshed, self._order_output_dir)
+        self._write_new_fills()
+        return refreshed
 
     def _write_new_fills(
         self,

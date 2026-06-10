@@ -9,7 +9,11 @@ from quant.execution import (
     evaluate_trading_safety,
     load_trading_safety_config_from_env,
 )
-from quant.models.execution import TradingMode, TradingSafetyConfig
+from quant.models.execution import (
+    ShortSellingPolicy,
+    TradingMode,
+    TradingSafetyConfig,
+)
 
 
 def test_trading_safety_allows_paper_by_default() -> None:
@@ -67,6 +71,37 @@ def test_trading_safety_config_loads_from_env_mapping() -> None:
     assert config.live_trading_enabled
     assert config.max_order_notional == 250
     assert config.broker_name == "example-broker"
+
+
+def test_trading_safety_config_loads_explicit_short_policy() -> None:
+    config = load_trading_safety_config_from_env(
+        {
+            "QUANT_SHORT_SELLING_ENABLED": "true",
+            "QUANT_MAX_SHORT_POSITION_NOTIONAL": "500",
+            "QUANT_MAX_TOTAL_SHORT_EXPOSURE_PCT_EQUITY": "0.25",
+            "QUANT_MAX_GROSS_EXPOSURE_PCT_EQUITY": "1.5",
+            "QUANT_MIN_BUYING_POWER_BUFFER_PCT": "0.1",
+        }
+    )
+
+    assert config.short_selling_policy == ShortSellingPolicy(
+        enabled=True,
+        max_short_position_notional=500,
+        max_total_short_exposure_pct_equity=0.25,
+        max_gross_exposure_pct_equity=1.5,
+        min_buying_power_buffer_pct=0.1,
+    )
+
+
+def test_trading_safety_config_rejects_enabled_short_policy_without_limits(
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="enabled short selling requires explicit limits",
+    ):
+        load_trading_safety_config_from_env(
+            {"QUANT_SHORT_SELLING_ENABLED": "true"}
+        )
 
 
 def test_safety_check_cli_fails_live_without_gates() -> None:
