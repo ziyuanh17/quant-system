@@ -1,5 +1,9 @@
-from quant.execution import check_projected_order_risk
+from quant.execution import (
+    check_projected_order_risk,
+    check_short_sale_availability,
+)
 from quant.models.execution import (
+    AssetTradingDetails,
     LiveAccountSnapshot,
     OrderRequest,
     OrderSide,
@@ -18,6 +22,46 @@ def test_projected_risk_rejects_short_when_policy_is_disabled() -> None:
 
     assert not result.approved
     assert result.reason == "short selling is not enabled"
+
+
+def test_short_availability_rejects_new_unborrowable_short() -> None:
+    result = check_short_sale_availability(
+        OrderRequest(symbol="AAPL", side=OrderSide.SELL, quantity=1),
+        account=_account(),
+        asset=AssetTradingDetails(
+            symbol="AAPL",
+            tradable=True,
+            shortable=True,
+            easy_to_borrow=False,
+        ),
+    )
+
+    assert not result.approved
+    assert result.reason == "asset is not easy to borrow"
+
+
+def test_short_availability_does_not_block_cover() -> None:
+    result = check_short_sale_availability(
+        OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=1),
+        account=_account(
+            positions=(
+                Position(
+                    symbol="AAPL",
+                    quantity=-2,
+                    average_price=100,
+                    last_price=100,
+                ),
+            )
+        ),
+        asset=AssetTradingDetails(
+            symbol="AAPL",
+            tradable=False,
+            shortable=False,
+            easy_to_borrow=False,
+        ),
+    )
+
+    assert result.approved
 
 
 def test_projected_risk_allows_cover_when_short_policy_is_disabled() -> None:

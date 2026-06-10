@@ -1,4 +1,5 @@
 from quant.models.execution import (
+    AssetTradingDetails,
     LiveAccountSnapshot,
     OrderRequest,
     OrderSide,
@@ -160,6 +161,51 @@ def check_projected_order_risk(
         return _rejected("projected buying power buffer is too small")
 
     return RiskCheckResult(decision=RiskDecision.APPROVED)
+
+
+def check_short_sale_availability(
+    request: OrderRequest,
+    *,
+    account: LiveAccountSnapshot,
+    asset: AssetTradingDetails,
+) -> RiskCheckResult:
+    """Require current broker borrow permission only for new short exposure."""
+    if not opens_or_increases_short(request, account=account):
+        return RiskCheckResult(decision=RiskDecision.APPROVED)
+    if not asset.tradable:
+        return _rejected("asset is not tradable")
+    if not asset.shortable:
+        return _rejected("asset is not shortable")
+    if not asset.easy_to_borrow:
+        return _rejected("asset is not easy to borrow")
+    return RiskCheckResult(decision=RiskDecision.APPROVED)
+
+
+def opens_or_increases_short(
+    request: OrderRequest,
+    *,
+    account: LiveAccountSnapshot,
+) -> bool:
+    """Return whether a full fill would create additional short exposure."""
+    current = next(
+        (
+            position
+            for position in account.positions
+            if position.symbol == request.symbol
+        ),
+        None,
+    )
+    current_quantity = 0 if current is None else current.quantity
+    signed_order_quantity = (
+        request.quantity
+        if request.side == OrderSide.BUY
+        else -request.quantity
+    )
+    projected_quantity = current_quantity + signed_order_quantity
+    return max(-projected_quantity, 0) > max(
+        -current_quantity,
+        0,
+    )
 
 
 def _rejected(reason: str) -> RiskCheckResult:

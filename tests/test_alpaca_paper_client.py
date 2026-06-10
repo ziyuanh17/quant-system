@@ -138,6 +138,35 @@ def test_alpaca_paper_client_maps_account_snapshot() -> None:
     assert snapshot.positions[0].symbol == "AAPL"
 
 
+def test_alpaca_paper_client_maps_asset_trading_details() -> None:
+    trading_client = FakeTradingClient(
+        api_key="unused",
+        secret_key="unused",
+        paper=True,
+    )
+    trading_client.assets["AAPL"] = SimpleNamespace(
+        symbol="AAPL",
+        tradable=True,
+        shortable=True,
+        easy_to_borrow=False,
+    )
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=trading_client,
+    )
+
+    details = client.asset_trading_details("AAPL")
+
+    assert details.symbol == "AAPL"
+    assert details.tradable is True
+    assert details.shortable is True
+    assert details.easy_to_borrow is False
+
+
 def test_alpaca_paper_client_open_orders_maps_known_orders_only() -> None:
     trading_client = FakeTradingClient(
         api_key="unused",
@@ -318,6 +347,7 @@ class FakeTradingClient:
         self.submitted_orders: list[object] = []
         self.orders: list[object] = []
         self.positions: list[object] = []
+        self.assets: dict[str, object] = {}
         self.account = SimpleNamespace(
             id="acct-1",
             cash="1000",
@@ -354,6 +384,9 @@ class FakeTradingClient:
 
     def get_all_positions(self) -> list[object]:
         return self.positions
+
+    def get_asset(self, symbol_or_asset_id: str) -> object:
+        return self.assets[symbol_or_asset_id]
 
 
 def _fake_sdk() -> AlpacaTradingSdk:

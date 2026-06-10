@@ -11,6 +11,7 @@ from quant.execution import (
     LiveBrokerClient,
     PaperBrokerAdapter,
     check_projected_order_risk,
+    check_short_sale_availability,
     compare_paper_signal_to_dry_run_order,
     decide_latest_signal,
     evaluate_trading_safety,
@@ -18,6 +19,7 @@ from quant.execution import (
     execute_latest_signal_dry_run,
     latest_json,
     load_paper_broker_state,
+    opens_or_increases_short,
     reconcile_live_state,
     save_paper_broker_state,
     write_dry_run_order_record,
@@ -730,6 +732,17 @@ def _run_alpaca_paper_signal_once(
                 "Alpaca paper order risk check failed: "
                 f"{risk.reason or 'no rejection reason provided'}"
             )
+        if opens_or_increases_short(request, account=account_before_order):
+            availability = check_short_sale_availability(
+                request,
+                account=account_before_order,
+                asset=broker_client.asset_trading_details(symbol),
+            )
+            if not availability.approved:
+                raise ValueError(
+                    "Alpaca paper order risk check failed: "
+                    f"{availability.reason or 'no rejection reason provided'}"
+                )
 
         order = adapter.submit_market_order(
             request,

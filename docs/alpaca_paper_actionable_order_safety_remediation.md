@@ -25,7 +25,9 @@ Before submitting an actionable Alpaca paper order, the workflow now:
    order created by a previous process,
 2. captures current broker cash and positions,
 3. runs a projected-position order-risk check using explicit short, gross
-   exposure, and buying-power-buffer limits.
+   exposure, and buying-power-buffer limits,
+4. requires current Alpaca `tradable`, `shortable`, and `easy_to_borrow`
+   metadata before opening or increasing a short.
 
 A sell that would open or increase a short is rejected before broker
 submission unless short selling and every required limit are explicit. See
@@ -74,6 +76,7 @@ Automated tests cover:
 
 - rejecting an unauthorized Alpaca paper short before submission,
 - allowing an explicitly bounded strategy short,
+- rejecting a short entry when Alpaca reports unavailable borrow,
 - rejecting submission while any broker order remains open,
 - polling an accepted order to terminal state before reconciliation,
 - failing when an actionable order settles without filling,

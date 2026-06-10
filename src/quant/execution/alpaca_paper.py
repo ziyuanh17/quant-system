@@ -6,6 +6,7 @@ from pydantic import Field
 
 from quant.models.base import FrozenModel
 from quant.models.execution import (
+    AssetTradingDetails,
     LiveAccountSnapshot,
     LiveFillRecord,
     LiveOrderRecord,
@@ -49,6 +50,10 @@ class AlpacaTradingClientProtocol(Protocol):
 
     def get_all_positions(self) -> list[object]:
         """Return Alpaca open positions."""
+        ...
+
+    def get_asset(self, symbol_or_asset_id: str) -> object:
+        """Return current Alpaca metadata for one asset."""
         ...
 
 
@@ -122,6 +127,16 @@ class AlpacaPaperBrokerClient:
         return map_alpaca_account_snapshot(
             self._trading_client.get_account(),
             self._trading_client.get_all_positions(),
+        )
+
+    def asset_trading_details(self, symbol: str) -> AssetTradingDetails:
+        """Map Alpaca's current tradability and borrow-availability flags."""
+        raw_asset = self._trading_client.get_asset(symbol)
+        return AssetTradingDetails(
+            symbol=str(_required_attr(raw_asset, "symbol")),
+            tradable=_required_bool(raw_asset, "tradable"),
+            shortable=_required_bool(raw_asset, "shortable"),
+            easy_to_borrow=_required_bool(raw_asset, "easy_to_borrow"),
         )
 
     def open_orders(self) -> tuple[LiveOrderRecord, ...]:
@@ -442,6 +457,19 @@ def _required_float(source: object, name: str) -> float:
     if value is None:
         raise ValueError(f"Alpaca object is missing {name}")
     return value
+
+
+def _required_bool(source: object, name: str) -> bool:
+    value = _get_value(source, name)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized == "true":
+            return True
+        if normalized == "false":
+            return False
+    raise ValueError(f"Alpaca object has invalid boolean {name}")
 
 
 def _optional_float(source: object, name: str) -> float | None:

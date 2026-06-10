@@ -631,6 +631,54 @@ def test_alpaca_paper_refresh_workflow_allows_bounded_short(
     assert client.account_snapshot().positions[0].quantity == -1
 
 
+def test_alpaca_paper_refresh_workflow_rejects_unborrowable_short(
+    tmp_path,
+) -> None:
+    client = FakeAlpacaPaperWorkflowClient()
+    client.asset_easy_to_borrow = False
+
+    try:
+        run_alpaca_paper_refresh_workflow(
+            provider=FakeFallingMarketBarProvider(),
+            broker_client=client,
+            safety_config=_alpaca_paper_safety_config(
+                short_selling_policy=ShortSellingPolicy(
+                    enabled=True,
+                    max_short_position_notional=100,
+                    max_total_short_exposure_pct_equity=0.1,
+                    max_gross_exposure_pct_equity=0.2,
+                    min_buying_power_buffer_pct=0.5,
+                )
+            ),
+            symbol="AAPL",
+            start="2024-01-01",
+            end="2024-02-01",
+            raw_dir=tmp_path / "raw",
+            normalized_dir=tmp_path / "normalized",
+            validation_dir=tmp_path / "validation",
+            metadata_dir=tmp_path / "metadata",
+            workflow_output_dir=tmp_path / "workflows",
+            strategy="momentum",
+            quantity=1,
+            min_rows=20,
+            order_output_dir=tmp_path / "live" / "orders",
+            fill_output_dir=tmp_path / "live" / "fills",
+            snapshot_output_dir=tmp_path / "live" / "snapshots",
+            reconciliation_output_path=tmp_path
+            / "live"
+            / "reconciliation"
+            / "latest.json",
+        )
+    except WorkflowRunFailed as exc:
+        record = exc.record
+    else:
+        raise AssertionError("expected unborrowable short to fail")
+
+    assert record.status == WorkflowRunStatus.FAILED
+    assert "not easy to borrow" in record.message
+    assert client.submitted_client_order_ids == ()
+
+
 def test_alpaca_paper_refresh_workflow_rejects_submission_with_open_order(
     tmp_path,
 ) -> None:
@@ -1140,6 +1188,7 @@ class FakeAlpacaPaperWorkflowClient:
         self._cash = 1000.0
         self._positions: dict[str, Position] = {}
         self.existing_open_orders: tuple[LiveOrderRecord, ...] = ()
+        self.asset_easy_to_borrow = True
 
     def submit_market_order(
         self,
@@ -1200,6 +1249,16 @@ class FakeAlpacaPaperWorkflowClient:
 
     def has_open_orders(self) -> bool:
         return bool(self.existing_open_orders)
+
+    def asset_trading_details(self, symbol: str):
+        from quant.models.execution import AssetTradingDetails
+
+        return AssetTradingDetails(
+            symbol=symbol,
+            tradable=True,
+            shortable=True,
+            easy_to_borrow=self.asset_easy_to_borrow,
+        )
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
         self._fill_calls += 1

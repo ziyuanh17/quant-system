@@ -5,6 +5,7 @@ from quant.models.backtest import (
     PerformanceMetrics,
 )
 from quant.models.execution import (
+    AssetTradingDetails,
     BrokerAccountSnapshot,
     BrokerMode,
     DryRunOrderRecord,
@@ -83,6 +84,7 @@ from quant.models.workflow import DataRefreshWorkflowRecord, WorkflowRunStatus
 
 __all__ = [
     "BacktestConfig",
+    "AssetTradingDetails",
     "BacktestArtifactPaths",
     "BacktestResult",
     "Bar",

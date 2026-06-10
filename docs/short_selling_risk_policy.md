@@ -60,10 +60,18 @@ The workflow still fails closed while any broker order is unsettled. A future
 version can include signed pending-order quantities in projected exposure, but
 blocking overlapping orders is safer until that state is modeled reliably.
 
-Alpaca asset shortability and daily easy-to-borrow status are not yet exposed
-through the local broker protocol. Alpaca remains the final borrow-availability
-gate for now. Adding an explicit local asset-borrow check is the next
-short-selling risk increment.
+Before opening or increasing a short, the workflow now queries Alpaca's current
+asset metadata and requires all three broker flags:
+
+```text
+tradable=true
+shortable=true
+easy_to_borrow=true
+```
+
+The query is made immediately before submission because borrow availability can
+change. It is not required for long orders, long-position sells, or short
+covers. Alpaca remains the final broker-side borrow and margin gate.
 
 ## Rehearsal Gate
 
@@ -75,4 +83,3 @@ schedule until:
 3. a controlled paper rehearsal is explicitly approved,
 4. resulting order, fill, snapshot, reconciliation, log, and dashboard
    artifacts are reviewed.
-

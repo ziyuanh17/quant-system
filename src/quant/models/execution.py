@@ -61,6 +61,15 @@ class OrderRequest(FrozenModel):
     order_type: OrderType = OrderType.MARKET
 
 
+class AssetTradingDetails(FrozenModel):
+    """Broker-neutral asset permissions used by pre-trade risk checks."""
+
+    symbol: str
+    tradable: bool
+    shortable: bool
+    easy_to_borrow: bool
+
+
 class RiskCheckResult(FrozenModel):
     decision: RiskDecision
     reason: str | None = None

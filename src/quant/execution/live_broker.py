@@ -8,6 +8,7 @@ from quant.execution.artifacts import (
 )
 from quant.execution.safety import LiveTradingNotAllowedError
 from quant.models.execution import (
+    AssetTradingDetails,
     LiveAccountSnapshot,
     LiveFillRecord,
     LiveOrderRecord,
@@ -44,6 +45,10 @@ class LiveBrokerClient(Protocol):
 
     def has_open_orders(self) -> bool:
         """Return whether any broker order is not terminal."""
+        ...
+
+    def asset_trading_details(self, symbol: str) -> AssetTradingDetails:
+        """Return current broker permissions for one asset."""
         ...
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
@@ -161,6 +166,14 @@ class FakeLiveBrokerClient:
 
     def has_open_orders(self) -> bool:
         return bool(self.open_orders())
+
+    def asset_trading_details(self, symbol: str) -> AssetTradingDetails:
+        return AssetTradingDetails(
+            symbol=symbol,
+            tradable=True,
+            shortable=True,
+            easy_to_borrow=True,
+        )
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
         return tuple(self._fills)

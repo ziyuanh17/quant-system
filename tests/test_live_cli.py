@@ -505,6 +505,16 @@ class FakeAlpacaPaperBrokerClient:
     def has_open_orders(self) -> bool:
         return False
 
+    def asset_trading_details(self, symbol: str):
+        from quant.models.execution import AssetTradingDetails
+
+        return AssetTradingDetails(
+            symbol=symbol,
+            tradable=True,
+            shortable=True,
+            easy_to_borrow=True,
+        )
+
     def fills(self) -> tuple[LiveFillRecord, ...]:
         return type(self).broker_fills
 

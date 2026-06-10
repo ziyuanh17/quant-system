@@ -97,7 +97,7 @@ side discussions.
 | 79 | Actionable Alpaca Paper Order Incident Review | Done | Contain and document the first scheduled actionable paper order, its unexpected short position, and reconciliation failure. |
 | 80 | Alpaca Paper Actionable-Order Safety Remediation | In Review | Add projected-position and open-order policies, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
 | 81 | Bounded Short-Selling Risk Policy | In Review | Replace the temporary blanket no-short guard with explicit projected-position, short exposure, gross exposure, and buying-power-buffer limits. |
-| 82 | Alpaca Asset Borrow-Availability Guard | Planned | Check current Alpaca shortable and easy-to-borrow asset metadata locally before submitting a short-entry order. |
+| 82 | Alpaca Asset Borrow-Availability Guard | In Review | Check current Alpaca tradable, shortable, and easy-to-borrow asset metadata locally before submitting a short-entry order. |
 | 83 | Controlled Alpaca Paper Safety Rehearsal | Next | After remediation and short-policy review, run an explicitly approved broker-connected paper rehearsal and inspect every resulting artifact before considering schedule reactivation. |
 
 ## Current Recommendation
