@@ -95,18 +95,20 @@ side discussions.
 | 77 | Strategy Evaluation Harness Design v1 | Planned | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
 | 78 | Mac Studio Migration | Planned | Complete the dedicated finite migration roadmap in `docs/mac_studio_migration_roadmap.md` before resuming strategy work. |
 | 79 | Actionable Alpaca Paper Order Incident Review | Done | Contain and document the first scheduled actionable paper order, its unexpected short position, and reconciliation failure. |
-| 80 | Alpaca Paper Actionable-Order Safety Remediation | In Review | Add projected-position and open-order policies, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
-| 81 | Bounded Short-Selling Risk Policy | In Review | Replace the temporary blanket no-short guard with explicit projected-position, short exposure, gross exposure, and buying-power-buffer limits. |
-| 82 | Alpaca Asset Borrow-Availability Guard | In Review | Check current Alpaca tradable, shortable, and easy-to-borrow asset metadata locally before submitting a short-entry order. |
-| 83 | Controlled Alpaca Paper Safety Rehearsal | Next | After remediation and short-policy review, run an explicitly approved broker-connected paper rehearsal and inspect every resulting artifact before considering schedule reactivation. |
+| 80 | Alpaca Paper Actionable-Order Safety Remediation | Done | Add projected-position and open-order policies, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
+| 81 | Bounded Short-Selling Risk Policy | Done | Replace the temporary blanket no-short guard with explicit projected-position, short exposure, gross exposure, and buying-power-buffer limits. |
+| 82 | Alpaca Asset Borrow-Availability Guard | Done | Check current Alpaca tradable, shortable, and easy-to-borrow asset metadata locally before submitting a short-entry order. |
+| 83 | Controlled Alpaca Paper Safety Rehearsal Preparation | In Review | Sync and verify the runtime clone, run no-order wrapper preflight, compare artifacts, and define stop gates for the controlled rehearsal. |
+| 84 | Read-Only Alpaca Broker Readiness Rehearsal | In Review | Verified credentials, account state, open orders, AAPL asset metadata, and reconciliation without submitting or modifying an order. |
+| 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | Next | After read-only review, design a rehearsal that cannot unintentionally recover or increase the retained paper short. |
+| 86 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | Planned | Execute the reviewed design only after explicit approval immediately before the order-capable command. |
 
 ## Current Recommendation
 
-The current milestone is **Controlled Alpaca Paper Safety Rehearsal**.
-Review and commit the actionable-order remediation and bounded short-selling
-policy before running an explicitly approved broker-connected paper rehearsal.
-Keep scheduling unloaded and the Mac Studio runtime cutover paused until the
-rehearsal is reviewed.
+The current milestone is **Controlled Alpaca Paper Order-Capable Rehearsal
+Design**. Review and commit the no-order preparation and read-only readiness
+evidence before designing an order-capable rehearsal. Keep scheduling unloaded
+and the Mac Studio runtime cutover paused.
 
 ## Status Convention
 

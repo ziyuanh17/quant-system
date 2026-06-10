@@ -58,8 +58,11 @@ permission to connect and execute setup commands
 The MacBook Air recurring schedule was unloaded on June 9, 2026 after the
 first actionable scheduled Alpaca paper order exposed short-selling and
 reconciliation timing gaps. The actionable-order safety remediation is now in
-review. The Mac Studio runtime cutover remains paused until that remediation
-passes a controlled broker-connected paper rehearsal.
+the reviewed source history. The MacBook Air runtime clone has been synced and
+passed a preflight-only rehearsal, but the Mac Studio runtime cutover remains
+paused. Read-only broker readiness passed with zero reconciliation differences;
+a later controlled order-capable rehearsal still requires design review and
+explicit approval.
 
 SSH reaches the Mac Studio over Tailscale, but the MacBook Air public key is
 not yet authorized for user `mochifufu`.
