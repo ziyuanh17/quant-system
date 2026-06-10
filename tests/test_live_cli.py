@@ -4,7 +4,11 @@ from typer.testing import CliRunner
 
 import quant.cli
 from quant.cli import app
-from quant.execution import LIVE_TRADING_CONFIRMATION
+from quant.execution import (
+    ALPACA_PAPER_REHEARSAL_CONFIRMATION,
+    LIVE_TRADING_CONFIRMATION,
+    FakeLiveBrokerClient,
+)
 from quant.models.execution import (
     LiveAccountSnapshot,
     LiveFillRecord,
@@ -261,6 +265,97 @@ def test_live_alpaca_paper_order_requires_credentials(
     assert result.exit_code != 0
     assert "QUANT_ALPACA_PAPER_API_KEY is missing" in result.output
     assert not (tmp_path / "orders").exists()
+
+
+def test_live_alpaca_paper_rehearsal_blocks_before_client_construction(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    constructed = False
+
+    class BlockingClient:
+        def __init__(self, *args, **kwargs) -> None:
+            nonlocal constructed
+            constructed = True
+
+    monkeypatch.setattr(quant.cli, "AlpacaPaperBrokerClient", BlockingClient)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "live",
+            "alpaca-paper-rehearsal-order",
+            *_live_safety_args(broker_name="alpaca-paper"),
+            "--symbol",
+            "MSFT",
+            "--reference-price",
+            "100",
+            "--client-order-id",
+            "rehearsal-msft-1",
+            "--protected-position",
+            "AAPL=-1",
+            "--order-output-dir",
+            str(tmp_path / "orders"),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "rehearsal confirmation is missing" in result.output
+    assert constructed is False
+    assert not (tmp_path / "orders").exists()
+
+
+def test_live_alpaca_paper_rehearsal_writes_complete_evidence(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        FakeAlpacaPaperRehearsalClient,
+    )
+    _set_alpaca_env(monkeypatch)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "live",
+            "alpaca-paper-rehearsal-order",
+            *_live_safety_args(broker_name="alpaca-paper"),
+            "--symbol",
+            "MSFT",
+            "--reference-price",
+            "100",
+            "--client-order-id",
+            "rehearsal-msft-1",
+            "--protected-position",
+            "AAPL=-1",
+            "--rehearsal-confirmation",
+            ALPACA_PAPER_REHEARSAL_CONFIRMATION,
+            "--order-poll-interval-seconds",
+            "0",
+            "--order-output-dir",
+            str(tmp_path / "orders"),
+            "--fill-output-dir",
+            str(tmp_path / "fills"),
+            "--snapshot-output-dir",
+            str(tmp_path / "snapshots"),
+            "--reconciliation-output-path",
+            str(tmp_path / "reconciliation.json"),
+            "--rehearsal-output-dir",
+            str(tmp_path / "rehearsals"),
+        ],
+    )
+
+    result_path = next((tmp_path / "rehearsals").glob("*.json"))
+    result_payload = json.loads(result_path.read_text())
+    assert result.exit_code == 0
+    assert "Rehearsal status: passed" in result.output
+    assert result_payload["symbol"] == "MSFT"
+    assert result_payload["protected_positions_after"] == {"AAPL": -1}
+    assert len(list((tmp_path / "orders").glob("*.json"))) == 1
+    assert len(list((tmp_path / "fills").glob("*.json"))) == 1
+    assert len(list((tmp_path / "snapshots").glob("*.json"))) == 2
 
 
 def test_live_alpaca_paper_snapshot_writes_artifact(
@@ -527,6 +622,26 @@ class FakeAlpacaPaperBrokerClient:
     ) -> LiveOrderRecord:
         return record.model_copy(
             update={"status": type(self).refreshed_status},
+        )
+
+
+class FakeAlpacaPaperRehearsalClient(FakeLiveBrokerClient):
+    """Alpaca-shaped immediate-fill fake used only by rehearsal CLI tests."""
+
+    def __init__(self, *, config) -> None:
+        super().__init__(
+            initial_cash=1000,
+            broker_name="alpaca-paper",
+            account_id=config.account_id,
+            broker_environment="paper",
+            positions=(
+                Position(
+                    symbol="AAPL",
+                    quantity=-1,
+                    average_price=100,
+                    last_price=100,
+                ),
+            ),
         )
 
 

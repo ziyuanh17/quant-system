@@ -16,6 +16,7 @@ from quant.execution.artifacts import (
     write_live_fill_record,
     write_live_order_record,
     write_live_reconciliation_report,
+    write_live_rehearsal_result,
     write_paper_signal_record,
     write_paper_trade_record,
 )
@@ -34,6 +35,11 @@ from quant.execution.live_broker import (
     FakeLiveBrokerClient,
     LiveBrokerAdapter,
     LiveBrokerClient,
+)
+from quant.execution.live_rehearsal import (
+    ALPACA_PAPER_REHEARSAL_CONFIRMATION,
+    LiveRehearsalBlockedError,
+    run_alpaca_paper_order_rehearsal,
 )
 from quant.execution.paper_broker import PaperBroker
 from quant.execution.reconciliation import (
@@ -73,11 +79,13 @@ __all__ = [
     "AlpacaPaperBrokerClient",
     "AlpacaPaperConfig",
     "AlpacaTradingClientProtocol",
+    "ALPACA_PAPER_REHEARSAL_CONFIRMATION",
     "DryRunBrokerAdapter",
     "FakeLiveBrokerClient",
     "LIVE_TRADING_CONFIRMATION",
     "LiveBrokerAdapter",
     "LiveBrokerClient",
+    "LiveRehearsalBlockedError",
     "LiveTradingNotAllowedError",
     "PaperBroker",
     "PaperBrokerAdapter",
@@ -106,12 +114,14 @@ __all__ = [
     "map_order_request_to_alpaca_market_order",
     "reconcile_live_state",
     "reconcile_paper_state",
+    "run_alpaca_paper_order_rehearsal",
     "save_paper_broker_state",
     "write_dry_run_order_record",
     "write_live_account_snapshot",
     "write_live_fill_record",
     "write_live_order_record",
     "write_live_reconciliation_report",
+    "write_live_rehearsal_result",
     "write_paper_dry_run_comparison_report",
     "write_paper_state_reconciliation_report",
     "write_paper_signal_record",

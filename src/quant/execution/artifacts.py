@@ -7,6 +7,7 @@ from quant.models.execution import (
     LiveFillRecord,
     LiveOrderRecord,
     LiveReconciliationReport,
+    LiveRehearsalResult,
     PaperSignalRecord,
     PaperTradeRecord,
 )
@@ -79,3 +80,13 @@ def write_live_reconciliation_report(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report.model_dump_json(indent=2) + "\n")
     return output_path
+
+
+def write_live_rehearsal_result(
+    result: LiveRehearsalResult,
+    output_dir: Path,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / f"{result.id}.json"
+    path.write_text(result.model_dump_json(indent=2) + "\n")
+    return path

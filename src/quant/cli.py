@@ -16,12 +16,14 @@ from quant.data import (
     write_reconciliation_report,
 )
 from quant.execution import (
+    ALPACA_PAPER_REHEARSAL_CONFIRMATION,
     LIVE_TRADING_CONFIRMATION,
     AlpacaPaperBrokerClient,
     AlpacaPaperConfig,
     DryRunBrokerAdapter,
     FakeLiveBrokerClient,
     LiveBrokerAdapter,
+    LiveRehearsalBlockedError,
     PaperBroker,
     PaperBrokerAdapter,
     compare_paper_signal_to_dry_run_order,
@@ -34,6 +36,7 @@ from quant.execution import (
     load_trading_safety_config_from_env,
     reconcile_live_state,
     reconcile_paper_state,
+    run_alpaca_paper_order_rehearsal,
     save_paper_broker_state,
     write_dry_run_order_record,
     write_live_account_snapshot,
@@ -658,6 +661,136 @@ def live_alpaca_paper_order(
     typer.echo(f"Snapshot records: {snapshot_output_dir}")
 
     if record.status.value == "rejected":
+        raise typer.Exit(code=1)
+
+
+@live_app.command("alpaca-paper-rehearsal-order")
+def live_alpaca_paper_rehearsal_order(
+    symbol: Annotated[
+        str,
+        typer.Option(help="Reviewed non-protected symbol to buy."),
+    ],
+    reference_price: Annotated[
+        float,
+        typer.Option(help="Current reviewed price used by safety checks."),
+    ],
+    client_order_id: Annotated[
+        str,
+        typer.Option(help="Unique client order ID for this rehearsal."),
+    ],
+    protected_position: Annotated[
+        list[str],
+        typer.Option(
+            help="Required signed broker position in SYMBOL=QUANTITY form."
+        ),
+    ],
+    rehearsal_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Separate confirmation phrase for this rehearsal."),
+    ] = None,
+    live_trading_enabled: Annotated[
+        bool,
+        typer.Option(help="Explicitly enable live-mode broker access."),
+    ] = False,
+    live_trading_confirmation: Annotated[
+        str | None,
+        typer.Option(help="Required live-mode confirmation phrase."),
+    ] = None,
+    max_order_notional: Annotated[
+        float | None,
+        typer.Option(help="Maximum allowed notional for this paper order."),
+    ] = None,
+    broker_name: Annotated[
+        str | None,
+        typer.Option(help="Broker name required for live-mode broker access."),
+    ] = None,
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load safety settings from QUANT_* env vars."),
+    ] = False,
+    order_poll_attempts: Annotated[
+        int,
+        typer.Option(help="Maximum broker order status checks."),
+    ] = 5,
+    order_poll_interval_seconds: Annotated[
+        float,
+        typer.Option(help="Seconds between broker order status checks."),
+    ] = 1,
+    cash_tolerance: Annotated[
+        float,
+        typer.Option(help="Allowed reconciliation cash difference."),
+    ] = 0.01,
+    order_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live order artifacts."),
+    ] = Path("data/live/orders"),
+    fill_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live fill artifacts."),
+    ] = Path("data/live/fills"),
+    snapshot_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for live account snapshot artifacts."),
+    ] = Path("data/live/account_snapshots"),
+    reconciliation_output_path: Annotated[
+        Path,
+        typer.Option(help="Path for the post-order reconciliation report."),
+    ] = Path("data/live/reconciliation/latest.json"),
+    rehearsal_output_dir: Annotated[
+        Path,
+        typer.Option(help="Directory for dedicated rehearsal results."),
+    ] = Path("data/live/rehearsals"),
+) -> None:
+    """Run one explicitly approved, evidence-producing Alpaca paper buy."""
+    check, resolved_safety_config = _live_safety_check_or_exit(
+        from_env=from_env,
+        live_trading_enabled=live_trading_enabled,
+        live_trading_confirmation=live_trading_confirmation,
+        max_order_notional=max_order_notional,
+        broker_name=broker_name,
+    )
+    if rehearsal_confirmation != ALPACA_PAPER_REHEARSAL_CONFIRMATION:
+        typer.echo("Blocked: rehearsal confirmation is missing")
+        typer.echo(
+            "Required rehearsal confirmation: "
+            f"{ALPACA_PAPER_REHEARSAL_CONFIRMATION}"
+        )
+        raise typer.Exit(code=1)
+    protected_positions = _parse_protected_positions(protected_position)
+
+    # Credentials and the network-capable client are intentionally constructed
+    # only after every locally checkable confirmation and input has passed.
+    config = _load_alpaca_paper_config_from_env()
+    try:
+        result = run_alpaca_paper_order_rehearsal(
+            client=AlpacaPaperBrokerClient(config=config),
+            safety_check=check,
+            symbol=symbol,
+            reference_price=reference_price,
+            client_order_id=client_order_id,
+            protected_positions=protected_positions,
+            confirmation=rehearsal_confirmation,
+            order_output_dir=order_output_dir,
+            fill_output_dir=fill_output_dir,
+            snapshot_output_dir=snapshot_output_dir,
+            reconciliation_output_path=reconciliation_output_path,
+            rehearsal_output_dir=rehearsal_output_dir,
+            max_order_notional=resolved_safety_config.max_order_notional,
+            order_poll_attempts=order_poll_attempts,
+            order_poll_interval_seconds=order_poll_interval_seconds,
+            cash_tolerance=cash_tolerance,
+        )
+    except LiveRehearsalBlockedError as exc:
+        typer.echo(f"Blocked: {exc}")
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"Rehearsal status: {result.status.value}")
+    typer.echo(f"Client order ID: {result.client_order_id}")
+    typer.echo(f"Order status: {result.order_status.value}")
+    typer.echo(f"Reconciliation passed: {result.reconciliation_passed}")
+    typer.echo(f"Rehearsal records: {rehearsal_output_dir}")
+    if result.failure_reason is not None:
+        typer.echo(f"Failure reason: {result.failure_reason}")
         raise typer.Exit(code=1)
 
 
@@ -2341,6 +2474,36 @@ def _validate_live_order_notional(
         raise typer.BadParameter(
             "order notional exceeds max-order-notional"
         )
+
+
+def _parse_protected_positions(values: list[str]) -> dict[str, int]:
+    """Parse explicit signed position invariants without accepting ambiguity."""
+    positions: dict[str, int] = {}
+    for value in values:
+        symbol, separator, raw_quantity = value.partition("=")
+        normalized_symbol = symbol.strip().upper()
+        if not separator or not normalized_symbol:
+            raise typer.BadParameter(
+                "protected-position must use SYMBOL=QUANTITY"
+            )
+        if normalized_symbol in positions:
+            raise typer.BadParameter(
+                f"duplicate protected position: {normalized_symbol}"
+            )
+        try:
+            quantity = int(raw_quantity)
+        except ValueError as exc:
+            raise typer.BadParameter(
+                "protected-position quantity must be a signed integer"
+            ) from exc
+        if quantity == 0:
+            raise typer.BadParameter(
+                "protected-position quantity must be non-zero"
+            )
+        positions[normalized_symbol] = quantity
+    if not positions:
+        raise typer.BadParameter("at least one protected-position is required")
+    return positions
 
 
 def _load_alpaca_paper_config_from_env() -> AlpacaPaperConfig:

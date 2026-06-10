@@ -100,15 +100,17 @@ side discussions.
 | 82 | Alpaca Asset Borrow-Availability Guard | Done | Check current Alpaca tradable, shortable, and easy-to-borrow asset metadata locally before submitting a short-entry order. |
 | 83 | Controlled Alpaca Paper Safety Rehearsal Preparation | In Review | Sync and verify the runtime clone, run no-order wrapper preflight, compare artifacts, and define stop gates for the controlled rehearsal. |
 | 84 | Read-Only Alpaca Broker Readiness Rehearsal | In Review | Verified credentials, account state, open orders, AAPL asset metadata, and reconciliation without submitting or modifying an order. |
-| 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | Next | After read-only review, design a rehearsal that cannot unintentionally recover or increase the retained paper short. |
-| 86 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | Planned | Execute the reviewed design only after explicit approval immediately before the order-capable command. |
+| 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | In Review | Design a dedicated one-share buy rehearsal command that pins the retained AAPL short and fails closed before any unexpected portfolio change. |
+| 86 | Controlled Alpaca Paper Order Rehearsal Command | In Review | Implemented and tested the dedicated rehearsal command and typed result artifact without executing it against Alpaca. |
+| 87 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | Next | Execute the reviewed command only after explicit approval immediately before the order-capable command. |
 
 ## Current Recommendation
 
 The current milestone is **Controlled Alpaca Paper Order-Capable Rehearsal
-Design**. Review and commit the no-order preparation and read-only readiness
-evidence before designing an order-capable rehearsal. Keep scheduling unloaded
-and the Mac Studio runtime cutover paused.
+Execution**. Review the dedicated command and its tests, then select a
+non-protected symbol and current reference price. Execution still requires
+explicit approval immediately before the order-capable command. Keep
+scheduling unloaded and the Mac Studio runtime cutover paused.
 
 ## Status Convention
 

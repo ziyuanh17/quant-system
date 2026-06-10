@@ -324,6 +324,36 @@ class LiveReconciliationReport(FrozenModel):
         return len(self.differences)
 
 
+class LiveRehearsalStatus(StrEnum):
+    PASSED = "passed"
+    FAILED = "failed"
+
+
+class LiveRehearsalResult(FrozenModel):
+    """Sanitized evidence from one tightly controlled paper order rehearsal."""
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    status: LiveRehearsalStatus
+    client_order_id: str
+    symbol: str
+    quantity: int = Field(gt=0)
+    reference_price: float = Field(gt=0)
+    protected_positions_expected: dict[str, int]
+    protected_positions_before: dict[str, int]
+    protected_positions_after: dict[str, int]
+    rehearsal_symbol_quantity_before: int
+    rehearsal_symbol_quantity_after: int
+    asset_tradable: bool
+    order_status: LiveOrderStatus
+    order_artifact_paths: tuple[str, ...]
+    fill_artifact_paths: tuple[str, ...]
+    snapshot_artifact_paths: tuple[str, ...]
+    reconciliation_path: str
+    reconciliation_passed: bool
+    failure_reason: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 class PaperDryRunComparisonStatus(StrEnum):
     PASSED = "passed"
     FAILED = "failed"

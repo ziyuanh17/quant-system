@@ -61,8 +61,8 @@ reconciliation timing gaps. The actionable-order safety remediation is now in
 the reviewed source history. The MacBook Air runtime clone has been synced and
 passed a preflight-only rehearsal, but the Mac Studio runtime cutover remains
 paused. Read-only broker readiness passed with zero reconciliation differences;
-a later controlled order-capable rehearsal still requires design review and
-explicit approval.
+the dedicated controlled order-capable rehearsal command is now in review, and
+its execution still requires explicit approval immediately before submission.
 
 SSH reaches the Mac Studio over Tailscale, but the MacBook Air public key is
 not yet authorized for user `mochifufu`.

@@ -82,8 +82,6 @@ authorized by this outcome.
 Before an order-capable rehearsal:
 
 1. review and commit the preparation and read-only evidence,
-2. decide how a rehearsal can avoid unintentionally covering or increasing the
-   retained AAPL short,
+2. review `docs/controlled_alpaca_paper_order_rehearsal_design.md`,
 3. define the exact expected order behavior and rollback boundary,
 4. obtain explicit approval immediately before any order-capable command.
-
