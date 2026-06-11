@@ -92,7 +92,7 @@ side discussions.
 | 74 | Alpaca Paper Dashboard Health Scope v1 | Done | Align scheduled Alpaca paper dashboard publishing so stale inactive paper/dry-run lanes do not make a successful Alpaca paper run look failed. |
 | 75 | Runtime Clone Sync v1 | Done | Synced reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
 | 76 | Next Scheduled Dashboard Review v1 | Done | Reviewed the next natural launchd run: the Alpaca paper workflow succeeded, reconciliation passed, and the corrected dashboard status was healthy with zero issues. |
-| 77 | Strategy Evaluation Harness Design v1 | Planned | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
+| 77 | Strategy Evaluation Harness Design v1 | In Review | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
 | 78 | Mac Studio Migration | In Review | Studio source/runtime bootstrap, state transfer, Codex readiness, no-order preflight, and reconciliation passed; controlled rehearsal and scheduler cutover remain. |
 | 79 | Actionable Alpaca Paper Order Incident Review | Done | Contain and document the first scheduled actionable paper order, its unexpected short position, and reconciliation failure. |
 | 80 | Alpaca Paper Actionable-Order Safety Remediation | Done | Add projected-position and open-order policies, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
@@ -112,6 +112,11 @@ non-protected symbol and current reference price. Candidate `F` passed
 read-only checks on June 10, but the market was closed; refresh its price and
 broker truth after the next market open before requesting immediate explicit
 approval. Keep scheduling unloaded and the Mac Studio runtime cutover paused.
+
+Research-only work may proceed in parallel through **Strategy Evaluation
+Harness Design v1**. Keep that work inside the development clone and do not
+connect candidate evaluation or promotion artifacts to paper, dry-run, live,
+workflow, scheduler, or runtime-clone execution.
 
 ## Status Convention
 
