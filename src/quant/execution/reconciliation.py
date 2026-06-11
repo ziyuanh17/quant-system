@@ -8,6 +8,7 @@ from quant.models.execution import (
     LiveOrderRecord,
     LiveOrderStatus,
     LiveReconciliationDifference,
+    LiveReconciliationObservation,
     LiveReconciliationReport,
     LiveReconciliationStatus,
     OrderSide,
@@ -137,13 +138,12 @@ def reconcile_live_state(
     differences.extend(
         _compare_live_fills(local=local_fills, broker=broker_fills)
     )
-    differences.extend(
-        _compare_live_snapshot(
-            local=local_snapshot,
-            broker=broker_snapshot,
-            tolerance=cash_tolerance,
-        )
+    snapshot_differences, observations = _compare_live_snapshot(
+        local=local_snapshot,
+        broker=broker_snapshot,
+        tolerance=cash_tolerance,
     )
+    differences.extend(snapshot_differences)
 
     return LiveReconciliationReport(
         broker_name=broker_snapshot.broker_name,
@@ -163,6 +163,7 @@ def reconcile_live_state(
             else LiveReconciliationStatus.FAILED
         ),
         differences=tuple(differences),
+        observations=tuple(observations),
     )
 
 
@@ -319,38 +320,49 @@ def _compare_live_snapshot(
     local: LiveAccountSnapshot | None,
     broker: LiveAccountSnapshot,
     tolerance: float,
-) -> list[LiveReconciliationDifference]:
+) -> tuple[
+    list[LiveReconciliationDifference],
+    list[LiveReconciliationObservation],
+]:
     if local is None:
-        return [
-            LiveReconciliationDifference(
-                field="account_snapshot",
-                local_value="missing",
-                broker_value=broker.id,
-                message="local account snapshot is missing",
-            )
-        ]
+        return (
+            [
+                LiveReconciliationDifference(
+                    field="account_snapshot",
+                    local_value="missing",
+                    broker_value=broker.id,
+                    message="local account snapshot is missing",
+                )
+            ],
+            [],
+        )
 
     differences: list[LiveReconciliationDifference] = []
-    for field in ("cash", "buying_power"):
-        local_value = getattr(local, field)
-        broker_value = getattr(broker, field)
-        if abs(local_value - broker_value) > tolerance:
-            differences.append(
-                LiveReconciliationDifference(
-                    field=field,
-                    local_value=f"{local_value:.6f}",
-                    broker_value=f"{broker_value:.6f}",
-                    message="account numeric value differs",
-                )
+    observations: list[LiveReconciliationObservation] = []
+    if abs(local.cash - broker.cash) > tolerance:
+        differences.append(
+            LiveReconciliationDifference(
+                field="cash",
+                local_value=f"{local.cash:.6f}",
+                broker_value=f"{broker.cash:.6f}",
+                message="account cash differs",
             )
-    differences.extend(
-        _compare_live_positions(
-            local=local.positions,
-            broker=broker.positions,
-            tolerance=tolerance,
         )
+    _observe_live_numeric_value(
+        field="buying_power",
+        local_value=local.buying_power,
+        broker_value=broker.buying_power,
+        tolerance=tolerance,
+        observations=observations,
     )
-    return differences
+    position_differences, position_observations = _compare_live_positions(
+        local=local.positions,
+        broker=broker.positions,
+        tolerance=tolerance,
+    )
+    differences.extend(position_differences)
+    observations.extend(position_observations)
+    return differences, observations
 
 
 def _compare_live_positions(
@@ -358,8 +370,12 @@ def _compare_live_positions(
     local: tuple[Position, ...],
     broker: tuple[Position, ...],
     tolerance: float,
-) -> list[LiveReconciliationDifference]:
+) -> tuple[
+    list[LiveReconciliationDifference],
+    list[LiveReconciliationObservation],
+]:
     differences: list[LiveReconciliationDifference] = []
+    observations: list[LiveReconciliationObservation] = []
     local_by_symbol = {position.symbol: position for position in local}
     broker_by_symbol = {position.symbol: position for position in broker}
     symbols = sorted(local_by_symbol.keys() | broker_by_symbol.keys())
@@ -376,7 +392,7 @@ def _compare_live_positions(
                 )
             )
             continue
-        differences.extend(
+        position_differences, position_observations = (
             _compare_live_position_values(
                 symbol=symbol,
                 local=local_position,
@@ -384,7 +400,9 @@ def _compare_live_positions(
                 tolerance=tolerance,
             )
         )
-    return differences
+        differences.extend(position_differences)
+        observations.extend(position_observations)
+    return differences, observations
 
 
 def _compare_live_position_values(
@@ -393,8 +411,12 @@ def _compare_live_position_values(
     local: Position,
     broker: Position,
     tolerance: float,
-) -> list[LiveReconciliationDifference]:
+) -> tuple[
+    list[LiveReconciliationDifference],
+    list[LiveReconciliationObservation],
+]:
     differences: list[LiveReconciliationDifference] = []
+    observations: list[LiveReconciliationObservation] = []
     if local.quantity != broker.quantity:
         differences.append(
             LiveReconciliationDifference(
@@ -404,19 +426,43 @@ def _compare_live_position_values(
                 message="position quantity differs",
             )
         )
-    for field in ("average_price", "last_price"):
-        local_value = getattr(local, field)
-        broker_value = getattr(broker, field)
-        if abs(local_value - broker_value) > tolerance:
-            differences.append(
-                LiveReconciliationDifference(
-                    field=f"positions.{symbol}.{field}",
-                    local_value=f"{local_value:.6f}",
-                    broker_value=f"{broker_value:.6f}",
-                    message="position numeric value differs",
-                )
+    if abs(local.average_price - broker.average_price) > tolerance:
+        differences.append(
+            LiveReconciliationDifference(
+                field=f"positions.{symbol}.average_price",
+                local_value=f"{local.average_price:.6f}",
+                broker_value=f"{broker.average_price:.6f}",
+                message="position average price differs",
             )
-    return differences
+        )
+    _observe_live_numeric_value(
+        field=f"positions.{symbol}.last_price",
+        local_value=local.last_price,
+        broker_value=broker.last_price,
+        tolerance=tolerance,
+        observations=observations,
+    )
+    return differences, observations
+
+
+def _observe_live_numeric_value(
+    *,
+    field: str,
+    local_value: float,
+    broker_value: float,
+    tolerance: float,
+    observations: list[LiveReconciliationObservation],
+) -> None:
+    if abs(local_value - broker_value) <= tolerance:
+        return
+    observations.append(
+        LiveReconciliationObservation(
+            field=field,
+            local_value=f"{local_value:.6f}",
+            broker_value=f"{broker_value:.6f}",
+            message="volatile market-derived value changed between snapshots",
+        )
+    )
 
 
 def _live_order_key(record: LiveOrderRecord) -> str:

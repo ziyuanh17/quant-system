@@ -560,6 +560,12 @@ def live_fake_reconcile(
             f"[{difference.field}] local={difference.local_value} "
             f"broker={difference.broker_value}: {difference.message}"
         )
+    typer.echo(f"Observations: {report.observation_count}")
+    for observation in report.observations:
+        typer.echo(
+            f"[{observation.field}] local={observation.local_value} "
+            f"broker={observation.broker_value}: {observation.message}"
+        )
     typer.echo(f"Report: {report_path}")
 
     if not report.passed:
@@ -720,7 +726,9 @@ def live_alpaca_paper_rehearsal_order(
     ] = 1,
     cash_tolerance: Annotated[
         float,
-        typer.Option(help="Allowed reconciliation cash difference."),
+        typer.Option(
+            help="Allowed hard numeric reconciliation difference."
+        ),
     ] = 0.01,
     order_output_dir: Annotated[
         Path,
@@ -888,7 +896,9 @@ def live_alpaca_paper_reconcile(
     ] = Path("data/live/reconciliation/latest.json"),
     cash_tolerance: Annotated[
         float,
-        typer.Option(help="Allowed cash and price difference."),
+        typer.Option(
+            help="Allowed hard numeric reconciliation difference."
+        ),
     ] = 0.01,
 ) -> None:
     """Reconcile local live artifacts against Alpaca paper broker truth."""
@@ -920,6 +930,12 @@ def live_alpaca_paper_reconcile(
         typer.echo(
             f"[{difference.field}] local={difference.local_value} "
             f"broker={difference.broker_value}: {difference.message}"
+        )
+    typer.echo(f"Observations: {report.observation_count}")
+    for observation in report.observations:
+        typer.echo(
+            f"[{observation.field}] local={observation.local_value} "
+            f"broker={observation.broker_value}: {observation.message}"
         )
     typer.echo(f"Report: {report_path}")
 

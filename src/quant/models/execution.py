@@ -298,6 +298,15 @@ class LiveReconciliationDifference(FrozenModel):
     message: str
 
 
+class LiveReconciliationObservation(FrozenModel):
+    """Non-failing comparison evidence for values expected to move."""
+
+    field: str
+    local_value: str
+    broker_value: str
+    message: str
+
+
 class LiveReconciliationReport(FrozenModel):
     """Read-only comparison between local live artifacts and broker truth."""
 
@@ -313,6 +322,7 @@ class LiveReconciliationReport(FrozenModel):
     broker_position_count: int = Field(ge=0)
     status: LiveReconciliationStatus
     differences: tuple[LiveReconciliationDifference, ...] = ()
+    observations: tuple[LiveReconciliationObservation, ...] = ()
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @property
@@ -322,6 +332,10 @@ class LiveReconciliationReport(FrozenModel):
     @property
     def difference_count(self) -> int:
         return len(self.differences)
+
+    @property
+    def observation_count(self) -> int:
+        return len(self.observations)
 
 
 class LiveRehearsalStatus(StrEnum):

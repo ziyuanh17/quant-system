@@ -10,6 +10,7 @@ from quant.models.execution import (
     LiveOrderRecord,
     LiveOrderStatus,
     LiveReconciliationDifference,
+    LiveReconciliationObservation,
     LiveReconciliationReport,
     LiveReconciliationStatus,
     OrderRequest,
@@ -122,6 +123,16 @@ def test_live_reconciliation_report_tracks_differences(tmp_path) -> None:
                 message="broker has a fill missing from local artifacts",
             ),
         ),
+        observations=(
+            LiveReconciliationObservation(
+                field="positions.AAPL.last_price",
+                local_value="100.000000",
+                broker_value="101.000000",
+                message=(
+                    "volatile market-derived value changed between snapshots"
+                ),
+            ),
+        ),
     )
 
     path = write_live_reconciliation_report(
@@ -132,4 +143,5 @@ def test_live_reconciliation_report_tracks_differences(tmp_path) -> None:
 
     assert not loaded.passed
     assert loaded.difference_count == 1
+    assert loaded.observation_count == 1
     assert loaded.differences[0].field == "fills"

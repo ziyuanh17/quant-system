@@ -106,6 +106,7 @@ side discussions.
 | 88 | Strategy Evaluation Harness Foundation v1 | Done | Add typed candidate, lineage, split, scenario, and trial models plus adapters that normalize existing strategies into a shared research simulation input. |
 | 89 | Quant System Web App Design v1 | In Review | Design a private read-only operations, accounts, research, incident, and knowledge console with a dedicated roadmap and automatic-decision traces, without adding trading controls. |
 | 90 | Immutable Research Artifacts and Trial Ledger v1 | In Review | Add content-derived evaluation IDs, exclusive immutable manifests, checksum verification, and an append-only trial ledger. |
+| 91 | Market-Hours Live Reconciliation Policy v1 | In Review | Preserve buying-power and current-mark movement as non-failing observations while keeping orders, fills, cash, position quantity, and average price as hard reconciliation gates. |
 
 ## Current Recommendation
 

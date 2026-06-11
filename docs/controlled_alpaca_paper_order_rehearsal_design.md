@@ -250,3 +250,32 @@ protected position=AAPL=-1
 
 Do not reuse the `$14.30` closed-market price as the execution reference
 without refreshing it.
+
+## June 11 Market-Hours Readiness Outcome
+
+Read-only readiness was repeated on June 11, 2026 while the market was open:
+
+```text
+protected position=AAPL:-1
+F position present=false
+open orders=0
+F tradable=true
+fresh F price=$14.36
+scheduler=unloaded
+```
+
+The order-capable rehearsal did not proceed because reconciliation failed
+twice on values that moved between sequential market-hours reads:
+
+```text
+buying_power
+positions.AAPL.last_price
+```
+
+Cash, open orders, fills, position presence, and position quantity remained
+consistent. This exposed a reconciliation-policy gap rather than authorizing a
+tolerance bypass. The rehearsal remains blocked until the reviewed
+market-hours reconciliation policy is committed, promoted to the runtime
+clone, and verified read-only.
+
+See `docs/market_hours_live_reconciliation_policy.md`.
