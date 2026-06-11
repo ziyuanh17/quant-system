@@ -249,7 +249,7 @@ class OverviewSource(FrozenModel):
 class OverviewResponse(FrozenModel):
     """Response for GET /api/v1/overview."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     system: OverviewSystem
     account_lanes: tuple[AccountLane, ...]
     latest_decisions: dict[Environment, DecisionTrace | None] = Field(
@@ -327,7 +327,7 @@ class AccountSummary(FrozenModel):
 class AccountsListResponse(FrozenModel):
     """Response for GET /api/v1/accounts."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     accounts: tuple[AccountSummary, ...]
 
 
@@ -349,7 +349,7 @@ class ResearchFamilySummary(FrozenModel):
 class ResearchFamiliesResponse(FrozenModel):
     """Response for GET /api/v1/research/families."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     families: tuple[ResearchFamilySummary, ...]
 
 
@@ -377,7 +377,7 @@ class ResearchCandidateDetail(FrozenModel):
 class ResearchCandidateResponse(FrozenModel):
     """Response for GET /api/v1/research/candidates/{candidate-id}."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     candidate: ResearchCandidateDetail
 
 
@@ -433,7 +433,7 @@ class IncidentDetail(FrozenModel):
 class IncidentsListResponse(FrozenModel):
     """Response for GET /api/v1/incidents."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     active: tuple[IncidentSummary, ...]
     resolved: tuple[IncidentSummary, ...]
 
@@ -497,7 +497,7 @@ class DocDetail(FrozenModel):
 class DocsListResponse(FrozenModel):
     """Response for GET /api/v1/docs."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     docs: tuple[DocSummary, ...]
     collections: tuple[DocCollection, ...]
 
@@ -505,7 +505,7 @@ class DocsListResponse(FrozenModel):
 class DocsDetailResponse(FrozenModel):
     """Response for GET /api/v1/docs/{slug}."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     document: DocDetail
 
 
@@ -531,7 +531,7 @@ class SystemComponent(FrozenModel):
 class SystemComponentsResponse(FrozenModel):
     """Response for GET /api/v1/system/components."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     components: tuple[SystemComponent, ...]
 
 
@@ -543,7 +543,7 @@ class SystemComponentsResponse(FrozenModel):
 class ApiRootResponse(FrozenModel):
     """Response for GET /api/v1 — schema discovery."""
 
-    response_schema: SchemaVersion
+    response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     endpoints: dict[str, str] = Field(
         default_factory=lambda: {
             "overview": "/api/v1/overview",

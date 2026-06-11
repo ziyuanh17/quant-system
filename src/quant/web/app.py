@@ -15,54 +15,59 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from quant.api.models import (
-    ApiRootResponse,
+from quant.api.auth import (
+    AccessLoggingMiddleware,
+    SecureHeadersMiddleware,
 )
+from quant.api.routes import router as api_router
 
-# Directory containing this file — used for static file paths.
+# Directory containing this file -- used for static file paths.
 _PACKAGE_DIR = Path(__file__).resolve().parent
 _TEMPLATE_DIR = _PACKAGE_DIR / "templates"
 _STATIC_DIR = _PACKAGE_DIR / "static"
 
 
 def _create_app() -> FastAPI:
-     """Create and configure the FastAPI application."""
+    """Create and configure the FastAPI application."""
     app = FastAPI(
         title="Quant System Console",
         description=(
-             "Read-only operations, research, and knowledge console for "
-             "the quant-system trading platform."
-         ),
+            "Read-only operations, research, and knowledge console for "
+            "the quant-system trading platform."
+        ),
         version="0.1.0",
-     )
+    )
 
-      # --- API routes ---
+    # -- Middleware (order matters: outer to inner) --
 
-     @app.get("/api/v1", response_model=ApiRootResponse)
-    async def api_root() -> ApiRootResponse:
-        return ApiRootResponse()
+    app.add_middleware(AccessLoggingMiddleware)
+    app.add_middleware(SecureHeadersMiddleware)
 
-     # --- HTML routes ---
+    # -- API routes --
 
-     @app.get("/")
+    app.include_router(api_router)
+
+    # -- HTML routes --
+
+    @app.get("/")
     async def index():
         return FileResponse(_STATIC_DIR / "index.html")
 
-     @app.get("/overview")
+    @app.get("/overview")
     async def overview_page():
         return FileResponse(_TEMPLATE_DIR / "overview.html")
 
-     @app.get("/health")
+    @app.get("/health")
     async def health_page():
         return FileResponse(_TEMPLATE_DIR / "overview.html")
 
-      # --- Static files ---
+    # -- Static files --
 
     app.mount(
-         "/static",
+        "/static",
         StaticFiles(directory=str(_STATIC_DIR)),
         name="static",
-     )
+    )
 
     return app
 
