@@ -25,7 +25,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function() {
       "use strict";
      function fmt(d) { if (!d) return "-"; return new Date(d).toLocaleString(); }
@@ -47,7 +47,9 @@
                if (detail && content && data.candidate) {
                     detail.style.display = "block";
                     document.getElementById("families-table")?.closest(".card").style.display = "none";
-                    content.innerHTML = '<pre>' + JSON.stringify(data.candidate, null, 2) + '</pre>';
+                    var pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(data.candidate, null, 2);
+                    content.replaceChildren(pre);
                }
           }).catch(function() {});
      }

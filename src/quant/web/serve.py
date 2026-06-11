@@ -5,10 +5,19 @@ Intended for local development and Mac Studio deployment.
 
 """
 
-import os
-import sys
+import ipaddress
 
 import uvicorn
+
+
+def _is_loopback_host(host: str) -> bool:
+    """Return whether a bind host is restricted to the local machine."""
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 def serve(
@@ -29,8 +38,13 @@ def serve(
     reload : bool
         Enable auto-reload for development. Default ``False``.
 
-     """
-    api_key_set = os.environ.get("QUANT_CONSOLE_API_KEY") is not None
+    """
+    if not _is_loopback_host(host):
+        raise ValueError(
+            "The console may only bind to a loopback address. "
+            "Use a local Tailscale or authenticated reverse-proxy endpoint "
+            "for remote access."
+        )
 
     uvicorn.run(
         "quant.web.app:app",

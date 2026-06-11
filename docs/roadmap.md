@@ -102,20 +102,20 @@ side discussions.
 | 84 | Read-Only Alpaca Broker Readiness Rehearsal | Done | Verified credentials, account state, open orders, AAPL asset metadata, and reconciliation without submitting or modifying an order. |
 | 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | Done | Design a dedicated one-share buy rehearsal command that pins the retained AAPL short and fails closed before any unexpected portfolio change. |
 | 86 | Controlled Alpaca Paper Order Rehearsal Command | Done | Implemented and tested the dedicated rehearsal command and typed result artifact without executing it against Alpaca. |
-| 87 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | Next | Execute the reviewed command only after explicit approval immediately before the order-capable command. |
+| 87 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | In Review | The approved one-share F paper buy filled, AAPL remained exactly -1, no open orders remained, and post-order reconciliation passed with zero differences. |
 | 88 | Strategy Evaluation Harness Foundation v1 | Done | Add typed candidate, lineage, split, scenario, and trial models plus adapters that normalize existing strategies into a shared research simulation input. |
 | 89 | Quant System Web App Design v1 | In Review | Design a private read-only operations, accounts, research, incident, and knowledge console with a dedicated roadmap and automatic-decision traces, without adding trading controls. |
 | 90 | Immutable Research Artifacts and Trial Ledger v1 | In Review | Add content-derived evaluation IDs, exclusive immutable manifests, checksum verification, and an append-only trial ledger. |
 | 91 | Market-Hours Live Reconciliation Policy v1 | In Review | Preserve buying-power and current-mark movement as non-failing observations while keeping orders, fills, cash, position quantity, and average price as hard reconciliation gates. |
+| 92 | Mac Studio Scheduler Activation Readiness Review | In Review | Record the successful controlled rehearsal, verify Studio runtime activation prerequisites, and preserve a separate explicit scheduler activation gate. |
 
 ## Current Recommendation
 
-The current milestone is **Controlled Alpaca Paper Order-Capable Rehearsal
-Execution**. Review the dedicated command and its tests, then select a
-non-protected symbol and current reference price. Candidate `F` passed
-read-only checks on June 10, but the market was closed; refresh its price and
-broker truth after the next market open before requesting immediate explicit
-approval. Keep scheduling unloaded and the Mac Studio runtime cutover paused.
+The controlled Alpaca paper order-capable rehearsal passed on the Mac Studio.
+The current milestone is **Mac Studio Scheduler Activation Readiness Review**.
+Review and commit the rehearsal evidence and activation readiness record, then
+decide separately whether to load the Studio launchd schedule. Do not close the
+new `F=+1` paper position or load the scheduler without separate approval.
 
 Research-only work may proceed in parallel through **Strategy Evaluation
 Harness Design v1**. Keep that work inside the development clone and do not

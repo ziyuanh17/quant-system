@@ -21,8 +21,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
 (function() {
       "use strict";
      function renderCollections(collections) {
@@ -68,7 +67,7 @@
                var d = data.document;
                var html = '<h2>' + d.title + '</h2>';
                html += '<p class="text-secondary">' + d.docType + ' · ' + d.status + '</p>';
-               html += '<div id="doc-content">' + (marked ? marked.parse(d.renderedContent) : '<pre>' + d.renderedContent + '</pre>') + '</div>';
+               html += '<div id="doc-content">' + d.renderedContent + '</div>';
                main.innerHTML = html;
           }).catch(function() {});
      }

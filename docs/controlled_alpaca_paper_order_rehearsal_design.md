@@ -279,3 +279,50 @@ market-hours reconciliation policy is committed, promoted to the runtime
 clone, and verified read-only.
 
 See `docs/market_hours_live_reconciliation_policy.md`.
+
+## June 11 Execution Outcome
+
+After the market-hours reconciliation remediation was committed and promoted
+to the Mac Studio runtime clone, the read-only activation gates passed:
+
+```text
+runtime commit=4853789
+scheduler=unloaded
+preflight-only wrapper=passed without broker submission
+protected position=AAPL:-1
+F position present=false
+open orders=0
+reconciliation=passed
+reconciliation differences=0
+fresh F reference price=$14.315
+```
+
+The user then gave immediate explicit approval for the exact bounded
+rehearsal:
+
+```text
+symbol=F
+reference price=14.315
+maximum order notional=400
+protected position=AAPL=-1
+```
+
+The dedicated command submitted exactly one Alpaca paper market buy for `F`.
+The order filled at an average price of `$14.33`. The protected AAPL short
+remained exactly `-1`, the resulting F position was exactly `+1`, no open
+orders remained, and post-order reconciliation passed with zero differences
+and zero observations.
+
+Evidence:
+
+```text
+client order ID=codex-rehearsal-F-20260611T1557Z
+rehearsal ID=a4b5f7a6-6c45-4742-b93b-80175382133f
+order artifact=data/live/orders/6f964a32-68c8-438b-a920-4ef481663d6a.json
+fill artifact=data/live/fills/9995f91d-a94a-4d8f-b865-f98b3c25ad18.json
+reconciliation ID=28476853-37d9-4dc7-bccf-16ccb3fc264f
+```
+
+No cleanup order was submitted and the scheduler remains unloaded. Closing
+`F=+1` or activating the recurring scheduler is a separate decision requiring
+separate approval.

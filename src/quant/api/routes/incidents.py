@@ -1,7 +1,7 @@
 """Incident API endpoints."""
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
@@ -43,9 +43,9 @@ def _parse_incident_doc(filepath):
         "resolvedAt": detected_at,
         "impactedEnvironments": ["alpaca-paper"],
         "unresolvedActions": 0 if is_resolved else 1,
-        "description": text[:500].replace("\n", " "),
+        "description": "Historical incident document",
         "timeline": [],
-        "linkedEvidence": [str(filepath)],
+        "linkedEvidence": [f"doc:{filepath.stem}"],
         "linkedDocument": str(filepath.name),
         "unresolvedActionItems": [],
     }
@@ -54,7 +54,7 @@ def _parse_incident_doc(filepath):
 @router.get("/", dependencies=[Depends(require_api_key)])
 async def list_incidents(status: str = "all") -> dict:
     """List active and resolved incidents."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     active = []
     resolved = []
 
@@ -89,14 +89,17 @@ async def list_incidents(status: str = "all") -> dict:
 @router.get("/{incident_id}", dependencies=[Depends(require_api_key)])
 async def get_incident(incident_id: str) -> dict:
     """Detail for one incident."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     filepath = _DOCS_DIR / f"{incident_id}.md"
 
     if filepath.exists():
         incident = _parse_incident_doc(filepath)
         if incident:
             return {
-                "schema": {"schemaVersion": "v1", "generatedAt": now.isoformat()},
+                "schema": {
+                    "schemaVersion": "v1",
+                    "generatedAt": now.isoformat(),
+                },
                 "incident": incident,
             }
 

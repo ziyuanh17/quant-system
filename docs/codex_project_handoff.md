@@ -38,11 +38,11 @@ reviewed source changes through GitHub before updating the runtime clone.
 ## Current Source State
 
 - Git branch: `main`
-- GitHub source commit used for Studio bootstrap: `3f60b4f`
+- Current reviewed GitHub source commit: `4853789`
 - Repository: `https://github.com/ziyuanh17/quant-system`
-- Both Studio clones were created from GitHub at the same commit.
-- Studio development and runtime clones each passed `make check` with
-  212 tests.
+- The Studio runtime clone is at `4853789`, matching `origin/main`.
+- The market-hours reconciliation remediation passed focused runtime tests and
+  a live read-only reconciliation before the controlled rehearsal.
 
 The MacBook Air and Studio development clone may contain uncommitted
 documentation updates from the migration review. Inspect Git status before
@@ -50,43 +50,31 @@ making further changes.
 
 ## Current Broker State
 
-As of the June 10, 2026 Studio read-only verification:
+As of the June 11, 2026 controlled Studio rehearsal review:
 
 ```text
 broker=alpaca-paper
-cash=100290.73
-buying_power=399643.06
-positions=AAPL:-1
+positions=AAPL:-1,F:+1
 open_orders=0
 reconciliation=passed
 reconciliation_differences=0
 ```
 
-The retained AAPL short is intentional and must remain exactly `-1` during the
-controlled rehearsal.
+The retained AAPL short is intentional and remains exactly `-1`. The new
+one-share F long is the expected result of the successful controlled
+rehearsal. Do not close either position automatically.
 
 ## Current Operational Boundary
 
 - Both Air and Studio launchd jobs are unloaded.
 - The Studio-local plist is valid and still has `Disabled=true`.
 - The Studio passed a preflight-only wrapper run.
-- No order was submitted during migration.
-- The next order-capable action is milestone 87: the dedicated controlled
-  Alpaca paper rehearsal.
-
-The provisional rehearsal candidate is `F`. After the regular market opens,
-refresh account truth, open orders, asset metadata, and the current price.
-Then request immediate explicit approval containing:
-
-```text
-symbol=F
-reference price=<fresh current price>
-maximum order notional=400
-protected position=AAPL=-1
-```
-
-Do not reuse the prior closed-market `$14.30` reference price without
-refreshing it.
+- Milestone 87 passed: the approved one-share F paper buy filled at an average
+  price of `$14.33`, AAPL remained `-1`, and reconciliation passed with zero
+  differences.
+- No cleanup order was submitted.
+- The next operational decision is whether to activate the Studio recurring
+  launchd schedule. Activation requires separate explicit approval.
 
 ## Verification Commands
 
@@ -128,9 +116,10 @@ The expected result before scheduler cutover is `service not found`.
 
 ## Remaining Migration Work
 
-1. Review the Studio-controlled order rehearsal after market open.
-2. Execute it only after immediate explicit approval.
-3. Review resulting positions, artifacts, reconciliation, and dashboard.
-4. Decide separately whether to load the Studio launchd schedule.
-5. Observe the first natural Studio scheduled run before closing migration.
-6. Configure Studio GitHub push authentication before development pushes.
+1. Review and commit the successful rehearsal evidence and scheduler
+   activation readiness record.
+2. Promote that reviewed documentation to the runtime clone.
+3. Decide separately whether to load the Studio launchd schedule.
+4. Observe the first natural Studio scheduled run before closing migration.
+5. Decide separately whether the expected `F=+1` rehearsal position should
+   remain or be closed.

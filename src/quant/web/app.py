@@ -11,9 +11,10 @@ mutation is possible through the web console.
 
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from quant.api.auth import (
     AccessLoggingMiddleware,
@@ -24,6 +25,7 @@ from quant.api.routes import router as api_router
 _PACKAGE_DIR = Path(__file__).resolve().parent
 _TEMPLATE_DIR = _PACKAGE_DIR / "templates"
 _STATIC_DIR = _PACKAGE_DIR / "static"
+_TEMPLATES = Jinja2Templates(directory=str(_TEMPLATE_DIR))
 
 
 def _create_app() -> FastAPI:
@@ -32,7 +34,7 @@ def _create_app() -> FastAPI:
         title="Quant System Console",
         description=(
             "Read-only operations, research, and knowledge console for "
-            "the quant-system trading platform.",
+            "the quant-system trading platform."
         ),
         version="0.1.0",
     )
@@ -42,49 +44,59 @@ def _create_app() -> FastAPI:
 
     app.include_router(api_router)
 
+    def render_page(request: Request, template: str, active: str):
+        return _TEMPLATES.TemplateResponse(
+            request=request,
+            name=template,
+            context={
+                "active": active,
+                "csp_nonce": request.state.csp_nonce,
+            },
+        )
+
     @app.get("/")
-    async def index():
-        return FileResponse(_STATIC_DIR / "index.html")
+    async def index() -> RedirectResponse:
+        return RedirectResponse("/overview")
 
     @app.get("/overview")
-    async def overview_page():
-        return FileResponse(_TEMPLATE_DIR / "overview.html")
+    async def overview_page(request: Request):
+        return render_page(request, "overview.html", "overview")
 
     @app.get("/accounts")
-    async def accounts_page():
-        return FileResponse(_TEMPLATE_DIR / "accounts.html")
+    async def accounts_page(request: Request):
+        return render_page(request, "accounts.html", "accounts")
 
     @app.get("/health")
-    async def health_page():
-        return FileResponse(_TEMPLATE_DIR / "overview.html")
+    async def health_page(request: Request):
+        return render_page(request, "overview.html", "overview")
 
     @app.get("/operations")
-    async def operations_page():
-         return FileResponse(_TEMPLATE_DIR / "operations.html")
+    async def operations_page(request: Request):
+        return render_page(request, "operations.html", "operations")
 
     @app.get("/decisions")
-    async def decisions_page():
-         return FileResponse(_TEMPLATE_DIR / "decisions.html")
+    async def decisions_page(request: Request):
+        return render_page(request, "decisions.html", "decisions")
 
     @app.get("/knowledge")
-    async def knowledge_page():
-         return FileResponse(_TEMPLATE_DIR / "knowledge.html")
+    async def knowledge_page(request: Request):
+        return render_page(request, "knowledge.html", "knowledge")
 
     @app.get("/system")
-    async def system_page():
-         return FileResponse(_TEMPLATE_DIR / "system.html")
+    async def system_page(request: Request):
+        return render_page(request, "system.html", "system")
 
     @app.get("/incidents")
-    async def incidents_page():
-         return FileResponse(_TEMPLATE_DIR / "incidents.html")
+    async def incidents_page(request: Request):
+        return render_page(request, "incidents.html", "incidents")
 
     @app.get("/history")
-    async def history_page():
-        return FileResponse(_TEMPLATE_DIR / "history.html")
+    async def history_page(request: Request):
+        return render_page(request, "history.html", "history")
 
     @app.get("/research")
-    async def research_page():
-         return FileResponse(_TEMPLATE_DIR / "research.html")
+    async def research_page(request: Request):
+        return render_page(request, "research.html", "research")
 
     app.mount(
         "/static",

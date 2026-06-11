@@ -3,6 +3,52 @@
 (function () {
      "use strict";
 
+     var nativeFetch = window.fetch.bind(window);
+     var authPrompt = null;
+
+     window.quantEscapeHtml = function (value) {
+          return String(value ?? "").replace(/[&<>"']/g, function (character) {
+               return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#039;"
+               }[character];
+          });
+     };
+
+     window.fetch = function (resource, options) {
+          var requestOptions = Object.assign({}, options || {});
+          var headers = new Headers(requestOptions.headers || {});
+          var key = sessionStorage.getItem("quantConsoleApiKey");
+          if (key && String(resource).startsWith("/api/v1/")) {
+               headers.set("Authorization", "Bearer " + key);
+          }
+          requestOptions.headers = headers;
+
+          return nativeFetch(resource, requestOptions).then(function (response) {
+               if (response.status !== 401 || !String(resource).startsWith("/api/v1/")) {
+                    return response;
+               }
+               if (!authPrompt) {
+                    authPrompt = Promise.resolve(
+                         window.prompt("Quant console API key")
+                    ).finally(function () {
+                         authPrompt = null;
+                    });
+               }
+               return authPrompt.then(function (enteredKey) {
+                    if (!enteredKey) {
+                         return response;
+                    }
+                    sessionStorage.setItem("quantConsoleApiKey", enteredKey);
+                    headers.set("Authorization", "Bearer " + enteredKey);
+                    return nativeFetch(resource, requestOptions);
+               });
+          });
+     };
+
      /* Status badge rendering */
 
      function statusBadge(state) {

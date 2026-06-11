@@ -25,7 +25,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function() {
       "use strict";
      function fmt(d) { if (!d) return "-"; return new Date(d).toLocaleString(); }
@@ -51,7 +51,9 @@
                if (card && content) {
                     card.style.display = "block";
                     document.getElementById("decisions-page")?.querySelector(".card:nth-child(2)")?.style.display === "block" && (document.querySelector(".decisions-page .card:first-child").style.display = "none");
-                    content.innerHTML = '<pre>' + JSON.stringify(data.decision, null, 2) + '</pre>';
+                    var pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(data.decision, null, 2);
+                    content.replaceChildren(pre);
                }
           }).catch(function() {});
      }

@@ -27,7 +27,9 @@ router = APIRouter(
 )
 router.include_router(root_router, tags=["root"])
 router.include_router(accounts_router, prefix="/accounts", tags=["accounts"])
-router.include_router(operations_router, prefix="/operations", tags=["operations"])
+router.include_router(
+    operations_router, prefix="/operations", tags=["operations"]
+)
 router.include_router(decisions_router, prefix="/decisions", tags=["decisions"])
 router.include_router(docs_router, prefix="/docs", tags=["docs"])
 router.include_router(system_router, prefix="/system", tags=["system"])

@@ -13,13 +13,23 @@ Each response model includes:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 from quant.models.base import FrozenModel
+
+
+class ApiModel(FrozenModel):
+    """Base for browser-facing models serialized with camelCase aliases."""
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -48,7 +58,7 @@ class Severity(StrEnum):
     ERROR = "error"
 
 
-class Status(FrozenModel):
+class Status(ApiModel):
     """One status observation with freshness metadata.
 
     Every displayed status must carry these fields so the user can
@@ -66,11 +76,11 @@ class Status(FrozenModel):
     message: str = ""
 
 
-class SchemaVersion(FrozenModel):
+class SchemaVersion(ApiModel):
     """Schema version and generation metadata for every API response."""
 
     schema_version: str = "v1"
-    generated_at: datetime = Field(default_factory=lambda: datetime.now())
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # ---------------------------------------------------------------------------
@@ -85,19 +95,19 @@ class Environment(StrEnum):
     REAL_MONEY = "real-money"
 
 
-class AccountLane(FrozenModel):
+class AccountLane(ApiModel):
     """One trading environment lane on the Overview page."""
 
     environment: Environment
     connection: Status
-    permission: str  # e.g. "simulated", "record only", "paper orders", "trading enabled"
+    permission: str
     reconciliation: Status
     open_orders: int = 0
     positions: int = 0
     freshness: Status
 
 
-class AccountDetailPermission(FrozenModel):
+class AccountDetailPermission(ApiModel):
     """Identity and permission for one account."""
 
     environment: Environment
@@ -111,7 +121,7 @@ class AccountDetailPermission(FrozenModel):
     last_snapshot_at: datetime | None = None
 
 
-class AccountDetailRisk(FrozenModel):
+class AccountDetailRisk(ApiModel):
     """Risk and exposure metrics for one account."""
 
     gross_exposure: float | None = None
@@ -125,7 +135,7 @@ class AccountDetailRisk(FrozenModel):
     unavailable_borrow_warning: bool = False
 
 
-class AccountDetailPerformance(FrozenModel):
+class AccountDetailPerformance(ApiModel):
     """Performance metrics for one account."""
 
     equity: float | None = None
@@ -139,7 +149,7 @@ class AccountDetailPerformance(FrozenModel):
     benchmark_comparison: float | None = None
 
 
-class AccountDetail(FrozenModel):
+class AccountDetail(ApiModel):
     """Full account view for one environment (Accounts page)."""
 
     permission: AccountDetailPermission
@@ -149,7 +159,7 @@ class AccountDetail(FrozenModel):
     open_orders: list[dict[str, Any]] = Field(default_factory=list)
     recent_fills: list[dict[str, Any]] = Field(default_factory=list)
     reconciliation: Status | None = None
-    latest_decision: "DecisionTrace | None" = None
+    latest_decision: DecisionTrace | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -174,7 +184,7 @@ class DecisionOutcome(StrEnum):
     RECONCILIATION_FAILED = "reconciliation_failed"
 
 
-class RiskGateResult(FrozenModel):
+class RiskGateResult(ApiModel):
     """One risk or safety gate with pass/fail evidence."""
 
     name: str
@@ -182,7 +192,7 @@ class RiskGateResult(FrozenModel):
     evidence: str = ""
 
 
-class DecisionTrace(FrozenModel):
+class DecisionTrace(ApiModel):
     """Complete trace of one automatic evaluation decision.
 
     Every step from trigger through reconciliation is recorded so the
@@ -220,7 +230,7 @@ class DecisionTrace(FrozenModel):
 # ---------------------------------------------------------------------------
 
 
-class OverviewSystem(FrozenModel):
+class OverviewSystem(ApiModel):
     """System-level status for the Overview page."""
 
     server_status: Status
@@ -232,21 +242,21 @@ class OverviewSystem(FrozenModel):
     next_action: str | None = None
 
 
-class OverviewResearchQueue(FrozenModel):
+class OverviewResearchQueue(ApiModel):
     """Research promotion queue on the Overview page."""
 
     candidates_pending: int = 0
     candidates: list[dict[str, Any]] = Field(default_factory=list)
 
 
-class OverviewSource(FrozenModel):
+class OverviewSource(ApiModel):
     """Source/configuration version on the Overview page."""
 
     source_commit: str | None = None
     config_version: str | None = None
 
 
-class OverviewResponse(FrozenModel):
+class OverviewResponse(ApiModel):
     """Response for GET /api/v1/overview."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
@@ -272,7 +282,7 @@ class OverviewResponse(FrozenModel):
 # ---------------------------------------------------------------------------
 
 
-class PaginatedResponse(FrozenModel):
+class PaginatedResponse(ApiModel):
     """Mixin for paginated list responses."""
 
     total: int = 0
@@ -287,7 +297,7 @@ class OperationsRunsResponse(PaginatedResponse):
     run_type: str = "all"  # "workflow", "scheduled", or "all"
 
 
-class OperationsEvent(FrozenModel):
+class OperationsEvent(ApiModel):
     """One operational event for the events timeline."""
 
     timestamp: datetime
@@ -308,7 +318,7 @@ class OperationsEventsResponse(PaginatedResponse):
 # ---------------------------------------------------------------------------
 
 
-class AccountSummary(FrozenModel):
+class AccountSummary(ApiModel):
     """Compact account summary for the accounts list."""
 
     environment: Environment
@@ -324,7 +334,7 @@ class AccountSummary(FrozenModel):
     freshness: Status
 
 
-class AccountsListResponse(FrozenModel):
+class AccountsListResponse(ApiModel):
     """Response for GET /api/v1/accounts."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
@@ -336,7 +346,7 @@ class AccountsListResponse(FrozenModel):
 # ---------------------------------------------------------------------------
 
 
-class ResearchFamilySummary(FrozenModel):
+class ResearchFamilySummary(ApiModel):
     """One research family on the families list."""
 
     family_id: str
@@ -346,14 +356,14 @@ class ResearchFamilySummary(FrozenModel):
     recommendation: str | None = None
 
 
-class ResearchFamiliesResponse(FrozenModel):
+class ResearchFamiliesResponse(ApiModel):
     """Response for GET /api/v1/research/families."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
     families: tuple[ResearchFamilySummary, ...]
 
 
-class ResearchCandidateDetail(FrozenModel):
+class ResearchCandidateDetail(ApiModel):
     """Detail for one research candidate."""
 
     candidate_id: str
@@ -374,7 +384,7 @@ class ResearchCandidateDetail(FrozenModel):
     promotion_recommendation: str | None = None
 
 
-class ResearchCandidateResponse(FrozenModel):
+class ResearchCandidateResponse(ApiModel):
     """Response for GET /api/v1/research/candidates/{candidate-id}."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
@@ -393,7 +403,7 @@ class IncidentSeverity(StrEnum):
     CRITICAL = "critical"
 
 
-class IncidentTimelineEntry(FrozenModel):
+class IncidentTimelineEntry(ApiModel):
     """One entry in an incident timeline."""
 
     timestamp: datetime
@@ -402,7 +412,7 @@ class IncidentTimelineEntry(FrozenModel):
     evidence_ref: str | None = None
 
 
-class IncidentSummary(FrozenModel):
+class IncidentSummary(ApiModel):
     """Compact incident summary for the incidents list."""
 
     incident_id: str
@@ -415,7 +425,7 @@ class IncidentSummary(FrozenModel):
     unresolved_actions: int = 0
 
 
-class IncidentDetail(FrozenModel):
+class IncidentDetail(ApiModel):
     """Full incident detail."""
 
     incident_id: str
@@ -430,7 +440,7 @@ class IncidentDetail(FrozenModel):
     impacted_environments: tuple[Environment, ...] = ()
 
 
-class IncidentsListResponse(FrozenModel):
+class IncidentsListResponse(ApiModel):
     """Response for GET /api/v1/incidents."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
@@ -461,7 +471,7 @@ class DocType(StrEnum):
     HISTORICAL_EVIDENCE = "historical_evidence"
 
 
-class DocSummary(FrozenModel):
+class DocSummary(ApiModel):
     """Compact document summary for the docs list."""
 
     slug: str
@@ -475,7 +485,7 @@ class DocSummary(FrozenModel):
     superseded_by: str | None = None
 
 
-class DocDetail(FrozenModel):
+class DocDetail(ApiModel):
     """Full document detail with rendered content."""
 
     slug: str
@@ -494,7 +504,7 @@ class DocDetail(FrozenModel):
     glossary_terms: list[dict[str, str]] = Field(default_factory=list)
 
 
-class DocsListResponse(FrozenModel):
+class DocsListResponse(ApiModel):
     """Response for GET /api/v1/docs."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
@@ -502,7 +512,7 @@ class DocsListResponse(FrozenModel):
     collections: tuple[DocCollection, ...]
 
 
-class DocsDetailResponse(FrozenModel):
+class DocsDetailResponse(ApiModel):
     """Response for GET /api/v1/docs/{slug}."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
@@ -514,7 +524,7 @@ class DocsDetailResponse(FrozenModel):
 # ---------------------------------------------------------------------------
 
 
-class SystemComponent(FrozenModel):
+class SystemComponent(ApiModel):
     """One component in the system flow."""
 
     name: str
@@ -528,7 +538,7 @@ class SystemComponent(FrozenModel):
     recent_issues: int = 0
 
 
-class SystemComponentsResponse(FrozenModel):
+class SystemComponentsResponse(ApiModel):
     """Response for GET /api/v1/system/components."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)
@@ -540,7 +550,7 @@ class SystemComponentsResponse(FrozenModel):
 # ---------------------------------------------------------------------------
 
 
-class ApiRootResponse(FrozenModel):
+class ApiRootResponse(ApiModel):
     """Response for GET /api/v1 — schema discovery."""
 
     response_schema: SchemaVersion = Field(default_factory=SchemaVersion)

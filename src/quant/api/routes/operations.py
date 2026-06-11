@@ -1,7 +1,7 @@
 """Operations API endpoints.."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
@@ -18,7 +18,9 @@ def _scan_json_files(directory: Path) -> list[dict]:
     if not directory.exists():
         return []
     items = []
-    for filepath in sorted(directory.rglob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
+    for filepath in sorted(
+        directory.rglob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
+    ):
         try:
             data = json.loads(filepath.read_text())
             data["_source_file"] = str(filepath)
@@ -35,18 +37,22 @@ async def list_runs(
     page_size: int = 50,
 ) -> dict:
     """List workflow and scheduled runs.."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     items: list[dict] = []
 
     if run_type in ("all", "workflow"):
-        for d in [_DATA_DIR / "workflows" / "paper-signal-refresh",
-                  _DATA_DIR / "workflows" / "alpaca-paper-refresh",
-                  _DATA_DIR / "workflows" / "dry-run-refresh"]:
+        for d in [
+            _DATA_DIR / "workflows" / "paper-signal-refresh",
+            _DATA_DIR / "workflows" / "alpaca-paper-refresh",
+            _DATA_DIR / "workflows" / "dry-run-refresh",
+        ]:
             items.extend(_scan_json_files(d))
 
     if run_type in ("all", "scheduler"):
-        for d in [_DATA_DIR / "scheduler" / "latest",
-                  _DATA_DIR / "scheduler" / "dry-run"]:
+        for d in [
+            _DATA_DIR / "scheduler" / "latest",
+            _DATA_DIR / "scheduler" / "dry-run",
+        ]:
             items.extend(_scan_json_files(d))
 
     total = len(items)
@@ -54,12 +60,12 @@ async def list_runs(
     end = start + page_size
 
     return {
-         "schema": {"schemaVersion": "v1", "generatedAt": now.isoformat()},
-         "runType": run_type,
-         "total": total,
-         "page": page,
-         "pageSize": page_size,
-         "items": items[start:end],
+        "schema": {"schemaVersion": "v1", "generatedAt": now.isoformat()},
+        "runType": run_type,
+        "total": total,
+        "page": page,
+        "pageSize": page_size,
+        "items": items[start:end],
     }
 
 
@@ -69,23 +75,29 @@ async def list_events(
     page_size: int = 50,
 ) -> dict:
     """List operational events from logs.."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     logs_dir = _DATA_DIR / "logs"
     items: list[dict] = []
 
     if logs_dir.exists():
-        for filepath in sorted(logs_dir.rglob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
+        for filepath in sorted(
+            logs_dir.rglob("*.json"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        ):
             try:
                 data = json.loads(filepath.read_text())
-                items.append({
-                     "timestamp": data.get("timestamp", now.isoformat()),
-                     "eventType": data.get("event_type", "log"),
-                     "component": data.get("component", "logs"),
-                     "status": data.get("status", "unknown"),
-                     "message": data.get("message", ""),
-                     "workflowId": data.get("workflow_id"),
-                     "evidenceRef": str(filepath),
-                 })
+                items.append(
+                    {
+                        "timestamp": data.get("timestamp", now.isoformat()),
+                        "eventType": data.get("event_type", "log"),
+                        "component": data.get("component", "logs"),
+                        "status": data.get("status", "unknown"),
+                        "message": data.get("message", ""),
+                        "workflowId": data.get("workflow_id"),
+                        "evidenceRef": str(filepath),
+                    }
+                )
             except (json.JSONDecodeError, OSError):
                 continue
 
@@ -94,9 +106,9 @@ async def list_events(
     end = start + page_size
 
     return {
-         "schema": {"schemaVersion": "v1", "generatedAt": now.isoformat()},
-         "total": total,
-         "page": page,
-         "pageSize": page_size,
-         "items": items[start:end],
+        "schema": {"schemaVersion": "v1", "generatedAt": now.isoformat()},
+        "total": total,
+        "page": page,
+        "pageSize": page_size,
+        "items": items[start:end],
     }

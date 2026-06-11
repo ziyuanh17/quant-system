@@ -28,7 +28,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function() {
       "use strict";
      function fmt(d) { if (!d) return "-"; return new Date(d).toLocaleString(); }
@@ -62,7 +62,9 @@
                if (detail && content && data.incident) {
                     detail.style.display = "block";
                     document.getElementById("incidents-table")?.closest(".card").style.display = "none";
-                    content.innerHTML = '<pre>' + JSON.stringify(data.incident, null, 2) + '</pre>';
+                    var pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(data.incident, null, 2);
+                    content.replaceChildren(pre);
                }
           }).catch(function() {});
      }

@@ -11,10 +11,11 @@ suffices for the solo-maintainable constraint.
 
 from __future__ import annotations
 
+import html
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
+from urllib.parse import urlsplit
 
 # ---------------------------------------------------------------------------
 # Collection taxonomy (hardcoded from design doc)
@@ -32,7 +33,10 @@ COLLECTIONS = (
 
 # Filename pattern → collection mapping
 COLLECTION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"^actionable_paper_order_incident_", re.IGNORECASE), "incidents_and_rehearsals"),
+    (
+        re.compile(r"^actionable_paper_order_incident_", re.IGNORECASE),
+        "incidents_and_rehearsals",
+    ),
     (re.compile(r"^alpaca_paper_", re.IGNORECASE), "safety_and_broker"),
     (re.compile(r"^controlled_alpaca_", re.IGNORECASE), "safety_and_broker"),
     (re.compile(r"^read_only_alpaca_", re.IGNORECASE), "safety_and_broker"),
@@ -53,7 +57,10 @@ COLLECTION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"^system_design_notes", re.IGNORECASE), "start_here"),
     (re.compile(r"^architecture", re.IGNORECASE), "start_here"),
     (re.compile(r"^roadmap", re.IGNORECASE), "project_management"),
-    (re.compile(r"^codex_project_handoff", re.IGNORECASE), "project_management"),
+    (
+        re.compile(r"^codex_project_handoff", re.IGNORECASE),
+        "project_management",
+    ),
     (re.compile(r"^quant_system_web_app", re.IGNORECASE), "project_management"),
     (re.compile(r".*_rehearsal_", re.IGNORECASE), "incidents_and_rehearsals"),
     (re.compile(r".*_smoke_", re.IGNORECASE), "incidents_and_rehearsals"),
@@ -62,7 +69,10 @@ COLLECTION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 
 # Filename pattern → doc type mapping
 DOC_TYPE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"^actionable_paper_order_incident_", re.IGNORECASE), "incident"),
+    (
+        re.compile(r"^actionable_paper_order_incident_", re.IGNORECASE),
+        "incident",
+    ),
     (re.compile(r".*_runbook", re.IGNORECASE), "runbook"),
     (re.compile(r".*_design", re.IGNORECASE), "design"),
     (re.compile(r".*_roadmap", re.IGNORECASE), "design"),
@@ -119,7 +129,9 @@ class DocEntry:
             "collection": self.collection,
             "docType": self.doc_type,
             "summary": self.summary,
-            "lastModified": self.last_modified.isoformat() if self.last_modified else None,
+            "lastModified": self.last_modified.isoformat()
+            if self.last_modified
+            else None,
             "sourceCommit": self.source_commit,
             "status": self.status,
             "supersededBy": self.superseded_by,
@@ -138,14 +150,17 @@ class DocManifest:
         schema_version: str = "v1",
     ) -> None:
         self.schema_version = schema_version
-        self.generated_at = datetime.now(timezone.utc)
+        self.generated_at = datetime.now(UTC)
         self.docs = docs
         self.collections = collections
 
     def to_dict(self) -> dict:
         """Serialize to a dict suitable for API response."""
         return {
-            "schema": {"schemaVersion": self.schema_version, "generatedAt": self.generated_at.isoformat()},
+            "schema": {
+                "schemaVersion": self.schema_version,
+                "generatedAt": self.generated_at.isoformat(),
+            },
             "docs": [d.to_dict() for d in self.docs],
             "collections": list(self.collections),
         }
@@ -154,6 +169,7 @@ class DocManifest:
 # ---------------------------------------------------------------------------
 # Markdown extraction helpers
 # ---------------------------------------------------------------------------
+
 
 def _extract_title(text: str) -> str:
     """Extract the document title from the first H1 heading."""
@@ -185,8 +201,11 @@ def _extract_summary(text: str, max_length: int = 200) -> str:
         if len("\n".join(summary_lines)) > max_length:
             break
     summary = " ".join(summary_lines).strip()
-    return (summary[:max_length - 3] + "...") if len(summary) > max_length else summary
-
+    return (
+        (summary[: max_length - 3] + "...")
+        if len(summary) > max_length
+        else summary
+    )
 
 
 def _categorize_collection(filename: str) -> str:
@@ -248,13 +267,13 @@ def _simple_markdown_to_html(text: str) -> str:
                 close_list()
                 close_blockquote()
                 flush_paragraph()
-                lang = line.strip()[3:].strip()
-                html_lines.append(f"<pre><code class=\"language-{lang}\">")
+                lang = re.sub(r"[^a-zA-Z0-9_-]", "", line.strip()[3:].strip())
+                html_lines.append(f'<pre><code class="language-{lang}">')
                 in_code_block = True
             continue
 
         if in_code_block:
-            html_lines.append(line)
+            html_lines.append(html.escape(line))
             continue
 
         # Blank line
@@ -271,7 +290,9 @@ def _simple_markdown_to_html(text: str) -> str:
             close_list()
             close_blockquote()
             level = len(heading_match.group(1))
-            html_lines.append(f"<h{level}>{_inline_format(heading_match.group(2))}</h{level}>")
+            html_lines.append(
+                f"<h{level}>{_inline_format(heading_match.group(2))}</h{level}>"
+            )
             continue
 
         # Blockquote
@@ -303,7 +324,9 @@ def _simple_markdown_to_html(text: str) -> str:
             if not in_list:
                 html_lines.append("<ol>")
                 in_list = True
-            html_lines.append(f"<li>{_inline_format(ordered_match.group(1))}</li>")
+            html_lines.append(
+                f"<li>{_inline_format(ordered_match.group(1))}</li>"
+            )
             continue
 
         # Horizontal rule
@@ -327,6 +350,7 @@ def _simple_markdown_to_html(text: str) -> str:
 
 def _inline_format(text: str) -> str:
     """Apply inline Markdown formatting."""
+    text = html.escape(text)
     # Bold
     text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
     # Italic
@@ -334,13 +358,23 @@ def _inline_format(text: str) -> str:
     # Inline code
     text = re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
     # Links
-    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', text)
+    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _safe_link, text)
     return text
+
+
+def _safe_link(match: re.Match[str]) -> str:
+    """Render a Markdown link only when its target uses an allowed scheme."""
+    label, target = match.groups()
+    parsed = urlsplit(html.unescape(target))
+    if parsed.scheme not in ("", "http", "https"):
+        return label
+    return f'<a href="{target}">{label}</a>'
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def build_docs_index(docs_dir: str | Path = "docs") -> DocManifest:
     """Scan ``docs_dir`` and build a searchable index of Markdown files.
@@ -361,7 +395,7 @@ def build_docs_index(docs_dir: str | Path = "docs") -> DocManifest:
     for filepath in sorted(docs_path.glob("*.md")):
         slug = filepath.stem
         text = filepath.read_text(encoding="utf-8")
-        mtime = datetime.fromtimestamp(filepath.stat().st_mtime, tz=timezone.utc)
+        mtime = datetime.fromtimestamp(filepath.stat().st_mtime, tz=UTC)
 
         entry = DocEntry(
             slug=slug,
@@ -397,7 +431,7 @@ def render_doc(slug: str, docs_dir: str | Path = "docs") -> dict:
         return {"error": f"Document not found: {slug}"}
 
     text = filepath.read_text(encoding="utf-8")
-    mtime = datetime.fromtimestamp(filepath.stat().st_mtime, tz=timezone.utc)
+    mtime = datetime.fromtimestamp(filepath.stat().st_mtime, tz=UTC)
 
     rendered = _simple_markdown_to_html(text)
     # Build a simple TOC from H2/H3 headings

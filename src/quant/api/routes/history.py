@@ -1,6 +1,6 @@
 """Historical observability API endpoints.."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Query
 
@@ -9,7 +9,7 @@ from quant.api.db import get_connection
 router = APIRouter(tags=["history"])
 
 
-@router.get("/history/status")
+@router.get("/status")
 async def get_status_history(
     source: str = Query(default=""),
     state: str = Query(default=""),
@@ -30,12 +30,15 @@ async def get_status_history(
     rows = conn.execute(query, params).fetchall()
     conn.close()
     return {
-        "schema": {"schemaVersion": "v1", "generatedAt": datetime.now(timezone.utc).isoformat()},
+        "schema": {
+            "schemaVersion": "v1",
+            "generatedAt": datetime.now(UTC).isoformat(),
+        },
         "observations": [dict(r) for r in rows],
-       }
+    }
 
 
-@router.get("/history/events")
+@router.get("/events")
 async def get_event_history(
     component: str = Query(default=""),
     event_type: str = Query(default=""),
@@ -56,12 +59,15 @@ async def get_event_history(
     rows = conn.execute(query, params).fetchall()
     conn.close()
     return {
-        "schema": {"schemaVersion": "v1", "generatedAt": datetime.now(timezone.utc).isoformat()},
+        "schema": {
+            "schemaVersion": "v1",
+            "generatedAt": datetime.now(UTC).isoformat(),
+        },
         "events": [dict(r) for r in rows],
-       }
+    }
 
 
-@router.get("/history/reconciliation")
+@router.get("/reconciliation")
 async def get_reconciliation_history(
     environment: str = Query(default=""),
     limit: int = Query(default=100, le=1000),
@@ -78,6 +84,9 @@ async def get_reconciliation_history(
     rows = conn.execute(query, params).fetchall()
     conn.close()
     return {
-        "schema": {"schemaVersion": "v1", "generatedAt": datetime.now(timezone.utc).isoformat()},
+        "schema": {
+            "schemaVersion": "v1",
+            "generatedAt": datetime.now(UTC).isoformat(),
+        },
         "reconciliations": [dict(r) for r in rows],
-       }
+    }

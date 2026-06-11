@@ -11,17 +11,18 @@ Tests:
 
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
+from fastapi import HTTPException
+from fastapi.testclient import TestClient
 
 from quant.api.models import (
     AccountDetail,
-    AccountDetailPermission,
     AccountDetailPerformance,
+    AccountDetailPermission,
     AccountDetailRisk,
-    AccountLane,
     AccountSummary,
     DecisionTrace,
     DocDetail,
@@ -29,14 +30,9 @@ from quant.api.models import (
     IncidentDetail,
     IncidentSummary,
     OverviewResponse,
-    ResearchCandidateDetail,
-    ResearchFamilySummary,
-    SchemaVersion,
-    Status,
     StatusValue,
     SystemComponent,
 )
-
 
 # ---------------------------------------------------------------------------
 # Redaction tests
@@ -97,6 +93,7 @@ class TestRedaction:
 
     def test_api_root_no_secrets(self):
         from quant.api.models import ApiRootResponse
+
         self._check_model(ApiRootResponse)
 
 
@@ -110,76 +107,111 @@ class TestReadOnly:
 
     def test_no_post_put_delete_patch_routes(self):
         from quant.web.app import app
+
         mutation_methods = {"POST", "PUT", "DELETE", "PATCH"}
         for route in app.routes:
-            if hasattr(route, "methods"):
-                route_methods = route.methods & mutation_methods
+            methods = getattr(route, "methods", set())
+            if methods:
+                route_methods = methods & mutation_methods
                 if route_methods:
                     pytest.fail(
                         f"Mutation endpoint found: "
-                        f"{list(route_methods)[0]} {route.path}"
+                        f"{list(route_methods)[0]} "
+                        f"{getattr(route, 'path', 'unknown')}"
                     )
 
     def test_no_mutation_in_api_models(self):
         """API response models should not have mutation methods."""
         from quant.api import models
 
-         # Only flag methods that genuinely mutate state
+        # Only flag methods that genuinely mutate state
         DANGEROUS = {
-             "__setstate__",
-             "__setattr__",
-             "__delattr__",
-             "populate",
-             "save",
-             "save_all",
-             "delete",
-             "delete_all",
-             "insert",
-             "insert_all",
-             "upsert",
-             "update",
-             "patch",
-             "execute",
-             "run",
-             "submit",
-             "commit",
-              "construct",
-                "copy",
-                "dict",
-                "json",
-                "model_dump",
-                "model_dump_json",
-                "model_copy",
-                "parse_obj",
-                "parse_raw",
-                "parse_file",
-                "from_orm",
-                "schema",
-                "schema_json",
-                "update_forward_refs",
-                "validate",
-                "__get_validators__",
-                 "__pydantic_initial_data__",
-                 "fields_set",
-                 "extra",
-          }
+            "__setstate__",
+            "__setattr__",
+            "__delattr__",
+            "populate",
+            "save",
+            "save_all",
+            "delete",
+            "delete_all",
+            "insert",
+            "insert_all",
+            "upsert",
+            "update",
+            "patch",
+            "execute",
+            "run",
+            "submit",
+            "commit",
+            "construct",
+            "copy",
+            "dict",
+            "json",
+            "model_dump",
+            "model_dump_json",
+            "model_copy",
+            "parse_obj",
+            "parse_raw",
+            "parse_file",
+            "from_orm",
+            "schema",
+            "schema_json",
+            "update_forward_refs",
+            "validate",
+            "__get_validators__",
+            "__pydantic_initial_data__",
+            "fields_set",
+            "extra",
+        }
 
         for name in dir(models):
             obj = getattr(models, name)
-            if (
-                hasattr(obj, "__bases__")
-                and "Model" in str(type(obj))
-             ):
+            if hasattr(obj, "__bases__") and "Model" in str(type(obj)):
                 for attr_name in dir(obj):
                     if (
                         not attr_name.startswith("_")
                         and attr_name not in DANGEROUS
                         and not attr_name.startswith("model_")
-                     ):
+                    ):
                         pytest.fail(
-                            f"Mutation method on model: "
-                            f"{name}.{attr_name}"
-                         )
+                            f"Mutation method on model: {name}.{attr_name}"
+                        )
+
+    def test_html_pages_are_rendered_not_returned_as_raw_templates(self):
+        from quant.web.app import app
+
+        response = TestClient(app).get("/overview")
+
+        assert response.status_code == 200
+        assert "{% extends" not in response.text
+        assert "Quant System" in response.text
+        assert "nonce=" in response.text
+        assert (
+            "'unsafe-inline'"
+            not in response.headers["content-security-policy"].split(
+                "style-src"
+            )[0]
+        )
+
+    def test_history_page_api_routes_exist(self):
+        from quant.web.app import app
+
+        client = TestClient(app)
+
+        assert client.get("/api/v1/history/status").status_code == 200
+        assert client.get("/api/v1/history/events").status_code == 200
+        assert client.get("/api/v1/history/reconciliation").status_code == 200
+
+    def test_browser_facing_typed_responses_use_camel_case(self):
+        from quant.web.app import app
+
+        client = TestClient(app)
+        overview = client.get("/api/v1/overview").json()
+        accounts = client.get("/api/v1/accounts/").json()
+
+        assert "accountLanes" in overview
+        assert "serverStatus" in overview["system"]
+        assert "accountAlias" in accounts["accounts"][0]
 
 
 # ---------------------------------------------------------------------------
@@ -192,7 +224,8 @@ class TestStaleData:
 
     def test_stale_status_has_correct_state(self):
         from quant.api.freshness import compute_status
-        now = datetime.now(timezone.utc)
+
+        now = datetime.now(UTC)
         old = now.replace(year=now.year - 1)
         s = compute_status(
             observed_at=old,
@@ -204,11 +237,13 @@ class TestStaleData:
 
     def test_missing_evidence_is_unknown(self):
         from quant.api.freshness import compute_status
+
         s = compute_status(observed_at=None, source="health_check")
         assert s.state == StatusValue.UNKNOWN
 
     def test_not_configured_is_not_healthy(self):
         from quant.api.freshness import compute_status
+
         s = compute_status(
             observed_at=None,
             is_not_configured=True,
@@ -218,6 +253,7 @@ class TestStaleData:
 
     def test_disabled_is_not_healthy(self):
         from quant.api.freshness import compute_status
+
         s = compute_status(
             observed_at=None,
             is_disabled=True,
@@ -246,18 +282,13 @@ class TestProhibitedFields:
 
     def test_no_prohibited_fields_in_any_model(self):
         from quant.api import models
+
         for name in dir(models):
             obj = getattr(models, name)
-            if (
-                hasattr(obj, "model_fields")
-                and hasattr(obj, "model_config")
-            ):
+            if hasattr(obj, "model_fields") and hasattr(obj, "model_config"):
                 for field_name in obj.model_fields:
                     if field_name in self.PROHIBITED_FIELD_NAMES:
-                        pytest.fail(
-                            f"Prohibited field in {name}: "
-                            f"{field_name}"
-                        )
+                        pytest.fail(f"Prohibited field in {name}: {field_name}")
 
 
 # ---------------------------------------------------------------------------
@@ -274,19 +305,40 @@ class TestAuthentication:
         env.pop("QUANT_CONSOLE_API_KEY", None)
         with patch.dict(os.environ, env, clear=False):
             import importlib
+
             import quant.api.auth as auth_module
+
             importlib.reload(auth_module)
             assert auth_module._get_api_key() is None
 
     def test_auth_required_when_key_set(self):
         """When QUANT_CONSOLE_API_KEY is set, requests without it fail."""
-        from quant.api.auth import require_api_key
         import os
+
+        from quant.api.auth import require_api_key
+
         os.environ["QUANT_CONSOLE_API_KEY"] = "test-key"
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(HTTPException):
                 require_api_key(credentials=None)
         finally:
             os.environ.pop("QUANT_CONSOLE_API_KEY", None)
 
+    def test_api_route_requires_configured_key(self):
+        from quant.web.app import app
 
+        with patch.dict(
+            os.environ,
+            {"QUANT_CONSOLE_API_KEY": "test-key"},
+        ):
+            response = TestClient(app).get("/api/v1/overview")
+
+        assert response.status_code == 401
+
+
+class TestDeploymentBoundary:
+    def test_remote_bind_is_rejected(self):
+        from quant.web.serve import serve
+
+        with pytest.raises(ValueError, match="loopback"):
+            serve(host="0.0.0.0")

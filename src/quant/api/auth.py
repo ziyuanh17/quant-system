@@ -21,14 +21,17 @@ In production:
 
 """
 
-import os
-import time
 import logging
-from collections.abc import Callable
+import os
+import secrets
+import time
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import (
+    BaseHTTPMiddleware,
+    RequestResponseEndpoint,
+)
 from starlette.responses import Response
 
 logger = logging.getLogger(__name__)
@@ -38,6 +41,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _scheme = HTTPBearer(auto_error=False)
+_credentials_dependency = Depends(_scheme)
 
 
 def _get_api_key() -> str | None:
@@ -46,7 +50,7 @@ def _get_api_key() -> str | None:
 
 
 def require_api_key(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_scheme),
+    credentials: HTTPAuthorizationCredentials | None = _credentials_dependency,
 ) -> str:
     """Dependency: require a valid API key.
 
@@ -86,8 +90,7 @@ def require_api_key(
 
 def _log_failed_attempt(attempt: str) -> None:
     """Log a failed authentication attempt (never log the key value)."""
-    masked = attempt[:4] + "****" if len(attempt) >= 4 else "****"
-    logger.warning("Failed auth attempt with key starting with %s", masked)
+    logger.warning("Failed authentication attempt")
 
 
 # ---------------------------------------------------------------------------
@@ -108,24 +111,24 @@ class SecureHeadersMiddleware(BaseHTTPMiddleware):
         "X-Frame-Options": "DENY",
         "X-XSS-Protection": "1; mode=block",
         "Referrer-Policy": "strict-origin-when-cross-origin",
-        "Content-Security-Policy": (
-            "default-src 'self'; "
-            "script-src 'self' cdn.jsdelivr.net unpkg.com; "
-            "style-src 'self' cdn.jsdelivr.net unpkg.com 'unsafe-inline'; "
-            "img-src 'self' data:"
-        ),
         "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-        "Permissions-Policy": (
-            "camera=(), microphone=(), geolocation=()"
-        ),
+        "Permissions-Policy": ("camera=(), microphone=(), geolocation=()"),
     }
 
     async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Response]
+        self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        nonce = secrets.token_urlsafe(16)
+        request.state.csp_nonce = nonce
         response = await call_next(request)
         for header, value in self.SECURITY_HEADERS.items():
             response.headers[header] = value
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            f"script-src 'self' cdn.jsdelivr.net 'nonce-{nonce}'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:"
+        )
         return response
 
 
@@ -143,7 +146,7 @@ class AccessLoggingMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Response]
+        self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         start = time.monotonic()
         response = await call_next(request)
