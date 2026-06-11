@@ -475,6 +475,30 @@ The first implementation slice introduces:
 This slice does not run evaluations, write research artifacts, sweep
 parameters, calculate promotion metrics, or connect research to execution.
 
+## Immutable Artifact Foundation Outcome
+
+The second implementation slice introduces:
+
+- full-content SHA-256 evaluation IDs derived from the typed candidate and
+  environment snapshots,
+- exclusive creation of candidate-scoped evaluation directories,
+- immutable candidate, environment, input, split, and scenario artifacts,
+- a checksum manifest regenerated from typed source content during audit,
+- fail-closed detection of changed, missing, or manifest-mismatched immutable
+  artifacts,
+- an append-only JSONL trial ledger that records successful, failed, and
+  abandoned trials,
+- duplicate trial ID, candidate mismatch, research-family mismatch, unsafe
+  path, and environment mismatch rejection.
+
+Appending a trial first verifies the immutable evaluation artifacts. The V1
+ledger assumes one research writer at a time; future parallel evaluation work
+must introduce an explicit research-family lock or transactional ledger before
+concurrent writers are allowed.
+
+This slice does not execute a strategy simulation, calculate metrics, expose a
+research CLI, or connect research artifacts to execution.
+
 ## Staged Scope
 
 To keep this system solo-maintainable, adopt state-of-the-art controls in

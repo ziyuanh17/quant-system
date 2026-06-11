@@ -92,7 +92,7 @@ side discussions.
 | 74 | Alpaca Paper Dashboard Health Scope v1 | Done | Align scheduled Alpaca paper dashboard publishing so stale inactive paper/dry-run lanes do not make a successful Alpaca paper run look failed. |
 | 75 | Runtime Clone Sync v1 | Done | Synced reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
 | 76 | Next Scheduled Dashboard Review v1 | Done | Reviewed the next natural launchd run: the Alpaca paper workflow succeeded, reconciliation passed, and the corrected dashboard status was healthy with zero issues. |
-| 77 | Strategy Evaluation Harness Design v1 | In Review | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
+| 77 | Strategy Evaluation Harness Design v1 | Done | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
 | 78 | Mac Studio Migration | In Review | Studio source/runtime bootstrap, state transfer, Codex readiness, no-order preflight, and reconciliation passed; controlled rehearsal and scheduler cutover remain. |
 | 79 | Actionable Alpaca Paper Order Incident Review | Done | Contain and document the first scheduled actionable paper order, its unexpected short position, and reconciliation failure. |
 | 80 | Alpaca Paper Actionable-Order Safety Remediation | Done | Add projected-position and open-order policies, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
@@ -103,7 +103,9 @@ side discussions.
 | 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | Done | Design a dedicated one-share buy rehearsal command that pins the retained AAPL short and fails closed before any unexpected portfolio change. |
 | 86 | Controlled Alpaca Paper Order Rehearsal Command | Done | Implemented and tested the dedicated rehearsal command and typed result artifact without executing it against Alpaca. |
 | 87 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | Next | Execute the reviewed command only after explicit approval immediately before the order-capable command. |
-| 88 | Strategy Evaluation Harness Foundation v1 | In Review | Add typed candidate, lineage, split, scenario, and trial models plus adapters that normalize existing strategies into a shared research simulation input. |
+| 88 | Strategy Evaluation Harness Foundation v1 | Done | Add typed candidate, lineage, split, scenario, and trial models plus adapters that normalize existing strategies into a shared research simulation input. |
+| 89 | Quant System Web App Design v1 | In Review | Design a private read-only operations, accounts, research, incident, and knowledge console with a dedicated roadmap and automatic-decision traces, without adding trading controls. |
+| 90 | Immutable Research Artifacts and Trial Ledger v1 | In Review | Add content-derived evaluation IDs, exclusive immutable manifests, checksum verification, and an append-only trial ledger. |
 
 ## Current Recommendation
 

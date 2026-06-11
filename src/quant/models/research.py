@@ -28,6 +28,21 @@ class ResearchTrialStatus(StrEnum):
     ABANDONED = "abandoned"
 
 
+class ResearchEnvironmentSnapshot(FrozenModel):
+    """Reproducibility identity for the code environment running evaluation."""
+
+    source_commit: str = Field(min_length=1)
+    dependency_lock_sha256: str
+    python_version: str = Field(min_length=1)
+    platform: str = Field(min_length=1)
+    evaluator_version: str = Field(min_length=1)
+
+    @field_validator("dependency_lock_sha256")
+    @classmethod
+    def dependency_hash_must_be_lowercase_hex(cls, value: str) -> str:
+        return _validate_sha256(value)
+
+
 class ResearchParameter(FrozenModel):
     """One explicit, serializable strategy or evaluator parameter."""
 
@@ -50,13 +65,7 @@ class ResearchInputSnapshot(FrozenModel):
     @field_validator("sha256")
     @classmethod
     def sha256_must_be_lowercase_hex(cls, value: str) -> str:
-        if len(value) != 64 or any(
-            character not in "0123456789abcdef" for character in value
-        ):
-            raise ValueError(
-                "sha256 must be a 64-character lowercase hex digest"
-            )
-        return value
+        return _validate_sha256(value)
 
     @model_validator(mode="after")
     def availability_policy_must_have_column(self) -> "ResearchInputSnapshot":
@@ -133,7 +142,7 @@ class StrategyCandidateSpec(FrozenModel):
     @field_validator("dependency_lock_sha256")
     @classmethod
     def dependency_hash_must_be_lowercase_hex(cls, value: str) -> str:
-        return ResearchInputSnapshot.sha256_must_be_lowercase_hex(value)
+        return _validate_sha256(value)
 
     @field_validator("parameters")
     @classmethod
@@ -223,6 +232,71 @@ class StrategySimulationInput(FrozenModel):
         return signals
 
 
+class ResearchArtifactDigest(FrozenModel):
+    """Expected content digest for one immutable evaluation artifact."""
+
+    relative_path: str = Field(min_length=1)
+    sha256: str
+
+    @field_validator("sha256")
+    @classmethod
+    def sha256_must_be_lowercase_hex(cls, value: str) -> str:
+        return _validate_sha256(value)
+
+
+class ResearchEvaluationManifest(FrozenModel):
+    """Checksum manifest for immutable artifacts in one evaluation directory."""
+
+    evaluation_id: str
+    candidate_id: str
+    immutable_artifacts: tuple[ResearchArtifactDigest, ...] = Field(
+        min_length=1
+    )
+
+    @field_validator("evaluation_id")
+    @classmethod
+    def evaluation_id_must_be_sha256(cls, value: str) -> str:
+        return _validate_sha256(value)
+
+    @field_validator("immutable_artifacts")
+    @classmethod
+    def artifact_paths_must_be_unique(
+        cls, artifacts: tuple[ResearchArtifactDigest, ...]
+    ) -> tuple[ResearchArtifactDigest, ...]:
+        _require_unique(
+            tuple(artifact.relative_path for artifact in artifacts),
+            "artifact paths",
+        )
+        return artifacts
+
+
+class ResearchEvaluationArtifactPaths(FrozenModel):
+    """Paths created for one immutable evaluation and append-only ledger."""
+
+    evaluation_id: str
+    output_dir: str
+    candidate_json: str
+    environment_json: str
+    inputs_json: str
+    splits_json: str
+    scenarios_json: str
+    manifest_json: str
+    trials_jsonl: str
+
+    @field_validator("evaluation_id")
+    @classmethod
+    def evaluation_id_must_be_sha256(cls, value: str) -> str:
+        return _validate_sha256(value)
+
+
 def _require_unique(values: tuple[str, ...], label: str) -> None:
     if len(values) != len(set(values)):
         raise ValueError(f"{label} must be unique")
+
+
+def _validate_sha256(value: str) -> str:
+    if len(value) != 64 or any(
+        character not in "0123456789abcdef" for character in value
+    ):
+        raise ValueError("sha256 must be a 64-character lowercase hex digest")
+    return value
