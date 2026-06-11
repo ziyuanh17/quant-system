@@ -356,6 +356,25 @@ make test
 make backtest
 ```
 
+## Web Console
+
+The repo includes a private, authenticated web console for observing the
+quant system in real time. It is read-only: no orders, no configuration
+changes, no scheduler controls.
+
+```bash
+quant web serve
+```
+
+Open `http://127.0.0.1:8000` in a browser. Set `QUANT_CONSOLE_API_KEY` to
+require authentication.
+
+Pages: Overview, Accounts, Operations, Decisions, Knowledge, System,
+Incidents, Research, History.
+
+Runbook: [console_runbook.md](docs/console_runbook.md)
+Security boundary: [console_security_boundary.md](docs/console_security_boundary.md)
+
 ## Design Rule
 
 Dictionaries are allowed at system edges. Core domain logic uses typed models:

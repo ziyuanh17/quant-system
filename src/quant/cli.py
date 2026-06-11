@@ -96,6 +96,7 @@ workflow_app = typer.Typer(no_args_is_help=True)
 safety_app = typer.Typer(no_args_is_help=True)
 dry_run_app = typer.Typer(no_args_is_help=True)
 live_app = typer.Typer(no_args_is_help=True)
+web_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
@@ -105,6 +106,7 @@ app.add_typer(workflow_app, name="workflow")
 app.add_typer(safety_app, name="safety")
 app.add_typer(dry_run_app, name="dry-run")
 app.add_typer(live_app, name="live")
+app.add_typer(web_app, name="web")
 
 
 @app.callback()
@@ -2407,6 +2409,36 @@ def ops_publish_status(
         raise typer.Exit(code=1)
 
 
+@ops_app.command("publish-knowledge")
+def ops_publish_knowledge(
+    docs_dir: Annotated[
+        Path,
+        typer.Option(help="Directory containing documentation Markdown files."),
+    ] = Path("docs"),
+    output_path: Annotated[
+        Path,
+        typer.Option(help="Knowledge index JSON output path."),
+    ] = Path("site/knowledge_index.json"),
+) -> None:
+    """Publish a searchable knowledge index for the static dashboard."""
+    import json
+
+    from quant.web.docs_index import build_docs_index
+
+    manifest = build_docs_index(docs_dir)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    # Atomic write: write to temp file, then rename
+    tmp_path = output_path.with_suffix(".json.tmp")
+    tmp_path.write_text(
+        json.dumps(manifest.to_dict(), indent=2, default=str),
+        encoding="utf-8",
+    )
+    tmp_path.rename(output_path)
+    typer.echo(f"Knowledge index: {output_path}")
+    typer.echo(f"Documents: {len(manifest.docs)}")
+    typer.echo(f"Collections: {', '.join(manifest.collections)}")
+
+
 def _validate_paper_signal_options(
     *,
     strategy: str,
@@ -2726,6 +2758,27 @@ def _format_optional(value: float | None, *, percent: bool = False) -> str:
     if percent:
         return f"{value:.2%}"
     return f"{value:.2f}"
+
+
+@web_app.command("serve")
+def web_serve(
+    host: Annotated[
+        str,
+        typer.Option(help="Bind address."),
+    ] = "127.0.0.1",
+    port: Annotated[
+        int,
+        typer.Option(help="Bind port."),
+    ] = 8000,
+    reload: Annotated[
+        bool,
+        typer.Option(help="Enable auto-reload for development."),
+    ] = False,
+) -> None:
+    """Start the web console server."""
+    from quant.web.serve import serve
+
+    serve(host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":

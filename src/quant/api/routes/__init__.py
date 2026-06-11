@@ -3,10 +3,14 @@
 All API endpoints are defined as FastAPI routers and mounted under
 ``/api/v1`` in the application factory.
 
+Authentication is enforced via ``QUANT_CONSOLE_API_KEY`` when set.
+The root endpoint (schema discovery) remains public.
+
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from quant.api.auth import require_api_key
 from quant.api.routes.accounts import router as accounts_router
 from quant.api.routes.decisions import router as decisions_router
 from quant.api.routes.docs import router as docs_router
@@ -17,7 +21,10 @@ from quant.api.routes.research import router as research_router
 from quant.api.routes.root import router as root_router
 from quant.api.routes.system import router as system_router
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter(
+    prefix="/api/v1",
+    dependencies=[Depends(require_api_key)],
+)
 router.include_router(root_router, tags=["root"])
 router.include_router(accounts_router, prefix="/accounts", tags=["accounts"])
 router.include_router(operations_router, prefix="/operations", tags=["operations"])

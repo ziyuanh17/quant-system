@@ -1,69 +1,44 @@
-"""Documentation API endpoints.
+"""Documentation API endpoints.."""
 
-Provides docs listing, search, and individual doc detail.
-
-"""
-
-from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import APIRouter
+
+from quant.web.docs_index import build_docs_index, render_doc
 
 router = APIRouter(tags=["docs"])
 
 
 @router.get("/")
 async def list_docs(collection: str = "", search: str = "") -> dict:
-     """List documentation documents.
+    """List documentation documents.."""
+    manifest = build_docs_index()
+    docs = manifest.docs
 
-      Returns
-      -------
-      dict
-          Doc list and available collections.
+    if collection:
+        docs = [d for d in docs if d.collection == collection]
+    if search:
+        search_lower = search.lower()
+        docs = [
+            d for d in docs
+            if search_lower in d.title.lower() or search_lower in d.summary.lower()
+        ]
 
-      """
-     now = datetime.now(timezone.utc)
-     return {
-          "schema": {"schemaVersion": "v1", "generatedAt": now.isoformat()},
-          "docs": [],
-          "collections": [
-               "start_here",
-               "operate",
-               "safety_and_broker",
-               "research_and_data",
-               "migration_and_scheduling",
-               "incidents_and_rehearsals",
-               "project_management",
-            ],
-       }
+    return {
+        "schema": {"schemaVersion": manifest.schema_version, "generatedAt": manifest.generated_at.isoformat()},
+        "docs": [d.to_dict() for d in docs],
+        "collections": list(manifest.collections),
+    }
 
 
 @router.get("/{slug}")
 async def get_doc(slug: str) -> dict:
-     """Detail for one documentation document.
+    """Detail for one documentation document.."""
+    doc = render_doc(slug)
+    if "error" in doc:
+        return {"error": doc["error"]}
 
-      Returns
-      -------
-      dict
-          Full document with rendered content.
-
-      """
-     now = datetime.now(timezone.utc)
-     return {
-          "schema": {"schemaVersion": "v1", "generatedAt": now.isoformat()},
-          "document": {
-               "slug": slug,
-               "title": "",
-               "collection": "",
-               "docType": "design",
-               "summary": "",
-               "toc": [],
-               "renderedContent": "",
-               "lastModified": None,
-               "sourceCommit": None,
-               "status": "design",
-               "supersededBy": None,
-               "relatedComponents": [],
-               "relatedDocuments": [],
-               "glossaryTerms": [],
-            },
-       }
+    return {
+        "schema": {"schemaVersion": "v1", "generatedAt": doc.get("lastModified", "")},
+        "document": doc,
+    }

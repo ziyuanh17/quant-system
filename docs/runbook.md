@@ -225,3 +225,22 @@ the paper account was created.
 8. Confirm dependencies are installed in the active environment.
 9. Re-run with the smallest dataset that reproduces the issue.
 10. Add a regression test before changing core accounting or signal behavior.
+
+## Web Console
+
+Start the private web console:
+
+```bash
+quant web serve
+```
+
+Publish operational health and knowledge index:
+
+```bash
+quant ops publish-status
+quant ops publish-knowledge
+```
+
+Full runbook: [console_runbook.md](console_runbook.md)
+Known limits: [console_known_limits.md](console_known_limits.md)
+Security boundary: [console_security_boundary.md](console_security_boundary.md)
