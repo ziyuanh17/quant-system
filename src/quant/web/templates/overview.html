@@ -4,31 +4,176 @@
 
 {% block content %}
 <section class="overview">
-     <h1>Overview</h1>
+      <h1>Overview</h1>
 
-     <section class="system-status">
-          <h2>System</h2>
-          <div id="system-status" hx-get="/api/v1/overview" hx-trigger="load"></div>
-     </section>
+      <!-- System status banner -->
+      <div class="card" id="system-status">
+           <h2>System</h2>
+           <div id="system-banner" class="status-banner">Loading...</div>
+           <div class="system-grid" id="system-details"></div>
+      </div>
 
-     <section class="account-lanes">
-          <h2>Accounts</h2>
-          <table id="account-table" class="data-table">
-               <thead>
-                    <tr>
-                         <th>Environment</th>
-                         <th>Connection</th>
-                         <th>Permission</th>
-                         <th>Reconciliation</th>
-                         <th>Open Orders</th>
-                         <th>Positions</th>
-                         <th>Freshness</th>
-                    </tr>
-               </thead>
-               <tbody id="account-lanes-body">
-                    <tr><td colspan="7">Loading...</td></tr>
-               </tbody>
-          </table>
-     </section>
+      <!-- Account lanes -->
+      <div class="card">
+           <h2>Accounts</h2>
+           <table class="data-table" id="account-table">
+                <thead>
+                     <tr>
+                          <th>Environment</th>
+                          <th>Connection</th>
+                          <th>Permission</th>
+                          <th>Reconciliation</th>
+                          <th>Open Orders</th>
+                          <th>Positions</th>
+                          <th>Freshness</th>
+                     </tr>
+                </thead>
+                <tbody id="account-lanes-body">
+                     <tr><td colspan="7">Loading...</td></tr>
+                </tbody>
+           </table>
+      </div>
+
+      <!-- Latest decisions -->
+      <div class="card">
+           <h2>Latest Decisions</h2>
+           <div id="latest-decisions">
+                <p class="text-secondary">No decisions recorded</p>
+           </div>
+      </div>
+
+      <!-- Issues -->
+      <div class="card" id="issues">
+           <h2>Issues</h2>
+           <div id="issues-list">
+                <p class="text-secondary">No issues</p>
+           </div>
+      </div>
+
+      <!-- Data freshness -->
+      <div class="card">
+           <h2>Data Freshness</h2>
+           <div id="data-freshness"></div>
+      </div>
+
+      <!-- Research queue -->
+      <div class="card">
+           <h2>Research Queue</h2>
+           <div id="research-queue">
+                <p class="text-secondary">No candidates pending</p>
+           </div>
+      </div>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+     "use strict";
+
+     function statusBadge(state) {
+          var cls = "badge badge-" + state.replace(/\s+/g, "_");
+          return '<span class="' + cls + '">' + state + "</span>";
+     }
+
+     function freshnessLabel(ageSeconds) {
+          if (ageSeconds === null || ageSeconds === undefined) {
+               return '<span class="text-secondary">unknown</span>';
+          }
+          if (ageSeconds < 60) return ageSeconds + "s ago";
+          if (ageSeconds < 3600) return Math.floor(ageSeconds / 60) + "m ago";
+          return Math.floor(ageSeconds / 3600) + "h ago";
+     }
+
+     function renderSystemBanner(data) {
+          var banner = document.getElementById("system-banner");
+          var details = document.getElementById("system-details");
+          if (!banner || !data || !data.system) return;
+
+          var sys = data.system;
+          var state = sys.serverStatus?.state || "unknown";
+          banner.className = "status-banner status-" + state;
+          banner.textContent = state.toUpperCase();
+
+          var html = "";
+          html += '<div class="system-field"><span class="label">Server</span><span class="value">' + statusBadge(sys.serverStatus?.state || "unknown") + '</span></div>';
+          html += '<div class="system-field"><span class="label">Heartbeat</span><span class="value">' + statusBadge(sys.serverHeartbeat?.state || "unknown") + '</span></div>';
+          html += '<div class="system-field"><span class="label">Trading</span><span class="value">' + (sys.tradingPermission || "disabled") + '</span></div>';
+          html += '<div class="system-field"><span class="label">Market</span><span class="value">' + (sys.marketState || "unknown") + '</span></div>';
+          if (sys.urgentIssue) {
+               html += '<div class="system-field urgent"><span class="label">Urgent</span><span class="value">' + sys.urgentIssue + '</span></div>';
+          }
+          details.innerHTML = html;
+     }
+
+     function renderAccountLanes(data) {
+          var body = document.getElementById("account-lanes-body");
+          if (!body || !data || !data.accountLanes) return;
+
+          var rows = "";
+          data.accountLanes.forEach(function(lane) {
+               rows += '<tr>' +
+                    '<td>' + lane.environment + '</td>' +
+                    '<td>' + statusBadge(lane.connection.state) + '</td>' +
+                    '<td>' + lane.permission + '</td>' +
+                    '<td>' + statusBadge(lane.reconciliation.state) + '</td>' +
+                    '<td class="mono">' + (lane.openOrders || 0) + '</td>' +
+                    '<td class="mono">' + (lane.positions || 0) + '</td>' +
+                    '<td>' + freshnessLabel(lane.freshness.age) + '</td>' +
+                    '</tr>';
+          });
+          body.innerHTML = rows;
+     }
+
+     function renderIssues(data) {
+          var list = document.getElementById("issues-list");
+          if (!list || !data || !data.issues || data.issues.length === 0) return;
+
+          var html = "";
+          data.issues.forEach(function(issue) {
+               var cls = issue.severity === "error" ? "issue-error" : "issue-warning";
+               html += '<div class="issue ' + cls + '">' +
+                    '<span class="mono">' + issue.code + '</span> ' +
+                    issue.message + '</div>';
+          });
+          list.innerHTML = html;
+     }
+
+     function renderDataFreshness(data) {
+          var container = document.getElementById("data-freshness");
+          if (!container || !data || !data.dataFreshness) return;
+
+          var html = "";
+          Object.keys(data.dataFreshness).forEach(function(key) {
+               var fs = data.dataFreshness[key];
+               html += '<div class="freshness-row">' +
+                    '<span>' + key + '</span>' +
+                    '<span>' + statusBadge(fs.state) + '</span>' +
+                    '<span class="text-secondary">' + freshnessLabel(fs.age) + '</span>' +
+                    '</div>';
+          });
+          container.innerHTML = html;
+     }
+
+     function loadOverview() {
+          fetch("/api/v1/overview")
+               .then(function(res) { return res.json(); })
+               .then(function(data) {
+                    renderSystemBanner(data);
+                    renderAccountLanes(data);
+                    renderIssues(data);
+                    renderDataFreshness(data);
+               })
+               .catch(function() {
+                    document.getElementById("system-banner").textContent = "UNREACHABLE";
+                    document.getElementById("system-banner").className = "status-banner status-failed";
+               });
+     }
+
+     document.addEventListener("DOMContentLoaded", function() {
+          loadOverview();
+          setInterval(loadOverview, 60000);
+     });
+})();
+</script>
 {% endblock %}
