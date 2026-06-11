@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Operations — Quant System{% endblock %}
+
+{% block content %}
+<section class="operations-page">
+       <h1>Operations</h1>
+
+       <div class="card">
+            <h2>Workflow Runs</h2>
+            <table class="data-table" id="workflow-runs-table">
+                 <thead>
+                      <tr><th>Started</th><th>Status</th><th>Duration</th><th>Symbol</th><th>Message</th></tr>
+                 </thead>
+                 <tbody id="workflow-runs-body"><tr><td colspan="5">No runs</td></tr></tbody>
+            </table>
+       </div>
+
+       <div class="card">
+            <h2>Scheduled Runs</h2>
+            <table class="data-table" id="scheduled-runs-table">
+                 <thead>
+                      <tr><th>Started</th><th>Task</th><th>Status</th><th>Duration</th><th>Message</th></tr>
+                 </thead>
+                 <tbody id="scheduled-runs-body"><tr><td colspan="5">No runs</td></tr></tbody>
+            </table>
+       </div>
+
+       <div class="card">
+            <h2>Event Timeline</h2>
+            <div id="event-timeline"></div>
+       </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+      "use strict";
+     function fmt(d) { if (!d) return "-"; var dt = new Date(d); return dt.toLocaleString(); }
+     function sec(s) { if (s == null) return "-"; return s < 60 ? s + "s" : Math.floor(s/60) + "m" + Math.floor(s%60) + "s"; }
+
+     function renderRuns(data, tbodyId) {
+          var body = document.getElementById(tbodyId);
+          if (!body || !data.items || data.items.length === 0) return;
+          var html = "";
+          data.items.forEach(function(r) {
+               html += '<tr><td>' + fmt(r.startedAt) + '</td><td>' + r.status + '</td><td class="mono">' + sec(r.durationSeconds) + '</td><td>' + (r.symbol || '-') + '</td><td>' + (r.message || '-') + '</td></tr>';
+          });
+          body.innerHTML = html;
+     }
+
+     function loadOperations() {
+          Promise.all([
+               fetch('/api/v1/operations/runs').then(function(r){return r.json();}),
+               fetch('/api/v1/operations/events').then(function(r){return r.json();}),
+          ]).then(function(responses) {
+               renderRuns(responses[0] || {}, 'workflow-runs-body');
+          }).catch(function() {});
+     }
+
+     document.addEventListener("DOMContentLoaded", function() {
+          loadOperations();
+          setInterval(loadOperations, 60000);
+     });
+})();
+</script>
+{% endblock %}
