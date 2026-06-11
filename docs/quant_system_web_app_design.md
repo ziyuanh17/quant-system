@@ -588,6 +588,12 @@ The API layer should:
 - expose schema version and generated time,
 - never accept order, scheduler, or configuration mutations in V1.
 
+Knowledge and configuration claims must identify whether they are declared
+defaults, resolved runtime configuration, observed runtime state, historical
+evidence, design intent, or unknown. The source inventory and publication
+rules are defined in
+[quant_system_web_app_source_classification.md](quant_system_web_app_source_classification.md).
+
 Start with polling and HTTP cache validation. Add server-sent events only when
 there is a clear need for faster updates. WebSockets are unnecessary for the
 current daily workflow cadence.
@@ -693,6 +699,12 @@ The finite implementation sequence and completion evidence are tracked in
 - full-text search,
 - system explorer,
 - incident and runbook linking.
+
+Scheduled and manual knowledge/status publication are deferred to the dedicated
+Knowledge Publication Refresh milestone. Manual refresh should begin as an
+owner-run CLI/job or deployment action, not a mutable web control. Publication
+must remain allowlisted, atomic, traceable to a source commit, and visibly
+stale or failed when refresh does not complete.
 
 ### Phase 3: Research Console
 

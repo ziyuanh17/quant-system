@@ -40,7 +40,7 @@ The first production-ready web app is complete only when:
 | Order | Milestone | Status | Completion Evidence |
 | --- | --- | --- | --- |
 | W1 | Product, Information Architecture, and Safety Design | In Review | Web-app design, screen inventory, private/read-only boundary, automatic-decision visibility, and staged delivery plan documented. |
-| W2 | Source Artifact and Data Classification | Planned | Every runtime, account, research, incident, and docs source is classified as public, private, sensitive, or prohibited. |
+| W2 | Source Artifact and Data Classification | In Review | Every runtime, account, research, incident, and docs source is classified as public, private, sensitive, or prohibited, with candid truth/provenance rules. |
 | W3 | Public and Private Read-Model Contracts | Planned | Typed, versioned, sanitized API models define overview, accounts, operations, decisions, research, incidents, and docs. |
 | W4 | Freshness and Status Semantics | Planned | Shared rules define healthy, degraded, failed, running, disabled, unknown, and stale states with expected cadence. |
 | W5 | Authentication and Private-Network Boundary | Planned | Private access, authentication, read-only authorization, secure headers, and access logging are designed and tested. |
@@ -51,14 +51,15 @@ The first production-ready web app is complete only when:
 | W10 | Operations and Data-Freshness Console | Planned | Workflow history, scheduler ownership, locks, validation, dependencies, logs, versions, and reconciliation history are visible. |
 | W11 | Account, Risk, and Performance Views | Planned | Local paper, dry-run, Alpaca paper, and real-money lanes expose authorized broker truth, risk utilization, and performance separately from health. |
 | W12 | Knowledge Center and Docs Manifest | Planned | Repository Markdown is categorized, searchable, rendered safely, linked to live components, and marked canonical/historical/superseded. |
-| W13 | System Explorer and Educational Flows | Planned | Interactive flow explains component purpose, inputs, outputs, safety boundaries, failure modes, docs, and recent evidence. |
-| W14 | Incident Console | Planned | Active and resolved incidents link detection, containment, remediation, evidence, documents, and follow-up actions. |
-| W15 | Research Console | Planned | Research families, candidates, trials, evaluations, reproducibility, and promotion recommendations are visible without execution controls. |
-| W16 | Historical Observability and Alerts | Planned | Health, decisions, reconciliation, dependencies, resources, and portfolio/risk history support time-based investigation and alert routing. |
-| W17 | Security, Redaction, and Failure-Mode Review | Planned | Redaction tests, authorization tests, stale-data tests, dependency failures, and prohibited-field checks pass. |
-| W18 | Private Server Deployment Rehearsal | Planned | One controlled deployment proves authentication, read-only behavior, monitoring, backup, and rollback without affecting trading workflows. |
-| W19 | First Natural Runtime Review | Planned | The deployed console correctly explains one natural workflow and automatic decision from trigger through reconciliation. |
-| W20 | Web App v1 Closeout | Planned | Operational ownership, runbook, known limits, security boundary, and future roadmap are documented. |
+| W13 | Knowledge Publication Refresh | Planned | Knowledge and sanitized configuration/status snapshots support reviewed scheduled refresh and manual owner CLI/job refresh with atomic publication and stale/failure visibility. |
+| W14 | System Explorer and Educational Flows | Planned | Interactive flow explains component purpose, inputs, outputs, safety boundaries, failure modes, docs, and recent evidence. |
+| W15 | Incident Console | Planned | Active and resolved incidents link detection, containment, remediation, evidence, documents, and follow-up actions. |
+| W16 | Research Console | Planned | Research families, candidates, trials, evaluations, reproducibility, and promotion recommendations are visible without execution controls. |
+| W17 | Historical Observability and Alerts | Planned | Health, decisions, reconciliation, dependencies, resources, and portfolio/risk history support time-based investigation and alert routing. |
+| W18 | Security, Redaction, and Failure-Mode Review | Planned | Redaction tests, authorization tests, stale-data tests, dependency failures, and prohibited-field checks pass. |
+| W19 | Private Server Deployment Rehearsal | Planned | One controlled deployment proves authentication, read-only behavior, monitoring, backup, and rollback without affecting trading workflows. |
+| W20 | First Natural Runtime Review | Planned | The deployed console correctly explains one natural workflow and automatic decision from trigger through reconciliation. |
+| W21 | Web App v1 Closeout | Planned | Operational ownership, runbook, known limits, security boundary, and future roadmap are documented. |
 
 ## Automatic Decision Visibility
 
@@ -146,4 +147,3 @@ The following require a separate explicitly reviewed roadmap:
 - strategy promotion into execution,
 - real-money trading controls,
 - public exposure of private console data.
-
