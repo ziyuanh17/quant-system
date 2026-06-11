@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>{% block title %}Quant System{% endblock %}</title>
+     <link rel="stylesheet" href="/static/css/style.css">
+     {% block extra_head %}{% endblock %}
+</head>
+<body>
+     <div class="shell">
+          <nav class="nav-rail" id="nav">
+               <a href="/" class="nav-item{% if active == 'overview' %} active{% endif %}">Overview</a>
+               <a href="/operations" class="nav-item{% if active == 'operations' %} active{% endif %}">Operations</a>
+               <a href="/accounts" class="nav-item{% if active == 'accounts' %} active{% endif %}">Accounts</a>
+               <a href="/research" class="nav-item{% if active == 'research' %} active{% endif %}">Research</a>
+               <a href="/knowledge" class="nav-item{% if active == 'knowledge' %} active{% endif %}">Knowledge</a>
+               <a href="/incidents" class="nav-item{% if active == 'incidents' %} active{% endif %}">Incidents</a>
+               <a href="/system" class="nav-item{% if active == 'system' %} active{% endif %}">System</a>
+          </nav>
+          <div class="main">
+               <header class="top-bar" id="topbar">
+                    <span class="topbar-status" id="overall-status">Loading...</span>
+                    <span class="topbar-freshness" id="topbar-freshness"></span>
+               </header>
+               <main class="content" id="content">
+                    {% block content %}{% endblock %}
+               </main>
+          </div>
+     </div>
+     <script src="/static/js/app.js"></script>
+     {% block extra_scripts %}{% endblock %}
+</body>
+</html>
