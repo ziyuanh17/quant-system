@@ -463,6 +463,7 @@ def test_ops_publish_status_can_disable_inactive_paper_lane(
     tmp_path,
 ) -> None:
     output_path = tmp_path / "site" / "status.json"
+    logs_dir = tmp_path / "missing-logs"
     workflow_records_dir = tmp_path / "workflows" / "alpaca-paper-refresh"
     reconciliation_path = tmp_path / "live" / "reconciliation" / "latest.json"
     _write_alpaca_paper_workflow_record(workflow_records_dir, passed=True)
@@ -475,6 +476,8 @@ def test_ops_publish_status_can_disable_inactive_paper_lane(
             "publish-status",
             "--output-path",
             str(output_path),
+            "--logs-dir",
+            str(logs_dir),
             "--no-check-paper-service",
             "--no-check-comparison",
             "--check-alpaca-paper",

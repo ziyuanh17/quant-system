@@ -137,10 +137,12 @@ def build_health_report(
             state_cash = state.cash
             state_position_count = len(state.positions)
 
-    log_count = _count_logs(logs_dir)
+    log_count = _count_logs(logs_dir) if check_paper_service else 0
     # Logs are useful for human debugging, but missing logs alone should not
     # make a paper account look broken while the artifact records are healthy.
-    if not logs_dir.exists():
+    if not check_paper_service:
+        pass
+    elif not logs_dir.exists():
         issues.append(
             _warning(
                 "missing_logs_dir",
