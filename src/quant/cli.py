@@ -2374,7 +2374,7 @@ def ops_publish_status(
         logs_dir=logs_dir,
         lock_path=lock_path,
         lock_stale_after_seconds=lock_stale_after_seconds,
-        reconcile_state=reconcile_state,
+        reconcile_state=reconcile_state and check_paper_service,
         initial_cash=initial_cash,
         cash_tolerance=cash_tolerance,
         reconciliation_report_path=None,
