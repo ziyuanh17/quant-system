@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Knowledge — Quant System{% endblock %}
+
+{% block content %}
+<section class="knowledge-page">
+       <h1>Knowledge Center</h1>
+
+       <div class="knowledge-layout">
+            <nav class="knowledge-sidebar" id="knowledge-sidebar">
+                 <h3>Collections</h3>
+                 <div id="collection-list"></div>
+                 <h3>Search</h3>
+                 <input type="text" id="doc-search" placeholder="Search documents..." style="width:100%;padding:6px;margin-bottom:8px;">
+            </nav>
+            <main class="knowledge-main" id="knowledge-main">
+                 <p class="text-secondary">Select a document or collection</p>
+            </main>
+       </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+(function() {
+      "use strict";
+     function renderCollections(collections) {
+          var list = document.getElementById("collection-list");
+          if (!list || !collections) return;
+          var html = "";
+          collections.forEach(function(c) {
+               html += '<a href="#" class="nav-item collection-link" data-collection="' + c + '">' + c.replace(/_/g, ' ') + '</a>';
+          });
+          list.innerHTML = html;
+          list.querySelectorAll(".collection-link").forEach(function(a) {
+               a.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    loadDocs(this.getAttribute("data-collection"));
+               });
+          });
+     }
+
+     function loadDocs(collection) {
+          fetch('/api/v1/docs?collection=' + collection).then(function(r){return r.json();}).then(function(data) {
+               var main = document.getElementById("knowledge-main");
+               if (!main || !data.docs || data.docs.length === 0) {
+                    main.innerHTML = '<p class="text-secondary">No documents in this collection</p>';
+                    return;
+               }
+               var html = '<table class="data-table"><thead><tr><th>Title</th><th>Type</th><th>Status</th></tr></thead><tbody>';
+               data.docs.forEach(function(d) {
+                    html += '<tr data-slug="' + d.slug + '"><td>' + d.title + '</td><td>' + d.docType + '</td><td>' + d.status + '</td></tr>';
+               });
+               html += '</tbody></table>';
+               main.innerHTML = html;
+               main.querySelectorAll("tr[data-slug]").forEach(function(row) {
+                    row.style.cursor = "pointer";
+                    row.addEventListener("click", function() { loadDoc(this.getAttribute("data-slug")); });
+               });
+          }).catch(function() {});
+     }
+
+     function loadDoc(slug) {
+          fetch('/api/v1/docs/' + slug).then(function(r){return r.json();}).then(function(data) {
+               var main = document.getElementById("knowledge-main");
+               if (!main || !data.document) return;
+               var d = data.document;
+               var html = '<h2>' + d.title + '</h2>';
+               html += '<p class="text-secondary">' + d.docType + ' · ' + d.status + '</p>';
+               html += '<div id="doc-content">' + (marked ? marked.parse(d.renderedContent) : '<pre>' + d.renderedContent + '</pre>') + '</div>';
+               main.innerHTML = html;
+          }).catch(function() {});
+     }
+
+     document.addEventListener("DOMContentLoaded", function() {
+          fetch('/api/v1/docs').then(function(r){return r.json();}).then(function(data){renderCollections(data.collections || []);}).catch(function(){});
+     });
+})();
+</script>
+{% endblock %}

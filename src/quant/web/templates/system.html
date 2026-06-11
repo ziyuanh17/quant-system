@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}System — Quant System{% endblock %}
+
+{% block content %}
+<section class="system-page">
+       <h1>System Explorer</h1>
+
+       <div class="card">
+            <h2>Component Flow</h2>
+            <div id="component-flow" class="flow-diagram"></div>
+       </div>
+
+       <div class="card">
+            <h2>Components</h2>
+            <table class="data-table" id="components-table">
+                 <thead>
+                      <tr><th>Component</th><th>Purpose</th><th>Status</th><th>Runs</th><th>Issues</th></tr>
+                 </thead>
+                 <tbody id="components-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+            </table>
+       </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+      "use strict";
+     function statusClass(s) { return s === "implemented" ? "badge-healthy" : s === "partial" ? "badge-degraded" : "badge-disabled"; }
+
+     function renderFlow(components) {
+          var flow = document.getElementById("component-flow");
+          if (!flow || !components) return;
+          var names = components.map(function(c){return c.name;});
+          var html = names.join(' &rarr; ');
+          flow.innerHTML = '<div class="flow-steps">' + names.map(function(n) { return '<span class="flow-step">' + n + '</span>'; }).join('<span class="flow-arrow">&rarr;</span>');
+          flow.innerHTML = html;
+     }
+
+     function renderComponents(data) {
+          var body = document.getElementById("components-body");
+          if (!body || !data.components) return;
+          var html = "";
+          data.components.forEach(function(c) {
+               html += '<tr><td>' + c.name + '</td><td>' + c.purpose + '</td><td><span class="badge ' + statusClass(c.implementationStatus) + '">' + c.implementationStatus + '</span></td><td class="mono">' + c.recentRuns + '</td><td class="mono">' + c.recentIssues + '</td></tr>';
+          });
+          body.innerHTML = html;
+     }
+
+     document.addEventListener("DOMContentLoaded", function() {
+          fetch('/api/v1/system/components').then(function(r){return r.json();}).then(function(data){renderFlow(data.components || []);renderComponents(data || {});}).catch(function(){});
+     });
+})();
+</script>
+{% endblock %}
