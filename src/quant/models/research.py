@@ -1,0 +1,228 @@
+from datetime import date, datetime
+from enum import StrEnum
+
+import pandas as pd
+from pydantic import Field, ValidationInfo, field_validator, model_validator
+
+from quant.models.base import FrozenModel
+from quant.models.signals import SignalFrame
+
+
+class ResearchInputKind(StrEnum):
+    MARKET_BARS = "market_bars"
+    FEATURES = "features"
+    UNIVERSE = "universe"
+    BENCHMARK = "benchmark"
+
+
+class PointInTimePolicy(StrEnum):
+    NOT_APPLICABLE = "not_applicable"
+    EVENT_TIME_ONLY = "event_time_only"
+    EVENT_AND_AVAILABILITY_TIME = "event_and_availability_time"
+
+
+class ResearchTrialStatus(StrEnum):
+    PLANNED = "planned"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    ABANDONED = "abandoned"
+
+
+class ResearchParameter(FrozenModel):
+    """One explicit, serializable strategy or evaluator parameter."""
+
+    name: str = Field(min_length=1)
+    value: str | int | float | bool
+
+
+class ResearchInputSnapshot(FrozenModel):
+    """Immutable identity and point-in-time policy for one research input."""
+
+    input_id: str = Field(min_length=1)
+    kind: ResearchInputKind
+    path: str = Field(min_length=1)
+    sha256: str
+    schema_version: str = Field(min_length=1)
+    event_time_column: str | None = None
+    availability_time_column: str | None = None
+    point_in_time_policy: PointInTimePolicy = PointInTimePolicy.EVENT_TIME_ONLY
+
+    @field_validator("sha256")
+    @classmethod
+    def sha256_must_be_lowercase_hex(cls, value: str) -> str:
+        if len(value) != 64 or any(
+            character not in "0123456789abcdef" for character in value
+        ):
+            raise ValueError(
+                "sha256 must be a 64-character lowercase hex digest"
+            )
+        return value
+
+    @model_validator(mode="after")
+    def availability_policy_must_have_column(self) -> "ResearchInputSnapshot":
+        if (
+            self.point_in_time_policy
+            == PointInTimePolicy.EVENT_AND_AVAILABILITY_TIME
+            and self.availability_time_column is None
+        ):
+            raise ValueError(
+                "availability_time_column is required for "
+                "event-and-availability-time policy"
+            )
+        return self
+
+
+class EvaluationSplitPolicy(FrozenModel):
+    """Ordered, non-overlapping development, validation, and holdout periods."""
+
+    development_start: date
+    development_end: date
+    validation_start: date
+    validation_end: date
+    holdout_start: date
+    holdout_end: date
+
+    @model_validator(mode="after")
+    def periods_must_be_ordered_and_non_overlapping(
+        self,
+    ) -> "EvaluationSplitPolicy":
+        if not (
+            self.development_start <= self.development_end
+            < self.validation_start
+            <= self.validation_end
+            < self.holdout_start
+            <= self.holdout_end
+        ):
+            raise ValueError(
+                "evaluation periods must be ordered and non-overlapping"
+            )
+        return self
+
+
+class SimulationScenario(FrozenModel):
+    """Versioned assumptions applied by a simulation engine."""
+
+    name: str = Field(min_length=1)
+    initial_cash: float = Field(default=100_000, gt=0)
+    fees: float = Field(default=0.001, ge=0)
+    slippage_bps: float = Field(default=0, ge=0)
+    execution_delay_bars: int = Field(default=0, ge=0)
+    max_participation_rate: float | None = Field(default=None, gt=0, le=1)
+
+
+class StrategyCandidateSpec(FrozenModel):
+    """Complete identity and declared evaluation policy for one candidate."""
+
+    candidate_id: str = Field(min_length=1)
+    research_family_id: str = Field(min_length=1)
+    hypothesis_id: str = Field(min_length=1)
+    hypothesis: str = Field(min_length=1)
+    strategy_name: str = Field(min_length=1)
+    strategy_version: str = Field(min_length=1)
+    parameters: tuple[ResearchParameter, ...] = ()
+    symbols: tuple[str, ...] = Field(min_length=1)
+    inputs: tuple[ResearchInputSnapshot, ...] = Field(min_length=1)
+    split_policy: EvaluationSplitPolicy
+    simulation_scenarios: tuple[SimulationScenario, ...] = Field(min_length=1)
+    benchmark_name: str = Field(min_length=1)
+    promotion_criteria_version: str = Field(min_length=1)
+    source_commit: str = Field(min_length=1)
+    dependency_lock_sha256: str
+    random_seed: int | None = None
+
+    @field_validator("dependency_lock_sha256")
+    @classmethod
+    def dependency_hash_must_be_lowercase_hex(cls, value: str) -> str:
+        return ResearchInputSnapshot.sha256_must_be_lowercase_hex(value)
+
+    @field_validator("parameters")
+    @classmethod
+    def parameter_names_must_be_unique(
+        cls, parameters: tuple[ResearchParameter, ...]
+    ) -> tuple[ResearchParameter, ...]:
+        _require_unique(
+            tuple(parameter.name for parameter in parameters),
+            "parameter names",
+        )
+        return parameters
+
+    @field_validator("symbols")
+    @classmethod
+    def symbols_must_be_unique(
+        cls, symbols: tuple[str, ...]
+    ) -> tuple[str, ...]:
+        _require_unique(symbols, "symbols")
+        return symbols
+
+    @field_validator("inputs")
+    @classmethod
+    def input_ids_must_be_unique(
+        cls, inputs: tuple[ResearchInputSnapshot, ...]
+    ) -> tuple[ResearchInputSnapshot, ...]:
+        _require_unique(tuple(item.input_id for item in inputs), "input IDs")
+        return inputs
+
+    @field_validator("simulation_scenarios")
+    @classmethod
+    def scenario_names_must_be_unique(
+        cls, scenarios: tuple[SimulationScenario, ...]
+    ) -> tuple[SimulationScenario, ...]:
+        _require_unique(
+            tuple(scenario.name for scenario in scenarios),
+            "scenario names",
+        )
+        return scenarios
+
+
+class ResearchTrialRecord(FrozenModel):
+    """Trial ledger entry; failed and abandoned attempts remain first-class."""
+
+    trial_id: str = Field(min_length=1)
+    research_family_id: str = Field(min_length=1)
+    candidate_id: str = Field(min_length=1)
+    status: ResearchTrialStatus
+    started_at: datetime
+    completed_at: datetime | None = None
+    message: str = ""
+    artifact_paths: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def terminal_trials_must_have_completion_time(
+        self,
+    ) -> "ResearchTrialRecord":
+        if (
+            self.status != ResearchTrialStatus.PLANNED
+            and self.completed_at is None
+        ):
+            raise ValueError("terminal research trials require completed_at")
+        if (
+            self.completed_at is not None
+            and self.completed_at < self.started_at
+        ):
+            raise ValueError("completed_at must not precede started_at")
+        return self
+
+
+class StrategySimulationInput(FrozenModel):
+    """Normalized existing-strategy output consumed by future simulators."""
+
+    strategy_name: str = Field(min_length=1)
+    symbol: str = Field(min_length=1)
+    close: pd.Series
+    signals: SignalFrame
+    diagnostics: tuple[str, ...] = ()
+
+    @field_validator("signals")
+    @classmethod
+    def signals_must_align_with_close(
+        cls, signals: SignalFrame, info: ValidationInfo
+    ) -> SignalFrame:
+        close = info.data.get("close")
+        if close is not None and not signals.entries.index.equals(close.index):
+            raise ValueError("signals and close must share the same index")
+        return signals
+
+
+def _require_unique(values: tuple[str, ...], label: str) -> None:
+    if len(values) != len(set(values)):
+        raise ValueError(f"{label} must be unique")

@@ -458,6 +458,23 @@ The first implementation should stay one-symbol and deterministic. Multi-symbol
 portfolio construction, parameter optimization, and automatic paper promotion
 are intentionally deferred.
 
+## Initial Foundation Outcome
+
+The first implementation slice introduces:
+
+- typed candidate, input snapshot, split policy, simulation scenario, and trial
+  ledger models,
+- validation for input content hashes, point-in-time availability policy,
+  non-overlapping ordered splits, unique candidate components, and terminal
+  trial completion,
+- a normalized `StrategySimulationInput` contract,
+- price-strategy and feature-strategy adapters for the existing strategy
+  protocols,
+- focused tests for both governance rules and existing-strategy compatibility.
+
+This slice does not run evaluations, write research artifacts, sweep
+parameters, calculate promotion metrics, or connect research to execution.
+
 ## Staged Scope
 
 To keep this system solo-maintainable, adopt state-of-the-art controls in

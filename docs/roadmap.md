@@ -103,6 +103,7 @@ side discussions.
 | 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | Done | Design a dedicated one-share buy rehearsal command that pins the retained AAPL short and fails closed before any unexpected portfolio change. |
 | 86 | Controlled Alpaca Paper Order Rehearsal Command | Done | Implemented and tested the dedicated rehearsal command and typed result artifact without executing it against Alpaca. |
 | 87 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | Next | Execute the reviewed command only after explicit approval immediately before the order-capable command. |
+| 88 | Strategy Evaluation Harness Foundation v1 | In Review | Add typed candidate, lineage, split, scenario, and trial models plus adapters that normalize existing strategies into a shared research simulation input. |
 
 ## Current Recommendation
 
