@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts — Quant System{% endblock %}
+
+{% block content %}
+<section class="accounts-page">
+       <h1>Accounts</h1>
+
+       <!-- Account list -->
+       <div id="account-list" class="account-list"></div>
+
+       <!-- Account detail (shown when an account is selected) -->
+       <div id="account-detail" class="account-detail" style="display:none;">
+            <button id="back-to-list" class="back-button">&larr; Back to accounts</button>
+            <div id="detail-content"></div>
+       </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+      "use strict";
+
+     function statusBadge(state) {
+          var cls = "badge badge-" + (state || "unknown").replace(/\s+/g, "_");
+          return '<span class="' + cls + '">' + (state || "unknown") + '</span>';
+      }
+
+     function freshnessLabel(ageSeconds) {
+          if (ageSeconds === null || ageSeconds === undefined)
+               return '<span class="text-secondary">unknown</span>';
+          if (ageSeconds < 60) return ageSeconds + "s ago";
+          if (ageSeconds < 3600) return Math.floor(ageSeconds / 60) + "m ago";
+          return Math.floor(ageSeconds / 3600) + "h ago";
+      }
+
+     function renderAccountList(accounts) {
+          var container = document.getElementById("account-list");
+          if (!container || !accounts || accounts.length === 0) {
+               container.innerHTML = '<p class="text-secondary">No accounts configured</p>';
+               return;
+           }
+
+          var html = '<table class="data-table"><thead><tr>' +
+               '<th>Environment</th><th>Broker</th><th>Connection</th>' +
+               '<th>Permission</th><th>Equity</th><th>Positions</th>' +
+               '<th>Reconciliation</th><th>Freshness</th>' +
+               '</tr></thead><tbody>';
+
+          accounts.forEach(function(acc) {
+               html += '<tr data-alias="' + acc.accountAlias + '">' +
+                    '<td>' + acc.environment + '</td>' +
+                    '<td>' + acc.broker + '</td>' +
+                    '<td>' + statusBadge(acc.connection.state) + '</td>' +
+                    '<td>' + acc.tradingPermission + '</td>' +
+                    '<td class="mono">' + (acc.equity !== null ? '$' + acc.equity.toFixed(2) : '-') + '</td>' +
+                    '<td class="mono">' + (acc.positionCount || 0) + '</td>' +
+                    '<td>' + statusBadge(acc.reconciliation?.state || "not_configured") + '</td>' +
+                    '<td>' + freshnessLabel(acc.freshness.age) + '</td>' +
+                    '</tr>';
+           });
+
+          html += '</tbody></table>';
+          container.innerHTML = html;
+
+          // Click handler for row selection
+          container.querySelectorAll("tr[data-alias]").forEach(function(row) {
+               row.style.cursor = "pointer";
+               row.addEventListener("click", function() {
+                    loadAccountDetail(this.getAttribute("data-alias"));
+                });
+           });
+      }
+
+     function loadAccountDetail(alias) {
+          fetch("/api/v1/accounts/" + alias)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    renderAccountDetail(data.account, alias);
+                })
+                .catch(function() {
+                    document.getElementById("detail-content").innerHTML =
+                         '<p class="text-secondary">Failed to load account details</p>';
+                });
+      }
+
+     function renderAccountDetail(account, alias) {
+          var container = document.getElementById("account-detail");
+          var content = document.getElementById("detail-content");
+          if (!container || !content) return;
+
+          container.style.display = "block";
+          document.getElementById("account-list").style.display = "none";
+
+          var perm = account.permission || {};
+          var risk = account.risk || {};
+          var perf = account.performance || {};
+
+          var html = '<h2>' + alias + '</h2>';
+
+           // Permission section
+          html += '<div class="card"><h3>Permission</h3>';
+          html += '<div class="detail-grid">';
+          html += '<div class="detail-field"><span class="label">Environment</span><span class="value">' + perm.environment + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Broker</span><span class="value">' + perm.broker + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Connection</span><span class="value">' + statusBadge(perm.connection?.state) + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Trading</span><span class="value">' + perm.tradingPermission + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Safety Gate</span><span class="value">' + statusBadge(perm.safetyGateStatus?.state) + '</span></div>';
+          html += '</div></div>';
+
+           // Risk section
+          html += '<div class="card"><h3>Risk & Exposure</h3>';
+          html += '<div class="detail-grid">';
+          html += '<div class="detail-field"><span class="label">Gross Exposure</span><span class="value mono">' + (risk.grossExposure !== null ? '$' + risk.grossExposure.toFixed(2) : '-') + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Net Exposure</span><span class="value mono">' + (risk.netExposure !== null ? '$' + risk.netExposure.toFixed(2) : '-') + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Stale Price</span><span class="value">' + (risk.stalePriceWarning ? 'yes' : 'no') + '</span></div>';
+          html += '</div></div>';
+
+           // Performance section
+          html += '<div class="card"><h3>Performance</h3>';
+          html += '<div class="detail-grid">';
+          html += '<div class="detail-field"><span class="label">Equity</span><span class="value mono">' + (perf.equity !== null ? '$' + perf.equity.toFixed(2) : '-') + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Cash</span><span class="value mono">' + (perf.cash !== null ? '$' + perf.cash.toFixed(2) : '-') + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Daily Return</span><span class="value mono">' + (perf.dailyReturn !== null ? (perf.dailyReturn * 100).toFixed(2) + '%' : '-') + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Drawdown</span><span class="value mono">' + (perf.drawdown !== null ? (perf.drawdown * 100).toFixed(2) + '%' : '-') + '</span></div>';
+          html += '</div></div>';
+
+           // Positions table
+          html += '<div class="card"><h3>Positions</h3>';
+          if (account.positions && account.positions.length > 0) {
+               html += '<table class="data-table"><thead><tr><th>Symbol</th><th>Qty</th><th>Avg Price</th><th>Last Price</th><th>Market Value</th></tr></thead><tbody>';
+               account.positions.forEach(function(pos) {
+                    html += '<tr><td>' + pos.symbol + '</td><td class="mono">' + pos.quantity + '</td><td class="mono">' + pos.averagePrice.toFixed(2) + '</td><td class="mono">' + pos.lastPrice.toFixed(2) + '</td><td class="mono">' + pos.marketValue.toFixed(2) + '</td></tr>';
+                });
+               html += '</tbody></table>';
+           } else {
+               html += '<p class="text-secondary">No positions</p>';
+           }
+          html += '</div>';
+
+           // Orders table
+          html += '<div class="card"><h3>Open Orders</h3>';
+          if (account.openOrders && account.openOrders.length > 0) {
+               html += '<table class="data-table"><thead><tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Status</th></tr></thead><tbody>';
+               account.openOrders.forEach(function(order) {
+                    html += '<tr><td>' + order.symbol + '</td><td>' + order.side + '</td><td class="mono">' + order.quantity + '</td><td>' + order.status + '</td></tr>';
+                });
+               html += '</tbody></table>';
+           } else {
+               html += '<p class="text-secondary">No open orders</p>';
+           }
+          html += '</div>';
+
+          content.innerHTML = html;
+      }
+
+     // Back button
+     document.getElementById("back-to-list")?.addEventListener("click", function() {
+          document.getElementById("account-detail").style.display = "none";
+          document.getElementById("account-list").style.display = "block";
+      });
+
+     // Boot
+     document.addEventListener("DOMContentLoaded", function() {
+          fetch("/api/v1/accounts/")
+                .then(function(res) { return res.json(); })
+                .then(function(data) { renderAccountList(data.accounts); })
+                .catch(function() {
+                    document.getElementById("account-list").innerHTML =
+                         '<p class="text-secondary">Failed to load accounts</p>';
+                });
+          setInterval(function() {
+               fetch("/api/v1/accounts/")
+                     .then(function(res) { return res.json(); })
+                     .then(function(data) { renderAccountList(data.accounts); })
+                     .catch(function() {});
+           }, 60000);
+      });
+})();
+</script>
+{% endblock %}
