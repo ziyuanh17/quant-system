@@ -219,3 +219,34 @@ The full repository check passed with 212 tests. No command was executed
 against Alpaca, no paper order was submitted, and the recurring launchd service
 remains intended to stay unloaded until the controlled execution is separately
 approved.
+
+## June 10 Execution Preparation
+
+Read-only preparation for milestone 87 completed on June 10, 2026:
+
+- source commit `01ea29e` is on `main` and matches `origin/main`,
+- the recurring launchd service remains unloaded,
+- the safety environment resolves to Alpaca paper with a `$400` maximum order
+  notional,
+- a fresh account snapshot reported cash of `$100,290.73`, buying power of
+  `$399,646.08`, and exactly one position: `AAPL = -1`,
+- fresh reconciliation passed with zero differences,
+- Alpaca reported no open orders,
+- provisional rehearsal candidate `F` is absent from positions and reported
+  as tradable, shortable, and easy to borrow, and
+- the latest available `F` price was `$14.30`.
+
+Execution stopped because Alpaca reported the market closed at
+`June 10, 2026 11:16 PM ET`. The next open is `June 11, 2026 9:30 AM ET`
+(`6:30 AM PT`). After the market opens, refresh broker truth and the current
+`F` reference price, then request immediate explicit approval containing:
+
+```text
+symbol=F
+reference price=<fresh price>
+maximum order notional=400
+protected position=AAPL=-1
+```
+
+Do not reuse the `$14.30` closed-market price as the execution reference
+without refreshing it.

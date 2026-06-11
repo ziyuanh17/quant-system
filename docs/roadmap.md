@@ -98,19 +98,20 @@ side discussions.
 | 80 | Alpaca Paper Actionable-Order Safety Remediation | Done | Add projected-position and open-order policies, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
 | 81 | Bounded Short-Selling Risk Policy | Done | Replace the temporary blanket no-short guard with explicit projected-position, short exposure, gross exposure, and buying-power-buffer limits. |
 | 82 | Alpaca Asset Borrow-Availability Guard | Done | Check current Alpaca tradable, shortable, and easy-to-borrow asset metadata locally before submitting a short-entry order. |
-| 83 | Controlled Alpaca Paper Safety Rehearsal Preparation | In Review | Sync and verify the runtime clone, run no-order wrapper preflight, compare artifacts, and define stop gates for the controlled rehearsal. |
-| 84 | Read-Only Alpaca Broker Readiness Rehearsal | In Review | Verified credentials, account state, open orders, AAPL asset metadata, and reconciliation without submitting or modifying an order. |
-| 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | In Review | Design a dedicated one-share buy rehearsal command that pins the retained AAPL short and fails closed before any unexpected portfolio change. |
-| 86 | Controlled Alpaca Paper Order Rehearsal Command | In Review | Implemented and tested the dedicated rehearsal command and typed result artifact without executing it against Alpaca. |
+| 83 | Controlled Alpaca Paper Safety Rehearsal Preparation | Done | Sync and verify the runtime clone, run no-order wrapper preflight, compare artifacts, and define stop gates for the controlled rehearsal. |
+| 84 | Read-Only Alpaca Broker Readiness Rehearsal | Done | Verified credentials, account state, open orders, AAPL asset metadata, and reconciliation without submitting or modifying an order. |
+| 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | Done | Design a dedicated one-share buy rehearsal command that pins the retained AAPL short and fails closed before any unexpected portfolio change. |
+| 86 | Controlled Alpaca Paper Order Rehearsal Command | Done | Implemented and tested the dedicated rehearsal command and typed result artifact without executing it against Alpaca. |
 | 87 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | Next | Execute the reviewed command only after explicit approval immediately before the order-capable command. |
 
 ## Current Recommendation
 
 The current milestone is **Controlled Alpaca Paper Order-Capable Rehearsal
 Execution**. Review the dedicated command and its tests, then select a
-non-protected symbol and current reference price. Execution still requires
-explicit approval immediately before the order-capable command. Keep
-scheduling unloaded and the Mac Studio runtime cutover paused.
+non-protected symbol and current reference price. Candidate `F` passed
+read-only checks on June 10, but the market was closed; refresh its price and
+broker truth after the next market open before requesting immediate explicit
+approval. Keep scheduling unloaded and the Mac Studio runtime cutover paused.
 
 ## Status Convention
 
