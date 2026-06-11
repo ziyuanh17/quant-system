@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}History — Quant System{% endblock %}
+
+{% block content %}
+<section class="history-page">
+       <h1>Historical Observability</h1>
+
+       <div class="card">
+             <h2>Status History</h2>
+             <div id="status-chart" class="chart-container"></div>
+             <table class="data-table" id="status-table">
+                  <thead>
+                       <tr><th>Time</th><th>Source</th><th>State</th><th>Age</th><th>Stale</th></tr>
+                  </thead>
+                  <tbody id="status-body"><tr><td colspan="5">No data</td></tr></tbody>
+             </table>
+        </div>
+
+        <div class="card">
+             <h2>Event Timeline</h2>
+             <div id="event-timeline" class="timeline"></div>
+        </div>
+
+        <div class="card">
+             <h2>Reconciliation History</h2>
+             <table class="data-table" id="recon-table">
+                  <thead>
+                       <tr><th>Time</th><th>Environment</th><th>Status</th><th>Differences</th></tr>
+                  </thead>
+                  <tbody id="recon-body"><tr><td colspan="4">No data</td></tr></tbody>
+             </table>
+        </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+       "use strict";
+     function fmt(d) { if (!d) return "-"; return new Date(d).toLocaleString(); }
+     function statusClass(s) { return {healthy:"badge-healthy",degraded:"badge-degraded",failed:"badge-failed",running:"badge-running",disabled:"badge-disabled",not_configured:"badge-not_configured",unknown:"badge-unknown",stale:"badge-stale"}[s] || "badge-disabled"; }
+
+     function renderStatus(data) {
+          var body = document.getElementById("status-body");
+          if (!body || !data.observations || data.observations.length === 0) return;
+          var html = "";
+          data.observations.forEach(function(o) {
+               html += '<tr><td>' + fmt(o.observedAt) + '</td><td>' + o.source + '</td><td><span class="badge ' + statusClass(o.state) + '">' + o.state + '</span></td><td class="mono">' + (o.ageSeconds != null ? o.ageSeconds + 's' : '-') + '</td><td class="mono">' + (o.isStale ? 'yes' : 'no') + '</td></tr>';
+           });
+          body.innerHTML = html;
+      }
+
+     function renderEvents(data) {
+          var container = document.getElementById("event-timeline");
+          if (!container || !data.events || data.events.length === 0) {
+               container.innerHTML = '<p class="text-secondary">No events</p>';
+               return;
+           }
+          var html = "";
+          data.events.forEach(function(e) {
+               html += '<div class="timeline-event">' +
+                     '<span class="mono">' + fmt(e.timestamp) + '</span> ' +
+                     '<span class="badge badge-' + e.status + '">' + e.eventType + '</span> ' +
+                     '<span>' + e.component + '</span>' +
+                     (e.message ? ' — ' + e.message : '') +
+                     '</div>';
+           });
+          container.innerHTML = html;
+      }
+
+     function renderRecon(data) {
+          var body = document.getElementById("recon-body");
+          if (!body || !data.reconciliations || data.reconciliations.length === 0) return;
+          var html = "";
+          data.reconciliations.forEach(function(r) {
+               html += '<tr><td>' + fmt(r.observedAt) + '</td><td>' + r.environment + '</td><td><span class="badge ' + statusClass(r.status) + '">' + r.status + '</span></td><td class="mono">' + r.differenceCount + '</td></tr>';
+           });
+          body.innerHTML = html;
+      }
+
+     document.addEventListener("DOMContentLoaded", function() {
+          Promise.all([
+               fetch('/api/v1/history/status').then(function(r){return r.json();}).then(renderStatus).catch(function(){}),
+               fetch('/api/v1/history/events').then(function(r){return r.json();}).then(renderEvents).catch(function(){}),
+               fetch('/api/v1/history/reconciliation').then(function(r){return r.json();}).then(renderRecon).catch(function(){}),
+           ]);
+      });
+})();
+</script>
+{% endblock %}

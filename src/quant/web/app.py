@@ -21,7 +21,6 @@ from quant.api.auth import (
 )
 from quant.api.routes import router as api_router
 
-# Directory containing this file -- used for static file paths.
 _PACKAGE_DIR = Path(__file__).resolve().parent
 _TEMPLATE_DIR = _PACKAGE_DIR / "templates"
 _STATIC_DIR = _PACKAGE_DIR / "static"
@@ -33,21 +32,15 @@ def _create_app() -> FastAPI:
         title="Quant System Console",
         description=(
             "Read-only operations, research, and knowledge console for "
-            "the quant-system trading platform."
+            "the quant-system trading platform.",
         ),
         version="0.1.0",
     )
 
-    # -- Middleware (order matters: outer to inner) --
-
     app.add_middleware(AccessLoggingMiddleware)
     app.add_middleware(SecureHeadersMiddleware)
 
-    # -- API routes --
-
     app.include_router(api_router)
-
-    # -- HTML routes --
 
     @app.get("/")
     async def index():
@@ -57,11 +50,41 @@ def _create_app() -> FastAPI:
     async def overview_page():
         return FileResponse(_TEMPLATE_DIR / "overview.html")
 
+    @app.get("/accounts")
+    async def accounts_page():
+        return FileResponse(_TEMPLATE_DIR / "accounts.html")
+
     @app.get("/health")
     async def health_page():
         return FileResponse(_TEMPLATE_DIR / "overview.html")
 
-    # -- Static files --
+    @app.get("/operations")
+    async def operations_page():
+         return FileResponse(_TEMPLATE_DIR / "operations.html")
+
+    @app.get("/decisions")
+    async def decisions_page():
+         return FileResponse(_TEMPLATE_DIR / "decisions.html")
+
+    @app.get("/knowledge")
+    async def knowledge_page():
+         return FileResponse(_TEMPLATE_DIR / "knowledge.html")
+
+    @app.get("/system")
+    async def system_page():
+         return FileResponse(_TEMPLATE_DIR / "system.html")
+
+    @app.get("/incidents")
+    async def incidents_page():
+         return FileResponse(_TEMPLATE_DIR / "incidents.html")
+
+    @app.get("/history")
+    async def history_page():
+        return FileResponse(_TEMPLATE_DIR / "history.html")
+
+    @app.get("/research")
+    async def research_page():
+         return FileResponse(_TEMPLATE_DIR / "research.html")
 
     app.mount(
         "/static",
