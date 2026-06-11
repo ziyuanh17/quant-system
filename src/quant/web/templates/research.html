@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Research — Quant System{% endblock %}
+
+{% block content %}
+<section class="research-page">
+       <h1>Research</h1>
+
+       <div class="card">
+            <h2>Research Families</h2>
+            <table class="data-table" id="families-table">
+                 <thead>
+                      <tr><th>Family</th><th>Hypothesis</th><th>Candidates</th><th>Latest</th><th>Recommendation</th></tr>
+                 </thead>
+                 <tbody id="families-body"><tr><td colspan="5">No families</td></tr></tbody>
+            </table>
+       </div>
+
+       <div class="card" id="candidate-detail" style="display:none;">
+            <button id="back-to-list" class="back-button">&larr; Back to families</button>
+            <h2 id="candidate-title">Candidate Detail</h2>
+            <div id="candidate-content"></div>
+       </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+      "use strict";
+     function fmt(d) { if (!d) return "-"; return new Date(d).toLocaleString(); }
+
+     function renderFamilies(data) {
+          var body = document.getElementById("families-body");
+          if (!body || !data.families || data.families.length === 0) return;
+          var html = "";
+          data.families.forEach(function(f) {
+               html += '<tr data-id="' + f.familyId + '"><td>' + f.name + '</td><td>' + (f.hypothesis || '-') + '</td><td class="mono">' + f.candidateCount + '</td><td>' + fmt(f.latestEvaluationAt) + '</td><td>' + (f.recommendation || '-') + '</td></tr>';
+          });
+          body.innerHTML = html;
+     }
+
+     function loadCandidate(id) {
+          fetch('/api/v1/research/candidates/' + id).then(function(r){return r.json();}).then(function(data) {
+               var detail = document.getElementById("candidate-detail");
+               var content = document.getElementById("candidate-content");
+               if (detail && content && data.candidate) {
+                    detail.style.display = "block";
+                    document.getElementById("families-table")?.closest(".card").style.display = "none";
+                    content.innerHTML = '<pre>' + JSON.stringify(data.candidate, null, 2) + '</pre>';
+               }
+          }).catch(function() {});
+     }
+
+     document.addEventListener("DOMContentLoaded", function() {
+          fetch('/api/v1/research/families').then(function(r){return r.json();}).then(function(data){renderFamilies(data || {});}).catch(function(){});
+          document.getElementById("back-to-list")?.addEventListener("click", function() {
+               document.getElementById("candidate-detail").style.display = "none";
+               document.getElementById("families-table")?.closest(".card").style.display = "block";
+          });
+     });
+})();
+</script>
+{% endblock %}

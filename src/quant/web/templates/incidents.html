@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Incidents — Quant System{% endblock %}
+
+{% block content %}
+<section class="incidents-page">
+       <h1>Incidents</h1>
+
+       <div class="incidents-tabs">
+            <button class="tab active" data-tab="active">Active</button>
+            <button class="tab" data-tab="resolved">Resolved</button>
+       </div>
+
+       <div class="card">
+            <table class="data-table" id="incidents-table">
+                 <thead>
+                      <tr><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th>Detected</th><th>Actions</th></tr>
+                 </thead>
+                 <tbody id="incidents-body"><tr><td colspan="6">No incidents</td></tr></tbody>
+            </table>
+       </div>
+
+       <div class="card" id="incident-detail" style="display:none;">
+            <button id="back-to-list" class="back-button">&larr; Back to incidents</button>
+            <div id="incident-content"></div>
+       </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+      "use strict";
+     function fmt(d) { if (!d) return "-"; return new Date(d).toLocaleString(); }
+     function severityClass(s) { return {low:"badge-healthy",medium:"badge-degraded",high:"badge-failed",critical:"badge-failed"}[s] || "badge-disabled"; }
+
+     var currentTab = "active";
+
+     function renderIncidents(data) {
+          var body = document.getElementById("incidents-body");
+          if (!body || !data[currentTab] || data[currentTab].length === 0) {
+               body.innerHTML = '<tr><td colspan="6">No ' + currentTab + ' incidents</td></tr>';
+               return;
+          }
+          var html = "";
+          data[currentTab].forEach(function(inc) {
+               html += '<tr data-id="' + inc.incidentId + '"><td class="mono">' + inc.incidentId + '</td><td>' + inc.title + '</td><td><span class="badge ' + severityClass(inc.severity) + '">' + inc.severity + '</span></td><td>' + inc.status + '</td><td>' + fmt(inc.detectedAt) + '</td><td><a href="#" class="detail-link" data-id="' + inc.incidentId + '">view</a></td></tr>';
+          });
+          body.innerHTML = html;
+          body.querySelectorAll(".detail-link").forEach(function(a) {
+               a.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    loadIncident(this.getAttribute("data-id"));
+               });
+          });
+     }
+
+     function loadIncident(id) {
+          fetch('/api/v1/incidents/' + id).then(function(r){return r.json();}).then(function(data) {
+               var detail = document.getElementById("incident-detail");
+               var content = document.getElementById("incident-content");
+               if (detail && content && data.incident) {
+                    detail.style.display = "block";
+                    document.getElementById("incidents-table")?.closest(".card").style.display = "none";
+                    content.innerHTML = '<pre>' + JSON.stringify(data.incident, null, 2) + '</pre>';
+               }
+          }).catch(function() {});
+     }
+
+     document.addEventListener("DOMContentLoaded", function() {
+          document.querySelectorAll(".tab").forEach(function(tab) {
+               tab.addEventListener("click", function() {
+                    document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("active");});
+                    this.classList.add("active");
+                    currentTab = this.getAttribute("data-tab");
+                    loadIncidents();
+               });
+          });
+          document.getElementById("back-to-list")?.addEventListener("click", function() {
+               document.getElementById("incident-detail").style.display = "none";
+               document.getElementById("incidents-table")?.closest(".card").style.display = "block";
+          });
+          loadIncidents();
+          setInterval(loadIncidents, 120000);
+     });
+
+     function loadIncidents() {
+          fetch('/api/v1/incidents?status=' + currentTab).then(function(r){return r.json();}).then(function(data){renderIncidents(data || {});}).catch(function(){});
+     }
+})();
+</script>
+{% endblock %}
