@@ -93,7 +93,7 @@ side discussions.
 | 75 | Runtime Clone Sync v1 | Done | Synced reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
 | 76 | Next Scheduled Dashboard Review v1 | Done | Reviewed the next natural launchd run: the Alpaca paper workflow succeeded, reconciliation passed, and the corrected dashboard status was healthy with zero issues. |
 | 77 | Strategy Evaluation Harness Design v1 | Planned | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
-| 78 | Mac Studio Migration | Planned | Complete the dedicated finite migration roadmap in `docs/mac_studio_migration_roadmap.md` before resuming strategy work. |
+| 78 | Mac Studio Migration | In Review | Studio source/runtime bootstrap, state transfer, Codex readiness, no-order preflight, and reconciliation passed; controlled rehearsal and scheduler cutover remain. |
 | 79 | Actionable Alpaca Paper Order Incident Review | Done | Contain and document the first scheduled actionable paper order, its unexpected short position, and reconciliation failure. |
 | 80 | Alpaca Paper Actionable-Order Safety Remediation | Done | Add projected-position and open-order policies, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
 | 81 | Bounded Short-Selling Risk Policy | Done | Replace the temporary blanket no-short guard with explicit projected-position, short exposure, gross exposure, and buying-power-buffer limits. |
