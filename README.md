@@ -366,8 +366,9 @@ changes, no scheduler controls.
 quant web serve
 ```
 
-Open `http://127.0.0.1:8000` in a browser. Set `QUANT_CONSOLE_API_KEY` to
-require authentication.
+Open `http://127.0.0.1:8000` in a browser. The recommended remote deployment
+uses Tailscale Serve identity authentication; API-key authentication remains
+available as a fallback.
 
 Pages: Overview, Accounts, Operations, Decisions, Knowledge, System,
 Incidents, Research, History.

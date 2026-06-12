@@ -9,8 +9,8 @@ quant web serve
 # Custom port
 quant web serve --port 8080
 
-# Production (with API key)
-QUANT_CONSOLE_API_KEY=$(openssl rand -hex 32) quant web serve
+# Production is started through scripts/run_web_console.sh after configuring
+# Tailscale identity or API-key fallback mode in .env.
 ```
 
 For the restart-safe runtime deployment and private iPhone access, follow
@@ -22,9 +22,8 @@ For the restart-safe runtime deployment and private iPhone access, follow
 # Check API is responding
 curl http://127.0.0.1:8000/api/v1/
 
-# Check overview (requires API key)
-curl -H "Authorization: Bearer YOUR_KEY" \
-     http://127.0.0.1:8000/api/v1/overview
+# Direct localhost overview should return 401 in Tailscale identity mode.
+curl http://127.0.0.1:8000/api/v1/overview
 ```
 
 ## Publishing Status
@@ -49,8 +48,9 @@ tail -f logs/console-error.log
 
 ## Common Issues
 
-**Console returns 401:** API key is required. Set `QUANT_CONSOLE_API_KEY` or
-start without it for development.
+**Console returns 401 through the Tailscale URL:** Confirm the requester login
+is listed in `QUANT_CONSOLE_TAILSCALE_USERS` and that the request is reaching
+the application through Tailscale Serve.
 
 **Overview shows "not_configured":** No workflow artifacts exist yet. Run
 `quant workflow paper-signal-refresh` to generate data.

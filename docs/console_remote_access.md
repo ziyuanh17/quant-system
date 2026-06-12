@@ -30,21 +30,18 @@ Current intended runtime clone:
 
 ## Runtime Configuration
 
-Generate a dedicated console API key:
-
-```bash
-openssl rand -hex 32
-```
-
-Set these values in the runtime clone's untracked `.env`:
+Set these values in the runtime clone's untracked `.env`. Use the exact login
+shown by `tailscale status --json` for the intended owner:
 
 ```text
-QUANT_CONSOLE_API_KEY=<generated-random-value>
+QUANT_CONSOLE_AUTH_MODE=tailscale
+QUANT_CONSOLE_TAILSCALE_USERS=owner@example.com
 QUANT_CONSOLE_HOST=127.0.0.1
 QUANT_CONSOLE_PORT=8000
 ```
 
-Do not put the API key in a plist or committed file.
+API-key mode remains available as a fallback. Do not put keys or identity
+configuration in the launchd plist.
 
 ## Manual Verification
 
@@ -61,8 +58,8 @@ curl http://127.0.0.1:8000/api/v1/
 curl http://127.0.0.1:8000/api/v1/overview
 ```
 
-Both API requests without the API key should return `401`. Repeat either
-request with `Authorization: Bearer <key>` to verify an authenticated `200`.
+Direct localhost API requests without Tailscale identity headers should return
+`401`. Verify authenticated access through the Tailscale Serve HTTPS URL.
 
 ## Localize And Install Launchd
 
@@ -106,8 +103,8 @@ tailscale serve --bg 8000
 tailscale serve status
 ```
 
-Open the displayed `https://...ts.net` URL from an authorized Tailscale
-device. The browser will prompt for the console API key once per tab session.
+Open the displayed `https://...ts.net` URL from an authorized and allowlisted
+Tailscale device. No additional console API key is required.
 
 Do not use `tailscale funnel`.
 

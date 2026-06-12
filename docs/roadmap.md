@@ -109,6 +109,7 @@ side discussions.
 | 91 | Market-Hours Live Reconciliation Policy v1 | In Review | Preserve buying-power and current-mark movement as non-failing observations while keeping orders, fills, cash, position quantity, and average price as hard reconciliation gates. |
 | 92 | Mac Studio Scheduler Activation Readiness Review | In Review | Record the successful controlled rehearsal, verify Studio runtime activation prerequisites, and preserve a separate explicit scheduler activation gate. |
 | 93 | Web Console Private Tailscale Deployment v1 | Done | Reviewed source commit `65f43ca` was promoted to the runtime clone; a dedicated console API key was configured; launchd is running the read-only console; authenticated localhost and tailnet-only Tailscale HTTPS verification passed. |
+| 94 | Web Console Tailscale Identity Authentication v1 | In Review | Replace the deployed shared API-key prompt with allowlisted Tailscale Serve identity authentication while preserving API-key fallback mode and localhost-only binding. |
 
 ## Current Recommendation
 

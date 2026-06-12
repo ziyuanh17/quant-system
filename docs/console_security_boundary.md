@@ -36,11 +36,14 @@
 
 ## Authentication Model
 
-- API key via `QUANT_CONSOLE_API_KEY` environment variable
-- Passed as `Authorization: Bearer <key>` header
-- No session management (stateless)
-- No token refresh or expiration
-- No multi-user support (single shared key)
+- Recommended: Tailscale Serve identity via the trusted
+  `Tailscale-User-Login` header and an explicit login allowlist
+- Fallback: API key via `QUANT_CONSOLE_API_KEY`, passed as
+  `Authorization: Bearer <key>`
+- No application session management or password storage
+- Tailscale ACLs remain the network-access boundary
+- The application remains bound to localhost so identity headers cannot be
+  spoofed by LAN or tailnet clients bypassing Serve
 
 ## Data Classification
 

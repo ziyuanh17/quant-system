@@ -16,18 +16,16 @@ The console will be available at `http://127.0.0.1:8000`.
 
 ## Production Deployment
 
-### 1. Generate API Key
+### 1. Select Authentication
 
-```bash
-openssl rand -hex 32
-```
-
-Copy the output and set it as `QUANT_CONSOLE_API_KEY` in `.env` or the launchd plist.
+For the recommended Tailscale Serve deployment, allowlist the owner's exact
+Tailscale login identity. API-key mode remains available as a fallback.
 
 ### 2. Configure `.env`
 
 ```bash
-QUANT_CONSOLE_API_KEY=<your-generated-key>
+QUANT_CONSOLE_AUTH_MODE=tailscale
+QUANT_CONSOLE_TAILSCALE_USERS=owner@example.com
 ```
 
 ### 3. Start Manually
@@ -55,12 +53,8 @@ launchctl bootstrap gui/$(id -u) \
 # Check the service is running
 launchctl list | grep quant-system.console
 
-# Test authentication (should return 401)
+# Direct localhost API access lacks Tailscale identity and should return 401
 curl http://127.0.0.1:8000/api/v1/overview
-
-# Test with API key (should return 200)
-curl -H "Authorization: Bearer YOUR_KEY" \
-     http://127.0.0.1:8000/api/v1/overview
 ```
 
 ## Network Security
@@ -80,7 +74,7 @@ The console reads from local artifacts. Back up:
 - `data/web/console.db` — SQLite historical observability database
 - `configs/launchd/com.quant-system.console.local.plist` — localized launchd
   configuration
-- `.env` — API key (keep secret)
+- `.env` — runtime authentication configuration
 
 ## Rollback
 
@@ -102,7 +96,7 @@ launchctl bootstrap gui/$(id -u) \
 
 - Single-threaded uvicorn (no async workers)
 - No rate limiting
-- No session management (API key only)
+- No application session management
 - No HTTPS in the app (use reverse proxy)
 - SQLite for historical data (not suitable for high write volume)
 - No caching — docs are scanned on each request

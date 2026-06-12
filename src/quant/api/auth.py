@@ -3,7 +3,7 @@
 Security contract
 -----------------
 * The console is read-only. No endpoint accepts mutations.
-* Authentication is API-key based (simple, no OAuth complexity).
+* Authentication supports Tailscale Serve identity or an API key.
 * Production deployment should place the console behind a private
   network (Tailscale) or an authenticated reverse proxy.
 * Secrets, credentials, raw broker payloads, and unredacted account
@@ -11,13 +11,16 @@ Security contract
 
 Configuration
 -------------
-Set ``QUANT_CONSOLE_API_KEY`` to enable API-key authentication.
-When unset, authentication is skipped (development mode only).
+Set ``QUANT_CONSOLE_AUTH_MODE=tailscale`` and
+``QUANT_CONSOLE_TAILSCALE_USERS`` for the recommended private deployment.
+Set ``QUANT_CONSOLE_AUTH_MODE=api_key`` and ``QUANT_CONSOLE_API_KEY`` for the
+fallback shared-key deployment. When no mode or key is set, authentication is
+skipped for development only.
 
 In production:
-1. Set ``QUANT_CONSOLE_API_KEY`` to a strong random value.
-2. Deploy behind Tailscale or an authenticated reverse proxy.
-3. Enable HTTPS at the reverse proxy layer.
+1. Keep the application bound to localhost.
+2. Deploy behind Tailscale Serve or an authenticated reverse proxy.
+3. Allowlist the expected Tailscale login identity.
 
 """
 
@@ -49,15 +52,35 @@ def _get_api_key() -> str | None:
     return os.environ.get("QUANT_CONSOLE_API_KEY")
 
 
+def _get_auth_mode() -> str:
+    """Return the configured authentication mode."""
+    configured = os.environ.get("QUANT_CONSOLE_AUTH_MODE")
+    if configured:
+        return configured
+    return "api_key" if _get_api_key() else "development"
+
+
+def _get_tailscale_users() -> set[str]:
+    """Return the normalized allowlist of Tailscale login identities."""
+    configured = os.environ.get("QUANT_CONSOLE_TAILSCALE_USERS", "")
+    return {
+        login.strip().lower()
+        for login in configured.split(",")
+        if login.strip()
+    }
+
+
 def require_api_key(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = _credentials_dependency,
 ) -> str:
-    """Dependency: require a valid API key.
+    """Dependency: authenticate a private API request.
 
     Returns
     -------
     str
-        The API key value (for audit logging).
+        The authenticated Tailscale login, API key, or empty development
+        identity.
 
     Raises
     ------
@@ -65,10 +88,25 @@ def require_api_key(
         If authentication is enabled and the key is missing or invalid.
 
     """
-    expected = _get_api_key()
-    if expected is None:
-        # Development mode — no auth required
+    auth_mode = _get_auth_mode()
+    if auth_mode == "development":
         return ""
+
+    if auth_mode == "tailscale":
+        return _require_tailscale_identity(request)
+
+    if auth_mode != "api_key":
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unsupported console authentication mode",
+        )
+
+    expected = _get_api_key()
+    if not expected:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Console API key authentication is not configured",
+        )
 
     if credentials is None or credentials.credentials == "":
         raise HTTPException(
@@ -86,6 +124,30 @@ def require_api_key(
         )
 
     return credentials.credentials
+
+
+def _require_tailscale_identity(request: Request) -> str:
+    """Require an allowlisted identity supplied by Tailscale Serve."""
+    allowed_users = _get_tailscale_users()
+    if not allowed_users:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Tailscale identity allowlist is not configured",
+        )
+
+    login = request.headers.get("Tailscale-User-Login", "").strip().lower()
+    if not login:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Tailscale identity required",
+        )
+    if login not in allowed_users:
+        logger.warning("Rejected non-allowlisted Tailscale identity")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tailscale identity is not authorized",
+        )
+    return login
 
 
 def _log_failed_attempt(attempt: str) -> None:
