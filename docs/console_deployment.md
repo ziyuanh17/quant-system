@@ -16,18 +16,16 @@ The console will be available at `http://127.0.0.1:8000`.
 
 ## Production Deployment
 
-### 1. Generate API Key
+### 1. Select Authentication
 
-```bash
-openssl rand -hex 32
-```
-
-Copy the output and set it as `QUANT_CONSOLE_API_KEY` in `.env` or the launchd plist.
+For the recommended Tailscale Serve deployment, allowlist the owner's exact
+Tailscale login identity. API-key mode remains available as a fallback.
 
 ### 2. Configure `.env`
 
 ```bash
-QUANT_CONSOLE_API_KEY=<your-generated-key>
+QUANT_CONSOLE_AUTH_MODE=tailscale
+QUANT_CONSOLE_TAILSCALE_USERS=owner@example.com
 ```
 
 ### 3. Start Manually
@@ -39,15 +37,14 @@ quant web serve --host 127.0.0.1 --port 8000
 ### 4. Install launchd Service
 
 ```bash
-# Copy the template
-cp configs/launchd/com.quant-system.console.plist \
-   ~/Library/LaunchAgents/com.quant-system.console.plist
-
-# Edit the plist: replace paths, set QUANT_CONSOLE_API_KEY
-# Set Disabled=false when ready
+# Follow the localization and verification procedure first.
+# The API key remains in the runtime clone's .env, never in the plist.
+cp configs/launchd/com.quant-system.console.plist.example \
+   configs/launchd/com.quant-system.console.local.plist
 
 # Load the service
-launchctl load ~/Library/LaunchAgents/com.quant-system.console.plist
+launchctl bootstrap gui/$(id -u) \
+  ~/Library/LaunchAgents/com.quant-system.console.plist
 ```
 
 ### 5. Verify
@@ -56,18 +53,15 @@ launchctl load ~/Library/LaunchAgents/com.quant-system.console.plist
 # Check the service is running
 launchctl list | grep quant-system.console
 
-# Test authentication (should return 401)
+# Direct localhost API access lacks Tailscale identity and should return 401
 curl http://127.0.0.1:8000/api/v1/overview
-
-# Test with API key (should return 200)
-curl -H "Authorization: Bearer YOUR_KEY" \
-     http://127.0.0.1:8000/api/v1/overview
 ```
 
 ## Network Security
 
-- **Tailscale (recommended):** Run the console on a Tailscale node so it's only
-  accessible from your Tailscale network.
+- **Tailscale Serve (recommended):** Keep the console on `127.0.0.1` and proxy
+  it privately with `tailscale serve --bg 8000`. See
+  [console_remote_access.md](console_remote_access.md).
 - **Reverse proxy:** Place the console behind nginx/Caddy with HTTPS and
   basic auth if you need external access.
 - **Never bind to `0.0.0.0`** without a reverse proxy or network-level security.
@@ -78,28 +72,31 @@ The console reads from local artifacts. Back up:
 
 - `site/` — published knowledge index and status snapshots
 - `data/web/console.db` — SQLite historical observability database
-- `configs/launchd/com.quant-system.console.plist` — launchd configuration
-- `.env` — API key (keep secret)
+- `configs/launchd/com.quant-system.console.local.plist` — localized launchd
+  configuration
+- `.env` — runtime authentication configuration
 
 ## Rollback
 
 ```bash
 # Stop the service
-launchctl unload ~/Library/LaunchAgents/com.quant-system.console.plist
+launchctl bootout gui/$(id -u) \
+  ~/Library/LaunchAgents/com.quant-system.console.plist
 
 # Restore from backup
 cp /backup/site/site/knowledge_index.json site/knowledge_index.json
 cp /backup/data/web/console.db data/web/console.db
 
 # Restart
-launchctl load ~/Library/LaunchAgents/com.quant-system.console.plist
+launchctl bootstrap gui/$(id -u) \
+  ~/Library/LaunchAgents/com.quant-system.console.plist
 ```
 
 ## Known Limits
 
 - Single-threaded uvicorn (no async workers)
 - No rate limiting
-- No session management (API key only)
+- No application session management
 - No HTTPS in the app (use reverse proxy)
 - SQLite for historical data (not suitable for high write volume)
 - No caching — docs are scanned on each request

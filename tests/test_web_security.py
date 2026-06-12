@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 
 from quant.api.models import (
@@ -297,7 +297,7 @@ class TestProhibitedFields:
 
 
 class TestAuthentication:
-    """API key authentication when QUANT_CONSOLE_API_KEY is set."""
+    """Private console authentication modes."""
 
     def test_auth_skipped_when_key_unset(self):
         """When QUANT_CONSOLE_API_KEY is unset, auth is skipped."""
@@ -320,7 +320,10 @@ class TestAuthentication:
         os.environ["QUANT_CONSOLE_API_KEY"] = "test-key"
         try:
             with pytest.raises(HTTPException):
-                require_api_key(credentials=None)
+                require_api_key(
+                    request=Request({"type": "http", "headers": []}),
+                    credentials=None,
+                )
         finally:
             os.environ.pop("QUANT_CONSOLE_API_KEY", None)
 
@@ -334,6 +337,45 @@ class TestAuthentication:
             response = TestClient(app).get("/api/v1/overview")
 
         assert response.status_code == 401
+
+    def test_tailscale_mode_accepts_allowlisted_identity(self):
+        from quant.web.app import app
+
+        with patch.dict(
+            os.environ,
+            {
+                "QUANT_CONSOLE_AUTH_MODE": "tailscale",
+                "QUANT_CONSOLE_TAILSCALE_USERS": "owner@example.com",
+            },
+            clear=True,
+        ):
+            response = TestClient(app).get(
+                "/api/v1/overview",
+                headers={"Tailscale-User-Login": "owner@example.com"},
+            )
+
+        assert response.status_code == 200
+
+    def test_tailscale_mode_rejects_missing_or_unlisted_identity(self):
+        from quant.web.app import app
+
+        with patch.dict(
+            os.environ,
+            {
+                "QUANT_CONSOLE_AUTH_MODE": "tailscale",
+                "QUANT_CONSOLE_TAILSCALE_USERS": "owner@example.com",
+            },
+            clear=True,
+        ):
+            client = TestClient(app)
+            missing = client.get("/api/v1/overview")
+            unlisted = client.get(
+                "/api/v1/overview",
+                headers={"Tailscale-User-Login": "other@example.com"},
+            )
+
+        assert missing.status_code == 401
+        assert unlisted.status_code == 403
 
 
 class TestDeploymentBoundary:

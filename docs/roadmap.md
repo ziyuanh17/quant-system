@@ -108,6 +108,8 @@ side discussions.
 | 90 | Immutable Research Artifacts and Trial Ledger v1 | In Review | Add content-derived evaluation IDs, exclusive immutable manifests, checksum verification, and an append-only trial ledger. |
 | 91 | Market-Hours Live Reconciliation Policy v1 | In Review | Preserve buying-power and current-mark movement as non-failing observations while keeping orders, fills, cash, position quantity, and average price as hard reconciliation gates. |
 | 92 | Mac Studio Scheduler Activation Readiness Review | In Review | Record the successful controlled rehearsal, verify Studio runtime activation prerequisites, and preserve a separate explicit scheduler activation gate. |
+| 93 | Web Console Private Tailscale Deployment v1 | Done | Reviewed source commit `65f43ca` was promoted to the runtime clone; a dedicated console API key was configured; launchd is running the read-only console; authenticated localhost and tailnet-only Tailscale HTTPS verification passed. |
+| 94 | Web Console Tailscale Identity Authentication v1 | Done | The runtime console uses the allowlisted Tailscale Serve login `ziyuanhuang21@gmail.com`; no-key tailnet API access passed, direct localhost access failed closed, a different identity was rejected, and API-key fallback remains implemented. |
 
 ## Current Recommendation
 
@@ -121,6 +123,11 @@ Research-only work may proceed in parallel through **Strategy Evaluation
 Harness Design v1**. Keep that work inside the development clone and do not
 connect candidate evaluation or promotion artifacts to paper, dry-run, live,
 workflow, scheduler, or runtime-clone execution.
+
+The read-only web console's private Tailscale deployment may also proceed in
+parallel through milestone 93. Keep the console bound to localhost and do not
+install its launchd service from the development clone; promote the reviewed
+bundle to the runtime clone first.
 
 ## Status Convention
 

@@ -43,7 +43,7 @@ The first production-ready web app is complete only when:
 | W2 | Source Artifact and Data Classification | Done | Source classification documented (`docs/quant_system_web_app_source_classification.md`). |
 | W3 | Public and Private Read-Model Contracts | Done | 561 lines of typed Pydantic models in `src/quant/api/models.py` define overview, accounts, operations, decisions, research, incidents, docs, system, and root endpoints. |
 | W4 | Freshness and Status Semantics | Done | `src/quant/api/freshness.py` (235 lines) implements shared rules for healthy, degraded, failed, running, disabled, unknown, and stale states. |
-| W5 | Authentication and Private-Network Boundary | Done | `src/quant/api/auth.py` (160 lines) implements API key auth, access logging, and secure headers middleware. |
+| W5 | Authentication and Private-Network Boundary | Done | `src/quant/api/auth.py` implements API-key and Tailscale identity authentication, access logging, and secure headers middleware. |
 | W6 | Read-Only API Foundation | Done | `src/quant/web/app.py` mounts read-only API at `/api/v1/*` and HTML pages at `/*`. No mutation endpoints. |
 | W7 | Web Shell and Responsive Navigation | Done | 10 Jinja2 templates (`src/quant/web/templates/`) plus static assets provide desktop/mobile shell with navigation rail, top bar, and evidence drawer. |
 | W8 | Overview and Account-Lane Status | Done | `/overview` page with system status, 4 account lanes, latest decisions, workflows, issues, freshness, research queue, and source version. |
@@ -60,6 +60,32 @@ The first production-ready web app is complete only when:
 | W19 | Private Server Deployment Rehearsal | Done | `src/quant/web/serve.py` wraps uvicorn; `quant web serve` CLI command; launchd plist template in `configs/launchd/`; deployment docs in `docs/console_deployment.md`; `.env.example` updated. |
 | W20 | First Natural Runtime Review | Done | All API routes wired to real data: `overview()` calls `build_health_report()`, `accounts()` reads paper state, `incidents()` scans `docs/`, `system()` counts artifact files, `operations()` scans workflow dirs. |
 | W21 | Web App v1 Closeout | Done | `docs/console_runbook.md`, `docs/console_known_limits.md`, `docs/console_security_boundary.md`, `docs/console_future_roadmap.md` created; `README.md` and `docs/runbook.md` updated; roadmap marked complete. |
+| W22 | Restart-Safe Private Tailscale Deployment | Done | Reviewed source was promoted to the runtime clone; a dedicated API key was configured; the console launchd service is running from the runtime clone; tailnet-only Tailscale Serve HTTPS and authenticated API access passed. |
+| W23 | Passwordless Tailscale Identity Authentication | Done | The runtime console now authenticates the allowlisted Tailscale Serve login `ziyuanhuang21@gmail.com`; Tailscale page and API access pass without an API key, direct localhost API access fails closed, and API-key fallback remains implemented. |
+
+## Current Deployment State
+
+As of June 12, 2026:
+
+- the source-side restart-safe deployment bundle is implemented and passes the
+  full repository quality gate,
+- the Mac Studio is connected to Tailscale as
+  `mochifufus-mac-studio.tail2d964e.ts.net`,
+- private Tailscale Serve is active at
+  `https://mochifufus-mac-studio.tail2d964e.ts.net/` and proxies only to
+  `http://127.0.0.1:8000`,
+- a development-clone wrapper rehearsal failed closed because no
+  `QUANT_CONSOLE_API_KEY` is configured,
+- reviewed source commit `65f43ca` is promoted to the runtime clone,
+- the runtime clone uses allowlisted Tailscale identity authentication and no
+  longer stores a console API key,
+- launchd service `com.quant-system.console` is running from the runtime clone,
+  with one run and no exit,
+- localhost page access, unauthenticated rejection, authenticated API access,
+  and tailnet HTTPS access all passed.
+- after the identity-auth cutover, direct localhost API access returns `401`,
+  the allowlisted identity returns `200`, a different identity returns `403`,
+  and the tailnet API returns `200` without an API key.
 
 ## Automatic Decision Visibility
 

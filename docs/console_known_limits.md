@@ -24,7 +24,7 @@
 
 ## Security Limits
 
-- API key authentication only (no OAuth, no sessions)
+- Tailscale identity or API-key authentication; no application sessions
 - No rate limiting
 - No HTTPS in the app (use reverse proxy or Tailscale)
 - No audit logging beyond access logs
