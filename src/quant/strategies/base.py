@@ -7,6 +7,7 @@ from typing import Protocol
 from quant.models.features import FeatureData
 from quant.models.market import PriceData
 from quant.models.signals import SignalFrame
+from quant.models.targets import StrategyTargetFrame
 
 
 class Strategy(Protocol):
@@ -47,5 +48,22 @@ class FeatureStrategy(Protocol):
 
     def generate_signals_from_features(
         self, features: FeatureData
-    ) -> SignalFrame:
-        ...
+    ) -> SignalFrame: ...
+
+
+class TargetStrategy(Protocol):
+    """Price strategy that emits desired position targets directly."""
+
+    name: str
+
+    def generate_targets(self, prices: PriceData) -> StrategyTargetFrame: ...
+
+
+class FeatureTargetStrategy(Protocol):
+    """Feature strategy that emits desired position targets directly."""
+
+    name: str
+
+    def generate_targets_from_features(
+        self, features: FeatureData
+    ) -> StrategyTargetFrame: ...

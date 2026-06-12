@@ -82,6 +82,11 @@ The harness should preserve the simple path while adding general interfaces
 around it. Existing `Strategy` and `FeatureStrategy` implementations should be
 supported through adapters rather than rewritten immediately.
 
+The first semantic-target foundation is defined in
+[semantic_target_architecture.md](semantic_target_architecture.md). Native
+target strategies and legacy-equivalence evidence are research-only; they do
+not authorize paper or broker execution.
+
 ## Safety Boundary
 
 The evaluation harness may read research artifacts and write new research

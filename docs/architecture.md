@@ -255,3 +255,12 @@ VectorBT owns:
 - fast vectorized backtests
 - signal portfolio simulation
 - metrics and research visualization
+
+## Semantic Target Direction
+
+The approved research-side target foundation and staged operational direction
+are documented in
+[semantic_target_architecture.md](semantic_target_architecture.md). Strategy
+targets are desired exposure, not broker orders. Future portfolio aggregation,
+risk approval, and execution lifecycle stages must remain separate and
+independently auditable.
