@@ -20,6 +20,7 @@ from quant.execution import (
     latest_json,
     load_paper_broker_state,
     opens_or_increases_short,
+    plan_target_position_order,
     reconcile_live_state,
     save_paper_broker_state,
     write_dry_run_order_record,
@@ -30,8 +31,6 @@ from quant.execution import (
 from quant.models.execution import (
     LiveOrderRecord,
     LiveOrderStatus,
-    OrderRequest,
-    OrderSide,
     PaperSignalAction,
     Position,
     TradingMode,
@@ -74,6 +73,10 @@ class _AlpacaPaperSignalRunOutcome:
     latest_signal_market_price: float | None = None
     broker_submission_attempted: bool | None = None
     broker_submission_skipped_reason: str | None = None
+    broker_position_quantity_before: int | None = None
+    strategy_target_quantity: int | None = None
+    planned_order_side: str | None = None
+    planned_order_quantity: int | None = None
     order_artifact_paths: tuple[str, ...] = ()
     fill_artifact_paths: tuple[str, ...] = ()
     snapshot_artifact_paths: tuple[str, ...] = ()
@@ -680,12 +683,6 @@ def _run_alpaca_paper_signal_once(
             f"Alpaca paper safety check failed: {safety_check.reason}"
         )
 
-    _validate_live_order_notional(
-        quantity=quantity,
-        price=decision.market_price,
-        max_order_notional=safety_config.max_order_notional,
-    )
-
     before_paths = _existing_json_paths(
         order_output_dir,
         fill_output_dir,
@@ -698,14 +695,23 @@ def _run_alpaca_paper_signal_once(
         snapshot_output_dir=snapshot_output_dir,
     )
 
-    broker_submission_attempted = decision.action != PaperSignalAction.HOLD
-    broker_submission_skipped_reason = (
-        None
-        if broker_submission_attempted
-        else "latest strategy signal is hold"
+    account_before_order = broker_client.account_snapshot()
+    target_plan = plan_target_position_order(
+        decision=decision,
+        account=account_before_order,
+        target_long_quantity=quantity,
     )
+    request = target_plan.order_request
+    broker_submission_attempted = request is not None
+    broker_submission_skipped_reason: str | None = None
+    if request is None:
+        broker_submission_skipped_reason = (
+            "latest strategy signal is hold"
+            if decision.action == PaperSignalAction.HOLD
+            else target_plan.reason
+        )
 
-    if broker_submission_attempted:
+    if request is not None:
         # Fail closed while another broker order is unsettled. The account
         # snapshot can still show cash or positions reserved by that order,
         # which would make a second local risk check incorrectly approve.
@@ -714,13 +720,11 @@ def _run_alpaca_paper_signal_once(
                 "Alpaca paper order risk check failed: "
                 "open broker order(s) must settle first"
             )
-        side = (
-            OrderSide.BUY
-            if decision.action == PaperSignalAction.BUY
-            else OrderSide.SELL
+        _validate_live_order_notional(
+            quantity=request.quantity,
+            price=decision.market_price,
+            max_order_notional=safety_config.max_order_notional,
         )
-        request = OrderRequest(symbol=symbol, side=side, quantity=quantity)
-        account_before_order = broker_client.account_snapshot()
         risk = check_projected_order_risk(
             request,
             account=account_before_order,
@@ -809,6 +813,12 @@ def _run_alpaca_paper_signal_once(
         latest_signal_market_price=decision.market_price,
         broker_submission_attempted=broker_submission_attempted,
         broker_submission_skipped_reason=broker_submission_skipped_reason,
+        broker_position_quantity_before=target_plan.current_quantity,
+        strategy_target_quantity=target_plan.target_quantity,
+        planned_order_side=request.side.value if request is not None else None,
+        planned_order_quantity=(
+            request.quantity if request is not None else None
+        ),
         order_artifact_paths=order_paths,
         fill_artifact_paths=fill_paths,
         snapshot_artifact_paths=snapshot_paths,
@@ -1057,6 +1067,26 @@ def _build_record(
         ),
         broker_submission_skipped_reason=(
             alpaca_paper_outcome.broker_submission_skipped_reason
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        broker_position_quantity_before=(
+            alpaca_paper_outcome.broker_position_quantity_before
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        strategy_target_quantity=(
+            alpaca_paper_outcome.strategy_target_quantity
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        planned_order_side=(
+            alpaca_paper_outcome.planned_order_side
+            if alpaca_paper_outcome is not None
+            else None
+        ),
+        planned_order_quantity=(
+            alpaca_paper_outcome.planned_order_quantity
             if alpaca_paper_outcome is not None
             else None
         ),

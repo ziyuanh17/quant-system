@@ -102,7 +102,8 @@ fetch provider data
   -> write validation report and metadata
   -> stop if validation fails
   -> generate the latest momentum signal
-  -> submit one actionable signal to Alpaca paper
+  -> calculate the long-only target position
+  -> submit only the order required to reach that target
   -> write live order, fill, and account snapshot artifacts
   -> reconcile local artifacts against Alpaca paper broker state
   -> write workflow record
@@ -117,8 +118,15 @@ data/workflows/alpaca-paper-refresh/
 For Alpaca paper runs, that record includes the latest signal action, signal
 reason, market price, whether broker submission was attempted, skip reason when
 submission was not attempted, order/fill/snapshot artifact paths, and the
-reconciliation report path. This lets a successful run distinguish "held with
-no order" from "submitted to the broker and reconciled."
+reconciliation report path. Target-based runs also record the broker position
+before planning, strategy target quantity, and planned order side and quantity.
+This lets a successful run distinguish "held with no order," "target position
+already satisfied," and "submitted to the broker and reconciled."
+
+The current momentum semantics are target-based: entry means long
+`--quantity`, exit means flat, and hold means no inventory change. Existing
+broker inventory determines the actual order side and quantity. Repeated
+signals at the intended target submit no additional order.
 
 See [alpaca_paper_workflow.md](alpaca_paper_workflow.md) for the design
 context, safety policy, artifact contract, and non-goals.

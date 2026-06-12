@@ -7,10 +7,15 @@ from quant.execution import (
     evaluate_trading_safety,
     execute_latest_signal,
     execute_latest_signal_dry_run,
+    plan_target_position_order,
 )
 from quant.models.execution import (
     BrokerMode,
+    LiveAccountSnapshot,
+    OrderSide,
     PaperSignalAction,
+    PaperSignalDecision,
+    Position,
     TradingMode,
     TradingSafetyConfig,
 )
@@ -155,6 +160,104 @@ def test_execute_latest_signal_dry_run_holds_without_order() -> None:
 
     assert decision.action == PaperSignalAction.HOLD
     assert record is None
+
+
+def test_target_position_entry_from_short_reverses_to_requested_long() -> None:
+    plan = plan_target_position_order(
+        decision=_decision(PaperSignalAction.BUY),
+        account=_live_account(position_quantity=-1),
+        target_long_quantity=1,
+    )
+
+    assert plan.current_quantity == -1
+    assert plan.target_quantity == 1
+    assert plan.order_request is not None
+    assert plan.order_request.side == OrderSide.BUY
+    assert plan.order_request.quantity == 2
+
+
+def test_target_position_repeated_entry_submits_no_order() -> None:
+    plan = plan_target_position_order(
+        decision=_decision(PaperSignalAction.BUY),
+        account=_live_account(position_quantity=1),
+        target_long_quantity=1,
+    )
+
+    assert plan.current_quantity == 1
+    assert plan.target_quantity == 1
+    assert plan.order_request is None
+
+
+def test_target_position_exit_closes_existing_long() -> None:
+    plan = plan_target_position_order(
+        decision=_decision(PaperSignalAction.SELL),
+        account=_live_account(position_quantity=2),
+        target_long_quantity=1,
+    )
+
+    assert plan.current_quantity == 2
+    assert plan.target_quantity == 0
+    assert plan.order_request is not None
+    assert plan.order_request.side == OrderSide.SELL
+    assert plan.order_request.quantity == 2
+
+
+def test_target_position_exit_from_flat_submits_no_order() -> None:
+    plan = plan_target_position_order(
+        decision=_decision(PaperSignalAction.SELL),
+        account=_live_account(position_quantity=0),
+        target_long_quantity=1,
+    )
+
+    assert plan.current_quantity == 0
+    assert plan.target_quantity == 0
+    assert plan.order_request is None
+
+
+def test_target_position_hold_never_changes_inventory() -> None:
+    plan = plan_target_position_order(
+        decision=_decision(PaperSignalAction.HOLD),
+        account=_live_account(position_quantity=-3),
+        target_long_quantity=1,
+    )
+
+    assert plan.current_quantity == -3
+    assert plan.target_quantity == -3
+    assert plan.order_request is None
+
+
+def _decision(action: PaperSignalAction) -> PaperSignalDecision:
+    return PaperSignalDecision(
+        symbol="AAPL",
+        action=action,
+        signal_date="2024-01-25",
+        market_price=20,
+        reason=f"test {action.value}",
+        idempotency_key=f"test:AAPL:2024-01-25:{action.value}",
+    )
+
+
+def _live_account(*, position_quantity: int) -> LiveAccountSnapshot:
+    positions = (
+        (
+            Position(
+                symbol="AAPL",
+                quantity=position_quantity,
+                average_price=10,
+                last_price=20,
+            ),
+        )
+        if position_quantity != 0
+        else ()
+    )
+    return LiveAccountSnapshot(
+        broker_name="alpaca-paper",
+        account_id="acct-1",
+        broker_environment="paper",
+        cash=1000,
+        buying_power=2000,
+        positions=positions,
+    )
 
 
 def _entry_frame() -> pd.DataFrame:
