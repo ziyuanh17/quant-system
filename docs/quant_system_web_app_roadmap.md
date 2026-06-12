@@ -61,7 +61,7 @@ The first production-ready web app is complete only when:
 | W20 | First Natural Runtime Review | Done | All API routes wired to real data: `overview()` calls `build_health_report()`, `accounts()` reads paper state, `incidents()` scans `docs/`, `system()` counts artifact files, `operations()` scans workflow dirs. |
 | W21 | Web App v1 Closeout | Done | `docs/console_runbook.md`, `docs/console_known_limits.md`, `docs/console_security_boundary.md`, `docs/console_future_roadmap.md` created; `README.md` and `docs/runbook.md` updated; roadmap marked complete. |
 | W22 | Restart-Safe Private Tailscale Deployment | Done | Reviewed source was promoted to the runtime clone; a dedicated API key was configured; the console launchd service is running from the runtime clone; tailnet-only Tailscale Serve HTTPS and authenticated API access passed. |
-| W23 | Passwordless Tailscale Identity Authentication | In Review | Replace the deployed shared API-key prompt with an explicit allowlist of trusted Tailscale Serve login identities while preserving API-key fallback mode and localhost-only binding. |
+| W23 | Passwordless Tailscale Identity Authentication | Done | The runtime console now authenticates the allowlisted Tailscale Serve login `ziyuanhuang21@gmail.com`; Tailscale page and API access pass without an API key, direct localhost API access fails closed, and API-key fallback remains implemented. |
 
 ## Current Deployment State
 
@@ -77,11 +77,15 @@ As of June 12, 2026:
 - a development-clone wrapper rehearsal failed closed because no
   `QUANT_CONSOLE_API_KEY` is configured,
 - reviewed source commit `65f43ca` is promoted to the runtime clone,
-- the runtime clone has a dedicated untracked console API key,
+- the runtime clone uses allowlisted Tailscale identity authentication and no
+  longer stores a console API key,
 - launchd service `com.quant-system.console` is running from the runtime clone,
   with one run and no exit,
 - localhost page access, unauthenticated rejection, authenticated API access,
   and tailnet HTTPS access all passed.
+- after the identity-auth cutover, direct localhost API access returns `401`,
+  the allowlisted identity returns `200`, a different identity returns `403`,
+  and the tailnet API returns `200` without an API key.
 
 ## Automatic Decision Visibility
 
