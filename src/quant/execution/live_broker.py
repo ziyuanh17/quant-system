@@ -310,7 +310,7 @@ class LiveBrokerAdapter:
         self._order_output_dir = order_output_dir
         self._fill_output_dir = fill_output_dir
         self._snapshot_output_dir = snapshot_output_dir
-        self._written_fill_ids: set[str] = set()
+        self._written_fill_keys = _existing_fill_keys(fill_output_dir)
 
     def submit_market_order(
         self,
@@ -364,10 +364,11 @@ class LiveBrokerAdapter:
             return
         current_fills = fills if fills is not None else self._client.fills()
         for fill in current_fills:
-            if fill.id in self._written_fill_ids:
+            fill_key = fill.broker_execution_id or fill.id
+            if fill_key in self._written_fill_keys:
                 continue
             write_live_fill_record(fill, self._fill_output_dir)
-            self._written_fill_ids.add(fill.id)
+            self._written_fill_keys.add(fill_key)
 
     def _require_live_allowed(self, safety_check: TradingSafetyCheck) -> None:
         if safety_check.allowed and safety_check.mode == TradingMode.LIVE:
@@ -375,3 +376,13 @@ class LiveBrokerAdapter:
         raise LiveTradingNotAllowedError(
             "live broker adapter requires an allowed live safety check"
         )
+
+
+def _existing_fill_keys(fill_output_dir: Path | None) -> set[str]:
+    if fill_output_dir is None:
+        return set()
+    keys: set[str] = set()
+    for path in fill_output_dir.glob("*.json"):
+        fill = LiveFillRecord.model_validate_json(path.read_text())
+        keys.add(fill.broker_execution_id or fill.id)
+    return keys

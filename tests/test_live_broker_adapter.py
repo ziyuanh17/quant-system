@@ -121,5 +121,30 @@ def test_live_broker_adapter_writes_optional_artifacts(tmp_path) -> None:
     )
 
 
+def test_live_broker_adapter_does_not_duplicate_fill_across_processes(
+    tmp_path,
+) -> None:
+    client = FakeLiveBrokerClient(initial_cash=1_000)
+    fill_dir = tmp_path / "fills"
+    first_adapter = LiveBrokerAdapter(
+        client=client,
+        fill_output_dir=fill_dir,
+    )
+    first_adapter.submit_market_order(
+        OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=1),
+        reference_price=100,
+        client_order_id="artifact-order",
+        safety_check=_allowed_live_check(),
+    )
+
+    second_adapter = LiveBrokerAdapter(
+        client=client,
+        fill_output_dir=fill_dir,
+    )
+    second_adapter.fills()
+
+    assert len(list(fill_dir.glob("*.json"))) == 1
+
+
 def _allowed_live_check() -> TradingSafetyCheck:
     return TradingSafetyCheck(mode=TradingMode.LIVE, allowed=True)

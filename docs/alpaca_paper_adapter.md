@@ -269,9 +269,19 @@ Compare:
 
 - local open live order artifacts vs `TradingClient.get_orders(...)` filtered
   for open/relevant orders
-- local fill artifacts vs filled/partially filled Alpaca order data
+- local fill artifacts vs each known local order refreshed directly through
+  `TradingClient.get_order_by_id(...)`
 - local latest `LiveAccountSnapshot` vs `TradingClient.get_account()` and
   `get_all_positions()`
+
+Direct broker-order-ID refresh keeps the fill comparison scope aligned with
+the durable local order scope. It avoids treating Alpaca's default order-list
+window as complete historical broker truth and avoids pulling unrelated broker
+history into reconciliation.
+
+Fill artifact persistence uses the broker execution ID as its idempotency key
+across processes. Re-running order refresh must not create a second local fill
+artifact for an execution that is already recorded.
 
 The first reconciliation pass may be polling-based. Streaming trade updates are
 out of scope until polling reconciliation is reliable.

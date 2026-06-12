@@ -275,6 +275,58 @@ def test_alpaca_paper_client_refreshes_known_fills_from_polled_orders() -> None:
     assert fills[0].notional == 200.5
 
 
+def test_alpaca_client_refreshes_historical_fill_by_broker_order_id() -> None:
+    trading_client = FakeTradingClient(
+        api_key="unused",
+        secret_key="unused",
+        paper=True,
+    )
+    order_record = LiveOrderRecord(
+        client_order_id="historical-client-1",
+        broker_order_id="historical-order-1",
+        broker_name="alpaca-paper",
+        account_id="acct-1",
+        broker_environment="paper",
+        request=OrderRequest(
+            symbol="F",
+            side=OrderSide.BUY,
+            quantity=1,
+        ),
+        reference_price=14.33,
+        notional=14.33,
+        safety_check=_allowed_live_check(),
+        status=LiveOrderStatus.FILLED,
+    )
+    trading_client.orders.append(
+        SimpleNamespace(
+            id="historical-order-1",
+            client_order_id="historical-client-1",
+            status="filled",
+            filled_qty="1",
+            filled_avg_price="14.33",
+        )
+    )
+    trading_client.default_order_ids = set()
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=trading_client,
+    )
+
+    client.remember_order_record(order_record)
+    fills = client.fills()
+
+    assert trading_client.get_orders_calls == 0
+    assert trading_client.get_order_by_id_calls == ["historical-order-1"]
+    assert len(fills) == 1
+    assert fills[0].symbol == "F"
+    assert fills[0].quantity == 1
+    assert fills[0].price == 14.33
+
+
 def test_alpaca_paper_client_refreshes_terminal_order_by_broker_id() -> None:
     trading_client = FakeTradingClient(
         api_key="unused",
@@ -354,6 +406,9 @@ class FakeTradingClient:
             buying_power="1000",
         )
         self.next_order_status = "filled"
+        self.default_order_ids: set[str] | None = None
+        self.get_orders_calls = 0
+        self.get_order_by_id_calls: list[str] = []
 
     def submit_order(self, order_data: object) -> object:
         if not isinstance(order_data, FakeMarketOrder):
@@ -370,9 +425,17 @@ class FakeTradingClient:
         return order
 
     def get_orders(self, filter: object | None = None) -> list[object]:
+        self.get_orders_calls += 1
+        if self.default_order_ids is not None:
+            return [
+                order
+                for order in self.orders
+                if cast(Any, order).id in self.default_order_ids
+            ]
         return self.orders
 
     def get_order_by_id(self, order_id: str) -> object:
+        self.get_order_by_id_calls.append(order_id)
         for order in self.orders:
             order_id_value = cast(Any, order).id
             if order_id_value == order_id:

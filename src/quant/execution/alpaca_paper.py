@@ -180,7 +180,13 @@ class AlpacaPaperBrokerClient:
         )
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
-        self.open_orders()
+        # Reconciliation remembers durable local order records before asking
+        # for fills. Refresh those exact broker orders by ID so old fills do
+        # not disappear when Alpaca's default order-list window changes.
+        for order_record in tuple(self._orders_by_client_id.values()):
+            if order_record.broker_order_id is None:
+                continue
+            self.refresh_order_record(order_record)
         return tuple(self._fills_by_execution_id.values())
 
     def remember_order_record(self, record: LiveOrderRecord) -> None:
