@@ -913,8 +913,6 @@ def live_alpaca_paper_reconcile(
     )
     config = _load_alpaca_paper_config_from_env()
     client = AlpacaPaperBrokerClient(config=config)
-    for order_record in load_live_order_records(order_records_dir):
-        client.remember_order_record(order_record)
     report = reconcile_live_state(
         client=client,
         order_records_dir=order_records_dir,

@@ -5,7 +5,12 @@ from typer.testing import CliRunner
 import quant.cli
 from quant.cli import app
 from quant.execution import LIVE_TRADING_CONFIRMATION, PaperBroker
-from quant.execution.artifacts import write_paper_signal_record
+from quant.execution.artifacts import (
+    write_live_account_snapshot,
+    write_live_fill_record,
+    write_live_order_record,
+    write_paper_signal_record,
+)
 from quant.models.execution import (
     LiveAccountSnapshot,
     LiveFillRecord,
@@ -556,6 +561,46 @@ def test_alpaca_paper_refresh_workflow_records_hold_without_order(
         tmp_path / "live" / "reconciliation" / "latest.json"
     )
     assert not (tmp_path / "locks" / "alpaca-paper-refresh.lock").exists()
+
+
+def test_alpaca_paper_refresh_hold_remembers_durable_orders_before_reconcile(
+    tmp_path,
+) -> None:
+    client = DurableOrderContextWorkflowClient()
+    order_dir = tmp_path / "live" / "orders"
+    fill_dir = tmp_path / "live" / "fills"
+    snapshot_dir = tmp_path / "live" / "snapshots"
+    write_live_order_record(client.historical_order, order_dir)
+    write_live_fill_record(client.historical_fill, fill_dir)
+    write_live_account_snapshot(client.account_snapshot(), snapshot_dir)
+
+    record = run_alpaca_paper_refresh_workflow(
+        provider=FakeFlatMarketBarProvider(),
+        broker_client=client,
+        safety_config=_alpaca_paper_safety_config(),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=1,
+        min_rows=20,
+        order_output_dir=order_dir,
+        fill_output_dir=fill_dir,
+        snapshot_output_dir=snapshot_dir,
+        reconciliation_output_path=tmp_path
+        / "live"
+        / "reconciliation"
+        / "latest.json",
+    )
+
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert record.latest_signal_action == "hold"
+    assert client.remembered_client_order_ids == ("historical-order",)
 
 
 def test_alpaca_paper_refresh_workflow_exit_from_flat_submits_no_order(
@@ -1423,6 +1468,60 @@ class FakeAlpacaPaperWorkflowClient:
         record: LiveOrderRecord,
     ) -> LiveOrderRecord:
         return record
+
+
+class DurableOrderContextWorkflowClient(FakeAlpacaPaperWorkflowClient):
+    def __init__(self) -> None:
+        super().__init__()
+        self.remembered_client_order_ids: tuple[str, ...] = ()
+        safety_check = TradingSafetyCheck(
+            mode=TradingMode.LIVE,
+            allowed=True,
+        )
+        self.historical_order = LiveOrderRecord(
+            client_order_id="historical-order",
+            broker_order_id="historical-broker-order",
+            broker_name="alpaca-paper",
+            account_id="acct-1",
+            broker_environment="paper",
+            request=OrderRequest(
+                symbol="F",
+                side=OrderSide.BUY,
+                quantity=1,
+            ),
+            reference_price=10,
+            notional=10,
+            safety_check=safety_check,
+            status=LiveOrderStatus.FILLED,
+            raw_response_ref="alpaca-paper:historical-order",
+        )
+        self.historical_fill = LiveFillRecord(
+            order_record_id=self.historical_order.id,
+            client_order_id=self.historical_order.client_order_id,
+            broker_order_id=self.historical_order.broker_order_id or "",
+            broker_execution_id="historical-execution",
+            broker_name="alpaca-paper",
+            account_id="acct-1",
+            broker_environment="paper",
+            symbol="F",
+            side=OrderSide.BUY,
+            quantity=1,
+            price=10,
+            raw_response_ref="alpaca-paper:historical-fill",
+        )
+
+    def remember_order_record(self, record: LiveOrderRecord) -> None:
+        self.remembered_client_order_ids = (
+            *self.remembered_client_order_ids,
+            record.client_order_id,
+        )
+
+    def fills(self) -> tuple[LiveFillRecord, ...]:
+        if self.historical_order.client_order_id not in (
+            self.remembered_client_order_ids
+        ):
+            return ()
+        return (self.historical_fill,)
 
 
 class DelayedFillAlpacaPaperWorkflowClient(FakeAlpacaPaperWorkflowClient):

@@ -777,15 +777,6 @@ def _run_alpaca_paper_signal_once(
             )
     adapter.account_snapshot()
 
-    _remember_local_order_contexts(
-        client=broker_client,
-        order_records=tuple(
-            _new_live_order_records(
-                order_output_dir=order_output_dir,
-                before_paths=before_paths,
-            )
-        ),
-    )
     report = reconcile_live_state(
         client=broker_client,
         order_records_dir=order_output_dir,
@@ -885,31 +876,6 @@ def _new_json_paths(
         for path in sorted(directory.glob("*.json"))
         if path not in before_paths
     )
-
-
-def _new_live_order_records(
-    *,
-    order_output_dir: Path,
-    before_paths: set[Path],
-) -> tuple[LiveOrderRecord, ...]:
-    records = []
-    for path in sorted(order_output_dir.glob("*.json")):
-        if path in before_paths:
-            continue
-        records.append(LiveOrderRecord.model_validate_json(path.read_text()))
-    return tuple(records)
-
-
-def _remember_local_order_contexts(
-    *,
-    client: LiveBrokerClient,
-    order_records: tuple[LiveOrderRecord, ...],
-) -> None:
-    remember = getattr(client, "remember_order_record", None)
-    if not callable(remember):
-        return
-    for record in order_records:
-        remember(record)
 
 
 def _compare_latest_paper_and_dry_run(

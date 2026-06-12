@@ -121,6 +121,7 @@ def reconcile_live_state(
         raise ValueError("cash_tolerance must be non-negative")
 
     local_orders = load_live_order_records(order_records_dir)
+    _remember_local_order_contexts(client=client, order_records=local_orders)
     local_open_orders = _open_live_orders(local_orders)
     local_fills = load_live_fill_records(fill_records_dir)
     local_snapshot = latest_live_account_snapshot(snapshot_records_dir)
@@ -174,6 +175,19 @@ def load_live_order_records(
     for path in sorted(order_records_dir.glob("*.json")):
         records.append(LiveOrderRecord.model_validate_json(path.read_text()))
     return tuple(sorted(records, key=lambda record: record.recorded_at))
+
+
+def _remember_local_order_contexts(
+    *,
+    client: LiveBrokerClient,
+    order_records: tuple[LiveOrderRecord, ...],
+) -> None:
+    """Seed optional broker context before retrieving durable order history."""
+    remember = getattr(client, "remember_order_record", None)
+    if not callable(remember):
+        return
+    for record in order_records:
+        remember(record)
 
 
 def load_live_fill_records(
