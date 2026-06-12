@@ -67,6 +67,7 @@ from quant.execution.signal_execution import (
     decide_latest_signal,
     execute_latest_signal,
     execute_latest_signal_dry_run,
+    plan_target_position_order,
 )
 from quant.execution.state import (
     load_paper_broker_state,
@@ -100,6 +101,7 @@ __all__ = [
     "evaluate_trading_safety",
     "execute_latest_signal",
     "execute_latest_signal_dry_run",
+    "plan_target_position_order",
     "load_paper_broker_state",
     "latest_live_account_snapshot",
     "load_live_fill_records",

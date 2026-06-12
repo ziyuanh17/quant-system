@@ -8,11 +8,13 @@ from quant.execution.broker_adapter import (
 )
 from quant.models.execution import (
     DryRunOrderRecord,
+    LiveAccountSnapshot,
     OrderRequest,
     OrderSide,
     PaperSignalAction,
     PaperSignalDecision,
     PaperSignalRecord,
+    TargetPositionPlan,
     TradingSafetyCheck,
 )
 from quant.models.market import PriceData
@@ -69,6 +71,60 @@ def decide_latest_signal(
         idempotency_key=_signal_key(
             strategy_name, prices.symbol, signal_date, action
         ),
+    )
+
+
+def plan_target_position_order(
+    *,
+    decision: PaperSignalDecision,
+    account: LiveAccountSnapshot,
+    target_long_quantity: int,
+) -> TargetPositionPlan:
+    """Translate long-only signal intent into an order toward its target."""
+    if target_long_quantity < 1:
+        raise ValueError("target_long_quantity must be at least 1")
+
+    current_quantity = next(
+        (
+            position.quantity
+            for position in account.positions
+            if position.symbol == decision.symbol
+        ),
+        0,
+    )
+    if decision.action == PaperSignalAction.HOLD:
+        return TargetPositionPlan(
+            symbol=decision.symbol,
+            signal_action=decision.action,
+            current_quantity=current_quantity,
+            target_quantity=current_quantity,
+            reason="hold signal leaves position unchanged",
+        )
+    target_quantity = (
+        target_long_quantity
+        if decision.action == PaperSignalAction.BUY
+        else 0
+    )
+    quantity_delta = target_quantity - current_quantity
+    if quantity_delta == 0:
+        return TargetPositionPlan(
+            symbol=decision.symbol,
+            signal_action=decision.action,
+            current_quantity=current_quantity,
+            target_quantity=target_quantity,
+            reason="strategy target position is already satisfied",
+        )
+    return TargetPositionPlan(
+        symbol=decision.symbol,
+        signal_action=decision.action,
+        current_quantity=current_quantity,
+        target_quantity=target_quantity,
+        order_request=OrderRequest(
+            symbol=decision.symbol,
+            side=OrderSide.BUY if quantity_delta > 0 else OrderSide.SELL,
+            quantity=abs(quantity_delta),
+        ),
+        reason="order required to reach strategy target position",
     )
 
 

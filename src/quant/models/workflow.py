@@ -38,6 +38,10 @@ class DataRefreshWorkflowRecord(FrozenModel):
     latest_signal_market_price: float | None = None
     broker_submission_attempted: bool | None = None
     broker_submission_skipped_reason: str | None = None
+    broker_position_quantity_before: int | None = None
+    strategy_target_quantity: int | None = None
+    planned_order_side: str | None = None
+    planned_order_quantity: int | None = None
     order_artifact_paths: tuple[str, ...] = ()
     fill_artifact_paths: tuple[str, ...] = ()
     snapshot_artifact_paths: tuple[str, ...] = ()

@@ -15,7 +15,8 @@ Build one finite, lock-protected workflow that can:
 refresh market data
   -> validate refreshed data
   -> generate the latest strategy signal
-  -> submit one actionable signal to Alpaca paper
+  -> translate signal intent into a target position
+  -> submit only the order required to reach that target
   -> write live audit artifacts
   -> reconcile against Alpaca paper broker state
   -> publish sanitized health only after reconciliation
@@ -102,6 +103,27 @@ The command should mirror the existing refresh workflows where possible:
 --publish-status-path optional
 ```
 
+For the current long-only momentum workflow, `--quantity` is the desired long
+position size, not an incremental order size:
+
+```text
+entry -> target position = +quantity
+exit  -> target position = 0
+hold  -> leave current position unchanged
+```
+
+The workflow reads current broker inventory and calculates:
+
+```text
+required order quantity = target position - current position
+```
+
+For example, an entry with `--quantity 1` while the broker position is `-1`
+requires `BUY 2` to reach the `+1` target. The full transition order must pass
+the configured order-notional and projected-portfolio risk checks. If the
+broker position already equals the target, the workflow records a successful
+target-satisfied skip without submitting an order.
+
 ## Execution Order
 
 The implementation should run these steps in order:
@@ -115,17 +137,19 @@ The implementation should run these steps in order:
 7. Fail if validation fails.
 8. Load the validated normalized market-bar data.
 9. Generate the latest strategy signal.
-10. If signal is `hold`, write a workflow record and stop without broker
-    submission.
-11. Build a deterministic client order ID.
-12. Check idempotency before broker submission.
-13. Submit one market order to Alpaca paper.
-14. Write live order, fill, and account snapshot artifacts.
-15. Reconcile local artifacts against Alpaca paper broker state.
-16. Fail if reconciliation status is not `passed`.
-17. Publish sanitized health/dashboard status only after reconciliation passes.
-18. Write a workflow record.
-19. Release workflow lock.
+10. Read current broker inventory and derive the long-only target position.
+11. If signal is `hold` or the target is already satisfied, stop without
+    broker submission.
+12. Build a deterministic client order ID.
+13. Check the full transition order against notional and projected-portfolio
+    risk limits.
+14. Submit one market order to Alpaca paper.
+15. Write live order, fill, and account snapshot artifacts.
+16. Reconcile local artifacts against Alpaca paper broker state.
+17. Fail if reconciliation status is not `passed`.
+18. Publish sanitized health/dashboard status only after reconciliation passes.
+19. Write a workflow record.
+20. Release workflow lock.
 
 ## Safety Policy
 
@@ -136,7 +160,7 @@ The workflow must fail closed when:
 - Alpaca paper credentials are missing
 - `QUANT_BROKER` is not `alpaca-paper`
 - `QUANT_MAX_ORDER_NOTIONAL` is missing
-- requested order notional exceeds `QUANT_MAX_ORDER_NOTIONAL`
+- the full target-position transition exceeds `QUANT_MAX_ORDER_NOTIONAL`
 - provider refresh fails
 - validation fails
 - strategy configuration is unsupported
@@ -193,6 +217,9 @@ The workflow record should include:
 - metadata path
 - signal action
 - signal date
+- broker position quantity before target planning
+- strategy target quantity
+- planned order side and quantity, if required
 - client order ID, if submitted
 - live order artifact paths
 - live fill artifact paths

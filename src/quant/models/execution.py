@@ -61,6 +61,17 @@ class OrderRequest(FrozenModel):
     order_type: OrderType = OrderType.MARKET
 
 
+class TargetPositionPlan(FrozenModel):
+    """Auditable translation from signal intent to a broker order."""
+
+    symbol: str
+    signal_action: PaperSignalAction
+    current_quantity: int
+    target_quantity: int
+    order_request: OrderRequest | None = None
+    reason: str
+
+
 class AssetTradingDetails(FrozenModel):
     """Broker-neutral asset permissions used by pre-trade risk checks."""
 

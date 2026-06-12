@@ -480,6 +480,10 @@ def test_alpaca_paper_refresh_workflow_submits_and_reconciles(
     assert record.latest_signal_market_price == 20.0
     assert record.broker_submission_attempted is True
     assert record.broker_submission_skipped_reason is None
+    assert record.broker_position_quantity_before == 0
+    assert record.strategy_target_quantity == 2
+    assert record.planned_order_side == "buy"
+    assert record.planned_order_quantity == 2
     assert record.order_artifact_paths == tuple(
         str(path) for path in order_paths
     )
@@ -543,6 +547,10 @@ def test_alpaca_paper_refresh_workflow_records_hold_without_order(
     )
     assert record.order_artifact_paths == ()
     assert record.fill_artifact_paths == ()
+    assert record.broker_position_quantity_before == 0
+    assert record.strategy_target_quantity == 0
+    assert record.planned_order_side is None
+    assert record.planned_order_quantity is None
     assert len(record.snapshot_artifact_paths) == 1
     assert record.reconciliation_report_path == str(
         tmp_path / "live" / "reconciliation" / "latest.json"
@@ -550,46 +558,7 @@ def test_alpaca_paper_refresh_workflow_records_hold_without_order(
     assert not (tmp_path / "locks" / "alpaca-paper-refresh.lock").exists()
 
 
-def test_alpaca_paper_refresh_workflow_rejects_sell_without_position(
-    tmp_path,
-) -> None:
-    client = FakeAlpacaPaperWorkflowClient()
-
-    try:
-        run_alpaca_paper_refresh_workflow(
-            provider=FakeFallingMarketBarProvider(),
-            broker_client=client,
-            safety_config=_alpaca_paper_safety_config(),
-            symbol="AAPL",
-            start="2024-01-01",
-            end="2024-02-01",
-            raw_dir=tmp_path / "raw",
-            normalized_dir=tmp_path / "normalized",
-            validation_dir=tmp_path / "validation",
-            metadata_dir=tmp_path / "metadata",
-            workflow_output_dir=tmp_path / "workflows",
-            strategy="momentum",
-            quantity=1,
-            min_rows=20,
-            order_output_dir=tmp_path / "live" / "orders",
-            fill_output_dir=tmp_path / "live" / "fills",
-            snapshot_output_dir=tmp_path / "live" / "snapshots",
-            reconciliation_output_path=tmp_path
-            / "live"
-            / "reconciliation"
-            / "latest.json",
-        )
-    except WorkflowRunFailed as exc:
-        record = exc.record
-    else:
-        raise AssertionError("expected naked sell to fail before submission")
-
-    assert record.status == WorkflowRunStatus.FAILED
-    assert "short selling is not enabled" in record.message
-    assert client.submitted_client_order_ids == ()
-
-
-def test_alpaca_paper_refresh_workflow_allows_bounded_short(
+def test_alpaca_paper_refresh_workflow_exit_from_flat_submits_no_order(
     tmp_path,
 ) -> None:
     client = FakeAlpacaPaperWorkflowClient()
@@ -597,15 +566,47 @@ def test_alpaca_paper_refresh_workflow_allows_bounded_short(
     record = run_alpaca_paper_refresh_workflow(
         provider=FakeFallingMarketBarProvider(),
         broker_client=client,
-        safety_config=_alpaca_paper_safety_config(
-            short_selling_policy=ShortSellingPolicy(
-                enabled=True,
-                max_short_position_notional=100,
-                max_total_short_exposure_pct_equity=0.1,
-                max_gross_exposure_pct_equity=0.2,
-                min_buying_power_buffer_pct=0.5,
-            )
-        ),
+        safety_config=_alpaca_paper_safety_config(),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=1,
+        min_rows=20,
+        order_output_dir=tmp_path / "live" / "orders",
+        fill_output_dir=tmp_path / "live" / "fills",
+        snapshot_output_dir=tmp_path / "live" / "snapshots",
+        reconciliation_output_path=tmp_path
+        / "live"
+        / "reconciliation"
+        / "latest.json",
+    )
+
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert record.broker_submission_attempted is False
+    assert (
+        record.broker_submission_skipped_reason
+        == "strategy target position is already satisfied"
+    )
+    assert client.submitted_client_order_ids == ()
+    assert record.broker_position_quantity_before == 0
+    assert record.strategy_target_quantity == 0
+
+
+def test_alpaca_paper_refresh_workflow_entry_reverses_short_to_long_target(
+    tmp_path,
+) -> None:
+    client = FakeAlpacaPaperWorkflowClient(initial_positions={"AAPL": -1})
+
+    record = run_alpaca_paper_refresh_workflow(
+        provider=FakeTrendingMarketBarProvider(),
+        broker_client=client,
+        safety_config=_alpaca_paper_safety_config(),
         symbol="AAPL",
         start="2024-01-01",
         end="2024-02-01",
@@ -628,27 +629,30 @@ def test_alpaca_paper_refresh_workflow_allows_bounded_short(
 
     assert record.status == WorkflowRunStatus.SUCCEEDED
     assert len(client.submitted_client_order_ids) == 1
-    assert client.account_snapshot().positions[0].quantity == -1
+    assert record.broker_position_quantity_before == -1
+    assert record.strategy_target_quantity == 1
+    assert record.planned_order_side == "buy"
+    assert record.planned_order_quantity == 2
+    assert client._orders[0].request.side == OrderSide.BUY
+    assert client._orders[0].request.quantity == 2
+    assert client.account_snapshot().positions[0].quantity == 1
 
 
-def test_alpaca_paper_refresh_workflow_rejects_unborrowable_short(
+def test_alpaca_paper_refresh_reversal_checks_full_delta_notional(
     tmp_path,
 ) -> None:
-    client = FakeAlpacaPaperWorkflowClient()
-    client.asset_easy_to_borrow = False
+    client = FakeAlpacaPaperWorkflowClient(initial_positions={"AAPL": -1})
 
     try:
         run_alpaca_paper_refresh_workflow(
-            provider=FakeFallingMarketBarProvider(),
+            provider=FakeTrendingMarketBarProvider(),
             broker_client=client,
-            safety_config=_alpaca_paper_safety_config(
-                short_selling_policy=ShortSellingPolicy(
-                    enabled=True,
-                    max_short_position_notional=100,
-                    max_total_short_exposure_pct_equity=0.1,
-                    max_gross_exposure_pct_equity=0.2,
-                    min_buying_power_buffer_pct=0.5,
-                )
+            safety_config=TradingSafetyConfig(
+                mode=TradingMode.LIVE,
+                live_trading_enabled=True,
+                live_trading_confirmation=LIVE_TRADING_CONFIRMATION,
+                max_order_notional=30,
+                broker_name="alpaca-paper",
             ),
             symbol="AAPL",
             start="2024-01-01",
@@ -672,11 +676,118 @@ def test_alpaca_paper_refresh_workflow_rejects_unborrowable_short(
     except WorkflowRunFailed as exc:
         record = exc.record
     else:
-        raise AssertionError("expected unborrowable short to fail")
+        raise AssertionError("expected full reversal delta to exceed order cap")
 
     assert record.status == WorkflowRunStatus.FAILED
-    assert "not easy to borrow" in record.message
+    assert "order notional exceeds max_order_notional" in record.message
     assert client.submitted_client_order_ids == ()
+
+
+def test_alpaca_paper_refresh_repeated_entry_at_target_submits_no_order(
+    tmp_path,
+) -> None:
+    client = FakeAlpacaPaperWorkflowClient(initial_positions={"AAPL": 1})
+
+    record = run_alpaca_paper_refresh_workflow(
+        provider=FakeTrendingMarketBarProvider(),
+        broker_client=client,
+        safety_config=_alpaca_paper_safety_config(),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=1,
+        min_rows=20,
+        order_output_dir=tmp_path / "live" / "orders",
+        fill_output_dir=tmp_path / "live" / "fills",
+        snapshot_output_dir=tmp_path / "live" / "snapshots",
+        reconciliation_output_path=tmp_path
+        / "live"
+        / "reconciliation"
+        / "latest.json",
+    )
+
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert record.broker_submission_attempted is False
+    assert (
+        record.broker_submission_skipped_reason
+        == "strategy target position is already satisfied"
+    )
+    assert client.submitted_client_order_ids == ()
+
+
+def test_alpaca_paper_refresh_exit_covers_short_without_borrow_check(
+    tmp_path,
+) -> None:
+    client = FakeAlpacaPaperWorkflowClient(initial_positions={"AAPL": -1})
+    client.asset_easy_to_borrow = False
+
+    record = run_alpaca_paper_refresh_workflow(
+        provider=FakeFallingMarketBarProvider(),
+        broker_client=client,
+        safety_config=_alpaca_paper_safety_config(),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=1,
+        min_rows=20,
+        order_output_dir=tmp_path / "live" / "orders",
+        fill_output_dir=tmp_path / "live" / "fills",
+        snapshot_output_dir=tmp_path / "live" / "snapshots",
+        reconciliation_output_path=tmp_path
+        / "live"
+        / "reconciliation"
+        / "latest.json",
+    )
+
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert client._orders[0].request.side == OrderSide.BUY
+    assert client._orders[0].request.quantity == 1
+    assert client.account_snapshot().positions == ()
+
+
+def test_alpaca_paper_refresh_exit_closes_long_target_to_flat(tmp_path) -> None:
+    client = FakeAlpacaPaperWorkflowClient(initial_positions={"AAPL": 2})
+
+    record = run_alpaca_paper_refresh_workflow(
+        provider=FakeFallingMarketBarProvider(),
+        broker_client=client,
+        safety_config=_alpaca_paper_safety_config(),
+        symbol="AAPL",
+        start="2024-01-01",
+        end="2024-02-01",
+        raw_dir=tmp_path / "raw",
+        normalized_dir=tmp_path / "normalized",
+        validation_dir=tmp_path / "validation",
+        metadata_dir=tmp_path / "metadata",
+        workflow_output_dir=tmp_path / "workflows",
+        strategy="momentum",
+        quantity=1,
+        min_rows=20,
+        order_output_dir=tmp_path / "live" / "orders",
+        fill_output_dir=tmp_path / "live" / "fills",
+        snapshot_output_dir=tmp_path / "live" / "snapshots",
+        reconciliation_output_path=tmp_path
+        / "live"
+        / "reconciliation"
+        / "latest.json",
+    )
+
+    assert record.status == WorkflowRunStatus.SUCCEEDED
+    assert client._orders[0].request.side == OrderSide.SELL
+    assert client._orders[0].request.quantity == 2
+    assert client.account_snapshot().positions == ()
 
 
 def test_alpaca_paper_refresh_workflow_rejects_submission_with_open_order(
@@ -1178,7 +1289,13 @@ class BadMarketBarProvider:
 class FakeAlpacaPaperWorkflowClient:
     """Immediate-fill Alpaca-paper test double for workflow tests."""
 
-    def __init__(self, *, config=None, drop_broker_fills: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        config=None,
+        drop_broker_fills: bool = False,
+        initial_positions: dict[str, int] | None = None,
+    ) -> None:
         self.config = config
         self.drop_broker_fills = drop_broker_fills
         self.submitted_client_order_ids: tuple[str, ...] = ()
@@ -1186,7 +1303,15 @@ class FakeAlpacaPaperWorkflowClient:
         self._fills: list[LiveFillRecord] = []
         self._fill_calls = 0
         self._cash = 1000.0
-        self._positions: dict[str, Position] = {}
+        self._positions = {
+            symbol: Position(
+                symbol=symbol,
+                quantity=quantity,
+                average_price=10,
+                last_price=20,
+            )
+            for symbol, quantity in (initial_positions or {}).items()
+        }
         self.existing_open_orders: tuple[LiveOrderRecord, ...] = ()
         self.asset_easy_to_borrow = True
 
@@ -1270,19 +1395,25 @@ class FakeAlpacaPaperWorkflowClient:
         return None
 
     def _apply_fill(self, fill: LiveFillRecord) -> None:
+        signed_fill_quantity = (
+            fill.quantity if fill.side == OrderSide.BUY else -fill.quantity
+        )
         if fill.side == OrderSide.BUY:
             self._cash -= fill.notional
-            self._positions[fill.symbol] = Position(
-                symbol=fill.symbol,
-                quantity=fill.quantity,
-                average_price=fill.price,
-                last_price=fill.price,
-            )
+        else:
+            self._cash += fill.notional
+        existing = self._positions.get(fill.symbol)
+        new_quantity = (
+            signed_fill_quantity
+            if existing is None
+            else existing.quantity + signed_fill_quantity
+        )
+        if new_quantity == 0:
+            self._positions.pop(fill.symbol, None)
             return
-        self._cash += fill.notional
         self._positions[fill.symbol] = Position(
             symbol=fill.symbol,
-            quantity=-fill.quantity,
+            quantity=new_quantity,
             average_price=fill.price,
             last_price=fill.price,
         )
