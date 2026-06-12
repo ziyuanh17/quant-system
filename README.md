@@ -374,6 +374,8 @@ Incidents, Research, History.
 
 Runbook: [console_runbook.md](docs/console_runbook.md)
 Security boundary: [console_security_boundary.md](docs/console_security_boundary.md)
+Private remote access:
+[console_remote_access.md](docs/console_remote_access.md)
 
 ## Design Rule
 

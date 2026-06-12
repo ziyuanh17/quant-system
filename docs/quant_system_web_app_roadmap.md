@@ -60,6 +60,24 @@ The first production-ready web app is complete only when:
 | W19 | Private Server Deployment Rehearsal | Done | `src/quant/web/serve.py` wraps uvicorn; `quant web serve` CLI command; launchd plist template in `configs/launchd/`; deployment docs in `docs/console_deployment.md`; `.env.example` updated. |
 | W20 | First Natural Runtime Review | Done | All API routes wired to real data: `overview()` calls `build_health_report()`, `accounts()` reads paper state, `incidents()` scans `docs/`, `system()` counts artifact files, `operations()` scans workflow dirs. |
 | W21 | Web App v1 Closeout | Done | `docs/console_runbook.md`, `docs/console_known_limits.md`, `docs/console_security_boundary.md`, `docs/console_future_roadmap.md` created; `README.md` and `docs/runbook.md` updated; roadmap marked complete. |
+| W22 | Restart-Safe Private Tailscale Deployment | In Review | Add a fail-closed `.env`-loading console wrapper, portable disabled launchd template, Tailscale Serve runbook, rollback procedure, and deployment validation tests. Promote reviewed source to the runtime clone before installing launchd. |
+
+## Current Deployment State
+
+As of June 12, 2026:
+
+- the source-side restart-safe deployment bundle is implemented and passes the
+  full repository quality gate,
+- the Mac Studio is connected to Tailscale as
+  `mochifufus-mac-studio.tail2d964e.ts.net`,
+- private Tailscale Serve is active at
+  `https://mochifufus-mac-studio.tail2d964e.ts.net/` and proxies only to
+  `http://127.0.0.1:8000`,
+- a development-clone wrapper rehearsal failed closed because no
+  `QUANT_CONSOLE_API_KEY` is configured,
+- no console launchd service has been installed or loaded,
+- the reviewed bundle must be promoted to the runtime clone before launchd
+  installation.
 
 ## Automatic Decision Visibility
 

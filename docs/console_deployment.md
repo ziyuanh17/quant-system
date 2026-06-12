@@ -39,15 +39,14 @@ quant web serve --host 127.0.0.1 --port 8000
 ### 4. Install launchd Service
 
 ```bash
-# Copy the template
-cp configs/launchd/com.quant-system.console.plist \
-   ~/Library/LaunchAgents/com.quant-system.console.plist
-
-# Edit the plist: replace paths, set QUANT_CONSOLE_API_KEY
-# Set Disabled=false when ready
+# Follow the localization and verification procedure first.
+# The API key remains in the runtime clone's .env, never in the plist.
+cp configs/launchd/com.quant-system.console.plist.example \
+   configs/launchd/com.quant-system.console.local.plist
 
 # Load the service
-launchctl load ~/Library/LaunchAgents/com.quant-system.console.plist
+launchctl bootstrap gui/$(id -u) \
+  ~/Library/LaunchAgents/com.quant-system.console.plist
 ```
 
 ### 5. Verify
@@ -66,8 +65,9 @@ curl -H "Authorization: Bearer YOUR_KEY" \
 
 ## Network Security
 
-- **Tailscale (recommended):** Run the console on a Tailscale node so it's only
-  accessible from your Tailscale network.
+- **Tailscale Serve (recommended):** Keep the console on `127.0.0.1` and proxy
+  it privately with `tailscale serve --bg 8000`. See
+  [console_remote_access.md](console_remote_access.md).
 - **Reverse proxy:** Place the console behind nginx/Caddy with HTTPS and
   basic auth if you need external access.
 - **Never bind to `0.0.0.0`** without a reverse proxy or network-level security.
@@ -78,21 +78,24 @@ The console reads from local artifacts. Back up:
 
 - `site/` — published knowledge index and status snapshots
 - `data/web/console.db` — SQLite historical observability database
-- `configs/launchd/com.quant-system.console.plist` — launchd configuration
+- `configs/launchd/com.quant-system.console.local.plist` — localized launchd
+  configuration
 - `.env` — API key (keep secret)
 
 ## Rollback
 
 ```bash
 # Stop the service
-launchctl unload ~/Library/LaunchAgents/com.quant-system.console.plist
+launchctl bootout gui/$(id -u) \
+  ~/Library/LaunchAgents/com.quant-system.console.plist
 
 # Restore from backup
 cp /backup/site/site/knowledge_index.json site/knowledge_index.json
 cp /backup/data/web/console.db data/web/console.db
 
 # Restart
-launchctl load ~/Library/LaunchAgents/com.quant-system.console.plist
+launchctl bootstrap gui/$(id -u) \
+  ~/Library/LaunchAgents/com.quant-system.console.plist
 ```
 
 ## Known Limits

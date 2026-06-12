@@ -13,6 +13,9 @@ quant web serve --port 8080
 QUANT_CONSOLE_API_KEY=$(openssl rand -hex 32) quant web serve
 ```
 
+For the restart-safe runtime deployment and private iPhone access, follow
+[console_remote_access.md](console_remote_access.md).
+
 ## Checking Health
 
 ```bash
@@ -62,18 +65,20 @@ scan `docs/`.
 tar czf /backup/quant-console-$(date +%Y%m%d).tar.gz \
      site/knowledge_index.json \
      data/web/console.db \
-     configs/launchd/com.quant-system.console.plist
+     configs/launchd/com.quant-system.console.local.plist
 ```
 
 ## Rollback
 
 ```bash
 # Stop the service
-launchctl unload ~/Library/LaunchAgents/com.quant-system.console.plist
+launchctl bootout gui/$(id -u) \
+  ~/Library/LaunchAgents/com.quant-system.console.plist
 
 # Restore from backup
 tar xzf /backup/quant-console-YYYYMMDD.tar.gz
 
 # Restart
-launchctl load ~/Library/LaunchAgents/com.quant-system.console.plist
+launchctl bootstrap gui/$(id -u) \
+  ~/Library/LaunchAgents/com.quant-system.console.plist
 ```

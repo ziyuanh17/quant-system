@@ -28,9 +28,11 @@
 ## Network Boundary
 
 - Default: binds to `127.0.0.1` (local only)
-- For remote access: use Tailscale or an authenticated reverse proxy
+- For remote access: use private Tailscale Serve or an authenticated reverse
+  proxy
 - Never bind to `0.0.0.0` without a reverse proxy or network-level security
 - No HTTPS in the app (use reverse proxy for HTTPS)
+- Never use Tailscale Funnel for the private console
 
 ## Authentication Model
 
