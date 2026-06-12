@@ -60,7 +60,7 @@ The first production-ready web app is complete only when:
 | W19 | Private Server Deployment Rehearsal | Done | `src/quant/web/serve.py` wraps uvicorn; `quant web serve` CLI command; launchd plist template in `configs/launchd/`; deployment docs in `docs/console_deployment.md`; `.env.example` updated. |
 | W20 | First Natural Runtime Review | Done | All API routes wired to real data: `overview()` calls `build_health_report()`, `accounts()` reads paper state, `incidents()` scans `docs/`, `system()` counts artifact files, `operations()` scans workflow dirs. |
 | W21 | Web App v1 Closeout | Done | `docs/console_runbook.md`, `docs/console_known_limits.md`, `docs/console_security_boundary.md`, `docs/console_future_roadmap.md` created; `README.md` and `docs/runbook.md` updated; roadmap marked complete. |
-| W22 | Restart-Safe Private Tailscale Deployment | In Review | Add a fail-closed `.env`-loading console wrapper, portable disabled launchd template, Tailscale Serve runbook, rollback procedure, and deployment validation tests. Promote reviewed source to the runtime clone before installing launchd. |
+| W22 | Restart-Safe Private Tailscale Deployment | Done | Reviewed source was promoted to the runtime clone; a dedicated API key was configured; the console launchd service is running from the runtime clone; tailnet-only Tailscale Serve HTTPS and authenticated API access passed. |
 
 ## Current Deployment State
 
@@ -75,9 +75,12 @@ As of June 12, 2026:
   `http://127.0.0.1:8000`,
 - a development-clone wrapper rehearsal failed closed because no
   `QUANT_CONSOLE_API_KEY` is configured,
-- no console launchd service has been installed or loaded,
-- the reviewed bundle must be promoted to the runtime clone before launchd
-  installation.
+- reviewed source commit `65f43ca` is promoted to the runtime clone,
+- the runtime clone has a dedicated untracked console API key,
+- launchd service `com.quant-system.console` is running from the runtime clone,
+  with one run and no exit,
+- localhost page access, unauthenticated rejection, authenticated API access,
+  and tailnet HTTPS access all passed.
 
 ## Automatic Decision Visibility
 

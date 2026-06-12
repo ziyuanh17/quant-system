@@ -61,8 +61,8 @@ curl http://127.0.0.1:8000/api/v1/
 curl http://127.0.0.1:8000/api/v1/overview
 ```
 
-The root discovery endpoint should return `200`. The overview request without
-the API key should return `401`.
+Both API requests without the API key should return `401`. Repeat either
+request with `Authorization: Bearer <key>` to verify an authenticated `200`.
 
 ## Localize And Install Launchd
 

@@ -108,7 +108,7 @@ side discussions.
 | 90 | Immutable Research Artifacts and Trial Ledger v1 | In Review | Add content-derived evaluation IDs, exclusive immutable manifests, checksum verification, and an append-only trial ledger. |
 | 91 | Market-Hours Live Reconciliation Policy v1 | In Review | Preserve buying-power and current-mark movement as non-failing observations while keeping orders, fills, cash, position quantity, and average price as hard reconciliation gates. |
 | 92 | Mac Studio Scheduler Activation Readiness Review | In Review | Record the successful controlled rehearsal, verify Studio runtime activation prerequisites, and preserve a separate explicit scheduler activation gate. |
-| 93 | Web Console Private Tailscale Deployment v1 | In Review | Restart-safe runtime launchd artifacts, fail-closed API-key loading, rollback guidance, and validation tests pass locally; private Tailscale Serve is active, the no-key rehearsal failed closed, and runtime-clone secret configuration plus launchd installation remain. |
+| 93 | Web Console Private Tailscale Deployment v1 | Done | Reviewed source commit `65f43ca` was promoted to the runtime clone; a dedicated console API key was configured; launchd is running the read-only console; authenticated localhost and tailnet-only Tailscale HTTPS verification passed. |
 
 ## Current Recommendation
 

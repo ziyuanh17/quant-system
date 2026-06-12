@@ -44,8 +44,8 @@
 
 ## Data Classification
 
-- **Public:** API root endpoint (`/api/v1/`) for schema discovery
-- **Private:** All other API endpoints (require authentication)
+- **Private:** All API endpoints, including schema discovery, require
+  authentication
 - **Sensitive:** Account data, decision traces, research data
 - **Prohibited:** Credentials, API keys, raw broker payloads, confirmation phrases
 
