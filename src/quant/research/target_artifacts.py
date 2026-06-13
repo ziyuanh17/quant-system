@@ -7,12 +7,61 @@ from pydantic import BaseModel
 
 from quant.models.targets import (
     TARGET_SCHEMA_VERSION,
+    ContributorSet,
     LegacyEquivalenceReport,
+    PortfolioTargetDecision,
+    RiskTargetDecision,
     StrategyEvaluation,
     StrategyTargetDecision,
     StrategyTargetFrame,
     TargetBacktestEvidence,
 )
+
+
+def write_contributor_set(
+    contributor_set: ContributorSet,
+    output_root: Path,
+) -> Path:
+    return _write_model_exclusive(
+        output_root
+        / contributor_set.contributor_set_id
+        / f"{contributor_set.revision}.json",
+        contributor_set,
+    )
+
+
+def load_contributor_set(path: Path) -> ContributorSet:
+    return ContributorSet.model_validate_json(path.read_text())
+
+
+def write_portfolio_target_decision(
+    decision: PortfolioTargetDecision,
+    output_root: Path,
+) -> Path:
+    return _write_model_exclusive(
+        output_root
+        / decision.portfolio_target_id
+        / f"{decision.revision}.json",
+        decision,
+    )
+
+
+def load_portfolio_target_decision(path: Path) -> PortfolioTargetDecision:
+    return PortfolioTargetDecision.model_validate_json(path.read_text())
+
+
+def write_risk_target_decision(
+    decision: RiskTargetDecision,
+    output_root: Path,
+) -> Path:
+    return _write_model_exclusive(
+        output_root / decision.risk_target_id / f"{decision.revision}.json",
+        decision,
+    )
+
+
+def load_risk_target_decision(path: Path) -> RiskTargetDecision:
+    return RiskTargetDecision.model_validate_json(path.read_text())
 
 
 def write_strategy_target_decision(

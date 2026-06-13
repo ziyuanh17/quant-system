@@ -14,10 +14,10 @@ strategy evaluation
   -> broker and reconciliation
 ```
 
-This first implementation stage is research-only. It defines strategy-target
-contracts, immutable artifacts, native target backtests, and a legacy
-equivalence investigation. It does not change paper, dry-run, Alpaca, scheduler,
-or runtime behavior.
+The implemented research stages define strategy-target contracts, immutable
+artifacts, native target backtests, legacy-equivalence evidence, contributor
+ownership, portfolio aggregation, and independent risk decisions. They do not
+change paper, dry-run, Alpaca, scheduler, runtime, or execution behavior.
 
 ## Strategy Targets
 
@@ -59,6 +59,9 @@ Research target artifacts are stored under:
 data/research/strategy-targets/
 data/research/strategy-evaluations/
 data/research/legacy-equivalence/
+data/research/contributor-sets/
+data/research/portfolio-targets/
+data/research/risk-targets/
 ```
 
 Artifacts are schema-versioned and written exclusively. Reusing an existing ID
@@ -82,9 +85,26 @@ and target-amount simulation are compared across trades and portfolio metrics.
 If they differ, the existing legacy simulator remains authoritative and the
 result is labeled non-equivalent.
 
+## Portfolio Construction And Risk
+
+`ContributorSet` is immutable, revisioned ownership configuration for one
+symbol and unit. It pins each expected strategy ID and strategy version,
+defines a freshness limit, and identifies the aggregation policy.
+
+`sum_active_targets_v1` aggregation follows contributor-set order. It sums
+signed targets only when every expected decision is active, fresh,
+unit-compatible, and symbol-compatible. Missing, duplicate, unavailable,
+not-yet-effective, expired, stale, or incompatible contributions produce an
+explicit blocked portfolio target. Blocking never becomes a zero target.
+
+`approve_or_reject_v1` risk evaluation persists an independent decision. It
+either approves the exact aggregate or rejects it with reasons; it never
+silently clamps, rounds, or resizes a target. Fractional research targets remain
+valid at this layer.
+
 ## Future Stages
 
-Later reviewed stages will add versioned contributor ownership, deterministic
-portfolio aggregation, risk targets, atomic execution-plan claims, append-only
-execution events, restart recovery, reconciliation-confirmed satisfaction, and
-detect-only drift. Alpaca paper integration requires a separate review.
+Later reviewed stages will add atomic execution-plan claims, append-only
+execution events, pre-submission revalidation, restart recovery,
+reconciliation-confirmed satisfaction, and detect-only drift. Alpaca paper
+integration requires a separate review.

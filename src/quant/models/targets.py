@@ -36,6 +36,28 @@ class StrategyEvaluationOutcome(StrEnum):
     UNAVAILABLE = "unavailable"
 
 
+class PortfolioTargetStatus(StrEnum):
+    AGGREGATED = "aggregated"
+    BLOCKED = "blocked"
+
+
+class RiskTargetStatus(StrEnum):
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class ContributionStatus(StrEnum):
+    INCLUDED = "included"
+    MISSING = "missing"
+    DUPLICATE = "duplicate"
+    NOT_YET_EFFECTIVE = "not_yet_effective"
+    EXPIRED = "expired"
+    STALE = "stale"
+    UNAVAILABLE = "unavailable"
+    SYMBOL_MISMATCH = "symbol_mismatch"
+    UNIT_MISMATCH = "unit_mismatch"
+
+
 class StrategyTargetFrame(FrozenModel):
     """Timestamp-aligned decimal strategy targets for research."""
 
@@ -135,6 +157,178 @@ class StrategyEvaluation(FrozenModel):
             raise ValueError(
                 "unavailable evaluations must not reference a target decision"
             )
+        return self
+
+
+class ContributorSpec(FrozenModel):
+    strategy_id: str = Field(min_length=1)
+    strategy_version: str = Field(min_length=1)
+
+
+class ContributorSet(FrozenModel):
+    """Immutable ownership and aggregation policy for one portfolio target."""
+
+    schema_version: Literal[1] = TARGET_SCHEMA_VERSION
+    contributor_set_id: str = Field(min_length=1)
+    revision: int = Field(ge=1)
+    symbol: str = Field(min_length=1)
+    unit: TargetUnit
+    expected_contributors: tuple[ContributorSpec, ...] = Field(min_length=1)
+    max_age_seconds: int = Field(gt=0)
+    portfolio_policy_version: str = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+    @field_validator("expected_contributors")
+    @classmethod
+    def contributors_must_be_unique(
+        cls, contributors: tuple[ContributorSpec, ...]
+    ) -> tuple[ContributorSpec, ...]:
+        identities = [
+            (item.strategy_id, item.strategy_version) for item in contributors
+        ]
+        if len(identities) != len(set(identities)):
+            raise ValueError("expected contributors must be unique")
+        return contributors
+
+
+class TargetContributionEvaluation(FrozenModel):
+    strategy_id: str = Field(min_length=1)
+    strategy_version: str = Field(min_length=1)
+    matched_decision_ids: tuple[str, ...] = ()
+    decision_id: str | None = None
+    effective_status: TargetEffectiveStatus | None = None
+    contribution_status: ContributionStatus
+    target_value: Decimal | None = None
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def included_contribution_must_be_complete(
+        self,
+    ) -> "TargetContributionEvaluation":
+        if self.contribution_status == ContributionStatus.INCLUDED:
+            if (
+                self.decision_id is None
+                or self.matched_decision_ids != (self.decision_id,)
+                or self.effective_status != TargetEffectiveStatus.ACTIVE
+                or self.target_value is None
+            ):
+                raise ValueError(
+                    "included contributions require active decision and value"
+                )
+        elif self.target_value is not None:
+            raise ValueError(
+                "non-included contributions must not have target_value"
+            )
+        if (
+            self.contribution_status == ContributionStatus.MISSING
+            and self.matched_decision_ids
+        ):
+            raise ValueError("missing contributions must not match decisions")
+        if (
+            self.contribution_status == ContributionStatus.DUPLICATE
+            and len(self.matched_decision_ids) < 2
+        ):
+            raise ValueError(
+                "duplicate contributions require all matching decision IDs"
+            )
+        return self
+
+
+class PortfolioTargetDecision(FrozenModel):
+    """Deterministic aggregate or explicit blocked aggregation result."""
+
+    schema_version: Literal[1] = TARGET_SCHEMA_VERSION
+    portfolio_target_id: str = Field(min_length=1)
+    revision: int = Field(ge=1)
+    contributor_set_id: str = Field(min_length=1)
+    contributor_set_revision: int = Field(ge=1)
+    portfolio_policy_version: str = Field(min_length=1)
+    symbol: str = Field(min_length=1)
+    unit: TargetUnit
+    generated_at: datetime
+    evaluated_at: datetime
+    status: PortfolioTargetStatus
+    aggregate_value: Decimal | None = None
+    contributing_decision_ids: tuple[str, ...] = ()
+    contribution_evaluations: tuple[TargetContributionEvaluation, ...] = Field(
+        min_length=1
+    )
+    reason: str = Field(min_length=1)
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_aggregation_result(self) -> "PortfolioTargetDecision":
+        included_ids = tuple(
+            item.decision_id
+            for item in self.contribution_evaluations
+            if item.contribution_status == ContributionStatus.INCLUDED
+        )
+        if self.status == PortfolioTargetStatus.AGGREGATED:
+            if self.aggregate_value is None:
+                raise ValueError("aggregated portfolio targets require value")
+            if len(included_ids) != len(self.contribution_evaluations):
+                raise ValueError(
+                    "aggregated portfolio targets require all contributors"
+                )
+            if self.contributing_decision_ids != included_ids:
+                raise ValueError(
+                    "contributing decision IDs must match included evaluations"
+                )
+            included_total = sum(
+                (
+                    item.target_value
+                    for item in self.contribution_evaluations
+                    if item.target_value is not None
+                ),
+                Decimal("0"),
+            )
+            if self.aggregate_value != included_total:
+                raise ValueError(
+                    "aggregate value must equal included contribution values"
+                )
+        elif self.aggregate_value is not None or self.contributing_decision_ids:
+            raise ValueError(
+                "blocked portfolio targets must not carry aggregate value "
+                "or IDs"
+            )
+        return self
+
+
+class ResearchRiskPolicy(FrozenModel):
+    risk_policy_version: str = Field(min_length=1)
+    allow_short_targets: bool = True
+    max_absolute_target: Decimal | None = Field(default=None, gt=0)
+
+
+class RiskTargetDecision(FrozenModel):
+    """Independent approval or rejection of a portfolio target."""
+
+    schema_version: Literal[1] = TARGET_SCHEMA_VERSION
+    risk_target_id: str = Field(min_length=1)
+    revision: int = Field(ge=1)
+    portfolio_target_id: str = Field(min_length=1)
+    risk_policy_version: str = Field(min_length=1)
+    symbol: str = Field(min_length=1)
+    unit: TargetUnit
+    generated_at: datetime
+    evaluated_at: datetime
+    status: RiskTargetStatus
+    approved_target_value: Decimal | None = None
+    reasons: tuple[str, ...] = Field(min_length=1)
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_risk_result(self) -> "RiskTargetDecision":
+        if (
+            self.status == RiskTargetStatus.APPROVED
+            and self.approved_target_value is None
+        ):
+            raise ValueError("approved risk targets require target value")
+        if (
+            self.status == RiskTargetStatus.REJECTED
+            and self.approved_target_value is not None
+        ):
+            raise ValueError("rejected risk targets must not have target value")
         return self
 
 
