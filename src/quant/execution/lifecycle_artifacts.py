@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from quant.models.execution_lifecycle import (
     BrokerOrderLookupEvidence,
     ExecutionDriftObservation,
+    ExecutionDryRunObservation,
     ExecutionEvent,
     ExecutionPlan,
     ExecutionPlanStatus,
@@ -232,6 +233,40 @@ def write_execution_drift_observation(
 
 def load_execution_drift_observation(path: Path) -> ExecutionDriftObservation:
     return ExecutionDriftObservation.model_validate_json(path.read_text())
+
+
+def write_execution_dry_run_observation(
+    observation: ExecutionDryRunObservation,
+    artifact_root: Path,
+) -> Path:
+    path = execution_dry_run_observation_path(
+        artifact_root,
+        observation.execution_plan_id,
+        observation.observation_id,
+    )
+    _write_model_exclusive(path, observation)
+    return path
+
+
+def execution_dry_run_observation_path(
+    artifact_root: Path,
+    execution_plan_id: str,
+    observation_id: str,
+) -> Path:
+    _require_safe_component(execution_plan_id)
+    _require_safe_component(observation_id)
+    return (
+        artifact_root
+        / "dry-run-observations"
+        / execution_plan_id
+        / f"{observation_id}.json"
+    )
+
+
+def load_execution_dry_run_observation(
+    path: Path,
+) -> ExecutionDryRunObservation:
+    return ExecutionDryRunObservation.model_validate_json(path.read_text())
 
 
 def _event_dir(artifact_root: Path, execution_plan_id: str) -> Path:

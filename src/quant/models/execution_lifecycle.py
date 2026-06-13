@@ -5,7 +5,13 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from quant.models.base import FrozenModel
-from quant.models.execution import LiveOrderStatus, OrderRequest, OrderSide
+from quant.models.execution import (
+    LiveOrderStatus,
+    OrderRequest,
+    OrderSide,
+    TradingMode,
+    TradingSafetyCheck,
+)
 
 EXECUTION_LIFECYCLE_SCHEMA_VERSION = 2
 
@@ -33,6 +39,12 @@ class ExecutionDriftStatus(StrEnum):
     CLEAR = "clear"
     DETECTED = "detected"
     INDETERMINATE = "indeterminate"
+
+
+class ExecutionDryRunStatus(StrEnum):
+    WOULD_SUBMIT = "would_submit"
+    ALREADY_SATISFIED = "already_satisfied"
+    BLOCKED = "blocked"
 
 
 class ExecutionLifecyclePolicy(FrozenModel):
@@ -175,3 +187,61 @@ class ExecutionDriftObservation(FrozenModel):
     status: ExecutionDriftStatus
     observed_at: datetime
     reason: str = Field(min_length=1)
+
+
+class ExecutionDryRunObservation(FrozenModel):
+    """Immutable read-only evaluation of one claimed execution plan."""
+
+    schema_version: Literal[2] = EXECUTION_LIFECYCLE_SCHEMA_VERSION
+    observation_id: str = Field(min_length=1)
+    execution_plan_id: str = Field(min_length=1)
+    risk_target_id: str = Field(min_length=1)
+    risk_target_revision: int = Field(ge=1)
+    account_snapshot_id: str = Field(min_length=1)
+    broker_name: str = Field(min_length=1)
+    account_id: str = Field(min_length=1)
+    broker_environment: str = Field(min_length=1)
+    symbol: str = Field(min_length=1)
+    current_quantity: int
+    target_quantity: int
+    order_request: OrderRequest | None = None
+    reference_price: float
+    notional: float = Field(ge=0)
+    safety_check: TradingSafetyCheck
+    status: ExecutionDryRunStatus
+    validation_reasons: tuple[str, ...] = ()
+    observed_at: datetime
+    reason: str = Field(min_length=1)
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_dry_run_result(self) -> "ExecutionDryRunObservation":
+        if self.status == ExecutionDryRunStatus.WOULD_SUBMIT:
+            if (
+                self.order_request is None
+                or self.validation_reasons
+                or self.safety_check.mode != TradingMode.DRY_RUN
+                or not self.safety_check.allowed
+                or self.reference_price <= 0
+            ):
+                raise ValueError(
+                    "would-submit dry-run requires an eligible order"
+                )
+            if self.notional <= 0:
+                raise ValueError("would-submit dry-run requires notional")
+        elif self.status == ExecutionDryRunStatus.ALREADY_SATISFIED:
+            if (
+                self.order_request is not None
+                or self.current_quantity != self.target_quantity
+                or self.validation_reasons
+                or self.safety_check.mode != TradingMode.DRY_RUN
+                or not self.safety_check.allowed
+                or self.reference_price <= 0
+                or self.notional != 0
+            ):
+                raise ValueError(
+                    "already-satisfied dry-run must have no order or reasons"
+                )
+        elif not self.validation_reasons:
+            raise ValueError("blocked dry-run requires validation reasons")
+        return self

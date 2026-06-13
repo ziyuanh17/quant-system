@@ -35,13 +35,16 @@ from quant.execution.lifecycle_artifacts import (
     append_execution_event,
     claim_execution_plan_exclusive,
     current_execution_status,
+    execution_dry_run_observation_path,
     execution_plan_path,
     load_broker_lookup_evidence,
     load_execution_drift_observation,
+    load_execution_dry_run_observation,
     load_execution_events,
     load_execution_plan,
     write_broker_lookup_evidence,
     write_execution_drift_observation,
+    write_execution_dry_run_observation,
 )
 from quant.execution.live_broker import (
     FakeLiveBrokerClient,
@@ -75,6 +78,13 @@ from quant.execution.safety import (
     evaluate_trading_safety,
     load_trading_safety_config_from_env,
 )
+from quant.execution.semantic_paper import (
+    SEMANTIC_PAPER_ACCOUNT_ID,
+    SEMANTIC_PAPER_BROKER_NAME,
+    SEMANTIC_PAPER_ENVIRONMENT,
+    SemanticPaperBrokerAdapter,
+    SemanticPaperBrokerClient,
+)
 from quant.execution.signal_execution import (
     decide_latest_signal,
     execute_latest_signal,
@@ -84,6 +94,10 @@ from quant.execution.signal_execution import (
 from quant.execution.state import (
     load_paper_broker_state,
     save_paper_broker_state,
+)
+from quant.execution.target_dry_run import (
+    observe_execution_plan_dry_run,
+    run_semantic_target_dry_run,
 )
 from quant.execution.target_lifecycle import (
     ACCOUNT_WIDE_EXACT_RECONCILIATION_POLICY,
@@ -96,6 +110,10 @@ from quant.execution.target_lifecycle import (
     refresh_submitted_execution,
     submit_execution_plan,
     validate_pre_submission,
+)
+from quant.execution.target_paper import (
+    SemanticPaperRunResult,
+    run_semantic_target_paper,
 )
 
 __all__ = [
@@ -118,6 +136,12 @@ __all__ = [
     "PaperBrokerAdapter",
     "SignalExecutionBroker",
     "SINGLE_MARKET_ORDER_POLICY",
+    "SEMANTIC_PAPER_ACCOUNT_ID",
+    "SEMANTIC_PAPER_BROKER_NAME",
+    "SEMANTIC_PAPER_ENVIRONMENT",
+    "SemanticPaperBrokerAdapter",
+    "SemanticPaperBrokerClient",
+    "SemanticPaperRunResult",
     "append_execution_event",
     "check_order_risk",
     "check_projected_order_risk",
@@ -126,6 +150,7 @@ __all__ = [
     "claim_execution_plan_exclusive",
     "confirm_execution_satisfaction",
     "current_execution_status",
+    "execution_dry_run_observation_path",
     "opens_or_increases_short",
     "compare_paper_signal_to_dry_run_order",
     "assert_trading_allowed",
@@ -141,6 +166,7 @@ __all__ = [
     "load_live_order_records",
     "load_broker_lookup_evidence",
     "load_execution_drift_observation",
+    "load_execution_dry_run_observation",
     "load_execution_events",
     "load_execution_plan",
     "load_trading_safety_config_from_env",
@@ -156,6 +182,9 @@ __all__ = [
     "recover_execution_submission",
     "refresh_submitted_execution",
     "observe_execution_drift",
+    "observe_execution_plan_dry_run",
+    "run_semantic_target_dry_run",
+    "run_semantic_target_paper",
     "run_alpaca_paper_order_rehearsal",
     "save_paper_broker_state",
     "submit_execution_plan",
@@ -168,6 +197,7 @@ __all__ = [
     "write_live_rehearsal_result",
     "write_broker_lookup_evidence",
     "write_execution_drift_observation",
+    "write_execution_dry_run_observation",
     "write_paper_dry_run_comparison_report",
     "write_paper_state_reconciliation_report",
     "write_paper_signal_record",

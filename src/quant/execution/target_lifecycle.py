@@ -68,6 +68,12 @@ class ExecutionLifecycleBroker(Protocol):
     ) -> tuple[LiveOrderRecord, ...]: ...
 
 
+class ExecutionLifecycleStateReader(Protocol):
+    def account_snapshot(self) -> LiveAccountSnapshot: ...
+
+    def has_open_orders(self) -> bool: ...
+
+
 def claim_execution_plan(
     *,
     risk_target: RiskTargetDecision,
@@ -162,6 +168,7 @@ def submit_execution_plan(
     safety_check: TradingSafetyCheck,
     artifact_root: Path,
     evaluated_at: datetime,
+    expected_trading_mode: TradingMode = TradingMode.LIVE,
 ) -> ExecutionPlanStatus:
     """Revalidate and submit once, recording uncertainty instead of retrying."""
     if (
@@ -180,6 +187,7 @@ def submit_execution_plan(
         reference_price=reference_price,
         safety_check=safety_check,
         evaluated_at=evaluated_at,
+        expected_trading_mode=expected_trading_mode,
     )
     if reasons:
         append_execution_event(
@@ -354,10 +362,11 @@ def validate_pre_submission(
     contributor_set: ContributorSet,
     strategy_decisions: tuple[StrategyTargetDecision, ...],
     risk_policy: ResearchRiskPolicy,
-    broker: ExecutionLifecycleBroker,
+    broker: ExecutionLifecycleStateReader,
     reference_price: float,
     safety_check: TradingSafetyCheck,
     evaluated_at: datetime,
+    expected_trading_mode: TradingMode = TradingMode.LIVE,
 ) -> tuple[str, ...]:
     reasons: list[str] = []
     try:
@@ -398,8 +407,10 @@ def validate_pre_submission(
         reasons.append("portfolio target is not aggregated")
     if reference_price <= 0:
         reasons.append("reference price must be positive")
-    if not safety_check.allowed or safety_check.mode != TradingMode.LIVE:
-        reasons.append("submission safety check is not allowed")
+    if not safety_check.allowed or safety_check.mode != expected_trading_mode:
+        reasons.append(
+            f"{expected_trading_mode.value} safety check is not allowed"
+        )
     if broker.has_open_orders():
         reasons.append("broker has unsettled working orders")
     account = broker.account_snapshot()

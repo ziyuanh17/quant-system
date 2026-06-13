@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Literal
 from uuid import uuid4
 
 from pydantic import Field, model_validator
@@ -421,6 +422,22 @@ class PaperBrokerState(FrozenModel):
     cash: float = Field(ge=0)
     positions: tuple[Position, ...] = ()
     processed_signal_keys: tuple[str, ...] = ()
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class SemanticPaperBrokerState(FrozenModel):
+    """Durable live-shaped local paper account for semantic targets."""
+
+    schema_version: Literal[1] = 1
+    broker_name: str = Field(min_length=1)
+    account_id: str = Field(min_length=1)
+    broker_environment: str = Field(min_length=1)
+    cash: float = Field(ge=0)
+    positions: tuple[Position, ...] = ()
+    orders: tuple[LiveOrderRecord, ...] = ()
+    fills: tuple[LiveFillRecord, ...] = ()
+    order_sequence: int = Field(default=0, ge=0)
+    execution_sequence: int = Field(default=0, ge=0)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

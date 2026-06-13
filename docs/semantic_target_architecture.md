@@ -16,8 +16,10 @@ strategy evaluation
 
 The implemented stages define strategy-target contracts, immutable artifacts,
 native target backtests, legacy-equivalence evidence, contributor ownership,
-portfolio aggregation, independent risk decisions, and an isolated fake-broker
-execution lifecycle. They do not change paper, dry-run, Alpaca, scheduler, or
+portfolio aggregation, independent risk decisions, an isolated fake-broker
+execution lifecycle, and an opt-in local semantic-target dry-run observation.
+An opt-in durable semantic-paper workflow is also available. They do not
+change the legacy signal dry-run, legacy signal paper, Alpaca, scheduler, or
 runtime behavior.
 
 ## Strategy Targets
@@ -143,6 +145,7 @@ plans/
 events/
 recovery-evidence/
 drift-observations/
+dry-run-observations/
 ```
 
 Immediately before submission, the lifecycle revalidates strategy freshness,
@@ -159,7 +162,50 @@ Failed satisfaction checks remain durable evidence and never trigger drift
 repair. After satisfaction, `detect_only_v1` persists clear, detected, or
 indeterminate drift observations without changing broker state.
 
-## Future Stages
+## Local Semantic-Target Dry Run
 
-Later reviewed stages may migrate the lifecycle into local paper and dry-run
-workflows. Alpaca paper integration requires a separate review.
+An opt-in read-only dry-run evaluator revalidates a claimed execution plan
+against a caller-supplied local account snapshot. It uses the same strategy,
+portfolio, risk, whole-share, account-identity, position, and working-order
+checks as pre-submission validation, but requires an allowed `dry_run` safety
+check and never receives a broker submission capability.
+
+Each plan may write one deterministic, immutable `ExecutionDryRunObservation`:
+
+```text
+would_submit
+already_satisfied
+blocked
+```
+
+The observation records the intended order and notional, or durable blocking
+reasons. It deliberately leaves the execution plan in `planned`; dry-run
+evidence never claims that an order was submitted, filled, or reconciled.
+Re-running the same plan cannot overwrite or create a second observation.
+The existing signal-based dry-run CLI and scheduler workflow remain unchanged.
+
+## Local Semantic Paper
+
+Semantic paper is a separate, durable, live-shaped local broker. It does not
+reuse or modify the legacy signal-oriented `PaperBroker`, which remains
+long-only and keeps signal idempotency state.
+
+The semantic-paper client supports signed positions, covers, and reversals. It
+persists broker state atomically before returning from submission and stores
+orders and fills by deterministic client-order identity. A restart after an
+ambiguous response can therefore recover the existing local paper order without
+resubmitting it.
+
+The opt-in workflow runs:
+
+```text
+claim or recover execution plan
+  -> require allowed paper safety mode
+  -> submit or recover durable local paper order
+  -> write live-shaped order, fill, and account artifacts
+  -> persist immutable reconciliation evidence against durable paper state
+  -> mark target satisfied only after reconciliation passes
+```
+
+Legacy paper commands and scheduled workflows remain unchanged. Alpaca paper
+integration requires a separate review.
