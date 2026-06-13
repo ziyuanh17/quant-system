@@ -114,7 +114,9 @@ def claim_execution_plan(
         )
     )
     plan = ExecutionPlan(
-        execution_plan_id=f"execution-{risk_target.risk_target_id}",
+        execution_plan_id=(
+            f"execution-{risk_target.risk_target_id}-r{risk_target.revision}"
+        ),
         risk_target_id=risk_target.risk_target_id,
         risk_target_revision=risk_target.revision,
         portfolio_target_id=portfolio_target.portfolio_target_id,
@@ -124,11 +126,16 @@ def claim_execution_plan(
             portfolio_target.contributing_decision_ids
         ),
         account_snapshot_id=account.id,
+        broker_name=account.broker_name,
+        account_id=account.account_id,
+        broker_environment=account.broker_environment,
         symbol=risk_target.symbol,
         current_quantity=current_quantity,
         target_quantity=target_quantity,
         order_request=order_request,
-        client_order_id=f"target-{risk_target.risk_target_id}",
+        client_order_id=(
+            f"target-{risk_target.risk_target_id}-r{risk_target.revision}"
+        ),
         execution_policy_version=policy.execution_policy_version,
         reconciliation_policy_version=policy.reconciliation_policy_version,
         drift_policy_version=policy.drift_policy_version,
@@ -210,6 +217,17 @@ def submit_execution_plan(
         )
         return ExecutionPlanStatus.AMBIGUOUS
 
+    mismatch = _order_identity_mismatch(plan, order)
+    if mismatch is not None:
+        append_execution_event(
+            plan=plan,
+            artifact_root=artifact_root,
+            new_status=ExecutionPlanStatus.AMBIGUOUS,
+            occurred_at=evaluated_at,
+            reason=f"broker submission response identity mismatch: {mismatch}",
+            evidence_refs=(order.id,),
+        )
+        return ExecutionPlanStatus.AMBIGUOUS
     append_execution_event(
         plan=plan,
         artifact_root=artifact_root,
@@ -217,6 +235,7 @@ def submit_execution_plan(
         occurred_at=evaluated_at,
         reason="broker order recovered from submission response",
         evidence_refs=(order.id,),
+        broker_order_ids=(_broker_order_key(order),),
     )
     return _record_terminal_order_status(
         plan=plan,
@@ -240,39 +259,11 @@ def recover_execution_submission(
         ExecutionPlanStatus.AMBIGUOUS,
     }:
         raise ValueError("only pending or ambiguous submissions can recover")
-    orders: tuple[LiveOrderRecord, ...] = ()
-    found_order: LiveOrderRecord | None = None
-    try:
-        orders = broker.orders_by_client_order_id(plan.client_order_id)
-    except Exception as exc:
-        evidence = _lookup_evidence(
-            plan=plan,
-            outcome=BrokerLookupOutcome.UNAVAILABLE,
-            orders=(),
-            evaluated_at=evaluated_at,
-            reason=f"broker lookup unavailable: {exc}",
-        )
-    else:
-        if (
-            len(orders) == 1
-            and orders[0].client_order_id == plan.client_order_id
-        ):
-            outcome = BrokerLookupOutcome.FOUND
-            reason = "broker order found by deterministic client order ID"
-            found_order = orders[0]
-        elif not orders:
-            outcome = BrokerLookupOutcome.NOT_FOUND
-            reason = "broker lookup proved no visible matching order"
-        else:
-            outcome = BrokerLookupOutcome.CONFLICTING
-            reason = "broker lookup returned conflicting matching orders"
-        evidence = _lookup_evidence(
-            plan=plan,
-            outcome=outcome,
-            orders=orders,
-            evaluated_at=evaluated_at,
-            reason=reason,
-        )
+    evidence, found_order = _lookup_plan_order(
+        plan=plan,
+        broker=broker,
+        evaluated_at=evaluated_at,
+    )
 
     evidence_path = write_broker_lookup_evidence(evidence, artifact_root)
     refs = (str(evidence_path),)
@@ -299,7 +290,53 @@ def recover_execution_submission(
         occurred_at=evaluated_at,
         reason="submission state recovered from broker lookup",
         evidence_refs=refs + (found_order.id,),
+        broker_order_ids=(_broker_order_key(found_order),),
     )
+    _record_terminal_order_status(
+        plan=plan,
+        order=found_order,
+        artifact_root=artifact_root,
+        occurred_at=evaluated_at,
+    )
+    return evidence
+
+
+def refresh_submitted_execution(
+    *,
+    plan: ExecutionPlan,
+    broker: ExecutionLifecycleBroker,
+    artifact_root: Path,
+    evaluated_at: datetime,
+) -> BrokerOrderLookupEvidence:
+    """Refresh a submitted order without creating or resubmitting an order."""
+    if (
+        current_execution_status(plan, artifact_root)
+        != ExecutionPlanStatus.SUBMITTED
+    ):
+        raise ValueError("only submitted executions can be refreshed")
+    expected_broker_order_id = _submitted_broker_order_id(plan, artifact_root)
+    evidence, found_order = _lookup_plan_order(
+        plan=plan,
+        broker=broker,
+        evaluated_at=evaluated_at,
+        expected_broker_order_id=expected_broker_order_id,
+    )
+    evidence_path = write_broker_lookup_evidence(evidence, artifact_root)
+    refs = (str(evidence_path),)
+    if found_order is None:
+        append_execution_event(
+            plan=plan,
+            artifact_root=artifact_root,
+            new_status=ExecutionPlanStatus.AMBIGUOUS,
+            occurred_at=evaluated_at,
+            reason=(
+                f"submitted-order refresh is ambiguous: "
+                f"{evidence.outcome.value}"
+            ),
+            evidence_refs=refs,
+        )
+        return evidence
+
     _record_terminal_order_status(
         plan=plan,
         order=found_order,
@@ -366,6 +403,8 @@ def validate_pre_submission(
     if broker.has_open_orders():
         reasons.append("broker has unsettled working orders")
     account = broker.account_snapshot()
+    if not _account_matches_plan(plan, account):
+        reasons.append("broker account identity changed after plan creation")
     if _position_quantity(account, plan.symbol) != plan.current_quantity:
         reasons.append("broker position changed after plan creation")
     if plan.target_quantity != target_quantity:
@@ -449,6 +488,8 @@ def confirm_execution_satisfaction(
     if broker.has_open_orders():
         reasons.append("broker has unsettled working orders")
     snapshot = broker.account_snapshot()
+    if not _account_matches_plan(plan, snapshot):
+        reasons.append("broker account identity differs from execution plan")
     if (
         reconciliation.broker_name != snapshot.broker_name
         or reconciliation.account_id != snapshot.account_id
@@ -506,7 +547,10 @@ def observe_execution_drift(
         raise ValueError("unsupported drift policy version")
     snapshot = broker.account_snapshot()
     broker_quantity = _position_quantity(snapshot, plan.symbol)
-    if snapshot.open_order_ids:
+    if not _account_matches_plan(plan, snapshot):
+        status = ExecutionDriftStatus.INDETERMINATE
+        reason = "broker account identity differs from execution plan"
+    elif snapshot.open_order_ids:
         status = ExecutionDriftStatus.INDETERMINATE
         reason = "working orders prevent reliable drift classification"
     elif broker_quantity != plan.target_quantity:
@@ -520,6 +564,9 @@ def observe_execution_drift(
         execution_plan_id=plan.execution_plan_id,
         drift_policy_version=plan.drift_policy_version,
         symbol=plan.symbol,
+        broker_name=snapshot.broker_name,
+        account_id=snapshot.account_id,
+        broker_environment=snapshot.broker_environment,
         approved_target_quantity=plan.target_quantity,
         broker_position_quantity=broker_quantity,
         open_order_ids=snapshot.open_order_ids,
@@ -555,8 +602,37 @@ def _record_terminal_order_status(
             occurred_at=occurred_at,
             reason=f"broker order status is {order.status.value}",
             evidence_refs=(order.id,),
+            broker_order_ids=(_broker_order_key(order),),
         )
     return lifecycle_status
+
+
+def _order_identity_mismatch(
+    plan: ExecutionPlan,
+    order: LiveOrderRecord,
+) -> str | None:
+    if order.client_order_id != plan.client_order_id:
+        return "client order ID differs"
+    if plan.order_request is None or order.request != plan.order_request:
+        return "order request differs"
+    if (
+        order.broker_name != plan.broker_name
+        or order.account_id != plan.account_id
+        or order.broker_environment != plan.broker_environment
+    ):
+        return "broker account identity differs"
+    return None
+
+
+def _account_matches_plan(
+    plan: ExecutionPlan,
+    account: LiveAccountSnapshot,
+) -> bool:
+    return (
+        account.broker_name == plan.broker_name
+        and account.account_id == plan.account_id
+        and account.broker_environment == plan.broker_environment
+    )
 
 
 def _lookup_evidence(
@@ -566,6 +642,7 @@ def _lookup_evidence(
     orders: tuple[LiveOrderRecord, ...],
     evaluated_at: datetime,
     reason: str,
+    order_identity_results: tuple[str, ...] | None = None,
 ) -> BrokerOrderLookupEvidence:
     return BrokerOrderLookupEvidence(
         evidence_id=f"{plan.execution_plan_id}:{evaluated_at.isoformat()}",
@@ -577,9 +654,97 @@ def _lookup_evidence(
             order.broker_order_id or order.client_order_id for order in orders
         ),
         order_statuses=tuple(order.status for order in orders),
+        order_identity_results=order_identity_results
+        if order_identity_results is not None
+        else tuple(_order_identity_result(plan, order) for order in orders),
         occurred_at=evaluated_at,
         reason=reason,
     )
+
+
+def _lookup_plan_order(
+    *,
+    plan: ExecutionPlan,
+    broker: ExecutionLifecycleBroker,
+    evaluated_at: datetime,
+    expected_broker_order_id: str | None = None,
+) -> tuple[BrokerOrderLookupEvidence, LiveOrderRecord | None]:
+    try:
+        orders = broker.orders_by_client_order_id(plan.client_order_id)
+    except Exception as exc:
+        return (
+            _lookup_evidence(
+                plan=plan,
+                outcome=BrokerLookupOutcome.UNAVAILABLE,
+                orders=(),
+                evaluated_at=evaluated_at,
+                reason=f"broker lookup unavailable: {exc}",
+            ),
+            None,
+        )
+    identity_results = tuple(
+        _order_identity_result(plan, order, expected_broker_order_id)
+        for order in orders
+    )
+    if len(orders) == 1 and identity_results == ("match",):
+        outcome = BrokerLookupOutcome.FOUND
+        reason = "broker order found by deterministic client order ID"
+        found_order = orders[0]
+    elif not orders:
+        outcome = BrokerLookupOutcome.NOT_FOUND
+        reason = "broker lookup proved no visible matching order"
+        found_order = None
+    else:
+        outcome = BrokerLookupOutcome.CONFLICTING
+        reason = "broker lookup returned conflicting matching orders"
+        found_order = None
+    return (
+        _lookup_evidence(
+            plan=plan,
+            outcome=outcome,
+            orders=orders,
+            evaluated_at=evaluated_at,
+            reason=reason,
+            order_identity_results=identity_results,
+        ),
+        found_order,
+    )
+
+
+def _submitted_broker_order_id(
+    plan: ExecutionPlan,
+    artifact_root: Path,
+) -> str:
+    submitted_events = tuple(
+        event
+        for event in load_execution_events(
+            artifact_root, plan.execution_plan_id
+        )
+        if event.new_status == ExecutionPlanStatus.SUBMITTED
+    )
+    if not submitted_events or len(submitted_events[-1].broker_order_ids) != 1:
+        raise ValueError("submitted execution lacks one broker order identity")
+    return submitted_events[-1].broker_order_ids[0]
+
+
+def _broker_order_key(order: LiveOrderRecord) -> str:
+    return order.broker_order_id or order.client_order_id
+
+
+def _order_identity_result(
+    plan: ExecutionPlan,
+    order: LiveOrderRecord,
+    expected_broker_order_id: str | None = None,
+) -> str:
+    mismatch = _order_identity_mismatch(plan, order)
+    if mismatch is not None:
+        return mismatch
+    if (
+        expected_broker_order_id is not None
+        and _broker_order_key(order) != expected_broker_order_id
+    ):
+        return "broker order ID differs"
+    return "match"
 
 
 def _approved_whole_share_target(risk_target: RiskTargetDecision) -> int:

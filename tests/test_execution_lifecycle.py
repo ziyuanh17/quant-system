@@ -1,8 +1,10 @@
+import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
+from pydantic import ValidationError
 
 from quant.execution import (
     ACCOUNT_WIDE_EXACT_RECONCILIATION_POLICY,
@@ -13,11 +15,14 @@ from quant.execution import (
     claim_execution_plan,
     confirm_execution_satisfaction,
     current_execution_status,
+    execution_plan_path,
     load_execution_drift_observation,
     load_execution_events,
+    load_execution_plan,
     observe_execution_drift,
     reconcile_live_state,
     recover_execution_submission,
+    refresh_submitted_execution,
     submit_execution_plan,
 )
 from quant.models.execution import (
@@ -59,7 +64,7 @@ def test_execution_plan_claim_is_atomic_per_risk_target(tmp_path) -> None:
 
     first = _claim(source, broker, tmp_path)
 
-    assert first.execution_plan_id == "execution-risk-1"
+    assert first.execution_plan_id == "execution-risk-1-r1"
     assert first.order_request is not None
     assert first.order_request.quantity == 2
     with pytest.raises(FileExistsError):
@@ -85,6 +90,33 @@ def test_concurrent_execution_plan_claims_create_exactly_one_plan(
         len([item for item in results if isinstance(item, ExecutionPlan)]) == 1
     )
     assert len([item for item in results if isinstance(item, Exception)]) == 1
+
+
+def test_distinct_risk_target_revisions_claim_distinct_plans(tmp_path) -> None:
+    first_source = _source(risk_target_revision=1)
+    second_source = _source(risk_target_revision=2)
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+
+    first = _claim(first_source, broker, tmp_path)
+    second = _claim(second_source, broker, tmp_path)
+
+    assert first.execution_plan_id == "execution-risk-1-r1"
+    assert second.execution_plan_id == "execution-risk-1-r2"
+    assert first.client_order_id != second.client_order_id
+
+
+def test_v1_execution_plan_artifact_fails_closed(tmp_path) -> None:
+    source = _source()
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+    _claim(source, broker, tmp_path)
+    path = execution_plan_path(tmp_path, "risk-1", 1)
+    payload = json.loads(path.read_text())
+    payload["schema_version"] = 1
+    legacy_path = tmp_path / "legacy-v1-plan.json"
+    legacy_path.write_text(json.dumps(payload))
+
+    with pytest.raises(ValidationError, match="schema_version"):
+        load_execution_plan(legacy_path)
 
 
 def test_fake_broker_lifecycle_reaches_reconciled_satisfaction(
@@ -152,6 +184,80 @@ def test_submit_then_crash_recovers_without_duplicate_order(tmp_path) -> None:
         current_execution_status(plan, tmp_path) == ExecutionPlanStatus.FILLED
     )
     assert len(broker.fills()) == 1
+
+
+def test_submission_response_identity_mismatch_becomes_ambiguous(
+    tmp_path,
+) -> None:
+    source = _source()
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+    plan = _claim(source, broker, tmp_path)
+
+    status = _submit(
+        plan,
+        source,
+        _MismatchedSubmissionBroker(broker, plan),
+        tmp_path,
+    )
+
+    assert status == ExecutionPlanStatus.AMBIGUOUS
+    assert (
+        "identity mismatch"
+        in load_execution_events(tmp_path, plan.execution_plan_id)[-1].reason
+    )
+
+
+def test_submitted_order_refresh_reaches_terminal_fill(tmp_path) -> None:
+    source = _source()
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+    plan = _claim(source, broker, tmp_path)
+    delayed = _AcceptedThenFilledBroker(broker, plan)
+
+    assert (
+        _submit(plan, source, delayed, tmp_path)
+        == ExecutionPlanStatus.SUBMITTED
+    )
+
+    evidence = refresh_submitted_execution(
+        plan=plan,
+        broker=delayed,
+        artifact_root=tmp_path,
+        evaluated_at=_now() + timedelta(minutes=1),
+    )
+
+    assert evidence.outcome == BrokerLookupOutcome.FOUND
+    assert (
+        current_execution_status(plan, tmp_path) == ExecutionPlanStatus.FILLED
+    )
+
+
+def test_submitted_order_refresh_rejects_broker_order_id_swap(tmp_path) -> None:
+    source = _source()
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+    plan = _claim(source, broker, tmp_path)
+    delayed = _AcceptedThenFilledBroker(
+        broker,
+        plan,
+        refreshed_broker_order_id="different-broker-order",
+    )
+    assert (
+        _submit(plan, source, delayed, tmp_path)
+        == ExecutionPlanStatus.SUBMITTED
+    )
+
+    evidence = refresh_submitted_execution(
+        plan=plan,
+        broker=delayed,
+        artifact_root=tmp_path,
+        evaluated_at=_now() + timedelta(minutes=1),
+    )
+
+    assert evidence.outcome == BrokerLookupOutcome.CONFLICTING
+    assert evidence.order_identity_results == ("broker order ID differs",)
+    assert (
+        current_execution_status(plan, tmp_path)
+        == ExecutionPlanStatus.AMBIGUOUS
+    )
 
 
 def test_not_found_recovery_blocks_without_resubmission(tmp_path) -> None:
@@ -223,6 +329,34 @@ def test_uncertain_recovery_outcomes_block_without_resubmission(
     assert broker.fills() == ()
 
 
+def test_recovery_matching_client_id_but_wrong_request_is_conflicting(
+    tmp_path,
+) -> None:
+    source = _source()
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+    plan = _claim(source, broker, tmp_path)
+    assert (
+        _submit(plan, source, _RaiseBeforeSubmitBroker(broker), tmp_path)
+        == ExecutionPlanStatus.AMBIGUOUS
+    )
+
+    evidence = recover_execution_submission(
+        plan=plan,
+        broker=_ConflictingLookupBroker(
+            broker,
+            (_lookup_order(plan, "wrong-request", quantity=1),),
+        ),
+        artifact_root=tmp_path,
+        evaluated_at=_now() + timedelta(minutes=1),
+    )
+
+    assert evidence.outcome == BrokerLookupOutcome.CONFLICTING
+    assert evidence.order_identity_results == ("order request differs",)
+    assert (
+        current_execution_status(plan, tmp_path) == ExecutionPlanStatus.BLOCKED
+    )
+
+
 def test_pre_submission_revalidation_blocks_stale_strategy_target(
     tmp_path,
 ) -> None:
@@ -290,6 +424,26 @@ def test_pre_submission_revalidation_blocks_invalid_safety_check(
         for event in load_execution_events(tmp_path, plan.execution_plan_id)
     ] == [ExecutionPlanStatus.BLOCKED]
     assert broker.fills() == ()
+
+
+def test_pre_submission_revalidation_blocks_another_broker_account(
+    tmp_path,
+) -> None:
+    source = _source()
+    claimed_broker = FakeLiveBrokerClient(initial_cash=1_000)
+    plan = _claim(source, claimed_broker, tmp_path)
+    another_account = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        account_id="another-account",
+    )
+
+    status = _submit(plan, source, another_account, tmp_path)
+
+    assert status == ExecutionPlanStatus.BLOCKED
+    assert (
+        "account identity changed"
+        in load_execution_events(tmp_path, plan.execution_plan_id)[-1].reason
+    )
 
 
 def test_failed_account_wide_reconciliation_prevents_satisfaction(
@@ -485,6 +639,47 @@ def test_detect_only_drift_observation_never_repairs_position(tmp_path) -> None:
     assert drifted_broker.fills() == ()
 
 
+def test_drift_observation_for_another_account_is_indeterminate(
+    tmp_path,
+) -> None:
+    source = _source()
+    broker, adapter, paths = _broker_with_artifacts(tmp_path)
+    plan = _claim(source, broker, tmp_path)
+    assert (
+        _submit(plan, source, adapter, tmp_path) == ExecutionPlanStatus.FILLED
+    )
+    adapter.account_snapshot()
+    reconciliation = reconcile_live_state(
+        client=broker,
+        order_records_dir=paths["orders"],
+        fill_records_dir=paths["fills"],
+        snapshot_records_dir=paths["snapshots"],
+    )
+    assert (
+        confirm_execution_satisfaction(
+            plan=plan,
+            broker=broker,
+            reconciliation=reconciliation,
+            artifact_root=tmp_path,
+            evaluated_at=_now() + timedelta(minutes=1),
+        )
+        == ExecutionPlanStatus.SATISFIED
+    )
+
+    observation = observe_execution_drift(
+        plan=plan,
+        broker=FakeLiveBrokerClient(
+            initial_cash=1_000,
+            account_id="another-account",
+        ),
+        artifact_root=tmp_path,
+        observed_at=_now() + timedelta(minutes=2),
+    )
+
+    assert observation.status == ExecutionDriftStatus.INDETERMINATE
+    assert "account identity differs" in observation.reason
+
+
 def test_fractional_risk_target_cannot_claim_operational_plan(tmp_path) -> None:
     source = _source(target_value=Decimal("1.5"))
     broker = FakeLiveBrokerClient(initial_cash=1_000)
@@ -537,6 +732,61 @@ class _RaiseBeforeSubmitBroker(_SubmitThenRaiseBroker):
         raise RuntimeError("connection lost before broker visibility")
 
 
+class _MismatchedSubmissionBroker(_RaiseBeforeSubmitBroker):
+    def __init__(self, delegate, plan: ExecutionPlan) -> None:
+        super().__init__(delegate)
+        self.plan = plan
+
+    def submit_market_order(
+        self,
+        request: OrderRequest,
+        *,
+        reference_price: float,
+        client_order_id: str,
+        safety_check: TradingSafetyCheck,
+    ) -> LiveOrderRecord:
+        return _lookup_order(self.plan, "wrong-response", quantity=1)
+
+
+class _AcceptedThenFilledBroker(_RaiseBeforeSubmitBroker):
+    def __init__(
+        self,
+        delegate,
+        plan: ExecutionPlan,
+        refreshed_broker_order_id: str = "delayed-broker-order",
+    ) -> None:
+        super().__init__(delegate)
+        self.plan = plan
+        self.refreshed_broker_order_id = refreshed_broker_order_id
+
+    def submit_market_order(
+        self,
+        request: OrderRequest,
+        *,
+        reference_price: float,
+        client_order_id: str,
+        safety_check: TradingSafetyCheck,
+    ) -> LiveOrderRecord:
+        return _lookup_order(
+            self.plan,
+            "accepted-order",
+            broker_order_id="delayed-broker-order",
+            status=LiveOrderStatus.ACCEPTED,
+        )
+
+    def orders_by_client_order_id(
+        self, client_order_id: str
+    ) -> tuple[LiveOrderRecord, ...]:
+        return (
+            _lookup_order(
+                self.plan,
+                "filled-order",
+                broker_order_id=self.refreshed_broker_order_id,
+                status=LiveOrderStatus.FILLED,
+            ),
+        )
+
+
 class _UnavailableLookupBroker(_RaiseBeforeSubmitBroker):
     def orders_by_client_order_id(
         self, client_order_id: str
@@ -564,20 +814,32 @@ class _WorkingOrderBroker(_RaiseBeforeSubmitBroker):
         return True
 
 
-def _lookup_order(plan: ExecutionPlan, record_id: str) -> LiveOrderRecord:
+def _lookup_order(
+    plan: ExecutionPlan,
+    record_id: str,
+    *,
+    quantity: int | None = None,
+    broker_order_id: str | None = None,
+    status: LiveOrderStatus = LiveOrderStatus.ACCEPTED,
+) -> LiveOrderRecord:
     assert plan.order_request is not None
+    request = (
+        plan.order_request
+        if quantity is None
+        else plan.order_request.model_copy(update={"quantity": quantity})
+    )
     return LiveOrderRecord(
         id=record_id,
         client_order_id=plan.client_order_id,
-        broker_order_id=f"broker-{record_id}",
+        broker_order_id=broker_order_id or f"broker-{record_id}",
         broker_name="fake-live",
         account_id="fake-account",
         broker_environment="paper",
-        request=plan.order_request,
+        request=request,
         reference_price=100,
-        notional=plan.order_request.quantity * 100,
+        notional=request.quantity * 100,
         safety_check=TradingSafetyCheck(mode=TradingMode.LIVE, allowed=True),
-        status=LiveOrderStatus.ACCEPTED,
+        status=status,
     )
 
 
@@ -632,6 +894,7 @@ def _source(
     *,
     target_value: Decimal = Decimal("2"),
     max_age_seconds: int = 3600,
+    risk_target_revision: int = 1,
 ) -> tuple[
     ContributorSet,
     tuple[StrategyTargetDecision, ...],
@@ -680,7 +943,7 @@ def _source(
     )
     risk_target = evaluate_research_risk_target(
         risk_target_id="risk-1",
-        revision=1,
+        revision=risk_target_revision,
         portfolio_target=portfolio_target,
         policy=risk_policy,
         evaluated_at=_now(),

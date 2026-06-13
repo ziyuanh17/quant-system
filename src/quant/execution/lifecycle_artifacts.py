@@ -52,20 +52,37 @@ def claim_execution_plan_exclusive(
 ) -> Path:
     """Atomically claim one risk-target revision before broker interaction."""
     _require_safe_component(plan.risk_target_id)
-    lock_path = artifact_root / "locks" / f"{plan.risk_target_id}.lock"
+    claim_key = _risk_target_revision_key(
+        plan.risk_target_id, plan.risk_target_revision
+    )
+    lock_path = artifact_root / "locks" / f"{claim_key}.lock"
     with FileLock(
         path=lock_path,
-        lock_name=f"execution-plan:{plan.risk_target_id}",
+        lock_name=f"execution-plan:{claim_key}",
         stale_after_seconds=300,
     ):
-        path = execution_plan_path(artifact_root, plan.risk_target_id)
+        path = execution_plan_path(
+            artifact_root,
+            plan.risk_target_id,
+            plan.risk_target_revision,
+        )
         _write_model_exclusive(path, plan)
     return path
 
 
-def execution_plan_path(artifact_root: Path, risk_target_id: str) -> Path:
+def execution_plan_path(
+    artifact_root: Path,
+    risk_target_id: str,
+    risk_target_revision: int,
+) -> Path:
     _require_safe_component(risk_target_id)
-    return artifact_root / "plans" / f"{risk_target_id}.json"
+    if risk_target_revision < 1:
+        raise ValueError("risk target revision must be positive")
+    filename = (
+        f"{_risk_target_revision_key(risk_target_id, risk_target_revision)}"
+        ".json"
+    )
+    return artifact_root / "plans" / filename
 
 
 def load_execution_plan(path: Path) -> ExecutionPlan:
@@ -80,6 +97,7 @@ def append_execution_event(
     occurred_at: datetime,
     reason: str,
     evidence_refs: tuple[str, ...] = (),
+    broker_order_ids: tuple[str, ...] = (),
 ) -> ExecutionEvent:
     _require_safe_component(plan.execution_plan_id)
     lock_path = (
@@ -112,6 +130,7 @@ def append_execution_event(
             occurred_at=occurred_at,
             reason=reason,
             evidence_refs=evidence_refs,
+            broker_order_ids=broker_order_ids,
         )
         path = _event_dir(artifact_root, plan.execution_plan_id) / (
             f"{sequence:06d}.json"
@@ -130,6 +149,7 @@ def load_execution_events(
             _event_dir(artifact_root, execution_plan_id).glob("*.json")
         )
     )
+    submitted_broker_order_id: str | None = None
     for expected_sequence, event in enumerate(events, start=1):
         if event.sequence != expected_sequence:
             raise ValueError("execution event sequence is not contiguous")
@@ -146,6 +166,23 @@ def load_execution_events(
                 raise ValueError("execution event timestamps are not monotonic")
         if event.new_status not in _ALLOWED_TRANSITIONS[event.previous_status]:
             raise ValueError("execution event transition is invalid")
+        if event.new_status == ExecutionPlanStatus.SUBMITTED:
+            broker_order_id = event.broker_order_ids[0]
+            if (
+                submitted_broker_order_id is not None
+                and broker_order_id != submitted_broker_order_id
+            ):
+                raise ValueError("submitted broker order identity changed")
+            submitted_broker_order_id = broker_order_id
+        if (
+            submitted_broker_order_id is not None
+            and event.broker_order_ids
+            and any(
+                broker_order_id != submitted_broker_order_id
+                for broker_order_id in event.broker_order_ids
+            )
+        ):
+            raise ValueError("execution event references another broker order")
     return events
 
 
@@ -207,6 +244,10 @@ def _require_safe_component(value: str) -> None:
         raise ValueError("artifact identity must be one safe path component")
 
 
+def _risk_target_revision_key(risk_target_id: str, revision: int) -> str:
+    return f"{risk_target_id}-r{revision}"
+
+
 def _write_model_exclusive(path: Path, model: BaseModel) -> None:
     payload = (
         json.dumps(model.model_dump(mode="json"), indent=2, sort_keys=True)
@@ -214,8 +255,12 @@ def _write_model_exclusive(path: Path, model: BaseModel) -> None:
     ).encode()
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+    with os.fdopen(descriptor, "wb") as file:
+        file.write(payload)
+        file.flush()
+        os.fsync(file.fileno())
+    directory = os.open(path.parent, os.O_RDONLY)
     try:
-        os.write(descriptor, payload)
-        os.fsync(descriptor)
+        os.fsync(directory)
     finally:
-        os.close(descriptor)
+        os.close(directory)

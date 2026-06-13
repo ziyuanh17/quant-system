@@ -109,9 +109,10 @@ The first execution implementation is isolated to the no-network fake broker.
 It does not authorize or integrate with paper or live operational workflows.
 
 One approved risk-target revision may atomically claim at most one immutable
-`ExecutionPlan`. The filesystem claim uses a lock plus an exclusive,
-deterministic risk-target path. Every lifecycle transition is a separate
-append-only `ExecutionEvent`:
+`ExecutionPlan`. Claim, execution-plan, and client-order identities include
+both the risk-target ID and revision, so later revisions do not collide. The
+filesystem claim uses a lock plus an exclusive, deterministic path. Every
+lifecycle transition is a separate append-only `ExecutionEvent`:
 
 ```text
 planned
@@ -125,6 +126,15 @@ planned
 pending or ambiguous state must look up the deterministic client order ID.
 Found orders recover broker state; not-found, unavailable, or conflicting
 lookups block without automatic resubmission.
+
+Direct submission responses, recovery lookups, and submitted-order refreshes
+must match the planned client order ID, exact order request, and claimed broker
+account identity. Accepted or partially filled orders remain `submitted` and
+advance only through lookup-based refresh.
+
+Lifecycle schema version 2 introduces revision-scoped plan identity,
+broker-account binding, and durable broker-order identity. Version 1 lifecycle
+artifacts fail closed and are not eligible for execution.
 
 Given an execution artifact root, the lifecycle writes immutable records under:
 

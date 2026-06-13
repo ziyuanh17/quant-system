@@ -93,6 +93,7 @@ from quant.execution.target_lifecycle import (
     confirm_execution_satisfaction,
     observe_execution_drift,
     recover_execution_submission,
+    refresh_submitted_execution,
     submit_execution_plan,
     validate_pre_submission,
 )
@@ -153,6 +154,7 @@ __all__ = [
     "reconcile_live_state",
     "reconcile_paper_state",
     "recover_execution_submission",
+    "refresh_submitted_execution",
     "observe_execution_drift",
     "run_alpaca_paper_order_rehearsal",
     "save_paper_broker_state",
