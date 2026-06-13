@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
@@ -169,6 +170,7 @@ def submit_execution_plan(
     artifact_root: Path,
     evaluated_at: datetime,
     expected_trading_mode: TradingMode = TradingMode.LIVE,
+    final_pre_submit_check: Callable[[], tuple[str, ...]] | None = None,
 ) -> ExecutionPlanStatus:
     """Revalidate and submit once, recording uncertainty instead of retrying."""
     if (
@@ -189,6 +191,11 @@ def submit_execution_plan(
         evaluated_at=evaluated_at,
         expected_trading_mode=expected_trading_mode,
     )
+    if not reasons and final_pre_submit_check is not None:
+        try:
+            reasons = final_pre_submit_check()
+        except Exception as exc:
+            reasons = (f"final pre-submit check failed: {exc}",)
     if reasons:
         append_execution_event(
             plan=plan,

@@ -95,6 +95,10 @@ from quant.execution.state import (
     load_paper_broker_state,
     save_paper_broker_state,
 )
+from quant.execution.target_alpaca_paper import (
+    AlpacaSemanticTargetRunResult,
+    run_alpaca_semantic_target_paper,
+)
 from quant.execution.target_dry_run import (
     observe_execution_plan_dry_run,
     run_semantic_target_dry_run,
@@ -122,6 +126,7 @@ __all__ = [
     "AlpacaPaperBrokerClient",
     "AlpacaPaperConfig",
     "AlpacaTradingClientProtocol",
+    "AlpacaSemanticTargetRunResult",
     "ALPACA_PAPER_REHEARSAL_CONFIRMATION",
     "ACCOUNT_WIDE_EXACT_RECONCILIATION_POLICY",
     "DryRunBrokerAdapter",
@@ -186,6 +191,7 @@ __all__ = [
     "run_semantic_target_dry_run",
     "run_semantic_target_paper",
     "run_alpaca_paper_order_rehearsal",
+    "run_alpaca_semantic_target_paper",
     "save_paper_broker_state",
     "submit_execution_plan",
     "validate_pre_submission",

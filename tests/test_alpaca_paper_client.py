@@ -371,6 +371,70 @@ def test_alpaca_paper_client_refreshes_terminal_order_by_broker_id() -> None:
     assert refreshed.broker_order_id == "alpaca-order-1"
 
 
+def test_alpaca_paper_client_recovers_order_by_client_id() -> None:
+    trading_client = FakeTradingClient(
+        api_key="unused",
+        secret_key="unused",
+        paper=True,
+    )
+    request = OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=1)
+    order_record = LiveOrderRecord(
+        client_order_id="client-1",
+        broker_name="alpaca-paper",
+        account_id="acct-1",
+        broker_environment="paper",
+        request=request,
+        reference_price=100,
+        notional=100,
+        safety_check=_allowed_live_check(),
+        status=LiveOrderStatus.UNKNOWN,
+    )
+    trading_client.orders.append(
+        SimpleNamespace(
+            id="alpaca-order-1",
+            client_order_id="client-1",
+            status="filled",
+            filled_qty="1",
+            filled_avg_price="100",
+        )
+    )
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=trading_client,
+    )
+    client.remember_order_record(order_record)
+
+    recovered = client.orders_by_client_order_id("client-1")
+
+    assert len(recovered) == 1
+    assert recovered[0].id == order_record.id
+    assert recovered[0].broker_order_id == "alpaca-order-1"
+    assert recovered[0].status == LiveOrderStatus.FILLED
+    assert trading_client.get_order_by_client_id_calls == ["client-1"]
+
+
+def test_alpaca_paper_client_lookup_requires_durable_context() -> None:
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=FakeTradingClient(
+            api_key="unused",
+            secret_key="unused",
+            paper=True,
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="durable order context"):
+        client.orders_by_client_order_id("unknown")
+
+
 class FakeEnum:
     def __init__(self, value: str) -> None:
         self.value = value
@@ -409,6 +473,7 @@ class FakeTradingClient:
         self.default_order_ids: set[str] | None = None
         self.get_orders_calls = 0
         self.get_order_by_id_calls: list[str] = []
+        self.get_order_by_client_id_calls: list[str] = []
 
     def submit_order(self, order_data: object) -> object:
         if not isinstance(order_data, FakeMarketOrder):
@@ -441,6 +506,13 @@ class FakeTradingClient:
             if order_id_value == order_id:
                 return order
         raise ValueError(f"unknown order: {order_id}")
+
+    def get_order_by_client_id(self, client_id: str) -> object:
+        self.get_order_by_client_id_calls.append(client_id)
+        for order in self.orders:
+            if cast(Any, order).client_order_id == client_id:
+                return order
+        raise ValueError(f"unknown client order: {client_id}")
 
     def get_account(self) -> object:
         return self.account

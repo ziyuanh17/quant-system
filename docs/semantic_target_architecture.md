@@ -208,4 +208,29 @@ claim or recover execution plan
 ```
 
 Legacy paper commands and scheduled workflows remain unchanged. Alpaca paper
-integration requires a separate review.
+integration is available only through a separately gated API workflow.
+
+## Alpaca Semantic-Target Paper Integration
+
+The opt-in Alpaca semantic-target workflow reuses the same execution lifecycle
+and immutable reconciliation requirements. It is not connected to a CLI,
+scheduler, or runtime service.
+
+Activation requires both:
+
+```text
+alpaca_submission_enabled = true
+allowed live-shaped safety config with broker_name = alpaca-paper
+```
+
+Before a planned order may submit, the workflow checks maximum order notional,
+projected account exposure, buying power, asset tradability, and short-borrow
+availability. Pending or ambiguous submissions are recovered only by the
+deterministic client order ID. The Alpaca client must have durable plan context
+before lookup so the recovered broker order can be checked against the exact
+planned request.
+
+The workflow writes live-shaped order, fill, snapshot, lifecycle, recovery, and
+immutable reconciliation artifacts. A filled order becomes `satisfied` only
+after account-wide reconciliation passes. Operational CLI and scheduler
+activation remain a later, separately approved stage.
