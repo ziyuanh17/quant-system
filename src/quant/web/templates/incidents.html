@@ -44,7 +44,7 @@
           }
           var html = "";
           data[currentTab].forEach(function(inc) {
-               html += '<tr data-id="' + inc.incidentId + '"><td class="mono">' + inc.incidentId + '</td><td>' + inc.title + '</td><td><span class="badge ' + severityClass(inc.severity) + '">' + inc.severity + '</span></td><td>' + inc.status + '</td><td>' + fmt(inc.detectedAt) + '</td><td><a href="#" class="detail-link" data-id="' + inc.incidentId + '">view</a></td></tr>';
+               html += '<tr data-id="' + inc.incidentId + '"><td class="mono">' + inc.incidentId + '</td><td>' + inc.title + '</td><td>' + window.quantRenderStatus(severityClass(inc.severity)) + '</td><td>' + inc.status + '</td><td>' + fmt(inc.detectedAt) + '</td><td><a href="#" class="detail-link" data-id="' + inc.incidentId + '">view</a></td></tr>';
           });
           body.innerHTML = html;
           body.querySelectorAll(".detail-link").forEach(function(a) {

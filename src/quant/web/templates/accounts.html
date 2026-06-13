@@ -22,11 +22,7 @@
 (function() {
       "use strict";
 
-     function statusBadge(state) {
-          var cls = "badge badge-" + (state || "unknown").replace(/\s+/g, "_");
-          return '<span class="' + cls + '">' + (state || "unknown") + '</span>';
-      }
-
+     var badge = window.quantRenderStatus;
      function freshnessLabel(ageSeconds) {
           if (ageSeconds === null || ageSeconds === undefined)
                return '<span class="text-secondary">unknown</span>';
@@ -52,11 +48,11 @@
                html += '<tr data-alias="' + acc.accountAlias + '">' +
                     '<td>' + acc.environment + '</td>' +
                     '<td>' + acc.broker + '</td>' +
-                    '<td>' + statusBadge(acc.connection.state) + '</td>' +
+                    '<td>' + badge(acc.connection.state) + '</td>' +
                     '<td>' + acc.tradingPermission + '</td>' +
                     '<td class="mono">' + (acc.equity !== null ? '$' + acc.equity.toFixed(2) : '-') + '</td>' +
                     '<td class="mono">' + (acc.positionCount || 0) + '</td>' +
-                    '<td>' + statusBadge(acc.reconciliation?.state || "not_configured") + '</td>' +
+                    '<td>' + badge(acc.reconciliation?.state || "not_configured") + '</td>' +
                     '<td>' + freshnessLabel(acc.freshness.age) + '</td>' +
                     '</tr>';
            });
@@ -104,9 +100,9 @@
           html += '<div class="detail-grid">';
           html += '<div class="detail-field"><span class="label">Environment</span><span class="value">' + perm.environment + '</span></div>';
           html += '<div class="detail-field"><span class="label">Broker</span><span class="value">' + perm.broker + '</span></div>';
-          html += '<div class="detail-field"><span class="label">Connection</span><span class="value">' + statusBadge(perm.connection?.state) + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Connection</span><span class="value">' + badge(perm.connection?.state) + '</span></div>';
           html += '<div class="detail-field"><span class="label">Trading</span><span class="value">' + perm.tradingPermission + '</span></div>';
-          html += '<div class="detail-field"><span class="label">Safety Gate</span><span class="value">' + statusBadge(perm.safetyGateStatus?.state) + '</span></div>';
+          html += '<div class="detail-field"><span class="label">Safety Gate</span><span class="value">' + badge(perm.safetyGateStatus?.state) + '</span></div>';
           html += '</div></div>';
 
            // Risk section
