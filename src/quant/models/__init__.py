@@ -46,6 +46,16 @@ from quant.models.execution import (
     TradingSafetyCheck,
     TradingSafetyConfig,
 )
+from quant.models.execution_lifecycle import (
+    BrokerLookupOutcome,
+    BrokerOrderLookupEvidence,
+    ExecutionDriftObservation,
+    ExecutionDriftStatus,
+    ExecutionEvent,
+    ExecutionLifecyclePolicy,
+    ExecutionPlan,
+    ExecutionPlanStatus,
+)
 from quant.models.features import (
     FeatureArtifactPaths,
     FeatureData,
@@ -110,6 +120,8 @@ __all__ = [
     "Bar",
     "BrokerAccountSnapshot",
     "BrokerMode",
+    "BrokerLookupOutcome",
+    "BrokerOrderLookupEvidence",
     "DryRunOrderRecord",
     "DryRunOrderStatus",
     "DataModality",
@@ -192,4 +204,10 @@ __all__ = [
     "ValidationSeverity",
     "WorkflowRunStatus",
     "EvaluationSplitPolicy",
+    "ExecutionEvent",
+    "ExecutionDriftObservation",
+    "ExecutionDriftStatus",
+    "ExecutionLifecyclePolicy",
+    "ExecutionPlan",
+    "ExecutionPlanStatus",
 ]

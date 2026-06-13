@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, cast
 
 from quant.execution.artifacts import (
     write_live_account_snapshot,
@@ -184,6 +184,13 @@ class FakeLiveBrokerClient:
     ) -> LiveOrderRecord:
         return self._orders.get(record.client_order_id, record)
 
+    def orders_by_client_order_id(
+        self,
+        client_order_id: str,
+    ) -> tuple[LiveOrderRecord, ...]:
+        order = self._orders.get(client_order_id)
+        return (order,) if order is not None else ()
+
     def _risk_rejection_reason(
         self,
         request: OrderRequest,
@@ -192,9 +199,8 @@ class FakeLiveBrokerClient:
         if request.side == OrderSide.BUY and notional > self._cash:
             return "insufficient buying power"
         position = self._positions.get(request.symbol)
-        if (
-            request.side == OrderSide.SELL
-            and (position is None or position.quantity < request.quantity)
+        if request.side == OrderSide.SELL and (
+            position is None or position.quantity < request.quantity
         ):
             return "insufficient position"
         return None
@@ -340,6 +346,20 @@ class LiveBrokerAdapter:
 
     def open_orders(self) -> tuple[LiveOrderRecord, ...]:
         return self._client.open_orders()
+
+    def has_open_orders(self) -> bool:
+        return self._client.has_open_orders()
+
+    def orders_by_client_order_id(
+        self,
+        client_order_id: str,
+    ) -> tuple[LiveOrderRecord, ...]:
+        lookup = getattr(self._client, "orders_by_client_order_id", None)
+        if not callable(lookup):
+            raise RuntimeError(
+                "broker client does not provide deterministic order lookup"
+            )
+        return cast(tuple[LiveOrderRecord, ...], lookup(client_order_id))
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
         fills = self._client.fills()

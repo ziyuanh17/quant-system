@@ -14,10 +14,11 @@ strategy evaluation
   -> broker and reconciliation
 ```
 
-The implemented research stages define strategy-target contracts, immutable
-artifacts, native target backtests, legacy-equivalence evidence, contributor
-ownership, portfolio aggregation, and independent risk decisions. They do not
-change paper, dry-run, Alpaca, scheduler, runtime, or execution behavior.
+The implemented stages define strategy-target contracts, immutable artifacts,
+native target backtests, legacy-equivalence evidence, contributor ownership,
+portfolio aggregation, independent risk decisions, and an isolated fake-broker
+execution lifecycle. They do not change paper, dry-run, Alpaca, scheduler, or
+runtime behavior.
 
 ## Strategy Targets
 
@@ -102,9 +103,53 @@ either approves the exact aggregate or rejects it with reasons; it never
 silently clamps, rounds, or resizes a target. Fractional research targets remain
 valid at this layer.
 
+## Fake-Broker Execution Lifecycle
+
+The first execution implementation is isolated to the no-network fake broker.
+It does not authorize or integrate with paper or live operational workflows.
+
+One approved risk-target revision may atomically claim at most one immutable
+`ExecutionPlan`. The filesystem claim uses a lock plus an exclusive,
+deterministic risk-target path. Every lifecycle transition is a separate
+append-only `ExecutionEvent`:
+
+```text
+planned
+  -> submission_pending
+  -> submitted
+  -> filled | rejected | cancelled | ambiguous
+  -> satisfied
+```
+
+`submission_pending` is persisted before broker interaction. A restart from
+pending or ambiguous state must look up the deterministic client order ID.
+Found orders recover broker state; not-found, unavailable, or conflicting
+lookups block without automatic resubmission.
+
+Given an execution artifact root, the lifecycle writes immutable records under:
+
+```text
+plans/
+events/
+recovery-evidence/
+drift-observations/
+```
+
+Immediately before submission, the lifecycle revalidates strategy freshness,
+contributor ownership, portfolio aggregation, risk approval, whole-share
+capability, working orders, and current broker position. Satisfaction requires:
+
+```text
+broker position equals approved target
+AND no unsettled orders exist
+AND account-wide reconciliation passed
+```
+
+Failed satisfaction checks remain durable evidence and never trigger drift
+repair. After satisfaction, `detect_only_v1` persists clear, detected, or
+indeterminate drift observations without changing broker state.
+
 ## Future Stages
 
-Later reviewed stages will add atomic execution-plan claims, append-only
-execution events, pre-submission revalidation, restart recovery,
-reconciliation-confirmed satisfaction, and detect-only drift. Alpaca paper
-integration requires a separate review.
+Later reviewed stages may migrate the lifecycle into local paper and dry-run
+workflows. Alpaca paper integration requires a separate review.
