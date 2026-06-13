@@ -35,7 +35,7 @@
           if (!body || !data.items || data.items.length === 0) return;
           var html = "";
           data.items.forEach(function(d) {
-               html += '<tr data-id="' + d.id + '"><td>' + fmt(d.observedAt) + '</td><td>' + d.strategy + '</td><td>' + d.signal + '</td><td><span class="badge badge-' + d.outcome + '">' + d.outcome + '</span></td><td>' + (d.environment || '-') + '</td></tr>';
+               html += '<tr data-id="' + d.id + '"><td>' + fmt(d.observedAt) + '</td><td>' + d.strategy + '</td><td>' + d.signal + '</td><td>' + window.quantRenderStatus(d.outcome) + '</td><td>' + (d.environment || '-') + '</td></tr>';
           });
           body.innerHTML = html;
           body.querySelectorAll("tr[data-id]").forEach(function(row) {

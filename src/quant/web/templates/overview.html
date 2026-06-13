@@ -71,11 +71,7 @@
 (function() {
      "use strict";
 
-     function statusBadge(state) {
-          var cls = "badge badge-" + state.replace(/\s+/g, "_");
-          return '<span class="' + cls + '">' + state + "</span>";
-     }
-
+     var badge = window.quantRenderStatus;
      function freshnessLabel(ageSeconds) {
           if (ageSeconds === null || ageSeconds === undefined) {
                return '<span class="text-secondary">unknown</span>';
@@ -96,8 +92,8 @@
           banner.textContent = state.toUpperCase();
 
           var html = "";
-          html += '<div class="system-field"><span class="label">Server</span><span class="value">' + statusBadge(sys.serverStatus?.state || "unknown") + '</span></div>';
-          html += '<div class="system-field"><span class="label">Heartbeat</span><span class="value">' + statusBadge(sys.serverHeartbeat?.state || "unknown") + '</span></div>';
+          html += '<div class="system-field"><span class="label">Server</span><span class="value">' + badge(sys.serverStatus?.state || "unknown") + '</span></div>';
+          html += '<div class="system-field"><span class="label">Heartbeat</span><span class="value">' + badge(sys.serverHeartbeat?.state || "unknown") + '</span></div>';
           html += '<div class="system-field"><span class="label">Trading</span><span class="value">' + (sys.tradingPermission || "disabled") + '</span></div>';
           html += '<div class="system-field"><span class="label">Market</span><span class="value">' + (sys.marketState || "unknown") + '</span></div>';
           if (sys.urgentIssue) {
@@ -114,9 +110,9 @@
           data.accountLanes.forEach(function(lane) {
                rows += '<tr>' +
                     '<td>' + lane.environment + '</td>' +
-                    '<td>' + statusBadge(lane.connection.state) + '</td>' +
+                    '<td>' + badge(lane.connection.state) + '</td>' +
                     '<td>' + lane.permission + '</td>' +
-                    '<td>' + statusBadge(lane.reconciliation.state) + '</td>' +
+                    '<td>' + badge(lane.reconciliation.state) + '</td>' +
                     '<td class="mono">' + (lane.openOrders || 0) + '</td>' +
                     '<td class="mono">' + (lane.positions || 0) + '</td>' +
                     '<td>' + freshnessLabel(lane.freshness.age) + '</td>' +
@@ -148,7 +144,7 @@
                var fs = data.dataFreshness[key];
                html += '<div class="freshness-row">' +
                     '<span>' + key + '</span>' +
-                    '<span>' + statusBadge(fs.state) + '</span>' +
+                    '<span>' + badge(fs.state) + '</span>' +
                     '<span class="text-secondary">' + freshnessLabel(fs.age) + '</span>' +
                     '</div>';
           });

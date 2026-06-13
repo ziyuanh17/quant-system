@@ -28,6 +28,7 @@
 (function() {
       "use strict";
      function statusClass(s) { return s === "implemented" ? "badge-healthy" : s === "partial" ? "badge-degraded" : "badge-disabled"; }
+         var badge = window.quantRenderStatus;
 
      function renderFlow(components) {
           var flow = document.getElementById("component-flow");
@@ -43,7 +44,7 @@
           if (!body || !data.components) return;
           var html = "";
           data.components.forEach(function(c) {
-               html += '<tr><td>' + c.name + '</td><td>' + c.purpose + '</td><td><span class="badge ' + statusClass(c.implementationStatus) + '">' + c.implementationStatus + '</span></td><td class="mono">' + c.recentRuns + '</td><td class="mono">' + c.recentIssues + '</td></tr>';
+               html += '<tr><td>' + c.name + '</td><td>' + c.purpose + '</td><td>' + badge(statusClass(c.implementationStatus)) + '</td><td class="mono">' + c.recentRuns + '</td><td class="mono">' + c.recentIssues + '</td></tr>';
           });
           body.innerHTML = html;
      }

@@ -3,9 +3,9 @@
 Scans ``docs/`` for Markdown files, extracts metadata (title, collection,
 doc type, last modified time), and renders documents to HTML on demand.
 
-This module is intentionally lightweight — no external markdown library.
-A simple regex-based frontmatter extractor and markdown-to-HTML converter
-suffices for the solo-maintainable constraint.
+Uses ``markdown2`` for robust, full-featured Markdown rendering with
+safe-mode escaping. A legacy regex-based converter (_simple_markdown_to_html)
+is retained for backward compatibility with existing tests.
 
 """
 
@@ -16,6 +16,8 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
+
+import markdown2
 
 # ---------------------------------------------------------------------------
 # Collection taxonomy (hardcoded from design doc)
@@ -433,7 +435,11 @@ def render_doc(slug: str, docs_dir: str | Path = "docs") -> dict:
     text = filepath.read_text(encoding="utf-8")
     mtime = datetime.fromtimestamp(filepath.stat().st_mtime, tz=UTC)
 
-    rendered = _simple_markdown_to_html(text)
+    rendered = markdown2.markdown(
+        text,
+        extras=["tables", "fenced-code-blocks", "breaks"],
+        safe_mode="escape",
+    )
     # Build a simple TOC from H2/H3 headings
     toc: list[dict[str, str]] = []
     for match in re.finditer(r"^(#{2,3})\s+(.+)$", text, re.MULTILINE):

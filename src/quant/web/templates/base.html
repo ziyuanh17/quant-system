@@ -1,36 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>{% block title %}Quant System{% endblock %}</title>
-     <link rel="stylesheet" href="/static/css/style.css">
-     {% block extra_head %}{% endblock %}
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>{% block title %}Quant System{% endblock %}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="/static/css/style.css">
+      {% block extra_head %}{% endblock %}
 </head>
 <body>
-     <div class="shell">
-          <nav class="nav-rail" id="nav">
-               <a href="/" class="nav-item{% if active == 'overview' %} active{% endif %}">Overview</a>
-               <a href="/operations" class="nav-item{% if active == 'operations' %} active{% endif %}">Operations</a>
-               <a href="/accounts" class="nav-item{% if active == 'accounts' %} active{% endif %}">Accounts</a>
-               <a href="/decisions" class="nav-item{% if active == 'decisions' %} active{% endif %}">Decisions</a>
-                 <a href="/history" class="nav-item{% if active == 'history' %} active{% endif %}">History</a>
-                 <a href="/research" class="nav-item{% if active == 'research' %} active{% endif %}">Research</a>
-               <a href="/knowledge" class="nav-item{% if active == 'knowledge' %} active{% endif %}">Knowledge</a>
-               <a href="/incidents" class="nav-item{% if active == 'incidents' %} active{% endif %}">Incidents</a>
-               <a href="/system" class="nav-item{% if active == 'system' %} active{% endif %}">System</a>
-          </nav>
-          <div class="main">
-               <header class="top-bar" id="topbar">
-                    <span class="topbar-status" id="overall-status">Loading...</span>
-                    <span class="topbar-freshness" id="topbar-freshness"></span>
-               </header>
-               <main class="content" id="content">
-                    {% block content %}{% endblock %}
-               </main>
-          </div>
-     </div>
-     <script src="/static/js/app.js"></script>
-     {% block extra_scripts %}{% endblock %}
+      <div class="shell">
+           <nav class="nav-rail" id="nav">
+                <div class="nav-brand">Quant System</div>
+                <a href="/" class="nav-item{% if active == 'overview' %} active{% endif %}">Overview</a>
+                <a href="/operations" class="nav-item{% if active == 'operations' %} active{% endif %}">Operations</a>
+                <a href="/accounts" class="nav-item{% if active == 'accounts' %} active{% endif %}">Accounts</a>
+                <a href="/decisions" class="nav-item{% if active == 'decisions' %} active{% endif %}">Decisions</a>
+                <a href="/history" class="nav-item{% if active == 'history' %} active{% endif %}">History</a>
+                <a href="/research" class="nav-item{% if active == 'research' %} active{% endif %}">Research</a>
+                <a href="/knowledge" class="nav-item{% if active == 'knowledge' %} active{% endif %}">Knowledge</a>
+                <a href="/incidents" class="nav-item{% if active == 'incidents' %} active{% endif %}">Incidents</a>
+                <a href="/system" class="nav-item{% if active == 'system' %} active{% endif %}">System</a>
+           </nav>
+           <div class="main">
+                <header class="top-bar" id="topbar">
+                     <span class="topbar-status" id="overall-status">Loading...</span>
+                     <span class="topbar-freshness" id="topbar-freshness"></span>
+                </header>
+                <main class="content" id="content">
+                     {% block content %}{% endblock %}
+                </main>
+           </div>
+      </div>
+      <script src="/static/js/app.js"></script>
+      {% block extra_scripts %}{% endblock %}
 </body>
 </html>
