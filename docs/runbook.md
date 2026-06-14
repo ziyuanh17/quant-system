@@ -142,6 +142,11 @@ dry-run path. It has no mode or broker selector and cannot invoke local paper
 or Alpaca. Blocked activation creates request and activation evidence but no
 strategy, portfolio, risk, lifecycle, or dry-run workflow artifacts.
 
+The first local synthetic command rehearsal is recorded in
+[activated_dry_run_operator_rehearsal.md](activated_dry_run_operator_rehearsal.md).
+In that result, `would_submit` means the system calculated and recorded the
+intended order; it does not mean an order was sent to a broker.
+
 ## Run The Service Wrapper
 
 ```bash

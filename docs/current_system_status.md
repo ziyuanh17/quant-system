@@ -104,6 +104,12 @@ request, verifies exact passing activation-consumption rehearsal evidence, and
 hardcodes the activated dry-run path. Semantic local paper and Alpaca remain
 API-only.
 
+On June 14, 2026, the command passed one local synthetic operator rehearsal.
+Running the same request twice produced one durable `would_submit` observation
+for an intended `BUY 2 AAPL` order and created no paper, order, or fill
+directories in the operator output. See
+[activated_dry_run_operator_rehearsal.md](activated_dry_run_operator_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
