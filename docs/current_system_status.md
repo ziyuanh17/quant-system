@@ -8,7 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit at this documentation audit: `75602d8`
+- Reviewed source commit before this uncommitted orchestration bundle:
+  `15ef41c`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -61,11 +62,14 @@ Checked-in semantic-target capabilities include:
 - reconciliation-confirmed satisfaction and detect-only drift;
 - opt-in semantic dry-run evaluation;
 - opt-in durable local semantic-paper execution;
+- controlled API-only orchestration that durably composes strategy,
+  portfolio, risk, and dry-run/local-paper stages;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
-The semantic-target Alpaca path is an API capability only. It is not exposed by
-the CLI, recurring scheduler, launchd wrapper, or runtime service.
+All semantic-target orchestration and Alpaca paths are API capabilities only.
+They are not exposed by the CLI, recurring scheduler, launchd wrapper, or
+runtime service.
 
 ## Safety And Activation Boundary
 
@@ -101,8 +105,8 @@ Before connecting semantic targets to recurring operations:
 
 1. review the checked-in lifecycle and Alpaca integration as one safety
    boundary;
-2. add a controlled orchestration boundary that produces durable targets and
-   invokes dry-run or local semantic paper first;
+2. review and rehearse the controlled orchestration boundary through dry-run
+   and local semantic paper;
 3. rehearse restart, blocked, stale-target, working-order, and reconciliation
    failure behavior;
 4. separately review any CLI, runtime-clone, or recurring scheduler exposure;

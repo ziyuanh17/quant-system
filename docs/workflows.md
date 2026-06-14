@@ -8,6 +8,12 @@ The workflows in this document are the legacy signal-oriented operational
 lane. The semantic-target lifecycle is currently API-only and is not called by
 these wrappers or schedulers.
 
+The API-only controlled semantic-target orchestration persists strategy
+decisions and evaluations, contributor ownership, portfolio and risk targets,
+and one immutable orchestration result before or alongside semantic dry-run or
+local semantic-paper evidence. It deliberately has no CLI, server wrapper,
+scheduler, runtime-clone, or Alpaca entry point.
+
 ## Paper Signal Refresh
 
 Run:

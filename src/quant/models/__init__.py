@@ -113,7 +113,13 @@ from quant.models.validation import (
     ValidationReport,
     ValidationSeverity,
 )
-from quant.models.workflow import DataRefreshWorkflowRecord, WorkflowRunStatus
+from quant.models.workflow import (
+    DataRefreshWorkflowRecord,
+    SemanticTargetWorkflowMode,
+    SemanticTargetWorkflowRecord,
+    SemanticTargetWorkflowStatus,
+    WorkflowRunStatus,
+)
 
 __all__ = [
     "BacktestConfig",
@@ -129,6 +135,9 @@ __all__ = [
     "DryRunOrderStatus",
     "DataModality",
     "DataRefreshWorkflowRecord",
+    "SemanticTargetWorkflowMode",
+    "SemanticTargetWorkflowRecord",
+    "SemanticTargetWorkflowStatus",
     "DashboardHealthIssue",
     "DashboardHealthStatus",
     "DatasetMetadata",

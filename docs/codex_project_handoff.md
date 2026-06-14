@@ -42,7 +42,8 @@ reviewed source changes through GitHub before updating the runtime clone.
 ## Current Source State
 
 - Git branch: `main`
-- Current reviewed GitHub source commit at this audit: `75602d8`
+- Current reviewed GitHub source commit before the uncommitted semantic-target
+  orchestration bundle: `15ef41c`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - The runtime clone version is not established by this source document. Audit
   it before operational work.

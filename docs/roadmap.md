@@ -118,15 +118,15 @@ side discussions.
 | 98 | Semantic Target Dry Run v1 | Done | Add immutable, no-submission target-plan observations using execution pre-submit validation. |
 | 99 | Durable Local Semantic Paper v1 | Done | Add signed local semantic-paper positions, restart recovery, live-shaped artifacts, and reconciliation-confirmed satisfaction. |
 | 100 | Alpaca Semantic-Target Paper API v1 | Done | Add explicitly gated Alpaca paper lifecycle integration, operational risk revalidation, and client-order-ID recovery without CLI or scheduler exposure. |
-| 101 | Documentation Current-State Audit v1 | In Review | Align canonical docs with checked-in signal and semantic-target implementations; classify historical operational evidence. |
+| 101 | Documentation Current-State Audit v1 | Done | Align canonical docs with checked-in signal and semantic-target implementations; classify historical operational evidence. |
+| 102 | Controlled Semantic-Target Orchestration v1 | In Review | Durably compose strategy evaluations, portfolio aggregation, risk decisions, and dry-run/local semantic-paper execution without CLI, scheduler, runtime, or Alpaca activation. |
 
 ## Current Recommendation
 
-Finish and review **Documentation Current-State Audit v1**. Then add a
-controlled semantic-target orchestration boundary that generates durable
-targets and exercises semantic dry-run or local semantic paper before any
-semantic-target CLI, Alpaca rehearsal, runtime-clone deployment, or recurring
-scheduler exposure.
+Review **Controlled Semantic-Target Orchestration v1**, then rehearse its
+restart and fail-closed behavior through semantic dry-run and local semantic
+paper before any semantic-target CLI, Alpaca rehearsal, runtime-clone
+deployment, or recurring scheduler exposure.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

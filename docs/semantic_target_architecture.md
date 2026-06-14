@@ -235,3 +235,27 @@ The workflow writes live-shaped order, fill, snapshot, lifecycle, recovery, and
 immutable reconciliation artifacts. A filled order becomes `satisfied` only
 after account-wide reconciliation passes. Operational CLI and scheduler
 activation remain a later, separately approved stage.
+
+## Controlled Semantic-Target Orchestration
+
+The API-only orchestration boundary composes the implemented target stages
+without connecting them to a CLI, scheduler, runtime clone, or Alpaca:
+
+```text
+strategy decisions and evaluations
+  -> persist immutable contributor and strategy artifacts
+  -> aggregate and persist portfolio target
+  -> evaluate and persist risk target
+  -> stop durably when blocked, rejected, or operationally incompatible
+  -> otherwise run semantic dry-run or durable local semantic paper
+  -> persist one immutable orchestration record
+```
+
+Each orchestration ID is bound to a fingerprint of the complete run inputs,
+including target inputs, policies, safety check, reference price, evaluation
+time, and mode-specific account or initial-state inputs. Restarting the same
+run verifies that identity and returns its existing durable result. A crash
+before the orchestration record is written re-enters the underlying
+restart-safe execution lifecycle. Fractional research targets remain preserved
+in portfolio and risk artifacts but produce an operationally blocked workflow
+without rounding or an execution plan.
