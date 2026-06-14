@@ -8,8 +8,7 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted orchestration bundle:
-  `15ef41c`
+- Reviewed source commit before this uncommitted rehearsal bundle: `633c6c4`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -64,6 +63,8 @@ Checked-in semantic-target capabilities include:
 - opt-in durable local semantic-paper execution;
 - controlled API-only orchestration that durably composes strategy,
   portfolio, risk, and dry-run/local-paper stages;
+- deterministic no-network orchestration rehearsal with immutable,
+  evidence-verified scenario reports;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -105,10 +106,9 @@ Before connecting semantic targets to recurring operations:
 
 1. review the checked-in lifecycle and Alpaca integration as one safety
    boundary;
-2. review and rehearse the controlled orchestration boundary through dry-run
-   and local semantic paper;
-3. rehearse restart, blocked, stale-target, working-order, and reconciliation
-   failure behavior;
+2. review the controlled orchestration and local rehearsal evidence;
+3. add and rehearse explicit reconciliation-failure injection before any
+   operational exposure;
 4. separately review any CLI, runtime-clone, or recurring scheduler exposure;
 5. obtain explicit approval before every broker order-capable rehearsal.
 

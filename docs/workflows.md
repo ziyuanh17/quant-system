@@ -14,6 +14,12 @@ and one immutable orchestration result before or alongside semantic dry-run or
 local semantic-paper evidence. It deliberately has no CLI, server wrapper,
 scheduler, runtime-clone, or Alpaca entry point.
 
+The no-network local orchestration rehearsal exercises the controlled boundary
+with isolated eligible, restart, stale-target, working-order, risk-rejection,
+fractional-target, and local-paper scenarios. Its immutable report verifies
+that every linked orchestration record remains present and agrees with the
+summary. It is an API review tool, not an operational command.
+
 ## Paper Signal Refresh
 
 Run:

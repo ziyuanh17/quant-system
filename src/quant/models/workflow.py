@@ -30,6 +30,16 @@ class SemanticTargetWorkflowStatus(StrEnum):
     EXECUTION_COMPLETED = "execution_completed"
 
 
+class SemanticTargetRehearsalScenario(StrEnum):
+    DRY_RUN_ELIGIBLE = "dry_run_eligible"
+    DRY_RUN_RESTART = "dry_run_restart"
+    STALE_TARGET_BLOCK = "stale_target_block"
+    WORKING_ORDER_BLOCK = "working_order_block"
+    RISK_REJECTION = "risk_rejection"
+    FRACTIONAL_TARGET_BLOCK = "fractional_target_block"
+    LOCAL_PAPER_RESTART = "local_paper_restart"
+
+
 class SemanticTargetWorkflowRecord(FrozenModel):
     """Immutable result linking one controlled semantic-target run."""
 
@@ -90,6 +100,58 @@ class SemanticTargetWorkflowRecord(FrozenModel):
             raise ValueError(
                 "blocked or rejected workflows must not claim execution"
             )
+        return self
+
+
+class SemanticTargetRehearsalScenarioResult(FrozenModel):
+    scenario: SemanticTargetRehearsalScenario
+    passed: bool
+    orchestration_ids: tuple[str, ...] = Field(min_length=1)
+    workflow_statuses: tuple[SemanticTargetWorkflowStatus, ...] = Field(
+        min_length=1
+    )
+    execution_statuses: tuple[ExecutionPlanStatus | None, ...] = Field(
+        min_length=1
+    )
+    dry_run_statuses: tuple[ExecutionDryRunStatus | None, ...] = Field(
+        min_length=1
+    )
+    evidence_paths: tuple[str, ...] = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def evidence_sequences_must_align(
+        self,
+    ) -> "SemanticTargetRehearsalScenarioResult":
+        count = len(self.orchestration_ids)
+        if (
+            len(self.workflow_statuses) != count
+            or len(self.execution_statuses) != count
+            or len(self.dry_run_statuses) != count
+        ):
+            raise ValueError("rehearsal scenario outcome sequences must align")
+        return self
+
+
+class SemanticTargetRehearsalReport(FrozenModel):
+    schema_version: Literal[1] = 1
+    rehearsal_id: str = Field(min_length=1)
+    rehearsal_policy_version: str = Field(min_length=1)
+    evaluated_at: datetime
+    passed: bool
+    scenarios: tuple[SemanticTargetRehearsalScenarioResult, ...] = Field(
+        min_length=1
+    )
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def passed_must_match_scenarios(self) -> "SemanticTargetRehearsalReport":
+        if self.passed != all(item.passed for item in self.scenarios):
+            raise ValueError("rehearsal passed status must match scenarios")
+        if len({item.scenario for item in self.scenarios}) != len(
+            self.scenarios
+        ):
+            raise ValueError("rehearsal scenarios must be unique")
         return self
 
 

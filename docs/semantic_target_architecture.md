@@ -259,3 +259,25 @@ before the orchestration record is written re-enters the underlying
 restart-safe execution lifecycle. Fractional research targets remain preserved
 in portfolio and risk artifacts but produce an operationally blocked workflow
 without rounding or an execution plan.
+
+## Local Orchestration Rehearsal
+
+The no-network local rehearsal is the review gate after controlled
+orchestration and before any operational exposure. It runs isolated synthetic
+scenarios for:
+
+```text
+eligible dry-run
+dry-run restart idempotency
+stale-target blocking
+working-order blocking
+risk rejection
+fractional-target operational blocking
+local semantic-paper restart idempotency
+```
+
+It writes one immutable `SemanticTargetRehearsalReport` plus the complete
+orchestration evidence for each scenario. Re-reading an existing report
+verifies every linked orchestration record and fails if evidence is missing or
+no longer matches the summary. The rehearsal has no Alpaca client, network
+access, CLI command, scheduler entry point, or runtime-clone behavior.

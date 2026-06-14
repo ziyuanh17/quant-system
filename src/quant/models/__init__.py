@@ -115,6 +115,9 @@ from quant.models.validation import (
 )
 from quant.models.workflow import (
     DataRefreshWorkflowRecord,
+    SemanticTargetRehearsalReport,
+    SemanticTargetRehearsalScenario,
+    SemanticTargetRehearsalScenarioResult,
     SemanticTargetWorkflowMode,
     SemanticTargetWorkflowRecord,
     SemanticTargetWorkflowStatus,
@@ -135,6 +138,9 @@ __all__ = [
     "DryRunOrderStatus",
     "DataModality",
     "DataRefreshWorkflowRecord",
+    "SemanticTargetRehearsalReport",
+    "SemanticTargetRehearsalScenario",
+    "SemanticTargetRehearsalScenarioResult",
     "SemanticTargetWorkflowMode",
     "SemanticTargetWorkflowRecord",
     "SemanticTargetWorkflowStatus",
