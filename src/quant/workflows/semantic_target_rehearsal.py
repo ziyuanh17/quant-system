@@ -109,6 +109,17 @@ def run_semantic_target_local_rehearsal(
         return report
 
 
+def load_and_verify_semantic_target_rehearsal(
+    report_path: Path,
+) -> SemanticTargetRehearsalReport:
+    """Load a rehearsal report and verify all evidence it summarizes."""
+    report = SemanticTargetRehearsalReport.model_validate_json(
+        report_path.read_text()
+    )
+    _verify_report_evidence(report)
+    return report
+
+
 def _dry_run_eligible(
     root: Path, evaluated_at: datetime
 ) -> SemanticTargetRehearsalScenarioResult:

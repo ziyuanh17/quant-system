@@ -1,3 +1,10 @@
+from quant.models.activation import (
+    ActivationDecision,
+    ActivationEffectiveStatus,
+    SemanticTargetActivationAuthorization,
+    SemanticTargetActivationEvaluation,
+    SemanticTargetActivationScope,
+)
 from quant.models.backtest import (
     BacktestArtifactPaths,
     BacktestConfig,
@@ -125,6 +132,8 @@ from quant.models.workflow import (
 )
 
 __all__ = [
+    "ActivationDecision",
+    "ActivationEffectiveStatus",
     "BacktestConfig",
     "AssetTradingDetails",
     "BacktestArtifactPaths",
@@ -144,6 +153,9 @@ __all__ = [
     "SemanticTargetWorkflowMode",
     "SemanticTargetWorkflowRecord",
     "SemanticTargetWorkflowStatus",
+    "SemanticTargetActivationAuthorization",
+    "SemanticTargetActivationEvaluation",
+    "SemanticTargetActivationScope",
     "DashboardHealthIssue",
     "DashboardHealthStatus",
     "DatasetMetadata",

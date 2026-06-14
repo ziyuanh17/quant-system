@@ -291,3 +291,28 @@ difference. The order still fills exactly once, but the lifecycle remains
 durably `filled` rather than becoming `satisfied`; restarting the orchestration
 does not submit another order or create another fill. Broker-connected and
 Alpaca reconciliation paths do not receive this injection boundary.
+
+## Operational Activation Gate
+
+The API-only activation gate separates durable human authorization from
+capability exposure. An immutable `SemanticTargetActivationAuthorization`
+binds:
+
+```text
+allowed scope and validity interval
+  -> orchestration policy version
+  -> rehearsal policy version
+  -> exact rehearsal identity and report SHA-256
+  -> operator identity, reason, and evidence references
+```
+
+Each request produces an immutable `SemanticTargetActivationEvaluation`.
+Missing, changed, failed, or unverifiable rehearsal evidence; unsupported
+policies; unauthorized scope; and not-yet-effective or expired authorization
+all produce durable blocked evidence. Reusing an evaluation ID with different
+inputs fails.
+
+Gate v1 supports only `dry_run` and `semantic_paper`. It deliberately blocks
+`alpaca_paper`, and it has no CLI, scheduler, runtime-clone, broker, or workflow
+invocation boundary. A later reviewed exposure stage must consume an allowed
+evaluation and revalidate it before doing any operational work.

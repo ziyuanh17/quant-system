@@ -121,13 +121,15 @@ side discussions.
 | 101 | Documentation Current-State Audit v1 | Done | Align canonical docs with checked-in signal and semantic-target implementations; classify historical operational evidence. |
 | 102 | Controlled Semantic-Target Orchestration v1 | Done | Durably compose strategy evaluations, portfolio aggregation, risk decisions, and dry-run/local semantic-paper execution without CLI, scheduler, runtime, or Alpaca activation. |
 | 103 | Local Semantic-Target Orchestration Rehearsal v1 | Done | Produce immutable, evidence-verified no-network rehearsal results for eligible, restart, stale, working-order, risk, fractional, and local-paper scenarios. |
-| 104 | Semantic-Target Reconciliation-Failure Rehearsal v1 | In Review | Inject a deterministic local reconciliation failure and prove a single filled order remains unsatisfied without duplication across restart. |
+| 104 | Semantic-Target Reconciliation-Failure Rehearsal v1 | Done | Inject a deterministic local reconciliation failure and prove a single filled order remains unsatisfied without duplication across restart. |
+| 105 | Semantic-Target Operational Activation Gate v1 | In Review | Add immutable, time-bounded authorization and durable fail-closed evaluations bound to exact verified rehearsal evidence, without exposing any operational path. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Reconciliation-Failure Rehearsal v1**, then define a
-separate operational activation gate before any semantic-target CLI, Alpaca
-rehearsal, runtime-clone deployment, or recurring scheduler exposure.
+Review **Semantic-Target Operational Activation Gate v1**, then separately
+design how an allowed evaluation may be consumed by dry-run or local semantic
+paper. Do not expose semantic targets through CLI, Alpaca rehearsal,
+runtime-clone deployment, or recurring scheduler as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

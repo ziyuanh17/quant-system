@@ -68,12 +68,20 @@ Checked-in semantic-target capabilities include:
   evidence-verified scenario reports;
 - explicit local reconciliation-failure injection proving a fill cannot become
   satisfied when account-wide reconciliation fails;
+- immutable, time-bounded semantic-target activation authorizations and
+  durable evaluation artifacts that bind the exact verified local rehearsal
+  report;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
 All semantic-target orchestration and Alpaca paths are API capabilities only.
 They are not exposed by the CLI, recurring scheduler, launchd wrapper, or
 runtime service.
+
+Activation gate v1 can evaluate authorization only for semantic dry-run and
+local semantic paper. It explicitly blocks Alpaca paper scope and does not
+itself invoke an authorized workflow. Activation artifacts are written under
+the caller-selected root in `authorizations/` and `evaluations/`.
 
 ## Safety And Activation Boundary
 
@@ -111,7 +119,7 @@ Before connecting semantic targets to recurring operations:
    boundary;
 2. review the controlled orchestration and reconciliation-failure rehearsal
    evidence;
-3. define the separate operational activation gate before any exposure;
+3. review the separate operational activation gate before any exposure;
 4. separately review any CLI, runtime-clone, or recurring scheduler exposure;
 5. obtain explicit approval before every broker order-capable rehearsal.
 

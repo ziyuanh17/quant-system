@@ -129,6 +129,8 @@ before proceeding.
    semantic paper before exposing Alpaca semantic targets operationally.
 3. Rehearse stale decisions, working orders, restart recovery, durable blocked
    events, and failed reconciliation.
-4. Review any proposed CLI, runtime-clone, or scheduler exposure separately.
-5. Require explicit approval immediately before any broker order-capable
+4. Review the API-only operational activation gate, which currently supports
+   dry-run and local semantic paper and explicitly blocks Alpaca paper.
+5. Review any proposed CLI, runtime-clone, or scheduler exposure separately.
+6. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

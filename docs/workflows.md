@@ -26,6 +26,14 @@ execution remains unsatisfied across restart and does not duplicate its order
 or fill. The injection is identified in the orchestration fingerprint and is
 not available to Alpaca or broker-connected workflows.
 
+The API-only semantic-target activation gate evaluates an immutable,
+time-bounded authorization against the exact digest and verified evidence of a
+passing local rehearsal report. It persists the authorization and every
+allowed or blocked evaluation. Gate v1 supports only dry-run and local
+semantic-paper scopes; Alpaca paper is explicitly unsupported. The gate does
+not expose or invoke a workflow, broker adapter, CLI command, scheduler, or
+runtime service.
+
 ## Paper Signal Refresh
 
 Run:
