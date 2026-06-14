@@ -1,10 +1,10 @@
 # Broker Adapter Boundary v1
 
-This project is still a paper-trading system. Broker Adapter Boundary v1 exists
-to make the future real-money integration safer by separating strategy signal
-logic from broker-specific execution details.
+This project is a research and paper-trading system with no real-money broker
+integration. Broker adapters separate strategy and execution semantics from
+broker-specific APIs and state.
 
-The boundary is:
+The legacy signal boundary is:
 
 ```text
 strategy signal
@@ -26,8 +26,19 @@ The adapter boundary keeps the core system asking for a small set of behaviors:
 - check whether a signal idempotency key was already processed
 - mark a signal idempotency key as processed
 
-The current adapter only wraps the local paper broker. It does not call any
-external broker API and cannot place real trades.
+The semantic-target execution boundary is:
+
+```text
+approved risk target
+  -> ExecutionPlan and append-only ExecutionEvent records
+  -> LiveBrokerAdapter
+  -> fake, local semantic-paper, or Alpaca paper client
+  -> reconciliation-confirmed satisfaction
+```
+
+The repository can contact Alpaca paper through explicit legacy CLI/workflow
+commands and through an opt-in semantic-target API. It cannot place real-money
+trades.
 
 ## Current Implementation
 
@@ -39,11 +50,16 @@ needed by scheduled strategy execution.
 `PaperBrokerAdapter` wraps the existing deterministic `PaperBroker` and
 preserves the existing paper state and signal record formats.
 
-## Future Live Broker Requirements
+`LiveBrokerAdapter` wraps live-shaped clients and writes broker-neutral order,
+fill, and account artifacts. `FakeLiveBrokerClient` has no network access;
+`AlpacaPaperBrokerClient` connects only to Alpaca paper; and the durable local
+semantic-paper client simulates signed positions for lifecycle testing.
 
-The live broker design is now tracked in
+## Real-Money Broker Requirements
+
+The live-shaped broker design is tracked in
 [live_broker_adapter.md](live_broker_adapter.md). Before adding a live broker
-adapter, define and test:
+for real money, define and test:
 
 - broker credential loading rules
 - market-hours and asset-universe checks

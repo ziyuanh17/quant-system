@@ -1,8 +1,9 @@
 # Alpaca Paper Adapter Design v1
 
-This document designs the first external broker adapter boundary for Alpaca
-paper trading. It does not add `alpaca-py`, credentials, network calls, or
-commands that can contact Alpaca.
+This document records the original design and the implemented boundary for
+Alpaca paper trading. `alpaca-py`, the paper client, safety-gated commands,
+reconciliation, and the opt-in semantic-target API now exist. Real-money
+trading does not.
 
 The goal is to make the eventual Alpaca paper integration fit behind the same
 live audit, safety, adapter, and reconciliation contracts already proven with
@@ -30,9 +31,9 @@ Relevant current docs:
 - Alpaca order statuses include `new`, `accepted`, `partially_filled`,
   `filled`, `canceled`, `expired`, `rejected`, and several pending states.
 
-## Non-Goals
+## Original Milestone Non-Goals
 
-This milestone must not add:
+The design milestone did not add:
 
 - `alpaca-py` to project dependencies
 - Alpaca API keys or `.env` secrets
@@ -42,10 +43,10 @@ This milestone must not add:
 - CLI commands that contact Alpaca
 - background jobs that contact Alpaca
 
-## Target Architecture
+## Implemented Target Architecture
 
-The future integration should add a thin Alpaca client wrapper behind the
-existing protocol:
+The integration uses a thin Alpaca client wrapper behind the existing
+protocol:
 
 ```text
 quant live/paper command or workflow
@@ -70,9 +71,9 @@ The adapter should reuse:
 The Alpaca-specific code should translate Alpaca SDK objects into these internal
 models and keep the rest of the system broker-neutral.
 
-## Proposed Module Boundary
+## Module Boundary
 
-Add a future module:
+Implemented module:
 
 ```text
 src/quant/execution/alpaca_paper.py
@@ -103,24 +104,15 @@ get_all_positions()
 This lets tests use fake Alpaca SDK objects without importing or installing
 `alpaca-py`.
 
-## Dependency Plan
+## Dependency Boundary
 
-Dependency should be added only after the design is reviewed.
-
-When added, prefer an optional extra:
+Alpaca remains an optional extra:
 
 ```text
-pip install -e ".[alpaca]"
+pip install -e ".[broker-alpaca]"
 ```
 
-Possible `pyproject.toml` shape:
-
-```toml
-[project.optional-dependencies]
-alpaca = ["alpaca-py>=..."]
-```
-
-Do not make Alpaca a core dependency yet. The default development/test path
+Alpaca is not a core dependency. The default development/test path
 should keep working without broker packages.
 
 ## Environment Variables
@@ -317,7 +309,7 @@ Manual broker-connected checks should follow
 [alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) before any
 scheduled Alpaca workflow is added.
 
-## CLI Boundary
+## CLI And Semantic-Target Boundary
 
 Future commands should stay separate from fake live commands:
 
@@ -335,6 +327,11 @@ quant live order --broker alpaca --paper
 The explicit command name makes the environment obvious during early
 development. A generic broker selector can come later, after multiple broker
 adapters exist.
+
+The semantic-target Alpaca integration is separate from these legacy
+signal/order commands. `run_alpaca_semantic_target_paper(...)` is an API-only,
+explicitly enabled workflow that reuses the restart-safe execution lifecycle.
+It is not exposed to the CLI or scheduler.
 
 ## Implementation Order
 

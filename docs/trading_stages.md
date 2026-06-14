@@ -76,6 +76,16 @@ Paper trading helps catch operational mistakes such as:
 These failures can be expensive with real money, even when the strategy idea is
 reasonable.
 
+This repository has two paper mechanisms:
+
+- legacy signal-oriented local and Alpaca paper workflows;
+- semantic-target paper workflows that persist desired exposure, execution
+  plans, append-only transitions, and reconciliation-confirmed satisfaction.
+
+Alpaca paper sends orders to a real broker API in its paper environment, but
+does not use real money. It therefore exercises more integration behavior than
+the deterministic local paper brokers.
+
 ## Real Trading
 
 Real trading starts only when the system sends orders to an actual broker or
@@ -117,10 +127,10 @@ The current paper-trading foundation uses:
 - `PortfolioSnapshot`: cash, positions, and total equity after the order
 - `PaperTradeRecord`: the audit record tying order, fill, and portfolio state
 
-The first paper broker is deliberately deterministic. Market orders fill at a
-supplied price, which makes tests and audit records easy to inspect. Later
-milestones can connect this execution boundary to scheduled strategy runs,
-market data refreshes, and eventually a real broker adapter.
+The original paper broker is deliberately deterministic. The semantic-paper
+broker adds signed positions and restart-safe lifecycle behavior. Alpaca paper
+connectivity, scheduled legacy signal workflows, and reconciliation also
+exist. Real-money execution does not.
 
 ## Mental Model
 

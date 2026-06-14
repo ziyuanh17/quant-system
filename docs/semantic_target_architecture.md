@@ -16,10 +16,10 @@ strategy evaluation
 
 The implemented stages define strategy-target contracts, immutable artifacts,
 native target backtests, legacy-equivalence evidence, contributor ownership,
-portfolio aggregation, independent risk decisions, an isolated fake-broker
-execution lifecycle, and an opt-in local semantic-target dry-run observation.
-An opt-in durable semantic-paper workflow is also available. They do not
-change the legacy signal dry-run, legacy signal paper, Alpaca, scheduler, or
+portfolio aggregation, independent risk decisions, a restart-safe execution
+lifecycle, an opt-in local semantic-target dry-run observation, durable local
+semantic paper, and an explicitly gated Alpaca paper API workflow. They do not
+change the legacy signal dry-run, legacy signal paper, CLI, scheduler, or
 runtime behavior.
 
 ## Strategy Targets
@@ -105,10 +105,11 @@ either approves the exact aggregate or rejects it with reasons; it never
 silently clamps, rounds, or resizes a target. Fractional research targets remain
 valid at this layer.
 
-## Fake-Broker Execution Lifecycle
+## Execution Lifecycle
 
-The first execution implementation is isolated to the no-network fake broker.
-It does not authorize or integrate with paper or live operational workflows.
+The lifecycle was first proven against the no-network fake broker and is now
+reused by semantic dry-run, durable local semantic paper, and the explicitly
+gated Alpaca paper API. It does not itself authorize operational execution.
 
 One approved risk-target revision may atomically claim at most one immutable
 `ExecutionPlan`. Claim, execution-plan, and client-order identities include

@@ -3,6 +3,10 @@
 This guide explains how to inspect the local paper-trading service after it has
 started running on a schedule.
 
+The current health model primarily observes the legacy signal-oriented local
+paper, dry-run, and Alpaca paper lanes. It does not yet provide complete health
+coverage for semantic-target decisions and execution lifecycle artifacts.
+
 The first observability milestone is intentionally read-only:
 
 ```text

@@ -1,5 +1,8 @@
 # Controlled Alpaca Paper Order-Capable Rehearsal Design
 
+> Historical rehearsal design: AAPL was protected for this specific controlled
+> rehearsal. It is not a globally protected position in the current system.
+
 This design defines the first order-capable Alpaca paper rehearsal after the
 June 9 actionable-order incident. It does not authorize execution.
 

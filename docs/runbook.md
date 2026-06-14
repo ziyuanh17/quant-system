@@ -1,5 +1,11 @@
 # Runbook
 
+This runbook documents current CLI operations. The CLI commands below are the
+legacy signal-oriented lane unless stated otherwise. The semantic-target
+architecture is currently library/API driven and has no CLI or recurring
+scheduler entry point. See
+[current_system_status.md](current_system_status.md).
+
 ## Local Backtest
 
 ```bash
@@ -132,6 +138,10 @@ For the Alpaca paper rehearsal workflow:
 bash scripts/run_alpaca_paper_refresh.sh
 ```
 
+This wrapper is broker-connected and may submit an Alpaca paper order when its
+strategy produces an actionable delta. A documented command is not approval to
+run it.
+
 Copy `.env.example` to `.env` to configure the wrapper. See
 [deployment.md](deployment.md) for cron and systemd examples.
 
@@ -225,6 +235,25 @@ the paper account was created.
 8. Confirm dependencies are installed in the active environment.
 9. Re-run with the smallest dataset that reproduces the issue.
 10. Add a regression test before changing core accounting or signal behavior.
+
+## Semantic-Target Review
+
+Semantic-target dry-run, local semantic paper, and Alpaca paper are exposed as
+Python APIs, not CLI commands. Review their artifacts under the configured
+execution root:
+
+```text
+plans/
+events/
+recovery-evidence/
+drift-observations/
+dry-run-observations/
+```
+
+Do not manually edit lifecycle artifacts. A blocked or ambiguous event is
+durable evidence and must be understood before any recovery attempt. Do not
+connect the semantic-target Alpaca API to a CLI, wrapper, or scheduler without
+a separate review.
 
 ## Web Console
 

@@ -1,8 +1,9 @@
 # Live Broker Adapter Design v1
 
-This project is still not a real-money trading system. This document defines
-the design boundary for a future live broker adapter before any broker API,
-credential, or real order submission code is added.
+This project is not a real-money trading system. This document began as the
+design boundary for live-shaped broker integration. Its broker-neutral models,
+fake client, adapter, artifacts, reconciliation, safety-gated commands, and
+Alpaca paper implementation now exist.
 
 See [live_broker_api_research.md](live_broker_api_research.md) for the current
 broker API/package research and first-integration recommendation.
@@ -13,21 +14,16 @@ paper-broker adapter design.
 The goal is to make live trading boring, explicit, auditable, and impossible by
 accident.
 
-## Non-Goals
+## Real-Money Non-Goals
 
-This milestone does not add:
+The current repository does not add:
 
-- broker credentials
-- broker SDK dependencies
-- network calls to a broker
 - live order submission
-- live fills
-- live account mutation
 - a CLI command that can place a real order
 
-## Required Execution Shape
+## Implemented Live-Shaped Execution Shape
 
-The future live path should follow this order:
+The legacy live-shaped path follows this order:
 
 ```text
 strategy signal
@@ -45,9 +41,13 @@ The adapter must sit behind the existing broker boundary. Strategy code should
 not import a broker SDK, read credentials, know provider-specific order IDs, or
 handle broker-specific rejection messages directly.
 
+The semantic-target path adds durable target identity, atomic plan claiming,
+append-only transitions, restart recovery by client order ID, final
+pre-submission revalidation, and reconciliation-confirmed satisfaction.
+
 ## Adapter Contract
 
-A future live adapter should provide these capabilities:
+The broker-neutral adapter provides these capabilities:
 
 - validate that `TradingSafetyCheck` is allowed and has `mode=live`
 - submit a typed market order request
@@ -65,7 +65,7 @@ integration.
 
 ## Credential Boundary
 
-Credential loading must happen only inside a small broker-client factory, after
+Credential loading happens only inside a small broker-client factory, after
 the live safety check passes.
 
 Rules:
@@ -78,7 +78,7 @@ Rules:
 - missing credentials fail before any order request is built
 - test fixtures use fake clients, never real broker sandboxes by default
 
-Expected future variables should be broker-specific and explicit, for example:
+Broker variables are explicit, for example:
 
 ```text
 QUANT_LIVE_BROKER=example
@@ -195,7 +195,8 @@ degraded health status.
 
 ## CLI And Workflow Boundaries
 
-Future live commands should be separate from paper and dry-run commands.
+Broker-connected commands remain separate from local paper and dry-run
+commands.
 
 Acceptable shape:
 
@@ -229,6 +230,6 @@ Build in this order:
 7. Only then evaluate a real broker SDK integration.
 
 Typed live audit models, artifact writers, a no-network fake live broker
-client, a fake-backed live adapter, fake live reconciliation, and safety-gated
-fake live CLI commands now exist. The next milestone should design the Alpaca
-paper adapter boundary before adding any real broker SDK dependency.
+client, a fake-backed adapter, Alpaca paper client, reconciliation, and
+safety-gated Alpaca paper commands now exist. The semantic-target Alpaca paper
+workflow is API-only and remains outside CLI and scheduler activation.

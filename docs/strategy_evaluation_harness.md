@@ -1,6 +1,7 @@
 # Strategy Evaluation Harness Design
 
-This document designs a repeatable research-to-paper evaluation path for
+This document records the design and implemented foundation for a repeatable
+research-to-paper evaluation path for
 candidate strategies. The harness is research-only. It must not submit orders,
 read broker credentials, alter runtime artifacts, or change scheduler state.
 

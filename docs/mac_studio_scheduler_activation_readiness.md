@@ -1,5 +1,9 @@
 # Mac Studio Scheduler Activation Readiness
 
+> Historical evidence: this document records the activation-readiness review at
+> that time. Its commit, positions, protected-position assumptions, and
+> scheduler observations are not current operational truth.
+
 This record reviews whether the Mac Studio Alpaca paper runtime is ready for a
 separate recurring launchd activation decision after the successful controlled
 order-capable rehearsal. It does not activate the scheduler.

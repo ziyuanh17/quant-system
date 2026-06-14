@@ -4,6 +4,10 @@ Workflows compose existing commands into repeatable operational paths. They are
 where the system starts to behave like a server instead of a set of manual CLI
 steps.
 
+The workflows in this document are the legacy signal-oriented operational
+lane. The semantic-target lifecycle is currently API-only and is not called by
+these wrappers or schedulers.
+
 ## Paper Signal Refresh
 
 Run:
@@ -131,12 +135,11 @@ signals at the intended target submit no additional order.
 See [alpaca_paper_workflow.md](alpaca_paper_workflow.md) for the design
 context, safety policy, artifact contract, and non-goals.
 
-Do not schedule Alpaca paper broker access until
-[alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) has been
-reviewed and, ideally, run once against the intended paper account.
-The first recurring schedule policy is documented in
-[alpaca_paper_schedule.md](alpaca_paper_schedule.md); treat it as a review
-checkpoint, not an enabled schedule.
+Historical smoke and schedule evidence is documented in
+[alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) and
+[alpaca_paper_schedule.md](alpaca_paper_schedule.md). Do not infer current
+scheduler state or authorization from those records. Check runtime state
+directly and obtain explicit approval before an order-capable run.
 
 ## Concurrent Run Safety
 

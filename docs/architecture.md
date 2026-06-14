@@ -1,16 +1,20 @@
 # Architecture
 
-This repo starts as a research/backtest core and is shaped so it can later grow into
-paper trading and live trading without replacing the strategy layer.
+This repo combines a research/backtest core, legacy signal-oriented paper
+workflows, and a staged semantic-target execution architecture.
 
-## Current Flow
+## Current Architecture
 
 ```text
-CSV prices
-  -> data loader
-  -> strategy signal generation
-  -> VectorBT backtest adapter
-  -> typed BacktestResult
+research:
+  data -> strategy signals or targets -> VectorBT simulation -> evidence
+
+legacy operations:
+  latest signal -> order-oriented workflow -> local or Alpaca paper -> reconcile
+
+semantic targets:
+  strategy decision -> portfolio target -> risk target
+  -> execution plan and append-only events -> broker and reconciliation
 ```
 
 ## Data Layer
@@ -100,9 +104,14 @@ OrderRequest
   -> PaperTradeRecord
 ```
 
-The first implementation simulates market orders at an explicit supplied price.
-That keeps tests deterministic and makes the audit trail easy to inspect before
-the system grows into scheduled signal execution or external broker APIs.
+The deterministic `PaperBroker` remains the legacy signal-oriented simulator.
+The live-shaped adapter boundary supports fake and Alpaca paper clients.
+
+The semantic-target execution layer is separate. It atomically claims one plan
+per approved risk-target revision, persists every lifecycle transition, blocks
+ambiguous recovery, and marks satisfaction only after account-wide
+reconciliation. Its current adapters are dry-run observation, durable local
+semantic paper, and an explicitly gated Alpaca paper API.
 
 See [trading_stages.md](trading_stages.md) for the beginner-level distinction
 between backtesting, paper trading, and real trading.
@@ -258,9 +267,10 @@ VectorBT owns:
 
 ## Semantic Target Direction
 
-The approved research-side target foundation and staged operational direction
-are documented in
+The implemented target foundation and staged operational direction are
+documented in
 [semantic_target_architecture.md](semantic_target_architecture.md). Strategy
-targets are desired exposure, not broker orders. Future portfolio aggregation,
-risk approval, and execution lifecycle stages must remain separate and
-independently auditable.
+targets are desired exposure, not broker orders. Portfolio aggregation, risk
+approval, and execution lifecycle stages are separate and independently
+auditable. CLI and recurring scheduler exposure remain future, separately
+reviewed work.

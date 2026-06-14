@@ -1,9 +1,10 @@
 # Alpaca Paper Workflow Design
 
-This document records the design for the scheduled Alpaca paper workflow. It is
-not an implementation plan for real-money trading.
+This document records the original design for the now-implemented legacy
+signal-oriented Alpaca paper workflow. It is not an implementation plan for
+real-money trading and does not describe the newer semantic-target Alpaca API.
 
-The workflow should be implemented only after
+The workflow was implemented only after
 [alpaca_paper_smoke_runbook.md](alpaca_paper_smoke_runbook.md) has been
 reviewed and, ideally, run once against the intended Alpaca paper account.
 

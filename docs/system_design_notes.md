@@ -3,6 +3,11 @@
 This document explains the current implementation for a beginner who wants to
 understand not only what exists, but why each part exists.
 
+Most detailed examples below explain the original signal-oriented path. The
+repository also contains the semantic-target architecture summarized in
+[current_system_status.md](current_system_status.md) and specified in
+[semantic_target_architecture.md](semantic_target_architecture.md).
+
 The system is being built in layers:
 
 ```text

@@ -1,7 +1,8 @@
 # Live Trading Safety Gates v1
 
-This project must fail closed around real-money trading. Live Trading Safety
-Gates v1 adds the first reusable guard before any live broker adapter exists.
+This project must fail closed around broker-connected and real-money trading.
+Live Trading Safety Gates v1 is the reusable guard used by live-shaped broker
+paths, including Alpaca paper.
 
 The default mode is always:
 
@@ -63,15 +64,17 @@ QUANT_BROKER=
 
 Missing variables do not grant permission. Invalid values stop the check.
 
-## How Future Live Code Should Use This
+## How Broker-Connected Code Uses This
 
-Any future command or adapter that can place real orders should call
+Any command or adapter that can place broker orders should call
 `assert_trading_allowed` before constructing a live broker client or submitting
 an order. That call should happen close to the entry point so failures are
 visible before credentials, network calls, or account state are touched.
 
-This milestone does not add live broker connectivity and does not place real
-trades.
+Alpaca paper uses live-shaped safety checks even though it does not use real
+money. The semantic-target Alpaca API adds a separate explicit
+`alpaca_submission_enabled=True` gate. Real-money broker connectivity is not
+implemented.
 
 See [live_broker_adapter.md](live_broker_adapter.md) for the design boundary a
 future real broker adapter must satisfy before credentials or order APIs are

@@ -1,5 +1,9 @@
 # Alpaca Paper Schedule Design
 
+> Historical operational design: this file records the recurring legacy
+> Alpaca paper schedule policy and its implementation context. It does not
+> establish the scheduler's current loaded state or authorize a run.
+
 This note defines the first recurring Alpaca paper schedule policy. It is a
 design checkpoint only: do not install a cron, launchd, or systemd schedule
 until this policy has been reviewed.

@@ -1,6 +1,8 @@
 # Roadmap
 
-This document tracks the intended build order for the quant system.
+This document is the historical milestone ledger and current build
+recommendation. For the concise checked-in capability boundary, read
+[current_system_status.md](current_system_status.md).
 
 It exists so we do not lose the thread as design questions branch into useful
 side discussions.
@@ -93,7 +95,7 @@ side discussions.
 | 75 | Runtime Clone Sync v1 | Done | Synced reviewed source changes into `/Users/ziyuan/Code/quant-system-runtime` so the loaded launchd job uses the updated wrapper. |
 | 76 | Next Scheduled Dashboard Review v1 | Done | Reviewed the next natural launchd run: the Alpaca paper workflow succeeded, reconciliation passed, and the corrected dashboard status was healthy with zero issues. |
 | 77 | Strategy Evaluation Harness Design v1 | Done | Design a repeatable research-to-paper workflow for defining, backtesting, comparing, and promoting candidate strategies. |
-| 78 | Mac Studio Migration | In Review | Studio source/runtime bootstrap, state transfer, Codex readiness, no-order preflight, and reconciliation passed; controlled rehearsal and scheduler cutover remain. |
+| 78 | Mac Studio Migration | Done | Studio source/runtime bootstrap, state transfer, Codex readiness, no-order preflight, controlled rehearsal, and scheduler evidence were completed. Current runtime state still requires fresh verification. |
 | 79 | Actionable Alpaca Paper Order Incident Review | Done | Contain and document the first scheduled actionable paper order, its unexpected short position, and reconciliation failure. |
 | 80 | Alpaca Paper Actionable-Order Safety Remediation | Done | Add projected-position and open-order policies, terminal-order refresh, fill persistence, and failed-workflow dashboard publishing before re-enabling scheduling. |
 | 81 | Bounded Short-Selling Risk Policy | Done | Replace the temporary blanket no-short guard with explicit projected-position, short exposure, gross exposure, and buying-power-buffer limits. |
@@ -102,32 +104,35 @@ side discussions.
 | 84 | Read-Only Alpaca Broker Readiness Rehearsal | Done | Verified credentials, account state, open orders, AAPL asset metadata, and reconciliation without submitting or modifying an order. |
 | 85 | Controlled Alpaca Paper Order-Capable Rehearsal Design | Done | Design a dedicated one-share buy rehearsal command that pins the retained AAPL short and fails closed before any unexpected portfolio change. |
 | 86 | Controlled Alpaca Paper Order Rehearsal Command | Done | Implemented and tested the dedicated rehearsal command and typed result artifact without executing it against Alpaca. |
-| 87 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | In Review | The approved one-share F paper buy filled, AAPL remained exactly -1, no open orders remained, and post-order reconciliation passed with zero differences. |
+| 87 | Controlled Alpaca Paper Order-Capable Rehearsal Execution | Done | The approved one-share F paper buy filled, AAPL remained exactly -1, no open orders remained, and post-order reconciliation passed with zero differences. |
 | 88 | Strategy Evaluation Harness Foundation v1 | Done | Add typed candidate, lineage, split, scenario, and trial models plus adapters that normalize existing strategies into a shared research simulation input. |
-| 89 | Quant System Web App Design v1 | In Review | Design a private read-only operations, accounts, research, incident, and knowledge console with a dedicated roadmap and automatic-decision traces, without adding trading controls. |
-| 90 | Immutable Research Artifacts and Trial Ledger v1 | In Review | Add content-derived evaluation IDs, exclusive immutable manifests, checksum verification, and an append-only trial ledger. |
-| 91 | Market-Hours Live Reconciliation Policy v1 | In Review | Preserve buying-power and current-mark movement as non-failing observations while keeping orders, fills, cash, position quantity, and average price as hard reconciliation gates. |
-| 92 | Mac Studio Scheduler Activation Readiness Review | In Review | Record the successful controlled rehearsal, verify Studio runtime activation prerequisites, and preserve a separate explicit scheduler activation gate. |
+| 89 | Quant System Web App Design v1 | Done | Design a private read-only operations, accounts, research, incident, and knowledge console with a dedicated roadmap and automatic-decision traces, without adding trading controls. |
+| 90 | Immutable Research Artifacts and Trial Ledger v1 | Done | Add content-derived evaluation IDs, exclusive immutable manifests, checksum verification, and an append-only trial ledger. |
+| 91 | Market-Hours Live Reconciliation Policy v1 | Done | Preserve buying-power and current-mark movement as non-failing observations while keeping orders, fills, cash, position quantity, and average price as hard reconciliation gates. |
+| 92 | Mac Studio Scheduler Activation Readiness Review | Done | Record the successful controlled rehearsal, verify Studio runtime activation prerequisites, and preserve a separate explicit scheduler activation gate. |
 | 93 | Web Console Private Tailscale Deployment v1 | Done | Reviewed source commit `65f43ca` was promoted to the runtime clone; a dedicated console API key was configured; launchd is running the read-only console; authenticated localhost and tailnet-only Tailscale HTTPS verification passed. |
 | 94 | Web Console Tailscale Identity Authentication v1 | Done | The runtime console uses the allowlisted Tailscale Serve login `ziyuanhuang21@gmail.com`; no-key tailnet API access passed, direct localhost access failed closed, a different identity was rejected, and API-key fallback remains implemented. |
+| 95 | Semantic Target Research Foundation v1 | Done | Add signed strategy-target contracts, native target backtests, immutable target/evaluation artifacts, and legacy equivalence evidence. |
+| 96 | Portfolio And Risk Targets v1 | Done | Add versioned contributor ownership, deterministic aggregation, stale/unavailable blocking, and independently persisted risk targets. |
+| 97 | Restart-Safe Target Execution Lifecycle v1 | Done | Add atomic plan claims, append-only lifecycle events, durable ambiguous/blocked outcomes, recovery, satisfaction, and detect-only drift. |
+| 98 | Semantic Target Dry Run v1 | Done | Add immutable, no-submission target-plan observations using execution pre-submit validation. |
+| 99 | Durable Local Semantic Paper v1 | Done | Add signed local semantic-paper positions, restart recovery, live-shaped artifacts, and reconciliation-confirmed satisfaction. |
+| 100 | Alpaca Semantic-Target Paper API v1 | Done | Add explicitly gated Alpaca paper lifecycle integration, operational risk revalidation, and client-order-ID recovery without CLI or scheduler exposure. |
+| 101 | Documentation Current-State Audit v1 | In Review | Align canonical docs with checked-in signal and semantic-target implementations; classify historical operational evidence. |
 
 ## Current Recommendation
 
-The controlled Alpaca paper order-capable rehearsal passed on the Mac Studio.
-The current milestone is **Mac Studio Scheduler Activation Readiness Review**.
-Review and commit the rehearsal evidence and activation readiness record, then
-decide separately whether to load the Studio launchd schedule. Do not close the
-new `F=+1` paper position or load the scheduler without separate approval.
+Finish and review **Documentation Current-State Audit v1**. Then add a
+controlled semantic-target orchestration boundary that generates durable
+targets and exercises semantic dry-run or local semantic paper before any
+semantic-target CLI, Alpaca rehearsal, runtime-clone deployment, or recurring
+scheduler exposure.
 
-Research-only work may proceed in parallel through **Strategy Evaluation
-Harness Design v1**. Keep that work inside the development clone and do not
-connect candidate evaluation or promotion artifacts to paper, dry-run, live,
-workflow, scheduler, or runtime-clone execution.
-
-The read-only web console's private Tailscale deployment may also proceed in
-parallel through milestone 93. Keep the console bound to localhost and do not
-install its launchd service from the development clone; promote the reviewed
-bundle to the runtime clone first.
+The legacy signal-oriented Alpaca paper workflow remains separate and
+order-capable. Historical scheduler and broker observations must be refreshed
+read-only before operational decisions. No symbol is globally protected, but
+no broker position may be changed without the applicable target, risk, safety,
+and authorization gates.
 
 ## Status Convention
 
@@ -343,6 +348,11 @@ run strategies automatically on a schedule.
 
 The `v1` label means the boundary exists and is useful, not that the area is
 complete. Keep these follow-ups visible when planning future milestones.
+
+This table preserves limitations recorded as each milestone was introduced.
+Some listed “future improvements” were completed by later milestones. Use the
+milestone table and [current_system_status.md](current_system_status.md) for
+current capability claims.
 
 | Area | Current v1 Limitation | Future Improvement |
 | --- | --- | --- |

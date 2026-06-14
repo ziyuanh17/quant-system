@@ -1,5 +1,8 @@
 # Read-Only Alpaca Broker Readiness Rehearsal
 
+> Historical rehearsal evidence: this file records a dated read-only
+> observation and does not establish current broker state.
+
 This note records the broker-connected read-only rehearsal performed after the
 actionable-order safety remediation and no-order wrapper preflight.
 

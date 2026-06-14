@@ -1,14 +1,24 @@
 # Quant System
 
-A small, typed, solo-maintainable quant system.
+A typed, solo-maintainable quant research and paper-execution system.
 
-The first milestone is intentionally narrow:
+The repository now contains both the original signal-oriented workflows and a
+newer semantic-target architecture:
 
-1. Load historical prices from CSV.
-2. Generate entries and exits from a typed strategy.
-3. Run a VectorBT-backed signal backtest.
-4. Return typed performance results.
-5. Keep production code explicit enough that dictionary key tracing does not become a daily tax.
+```text
+strategy evaluation
+  -> signed strategy target
+  -> portfolio aggregation
+  -> risk target
+  -> restart-safe execution lifecycle
+  -> broker state and reconciliation
+```
+
+The target architecture is available through research, dry-run, local semantic
+paper, and an explicitly gated Alpaca paper API. It is not connected to the CLI
+or recurring scheduler. See
+[docs/current_system_status.md](docs/current_system_status.md) for the precise
+capability and activation boundary.
 
 ## Setup
 
@@ -132,9 +142,9 @@ quant safety check
 See [docs/trading_safety.md](docs/trading_safety.md) for the fail-closed live
 trading rules.
 
-See [docs/live_broker_adapter.md](docs/live_broker_adapter.md) for the live
-broker adapter design boundary. The project still has no real broker
-connectivity.
+See [docs/live_broker_adapter.md](docs/live_broker_adapter.md) for the
+broker-neutral live-shaped adapter boundary. Alpaca paper connectivity exists;
+real-money connectivity does not.
 
 See [docs/live_broker_api_research.md](docs/live_broker_api_research.md) for
 the broker API/package research behind the first integration decision.
@@ -260,6 +270,9 @@ Set `QUANT_ALPACA_PAPER_PUBLISH_STATUS_AFTER_RUN=true` to let the wrapper
 refresh the sanitized GitHub Pages status file after the run.
 
 ## Scheduled Runs
+
+The commands in this section are the legacy signal-oriented operational lane.
+They are not the semantic-target execution lifecycle.
 
 Run a finite scheduled paper-order loop:
 

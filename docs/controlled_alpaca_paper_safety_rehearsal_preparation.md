@@ -1,5 +1,8 @@
 # Controlled Alpaca Paper Safety Rehearsal Preparation
 
+> Historical rehearsal evidence: preserve the recorded stop gates and broker
+> observations, but do not treat them as current state or authorization.
+
 This note records the no-order preparation completed before any
 broker-connected Alpaca paper safety rehearsal.
 
@@ -108,4 +111,3 @@ an order.
 
 Only after reviewing that evidence should an order-capable rehearsal be
 designed and explicitly approved.
-
