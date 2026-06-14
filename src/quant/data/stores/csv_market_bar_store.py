@@ -1,3 +1,5 @@
+"""Store and retrieve market bars using CSV artifacts."""
+
 from pathlib import Path
 
 from quant.data.csv_loader import load_price_csv

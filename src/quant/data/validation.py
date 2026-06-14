@@ -1,3 +1,5 @@
+"""Validate canonical market-bar datasets and report issues."""
+
 from collections.abc import Iterable
 from pathlib import Path
 from typing import cast

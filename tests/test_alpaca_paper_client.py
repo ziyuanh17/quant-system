@@ -1,3 +1,5 @@
+"""Test alpaca paper client behavior and safety invariants."""
+
 from types import SimpleNamespace
 from typing import Any, cast
 

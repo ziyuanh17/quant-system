@@ -1,3 +1,5 @@
+"""Evaluate native target strategies and sizing policies."""
+
 from decimal import Decimal
 from typing import Protocol, TypeVar
 

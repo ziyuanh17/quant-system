@@ -1,3 +1,5 @@
+"""Reconcile local live-shaped artifacts against broker state."""
+
 from pathlib import Path
 
 from quant.execution.live_broker import LiveBrokerClient

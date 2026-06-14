@@ -1,3 +1,5 @@
+"""Expose the public quant.execution package API."""
+
 from quant.execution.alpaca_paper import (
     AlpacaMarketOrderRequest,
     AlpacaPaperBrokerClient,

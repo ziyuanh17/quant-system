@@ -1,3 +1,5 @@
+"""Test momentum strategy behavior and safety invariants."""
+
 import pandas as pd
 
 from quant.models.market import PriceData

@@ -1,3 +1,5 @@
+"""Define domain models for technical feature datasets."""
+
 from typing import cast
 
 import pandas as pd

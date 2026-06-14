@@ -1,3 +1,5 @@
+"""Define research candidate, policy, and evaluation-evidence models."""
+
 from datetime import date, datetime
 from enum import StrEnum
 

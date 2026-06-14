@@ -1,3 +1,5 @@
+"""Test projected order risk behavior and safety invariants."""
+
 from quant.execution import (
     check_projected_order_risk,
     check_short_sale_availability,

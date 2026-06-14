@@ -1,3 +1,5 @@
+"""Load validated market price data from CSV files."""
+
 from pathlib import Path
 
 import pandas as pd

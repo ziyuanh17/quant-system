@@ -1,3 +1,5 @@
+"""Test market bar store behavior and safety invariants."""
+
 import pandas as pd
 
 from quant.data.stores import CsvMarketBarStore

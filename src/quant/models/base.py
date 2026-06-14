@@ -1,3 +1,5 @@
+"""Define domain models for shared immutable domain-model behavior."""
+
 from pydantic import BaseModel, ConfigDict
 
 

@@ -1,3 +1,5 @@
+"""Test data reconciliation behavior and safety invariants."""
+
 import re
 from pathlib import Path
 

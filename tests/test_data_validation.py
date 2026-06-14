@@ -1,3 +1,5 @@
+"""Test data validation behavior and safety invariants."""
+
 import pandas as pd
 
 from quant.data.validation import validate_market_bars_csv

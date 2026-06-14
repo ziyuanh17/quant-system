@@ -1,3 +1,5 @@
+"""Define live-shaped broker protocols and fake broker behavior."""
+
 from pathlib import Path
 from typing import Protocol, cast
 

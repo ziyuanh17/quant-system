@@ -1,3 +1,5 @@
+"""Persist dataset metadata and validation lineage artifacts."""
+
 from pathlib import Path
 
 from quant.models.ingestion import DatasetMetadata

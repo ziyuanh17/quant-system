@@ -1,3 +1,5 @@
+"""Test paper broker behavior and safety invariants."""
+
 from quant.execution import PaperBroker, check_order_risk
 from quant.models.execution import OrderRequest, OrderSide, RiskDecision
 

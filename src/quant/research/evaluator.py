@@ -1,3 +1,5 @@
+"""Evaluate strategy candidates under research policies."""
+
 from typing import Protocol, TypeVar
 
 from quant.models.features import FeatureData

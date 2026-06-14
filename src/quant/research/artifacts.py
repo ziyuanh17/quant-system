@@ -1,3 +1,5 @@
+"""Persist immutable research evaluations and trial ledgers."""
+
 import hashlib
 import json
 import os

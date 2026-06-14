@@ -1,3 +1,5 @@
+"""Define order, position, broker-state, and execution-evidence models."""
+
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Literal

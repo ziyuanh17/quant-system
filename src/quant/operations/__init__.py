@@ -1,3 +1,5 @@
+"""Expose the public quant.operations package API."""
+
 from quant.operations.dashboard import (
     build_dashboard_health_status,
     write_dashboard_health_status,

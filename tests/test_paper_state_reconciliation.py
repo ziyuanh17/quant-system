@@ -1,3 +1,5 @@
+"""Test paper state reconciliation behavior and safety invariants."""
+
 from typer.testing import CliRunner
 
 from quant.cli import app

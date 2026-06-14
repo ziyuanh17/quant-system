@@ -1,3 +1,5 @@
+"""Persist and load immutable backtest result artifacts."""
+
 from pathlib import Path
 from typing import Any
 

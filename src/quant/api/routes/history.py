@@ -1,4 +1,4 @@
-"""Historical observability API endpoints.."""
+"""Historical observability API endpoints."""
 
 from datetime import UTC, datetime
 

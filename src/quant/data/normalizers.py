@@ -1,3 +1,5 @@
+"""Normalize provider data into canonical market-bar schemas."""
+
 from typing import Any
 
 import pandas as pd

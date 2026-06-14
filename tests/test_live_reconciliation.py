@@ -1,3 +1,5 @@
+"""Test live reconciliation behavior and safety invariants."""
+
 from quant.execution import (
     FakeLiveBrokerClient,
     LiveBrokerAdapter,

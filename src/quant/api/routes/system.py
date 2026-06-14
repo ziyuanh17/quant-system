@@ -1,4 +1,4 @@
-"""System component API endpoints.."""
+"""System component API endpoints."""
 
 from datetime import UTC, datetime
 from pathlib import Path

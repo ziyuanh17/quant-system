@@ -1,3 +1,5 @@
+"""Test data ingestion behavior and safety invariants."""
+
 import json
 
 import pandas as pd

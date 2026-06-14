@@ -12,6 +12,8 @@ checked-in capability summary.
   committed work is `Done`, uncommitted review bundles are `In Review`, and
   work not started is `Planned` or `Next`.
 - Annotate non-obvious code sufficiently for later debugging.
+- Give every Python module and package a concise module-level docstring that
+  explains its purpose; Ruff enforces this with `D100` and `D104`.
 - Never revert unrelated user changes.
 - Never submit an Alpaca paper order without explicit approval immediately
   before the exact order-capable command.

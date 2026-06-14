@@ -1,3 +1,5 @@
+"""Test signal execution behavior and safety invariants."""
+
 import pandas as pd
 
 from quant.execution import (

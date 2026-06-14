@@ -1,3 +1,5 @@
+"""Evaluate pre-trade and projected-portfolio risk constraints."""
+
 from quant.models.execution import (
     AssetTradingDetails,
     LiveAccountSnapshot,

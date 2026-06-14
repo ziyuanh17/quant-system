@@ -1,3 +1,5 @@
+"""Test feature momentum strategy behavior and safety invariants."""
+
 from typing import Any, cast
 
 import pandas as pd

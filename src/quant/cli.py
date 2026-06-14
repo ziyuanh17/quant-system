@@ -1,3 +1,5 @@
+"""Command-line interface for quant-system operations and research workflows."""
+
 import os
 from pathlib import Path
 from typing import Annotated

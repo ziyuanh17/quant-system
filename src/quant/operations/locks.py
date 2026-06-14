@@ -1,3 +1,5 @@
+"""Provide filesystem locks for restart-safe operations."""
+
 import os
 import socket
 from pathlib import Path

@@ -1,3 +1,5 @@
+"""Test schedule templates behavior and safety invariants."""
+
 import plistlib
 from pathlib import Path
 

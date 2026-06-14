@@ -1,3 +1,5 @@
+"""Expose the public quant.models package API."""
+
 from quant.models.activation import (
     ActivationDecision,
     ActivationEffectiveStatus,

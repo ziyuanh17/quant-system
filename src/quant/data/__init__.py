@@ -1,3 +1,5 @@
+"""Expose the public quant.data package API."""
+
 from quant.data.csv_loader import load_price_csv
 from quant.data.ingest import ingest_market_bars
 from quant.data.lineage import write_dataset_metadata, write_validation_report

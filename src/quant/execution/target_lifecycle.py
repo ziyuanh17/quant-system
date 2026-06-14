@@ -1,3 +1,5 @@
+"""Plan and execute restart-safe semantic-target transitions."""
+
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path

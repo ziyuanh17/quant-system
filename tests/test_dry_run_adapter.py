@@ -1,3 +1,5 @@
+"""Test dry run adapter behavior and safety invariants."""
+
 import json
 from pathlib import Path
 

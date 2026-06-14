@@ -1,3 +1,5 @@
+"""Test live rehearsal behavior and safety invariants."""
+
 import json
 
 import pytest

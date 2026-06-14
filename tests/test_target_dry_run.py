@@ -1,3 +1,5 @@
+"""Test target dry run behavior and safety invariants."""
+
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal

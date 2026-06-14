@@ -1,3 +1,5 @@
+"""Test semantic target rehearsal behavior and safety invariants."""
+
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 

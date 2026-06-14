@@ -1,3 +1,5 @@
+"""Test migration scripts behavior and safety invariants."""
+
 import subprocess
 import tarfile
 from pathlib import Path

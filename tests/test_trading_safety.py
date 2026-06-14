@@ -1,3 +1,5 @@
+"""Test trading safety behavior and safety invariants."""
+
 import pytest
 from typer.testing import CliRunner
 

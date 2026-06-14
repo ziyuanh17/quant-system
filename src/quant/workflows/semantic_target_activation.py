@@ -1,3 +1,5 @@
+"""Evaluate and persist semantic-target activation authorization."""
+
 import json
 import os
 from datetime import datetime

@@ -1,3 +1,5 @@
+"""Test target alpaca paper behavior and safety invariants."""
+
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 

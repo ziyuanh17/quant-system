@@ -1,3 +1,5 @@
+"""Evaluate operational health from durable system artifacts."""
+
 from datetime import datetime
 from pathlib import Path
 

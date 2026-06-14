@@ -1,3 +1,5 @@
+"""Test research artifacts behavior and safety invariants."""
+
 import json
 from datetime import UTC, date, datetime, timedelta
 

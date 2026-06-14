@@ -1,3 +1,5 @@
+"""Implement the Alpaca paper broker client and mappings."""
+
 from collections.abc import Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Protocol

@@ -1,3 +1,5 @@
+"""Run legacy signal-oriented VectorBT backtests."""
+
 from typing import Any
 
 import pandas as pd

@@ -1,3 +1,5 @@
+"""Test live audit models behavior and safety invariants."""
+
 from quant.execution import (
     write_live_account_snapshot,
     write_live_fill_record,

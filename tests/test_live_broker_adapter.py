@@ -1,3 +1,5 @@
+"""Test live broker adapter behavior and safety invariants."""
+
 import pytest
 
 from quant.execution import (

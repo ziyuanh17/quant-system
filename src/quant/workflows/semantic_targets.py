@@ -1,3 +1,5 @@
+"""Orchestrate the controlled semantic-target pipeline."""
+
 import json
 import os
 from collections.abc import Callable

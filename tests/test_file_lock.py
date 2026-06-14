@@ -1,3 +1,5 @@
+"""Test file lock behavior and safety invariants."""
+
 import socket
 from datetime import UTC, datetime, timedelta
 

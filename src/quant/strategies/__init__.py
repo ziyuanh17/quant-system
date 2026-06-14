@@ -1,3 +1,5 @@
+"""Expose the public quant.strategies package API."""
+
 from quant.strategies.base import FeatureTargetStrategy, TargetStrategy
 from quant.strategies.feature_momentum import (
     FeatureMomentumConfig,

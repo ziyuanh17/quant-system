@@ -1,4 +1,4 @@
-"""Accounts API endpoints.."""
+"""Accounts API endpoints."""
 
 import json
 from datetime import UTC, datetime

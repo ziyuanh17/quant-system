@@ -1,3 +1,5 @@
+"""Test fake live broker behavior and safety invariants."""
+
 import pytest
 
 from quant.execution import FakeLiveBrokerClient

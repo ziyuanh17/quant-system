@@ -1,3 +1,5 @@
+"""Run evidence-verified no-network semantic-target rehearsals."""
+
 import json
 import os
 from datetime import datetime, timedelta

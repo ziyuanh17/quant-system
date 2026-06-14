@@ -1,3 +1,5 @@
+"""Test alpaca paper mapping behavior and safety invariants."""
+
 from datetime import UTC, datetime
 from types import SimpleNamespace
 

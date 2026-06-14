@@ -1,3 +1,5 @@
+"""Investigate equivalence between legacy and target simulations."""
+
 from decimal import Decimal
 from typing import Any
 

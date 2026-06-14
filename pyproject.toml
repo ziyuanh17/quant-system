@@ -43,6 +43,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+extend-select = ["D100", "D104"]
 
 [tool.pyright]
 include = ["src", "tests"]

@@ -1,3 +1,5 @@
+"""Test execution lifecycle behavior and safety invariants."""
+
 import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta

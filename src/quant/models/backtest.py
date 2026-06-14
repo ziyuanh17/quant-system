@@ -1,3 +1,5 @@
+"""Define domain models for backtest configuration and results."""
+
 from pydantic import Field
 
 from quant.models.base import FrozenModel

@@ -1,3 +1,5 @@
+"""Test service wrappers behavior and safety invariants."""
+
 import subprocess
 from pathlib import Path
 

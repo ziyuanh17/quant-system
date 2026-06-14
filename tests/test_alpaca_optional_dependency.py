@@ -1,3 +1,5 @@
+"""Test alpaca optional dependency behavior and safety invariants."""
+
 import subprocess
 import sys
 from types import SimpleNamespace

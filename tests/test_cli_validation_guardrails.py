@@ -1,3 +1,5 @@
+"""Test cli validation guardrails behavior and safety invariants."""
+
 import re
 
 from typer.testing import CliRunner

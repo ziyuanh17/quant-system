@@ -1,3 +1,5 @@
+"""Define the market-bar storage protocol."""
+
 from pathlib import Path
 from typing import Protocol
 

@@ -1,3 +1,5 @@
+"""Test paper state behavior and safety invariants."""
+
 import quant.execution.state
 from quant.execution import (
     PaperBroker,

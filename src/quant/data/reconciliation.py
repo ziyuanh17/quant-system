@@ -1,3 +1,5 @@
+"""Compare normalized market data from independent providers."""
+
 from collections.abc import Iterable
 from pathlib import Path
 from typing import cast

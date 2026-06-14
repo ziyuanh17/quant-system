@@ -1,3 +1,5 @@
+"""Adapt strategy decisions to the local paper broker."""
+
 from typing import Protocol
 
 from quant.execution.paper_broker import PaperBroker

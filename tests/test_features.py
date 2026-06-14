@@ -1,3 +1,5 @@
+"""Test features behavior and safety invariants."""
+
 import pandas as pd
 import pytest
 

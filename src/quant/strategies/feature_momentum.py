@@ -1,3 +1,5 @@
+"""Implement momentum strategies over technical feature data."""
+
 from typing import cast
 
 import pandas as pd

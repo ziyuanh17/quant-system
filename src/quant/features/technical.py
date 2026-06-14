@@ -1,3 +1,5 @@
+"""Compute deterministic technical-analysis features."""
+
 from typing import cast
 
 import numpy as np

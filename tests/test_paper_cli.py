@@ -1,3 +1,5 @@
+"""Test paper cli behavior and safety invariants."""
+
 import json
 
 from typer.testing import CliRunner

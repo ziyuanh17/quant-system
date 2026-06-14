@@ -1,3 +1,5 @@
+"""Evaluate fail-closed trading-mode safety gates."""
+
 import os
 from collections.abc import Mapping
 

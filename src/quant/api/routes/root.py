@@ -1,4 +1,4 @@
-"""API root and overview endpoints.."""
+"""API root and overview endpoints."""
 
 from datetime import UTC, datetime
 from pathlib import Path

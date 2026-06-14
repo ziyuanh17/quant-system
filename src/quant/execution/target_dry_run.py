@@ -1,3 +1,5 @@
+"""Observe semantic-target execution plans without submission."""
+
 from datetime import datetime
 from pathlib import Path
 

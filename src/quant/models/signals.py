@@ -1,3 +1,5 @@
+"""Define domain models for legacy strategy signal frames."""
+
 import pandas as pd
 from pydantic import ValidationInfo, field_validator
 

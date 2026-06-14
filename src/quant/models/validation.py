@@ -1,3 +1,5 @@
+"""Define domain models for data validation issues and reports."""
+
 from enum import StrEnum
 
 from quant.models.base import FrozenModel

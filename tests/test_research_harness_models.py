@@ -1,3 +1,5 @@
+"""Test research harness models behavior and safety invariants."""
+
 from datetime import UTC, date, datetime
 
 import pandas as pd

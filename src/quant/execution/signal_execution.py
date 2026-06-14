@@ -1,3 +1,5 @@
+"""Translate legacy signal intent into target-position orders."""
+
 from typing import Any, cast
 
 import pandas as pd

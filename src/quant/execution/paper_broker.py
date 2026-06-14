@@ -1,3 +1,5 @@
+"""Implement the in-memory legacy paper broker."""
+
 from quant.execution.risk import check_order_risk
 from quant.models.execution import (
     Fill,

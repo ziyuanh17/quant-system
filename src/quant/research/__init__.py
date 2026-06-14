@@ -1,3 +1,5 @@
+"""Expose the public quant.research package API."""
+
 from quant.research.artifacts import (
     append_research_trial,
     build_evaluation_id,

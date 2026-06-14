@@ -1,3 +1,5 @@
+"""Define native target strategies and compatibility sizing policies."""
+
 from datetime import datetime, timedelta
 from decimal import Decimal
 

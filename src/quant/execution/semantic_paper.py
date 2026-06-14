@@ -1,3 +1,5 @@
+"""Implement durable live-shaped local semantic paper trading."""
+
 import os
 from datetime import UTC, datetime
 from pathlib import Path

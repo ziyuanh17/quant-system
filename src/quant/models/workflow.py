@@ -1,3 +1,5 @@
+"""Define domain models for durable workflow and rehearsal records."""
+
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Literal

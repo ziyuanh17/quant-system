@@ -1,3 +1,5 @@
+"""Persist execution order, fill, and snapshot artifacts."""
+
 from pathlib import Path
 from uuid import uuid4
 

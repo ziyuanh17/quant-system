@@ -1,4 +1,4 @@
-"""Documentation API endpoints.."""
+"""Documentation API endpoints."""
 
 from fastapi import APIRouter
 

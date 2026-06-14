@@ -1,3 +1,5 @@
+"""Aggregate strategy targets and evaluate research risk decisions."""
+
 from datetime import datetime, timedelta
 from decimal import Decimal
 

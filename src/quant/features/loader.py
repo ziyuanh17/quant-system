@@ -1,3 +1,5 @@
+"""Load aligned market and feature data for strategies."""
+
 from pathlib import Path
 
 import pandas as pd

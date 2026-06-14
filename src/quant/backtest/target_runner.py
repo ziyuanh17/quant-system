@@ -1,3 +1,5 @@
+"""Run VectorBT backtests from signed strategy target frames."""
+
 from typing import Any, cast
 
 import pandas as pd

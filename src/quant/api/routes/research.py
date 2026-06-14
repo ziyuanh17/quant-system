@@ -1,4 +1,4 @@
-"""Research API endpoints.."""
+"""Research API endpoints."""
 
 from datetime import UTC, datetime
 

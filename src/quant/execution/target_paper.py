@@ -1,3 +1,5 @@
+"""Execute semantic targets through durable local paper trading."""
+
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path

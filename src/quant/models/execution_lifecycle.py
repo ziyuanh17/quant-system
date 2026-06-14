@@ -1,3 +1,5 @@
+"""Define domain models for restart-safe target execution lifecycle."""
+
 from datetime import datetime
 from enum import StrEnum
 from typing import Literal

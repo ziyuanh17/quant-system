@@ -1,3 +1,5 @@
+"""Define domain models for market-data ingestion and lineage."""
+
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any

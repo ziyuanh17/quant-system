@@ -1,3 +1,5 @@
+"""Test scheduler runner behavior and safety invariants."""
+
 import json
 
 from quant.models.scheduler import ScheduledRunStatus, ScheduledTaskResult

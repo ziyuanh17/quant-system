@@ -1,3 +1,5 @@
+"""Persist and reconcile legacy paper-broker state."""
+
 import os
 from pathlib import Path
 from shutil import copy2

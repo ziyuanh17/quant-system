@@ -1,3 +1,5 @@
+"""Consume activation evidence for API-only local target orchestration."""
+
 import json
 import os
 from collections.abc import Callable

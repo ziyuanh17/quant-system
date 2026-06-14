@@ -1,3 +1,5 @@
+"""Define domain models for canonical market data."""
+
 from datetime import date, datetime
 from typing import cast
 

@@ -1,3 +1,5 @@
+"""Run scheduled tasks with durable records and overlap protection."""
+
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path

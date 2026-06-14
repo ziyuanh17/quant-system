@@ -1,3 +1,5 @@
+"""Persist restart-safe execution plans and lifecycle events."""
+
 import json
 import os
 from datetime import datetime

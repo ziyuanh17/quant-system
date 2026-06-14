@@ -1,3 +1,5 @@
+"""Expose the public quant.workflows package API."""
+
 from quant.workflows.activated_semantic_targets import (
     ActivatedSemanticTargetWorkflowResult,
     load_semantic_target_activation_consumption,

@@ -1,3 +1,5 @@
+"""Load optional Alpaca SDK types behind a stable boundary."""
+
 from collections.abc import Callable
 from dataclasses import dataclass
 from importlib import import_module as import_module_from_stdlib

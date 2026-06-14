@@ -1,3 +1,5 @@
+"""Run controlled paper-broker order rehearsals."""
+
 from pathlib import Path
 from time import sleep
 

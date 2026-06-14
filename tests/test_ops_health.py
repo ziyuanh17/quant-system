@@ -1,3 +1,5 @@
+"""Test ops health behavior and safety invariants."""
+
 import json
 from datetime import UTC, datetime, timedelta
 

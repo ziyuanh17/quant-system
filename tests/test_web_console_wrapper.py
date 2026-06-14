@@ -1,3 +1,5 @@
+"""Test web console wrapper behavior and safety invariants."""
+
 import subprocess
 from pathlib import Path
 

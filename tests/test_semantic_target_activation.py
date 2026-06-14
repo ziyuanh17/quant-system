@@ -1,3 +1,5 @@
+"""Test semantic target activation behavior and safety invariants."""
+
 from datetime import UTC, datetime, timedelta
 
 import pytest

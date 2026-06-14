@@ -1,3 +1,5 @@
+"""Define semantic-target activation authorization and consumption models."""
+
 from enum import StrEnum
 from typing import Literal
 

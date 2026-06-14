@@ -1,3 +1,5 @@
+"""Test paper signal refresh workflow behavior and safety invariants."""
+
 import json
 
 from typer.testing import CliRunner

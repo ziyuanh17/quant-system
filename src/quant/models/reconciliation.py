@@ -1,3 +1,5 @@
+"""Define domain models for provider reconciliation results."""
+
 from quant.models.base import FrozenModel
 from quant.models.validation import ValidationIssue, ValidationSeverity
 

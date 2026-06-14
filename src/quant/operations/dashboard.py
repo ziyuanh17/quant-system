@@ -1,3 +1,5 @@
+"""Build and persist sanitized operational dashboard status."""
+
 from pathlib import Path
 
 from quant.models.operations import (

@@ -1,3 +1,5 @@
+"""Persist schema-versioned semantic-target research artifacts."""
+
 import json
 import os
 from pathlib import Path

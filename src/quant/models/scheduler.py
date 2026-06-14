@@ -1,3 +1,5 @@
+"""Define domain models for scheduled task execution."""
+
 from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import uuid4

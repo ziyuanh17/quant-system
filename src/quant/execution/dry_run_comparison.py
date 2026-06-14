@@ -1,3 +1,5 @@
+"""Compare legacy paper decisions with dry-run order evidence."""
+
 from pathlib import Path
 
 from quant.models.execution import (

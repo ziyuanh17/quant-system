@@ -1,3 +1,5 @@
+"""Implement the legacy price-momentum strategy."""
+
 import pandas as pd
 from pydantic import Field
 

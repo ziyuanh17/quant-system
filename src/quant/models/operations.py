@@ -1,3 +1,5 @@
+"""Define domain models for operational health, dashboard, and locking."""
+
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 
