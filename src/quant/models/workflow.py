@@ -38,6 +38,7 @@ class SemanticTargetRehearsalScenario(StrEnum):
     RISK_REJECTION = "risk_rejection"
     FRACTIONAL_TARGET_BLOCK = "fractional_target_block"
     LOCAL_PAPER_RESTART = "local_paper_restart"
+    RECONCILIATION_FAILURE = "reconciliation_failure"
 
 
 class SemanticTargetWorkflowRecord(FrozenModel):
@@ -117,6 +118,7 @@ class SemanticTargetRehearsalScenarioResult(FrozenModel):
         min_length=1
     )
     evidence_paths: tuple[str, ...] = Field(min_length=1)
+    supporting_evidence_paths: tuple[str, ...] = ()
     reason: str = Field(min_length=1)
 
     @model_validator(mode="after")

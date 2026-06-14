@@ -11,8 +11,13 @@ from quant.execution import (
     DETECT_ONLY_DRIFT_POLICY,
     SINGLE_MARKET_ORDER_POLICY,
 )
+from quant.execution.reconciliation import reconcile_live_state
+from quant.execution.semantic_paper import SemanticPaperBrokerClient
 from quant.models.execution import (
     LiveAccountSnapshot,
+    LiveReconciliationDifference,
+    LiveReconciliationReport,
+    LiveReconciliationStatus,
     TradingMode,
     TradingSafetyCheck,
 )
@@ -45,7 +50,7 @@ from quant.workflows.semantic_targets import (
     run_semantic_target_paper_workflow,
 )
 
-SEMANTIC_TARGET_REHEARSAL_POLICY = "semantic_target_local_rehearsal_v1"
+SEMANTIC_TARGET_REHEARSAL_POLICY = "semantic_target_local_rehearsal_v2"
 
 
 def run_semantic_target_local_rehearsal(
@@ -85,6 +90,7 @@ def run_semantic_target_local_rehearsal(
             _risk_rejection(output_root, evaluated_at),
             _fractional_target_block(output_root, evaluated_at),
             _local_paper_restart(output_root, evaluated_at),
+            _reconciliation_failure(output_root, evaluated_at),
         )
         passed = all(item.passed for item in scenarios)
         report = SemanticTargetRehearsalReport(
@@ -250,6 +256,61 @@ def _local_paper_restart(
     )
 
 
+def _reconciliation_failure(
+    root: Path, evaluated_at: datetime
+) -> SemanticTargetRehearsalScenarioResult:
+    first = _run_paper(
+        "reconciliation-failure",
+        root,
+        evaluated_at,
+        reconciliation_runner=_inject_reconciliation_failure,
+        reconciliation_runner_id="inject_reconciliation_failure_v1",
+    )
+    second = _run_paper(
+        "reconciliation-failure",
+        root,
+        evaluated_at,
+        reconciliation_runner=_inject_reconciliation_failure,
+        reconciliation_runner_id="inject_reconciliation_failure_v1",
+    )
+    scenario_root = root / "scenarios" / "reconciliation-failure"
+    reconciliation_dir = (
+        scenario_root / "semantic-paper" / "reconciliations"
+    )
+    reports = tuple(
+        LiveReconciliationReport.model_validate_json(path.read_text())
+        for path in reconciliation_dir.rglob("*.json")
+    )
+    order_count = len(
+        tuple((scenario_root / "semantic-paper" / "orders").glob("*.json"))
+    )
+    fill_count = len(
+        tuple((scenario_root / "semantic-paper" / "fills").glob("*.json"))
+    )
+    return _scenario_result(
+        scenario=SemanticTargetRehearsalScenario.RECONCILIATION_FAILURE,
+        results=(first, second),
+        passed=(
+            first == second
+            and first.record.execution_status == ExecutionPlanStatus.FILLED
+            and first.record.reconciliation_report_id is not None
+            and len(reports) == 1
+            and not reports[0].passed
+            and order_count == 1
+            and fill_count == 1
+        ),
+        root=root,
+        supporting_evidence_paths=tuple(
+            str(path)
+            for path in reconciliation_dir.rglob("*.json")
+        ),
+        reason=(
+            "failed reconciliation prevented satisfaction across restart "
+            "without duplicating the order or fill"
+        ),
+    )
+
+
 def _run_dry(
     scenario_id: str,
     root: Path,
@@ -295,6 +356,9 @@ def _run_paper(
     scenario_id: str,
     root: Path,
     evaluated_at: datetime,
+    *,
+    reconciliation_runner=reconcile_live_state,
+    reconciliation_runner_id: str = "reconcile_live_state_v1",
 ) -> SemanticTargetWorkflowResult:
     scenario_root = root / "scenarios" / scenario_id
     decision, evaluation = _target_inputs(scenario_id, evaluated_at)
@@ -317,6 +381,8 @@ def _run_paper(
         output_root=scenario_root,
         initial_cash=1_000,
         evaluated_at=evaluated_at,
+        reconciliation_runner=reconciliation_runner,
+        reconciliation_runner_id=reconciliation_runner_id,
     )
 
 
@@ -411,6 +477,35 @@ def _account(
     )
 
 
+def _inject_reconciliation_failure(
+    *,
+    client: SemanticPaperBrokerClient,
+    order_records_dir: Path,
+    fill_records_dir: Path,
+    snapshot_records_dir: Path,
+) -> LiveReconciliationReport:
+    report = reconcile_live_state(
+        client=client,
+        order_records_dir=order_records_dir,
+        fill_records_dir=fill_records_dir,
+        snapshot_records_dir=snapshot_records_dir,
+    )
+    return report.model_copy(
+        update={
+            "status": LiveReconciliationStatus.FAILED,
+            "differences": report.differences
+            + (
+                LiveReconciliationDifference(
+                    field="rehearsal.injected_failure",
+                    local_value="expected-pass",
+                    broker_value="forced-failure",
+                    message="deterministic reconciliation failure injection",
+                ),
+            ),
+        }
+    )
+
+
 def _scenario_result(
     *,
     scenario: SemanticTargetRehearsalScenario,
@@ -418,6 +513,7 @@ def _scenario_result(
     passed: bool,
     root: Path,
     reason: str,
+    supporting_evidence_paths: tuple[str, ...] = (),
 ) -> SemanticTargetRehearsalScenarioResult:
     records = tuple(item.record for item in results)
     return SemanticTargetRehearsalScenarioResult(
@@ -428,6 +524,7 @@ def _scenario_result(
         execution_statuses=tuple(item.execution_status for item in records),
         dry_run_statuses=tuple(item.dry_run_status for item in records),
         evidence_paths=tuple(_record_path(root, item) for item in records),
+        supporting_evidence_paths=supporting_evidence_paths,
         reason=reason,
     )
 
@@ -444,6 +541,10 @@ def _record_path(root: Path, record: SemanticTargetWorkflowRecord) -> str:
 
 def _verify_report_evidence(report: SemanticTargetRehearsalReport) -> None:
     for scenario in report.scenarios:
+        for path_value in scenario.supporting_evidence_paths:
+            path = Path(path_value)
+            if not path.is_file():
+                raise ValueError(f"rehearsal evidence is missing: {path}")
         for index, path_value in enumerate(scenario.evidence_paths):
             path = Path(path_value)
             if not path.is_file():

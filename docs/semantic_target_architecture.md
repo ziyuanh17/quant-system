@@ -274,6 +274,7 @@ working-order blocking
 risk rejection
 fractional-target operational blocking
 local semantic-paper restart idempotency
+reconciliation-failure satisfaction blocking across restart
 ```
 
 It writes one immutable `SemanticTargetRehearsalReport` plus the complete
@@ -281,3 +282,12 @@ orchestration evidence for each scenario. Re-reading an existing report
 verifies every linked orchestration record and fails if evidence is missing or
 no longer matches the summary. The rehearsal has no Alpaca client, network
 access, CLI command, scheduler entry point, or runtime-clone behavior.
+
+The reconciliation-failure scenario uses an explicitly identified,
+fingerprinted reconciliation runner only in local semantic paper. The
+fingerprint binds both its declared version ID and callable identity. It first
+performs normal reconciliation, then injects one deterministic failing
+difference. The order still fills exactly once, but the lifecycle remains
+durably `filled` rather than becoming `satisfied`; restarting the orchestration
+does not submit another order or create another fill. Broker-connected and
+Alpaca reconciliation paths do not receive this injection boundary.

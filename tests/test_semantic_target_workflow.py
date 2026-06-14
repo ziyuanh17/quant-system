@@ -160,6 +160,33 @@ def test_local_paper_workflow_reaches_satisfaction_and_does_not_duplicate(
     assert len(state.fills) == 1
 
 
+def test_local_paper_workflow_requires_reconciliation_runner_identity(
+    tmp_path,
+) -> None:
+    with pytest.raises(ValueError, match="must not be empty"):
+        run_semantic_target_paper_workflow(
+            orchestration_id="orchestration-paper-1",
+            contributor_set=_contributor_set(),
+            strategy_decisions=(_decision(),),
+            strategy_evaluations=(_evaluation(),),
+            risk_policy=_risk_policy(),
+            portfolio_target_id="portfolio-paper-1",
+            portfolio_target_revision=1,
+            risk_target_id="risk-paper-1",
+            risk_target_revision=1,
+            policy=_execution_policy(),
+            reference_price=100,
+            safety_check=TradingSafetyCheck(
+                mode=TradingMode.PAPER,
+                allowed=True,
+            ),
+            output_root=tmp_path,
+            initial_cash=1_000,
+            evaluated_at=_now(),
+            reconciliation_runner_id="",
+        )
+
+
 def test_orchestration_identity_cannot_be_reused_for_other_decisions(
     tmp_path,
 ) -> None:

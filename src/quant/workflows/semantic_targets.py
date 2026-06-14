@@ -8,8 +8,12 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from quant.execution.reconciliation import reconcile_live_state
 from quant.execution.target_dry_run import run_semantic_target_dry_run
-from quant.execution.target_paper import run_semantic_target_paper
+from quant.execution.target_paper import (
+    SemanticPaperReconciliationRunner,
+    run_semantic_target_paper,
+)
 from quant.models.execution import (
     LiveAccountSnapshot,
     Position,
@@ -180,8 +184,14 @@ def run_semantic_target_paper_workflow(
     evaluated_at: datetime,
     initial_positions: tuple[Position, ...] = (),
     evidence_refs: tuple[str, ...] = (),
+    reconciliation_runner: SemanticPaperReconciliationRunner = (
+        reconcile_live_state
+    ),
+    reconciliation_runner_id: str = "reconcile_live_state_v1",
 ) -> SemanticTargetWorkflowResult:
     """Persist a target pipeline and execute it only in durable local paper."""
+    if not reconciliation_runner_id:
+        raise ValueError("reconciliation_runner_id must not be empty")
     input_fingerprint = _input_fingerprint(
         mode=SemanticTargetWorkflowMode.SEMANTIC_PAPER,
         contributor_set=contributor_set,
@@ -202,6 +212,10 @@ def run_semantic_target_paper_workflow(
             "initial_positions": [
                 item.model_dump(mode="json") for item in initial_positions
             ],
+            "reconciliation_runner_id": reconciliation_runner_id,
+            "reconciliation_runner_callable": _callable_identity(
+                reconciliation_runner
+            ),
         },
     )
 
@@ -229,6 +243,7 @@ def run_semantic_target_paper_workflow(
             initial_positions=initial_positions,
             evaluated_at=evaluated_at,
             evidence_refs=evidence_refs,
+            reconciliation_runner=reconciliation_runner,
         )
         return _record(
             orchestration_id=orchestration_id,
@@ -682,6 +697,12 @@ def _input_fingerprint(
         payload, sort_keys=True, separators=(",", ":")
     ).encode()
     return sha256(encoded).hexdigest()
+
+
+def _callable_identity(value: object) -> str:
+    module = getattr(value, "__module__", type(value).__module__)
+    name = getattr(value, "__qualname__", type(value).__qualname__)
+    return f"{module}.{name}"
 
 
 def _portfolio_path(

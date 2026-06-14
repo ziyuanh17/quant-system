@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Protocol
 
 from quant.execution.artifacts import write_live_reconciliation_report
 from quant.execution.lifecycle_artifacts import (
@@ -48,6 +49,19 @@ class SemanticPaperRunResult:
     reconciliation: LiveReconciliationReport | None
 
 
+class SemanticPaperReconciliationRunner(Protocol):
+    """Injectable read-only reconciliation boundary for local paper tests."""
+
+    def __call__(
+        self,
+        *,
+        client: SemanticPaperBrokerClient,
+        order_records_dir: Path,
+        fill_records_dir: Path,
+        snapshot_records_dir: Path,
+    ) -> LiveReconciliationReport: ...
+
+
 def run_semantic_target_paper(
     *,
     risk_target: RiskTargetDecision,
@@ -68,6 +82,9 @@ def run_semantic_target_paper(
     evaluated_at: datetime,
     initial_positions: tuple[Position, ...] = (),
     evidence_refs: tuple[str, ...] = (),
+    reconciliation_runner: SemanticPaperReconciliationRunner = (
+        reconcile_live_state
+    ),
 ) -> SemanticPaperRunResult:
     """Run one semantic target through the durable local paper lifecycle."""
     client = SemanticPaperBrokerClient(
@@ -138,7 +155,7 @@ def run_semantic_target_paper(
 
         _materialize_order_evidence(plan=plan, adapter=adapter)
         adapter.account_snapshot()
-        reconciliation = reconcile_live_state(
+        reconciliation = reconciliation_runner(
             client=client,
             order_records_dir=order_output_dir,
             fill_records_dir=fill_output_dir,

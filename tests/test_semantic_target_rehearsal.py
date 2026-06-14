@@ -50,6 +50,16 @@ def test_local_rehearsal_persists_complete_passing_evidence(tmp_path) -> None:
             ExecutionPlanStatus.SATISFIED,
         )
     )
+    assert (
+        _scenario(
+            report,
+            SemanticTargetRehearsalScenario.RECONCILIATION_FAILURE,
+        ).execution_statuses
+        == (
+            ExecutionPlanStatus.FILLED,
+            ExecutionPlanStatus.FILLED,
+        )
+    )
     assert all(
         path.exists()
         for item in report.scenarios
@@ -98,6 +108,29 @@ def test_local_rehearsal_detects_missing_evidence(tmp_path) -> None:
         Path(path) for item in report.scenarios for path in item.evidence_paths
     )
     missing.unlink()
+
+    with pytest.raises(ValueError, match="evidence is missing"):
+        run_semantic_target_local_rehearsal(
+            rehearsal_id="rehearsal-1",
+            output_root=tmp_path,
+            evaluated_at=_now(),
+        )
+
+
+def test_local_rehearsal_detects_missing_failed_reconciliation(
+    tmp_path,
+) -> None:
+    report = run_semantic_target_local_rehearsal(
+        rehearsal_id="rehearsal-1",
+        output_root=tmp_path,
+        evaluated_at=_now(),
+    )
+    scenario = _scenario(
+        report,
+        SemanticTargetRehearsalScenario.RECONCILIATION_FAILURE,
+    )
+    assert len(scenario.supporting_evidence_paths) == 1
+    Path(scenario.supporting_evidence_paths[0]).unlink()
 
     with pytest.raises(ValueError, match="evidence is missing"):
         run_semantic_target_local_rehearsal(

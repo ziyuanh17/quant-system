@@ -20,6 +20,12 @@ fractional-target, and local-paper scenarios. Its immutable report verifies
 that every linked orchestration record remains present and agrees with the
 summary. It is an API review tool, not an operational command.
 
+The rehearsal also injects one deterministic reconciliation failure through a
+local semantic-paper-only reconciliation dependency. This proves a filled
+execution remains unsatisfied across restart and does not duplicate its order
+or fill. The injection is identified in the orchestration fingerprint and is
+not available to Alpaca or broker-connected workflows.
+
 ## Paper Signal Refresh
 
 Run:

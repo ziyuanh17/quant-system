@@ -116,6 +116,7 @@ from quant.execution.target_lifecycle import (
     validate_pre_submission,
 )
 from quant.execution.target_paper import (
+    SemanticPaperReconciliationRunner,
     SemanticPaperRunResult,
     run_semantic_target_paper,
 )
@@ -147,6 +148,7 @@ __all__ = [
     "SemanticPaperBrokerAdapter",
     "SemanticPaperBrokerClient",
     "SemanticPaperRunResult",
+    "SemanticPaperReconciliationRunner",
     "append_execution_event",
     "check_order_risk",
     "check_projected_order_risk",
