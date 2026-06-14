@@ -123,13 +123,14 @@ side discussions.
 | 103 | Local Semantic-Target Orchestration Rehearsal v1 | Done | Produce immutable, evidence-verified no-network rehearsal results for eligible, restart, stale, working-order, risk, fractional, and local-paper scenarios. |
 | 104 | Semantic-Target Reconciliation-Failure Rehearsal v1 | Done | Inject a deterministic local reconciliation failure and prove a single filled order remains unsatisfied without duplication across restart. |
 | 105 | Semantic-Target Operational Activation Gate v1 | Done | Add immutable, time-bounded authorization and durable fail-closed evaluations bound to exact verified rehearsal evidence, without exposing any operational path. |
-| 106 | Activated Local Semantic-Target Orchestration v1 | In Review | Revalidate and atomically consume one activation evaluation for exactly one API-only dry-run or local semantic-paper orchestration, with durable blocked evidence and no operational exposure. |
+| 106 | Activated Local Semantic-Target Orchestration v1 | Done | Revalidate and atomically consume one activation evaluation for exactly one API-only dry-run or local semantic-paper orchestration, with durable blocked evidence and no operational exposure. |
+| 107 | Activation-Consumption Local Rehearsal v1 | In Review | Add a second-layer immutable no-network rehearsal proving allowed restart behavior, blocked authorization, and one-evaluation-to-one-orchestration enforcement. |
 
 ## Current Recommendation
 
-Review **Activated Local Semantic-Target Orchestration v1**, then decide
-whether to add a no-network rehearsal scenario for activation consumption.
-Do not expose semantic targets through CLI, Alpaca rehearsal, runtime-clone
+Review **Activation-Consumption Local Rehearsal v1**, then decide whether the
+next stage should expose activated dry-run through a separately reviewed
+operator boundary. Do not expose Alpaca semantic targets, runtime-clone
 deployment, or recurring scheduler as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and

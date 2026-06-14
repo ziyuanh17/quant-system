@@ -41,6 +41,12 @@ orchestration, and stop before target or execution artifacts when blocked.
 These wrappers remain unavailable to CLI, Alpaca, schedulers, and runtime
 services.
 
+A second-layer no-network rehearsal consumes a completed base semantic-target
+rehearsal and proves activated dry-run/local-paper restart safety, durable
+expired and scope-mismatch blocking, and atomic single-consumption
+enforcement. Its immutable report verifies the base report digest and every
+linked activation, consumption, and workflow artifact.
+
 ## Paper Signal Refresh
 
 Run:

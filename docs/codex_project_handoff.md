@@ -135,6 +135,8 @@ before proceeding.
    dry-run and local semantic paper and explicitly blocks Alpaca paper.
 5. Review the activated local orchestration wrappers and their atomic
    one-evaluation-to-one-orchestration consumption claim.
-6. Review any proposed CLI, runtime-clone, or scheduler exposure separately.
-7. Require explicit approval immediately before any broker order-capable
+6. Review the second-layer activation-consumption rehearsal evidence before
+   proposing any operator exposure.
+7. Review any proposed CLI, runtime-clone, or scheduler exposure separately.
+8. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

@@ -6,6 +6,11 @@ from quant.workflows.activated_semantic_targets import (
     run_activated_semantic_target_dry_run_workflow,
     run_activated_semantic_target_paper_workflow,
 )
+from quant.workflows.activation_consumption_rehearsal import (
+    ACTIVATION_CONSUMPTION_REHEARSAL_POLICY,
+    load_and_verify_activation_consumption_rehearsal,
+    run_activation_consumption_local_rehearsal,
+)
 from quant.workflows.paper_signal_refresh import (
     WorkflowRunFailed,
     run_alpaca_paper_refresh_workflow,
@@ -36,6 +41,9 @@ from quant.workflows.semantic_targets import (
 __all__ = [
     "WorkflowRunFailed",
     "ActivatedSemanticTargetWorkflowResult",
+    "ACTIVATION_CONSUMPTION_REHEARSAL_POLICY",
+    "load_and_verify_activation_consumption_rehearsal",
+    "run_activation_consumption_local_rehearsal",
     "load_semantic_target_activation_consumption",
     "run_activated_semantic_target_dry_run_workflow",
     "run_activated_semantic_target_paper_workflow",

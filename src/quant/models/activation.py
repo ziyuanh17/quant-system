@@ -25,6 +25,14 @@ class ActivationDecision(StrEnum):
     BLOCKED = "blocked"
 
 
+class ActivationConsumptionRehearsalScenario(StrEnum):
+    DRY_RUN_RESTART = "dry_run_restart"
+    LOCAL_PAPER_RESTART = "local_paper_restart"
+    EXPIRED_AUTHORIZATION_BLOCK = "expired_authorization_block"
+    SCOPE_MISMATCH_BLOCK = "scope_mismatch_block"
+    SINGLE_CONSUMPTION_ENFORCEMENT = "single_consumption_enforcement"
+
+
 class SemanticTargetActivationAuthorization(FrozenModel):
     """Immutable human authorization for a bounded operational capability."""
 
@@ -99,3 +107,69 @@ class SemanticTargetActivationConsumption(FrozenModel):
     consumed_at: AwareDatetime
     activation_evaluation_path: str = Field(min_length=1)
     reason: str = Field(min_length=1)
+
+
+class ActivationConsumptionRehearsalScenarioResult(FrozenModel):
+    """Evidence summary for one activation-consumption rehearsal scenario."""
+
+    scenario: ActivationConsumptionRehearsalScenario
+    passed: bool
+    activation_decisions: tuple[ActivationDecision, ...] = Field(min_length=1)
+    evaluation_ids: tuple[str, ...] = Field(min_length=1)
+    evaluation_paths: tuple[str, ...] = Field(min_length=1)
+    consumption_ids: tuple[str, ...] = Field(min_length=1)
+    consumption_paths: tuple[str, ...] = Field(min_length=1)
+    workflow_orchestration_ids: tuple[str, ...] = ()
+    workflow_statuses: tuple[str, ...] = ()
+    workflow_paths: tuple[str, ...] = ()
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def evidence_sequences_must_align(
+        self,
+    ) -> "ActivationConsumptionRehearsalScenarioResult":
+        count = len(self.activation_decisions)
+        if (
+            len(self.evaluation_ids) != count
+            or len(self.evaluation_paths) != count
+            or len(self.consumption_ids) != count
+            or len(self.consumption_paths) != count
+        ):
+            raise ValueError("activation rehearsal evidence must align")
+        if (
+            len(self.workflow_orchestration_ids) != len(self.workflow_paths)
+            or len(self.workflow_statuses) != len(self.workflow_paths)
+        ):
+            raise ValueError(
+                "activation rehearsal workflow evidence must align"
+            )
+        return self
+
+
+class ActivationConsumptionRehearsalReport(FrozenModel):
+    """Immutable second-layer rehearsal report for activation consumption."""
+
+    schema_version: Literal[1] = 1
+    rehearsal_id: str = Field(min_length=1)
+    rehearsal_policy_version: str = Field(min_length=1)
+    base_rehearsal_id: str = Field(min_length=1)
+    base_rehearsal_report_path: str = Field(min_length=1)
+    base_rehearsal_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    evaluated_at: AwareDatetime
+    passed: bool
+    scenarios: tuple[ActivationConsumptionRehearsalScenarioResult, ...] = Field(
+        min_length=1
+    )
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def passed_must_match_scenarios(
+        self,
+    ) -> "ActivationConsumptionRehearsalReport":
+        if self.passed != all(item.passed for item in self.scenarios):
+            raise ValueError("activation rehearsal passed status must match")
+        if len({item.scenario for item in self.scenarios}) != len(
+            self.scenarios
+        ):
+            raise ValueError("activation rehearsal scenarios must be unique")
+        return self

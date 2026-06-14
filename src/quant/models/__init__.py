@@ -1,6 +1,9 @@
 """Expose the public quant.models package API."""
 
 from quant.models.activation import (
+    ActivationConsumptionRehearsalReport,
+    ActivationConsumptionRehearsalScenario,
+    ActivationConsumptionRehearsalScenarioResult,
     ActivationDecision,
     ActivationEffectiveStatus,
     SemanticTargetActivationAuthorization,
@@ -135,6 +138,9 @@ from quant.models.workflow import (
 )
 
 __all__ = [
+    "ActivationConsumptionRehearsalReport",
+    "ActivationConsumptionRehearsalScenario",
+    "ActivationConsumptionRehearsalScenarioResult",
     "ActivationDecision",
     "ActivationEffectiveStatus",
     "BacktestConfig",

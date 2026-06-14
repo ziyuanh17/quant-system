@@ -339,3 +339,25 @@ The original controlled orchestration APIs remain available without activation
 so the local rehearsal can construct the evidence required by the gate.
 Activated wrappers are the reviewed consumer boundary. They still have no CLI,
 Alpaca, scheduler, runtime-clone, or server entry point.
+
+## Activation-Consumption Rehearsal
+
+Activation consumption is verified by a separate second-layer no-network
+rehearsal. It cannot safely be part of the base orchestration rehearsal because
+an authorization must bind the exact completed base report before consumption.
+
+The second-layer rehearsal verifies:
+
+```text
+activated dry-run restart idempotency
+activated local semantic-paper restart idempotency
+expired authorization blocking before target artifacts
+scope-mismatch blocking before local-paper artifacts
+one-evaluation-to-one-orchestration consumption enforcement
+```
+
+Its immutable report binds the verified base rehearsal path and SHA-256, exact
+activation evaluation and consumption identities, and resulting workflow
+identities and statuses. Restart verification reopens every linked artifact.
+The rehearsal is API-only and has no Alpaca, CLI, scheduler, runtime-clone,
+network, or server entry point.
