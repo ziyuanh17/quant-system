@@ -361,3 +361,24 @@ activation evaluation and consumption identities, and resulting workflow
 identities and statuses. Restart verification reopens every linked artifact.
 The rehearsal is API-only and has no Alpaca, CLI, scheduler, runtime-clone,
 network, or server entry point.
+
+## Activated Dry-Run Operator Boundary
+
+The first semantic-target operator boundary exposes only activated dry-run:
+
+```text
+schema-versioned reviewed request artifact
+  -> preserve immutable request copy
+  -> load exact target and activation evidence
+  -> revalidate and atomically consume activation
+  -> run controlled semantic-target dry-run
+  -> return nonzero on any blocked stage
+```
+
+`ActivatedDryRunOperatorRequest` embeds the account snapshot, risk policy,
+execution policy, reference price, evaluation time, and target identities, and
+references the exact authorization, base rehearsal, passing
+activation-consumption rehearsal, contributor, decision, and evaluation
+artifacts. The CLI command has no mode or broker selector. Local semantic
+paper, Alpaca, scheduler, runtime-clone deployment, and order submission remain
+outside the operator boundary.

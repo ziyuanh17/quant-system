@@ -124,13 +124,14 @@ side discussions.
 | 104 | Semantic-Target Reconciliation-Failure Rehearsal v1 | Done | Inject a deterministic local reconciliation failure and prove a single filled order remains unsatisfied without duplication across restart. |
 | 105 | Semantic-Target Operational Activation Gate v1 | Done | Add immutable, time-bounded authorization and durable fail-closed evaluations bound to exact verified rehearsal evidence, without exposing any operational path. |
 | 106 | Activated Local Semantic-Target Orchestration v1 | Done | Revalidate and atomically consume one activation evaluation for exactly one API-only dry-run or local semantic-paper orchestration, with durable blocked evidence and no operational exposure. |
-| 107 | Activation-Consumption Local Rehearsal v1 | In Review | Add a second-layer immutable no-network rehearsal proving allowed restart behavior, blocked authorization, and one-evaluation-to-one-orchestration enforcement. |
+| 107 | Activation-Consumption Local Rehearsal v1 | Done | Add a second-layer immutable no-network rehearsal proving allowed restart behavior, blocked authorization, and one-evaluation-to-one-orchestration enforcement. |
+| 108 | Activated Semantic-Target Dry-Run Operator Boundary v1 | In Review | Expose one reviewed-request CLI command hardcoded to activated dry-run, with immutable request evidence and no paper, Alpaca, scheduler, runtime, or order capability. |
 
 ## Current Recommendation
 
-Review **Activation-Consumption Local Rehearsal v1**, then decide whether the
-next stage should expose activated dry-run through a separately reviewed
-operator boundary. Do not expose Alpaca semantic targets, runtime-clone
+Review **Activated Semantic-Target Dry-Run Operator Boundary v1**, then decide
+whether to run one local operator rehearsal using reviewed synthetic artifacts.
+Do not expose semantic local paper, Alpaca semantic targets, runtime-clone
 deployment, or recurring scheduler as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and

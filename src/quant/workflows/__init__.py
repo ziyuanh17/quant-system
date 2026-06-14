@@ -1,5 +1,11 @@
 """Expose the public quant.workflows package API."""
 
+from quant.workflows.activated_dry_run_operator import (
+    ActivatedDryRunOperatorResult,
+    load_activated_dry_run_operator_request,
+    run_activated_dry_run_operator_request,
+    write_activated_dry_run_operator_request,
+)
 from quant.workflows.activated_semantic_targets import (
     ActivatedSemanticTargetWorkflowResult,
     load_semantic_target_activation_consumption,
@@ -41,12 +47,16 @@ from quant.workflows.semantic_targets import (
 __all__ = [
     "WorkflowRunFailed",
     "ActivatedSemanticTargetWorkflowResult",
+    "ActivatedDryRunOperatorResult",
     "ACTIVATION_CONSUMPTION_REHEARSAL_POLICY",
     "load_and_verify_activation_consumption_rehearsal",
     "run_activation_consumption_local_rehearsal",
     "load_semantic_target_activation_consumption",
     "run_activated_semantic_target_dry_run_workflow",
     "run_activated_semantic_target_paper_workflow",
+    "load_activated_dry_run_operator_request",
+    "run_activated_dry_run_operator_request",
+    "write_activated_dry_run_operator_request",
     "run_alpaca_paper_refresh_workflow",
     "run_dry_run_refresh_workflow",
     "run_paper_signal_refresh_workflow",

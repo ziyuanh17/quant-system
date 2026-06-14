@@ -47,6 +47,13 @@ expired and scope-mismatch blocking, and atomic single-consumption
 enforcement. Its immutable report verifies the base report digest and every
 linked activation, consumption, and workflow artifact.
 
+The activated dry-run operator boundary consumes one schema-versioned reviewed
+request artifact through `quant dry-run activated-target`. It preserves the
+request, verifies the exact passing activation-consumption rehearsal, hardcodes
+dry-run safety, and exits nonzero for blocked activation, blocked target
+stages, or a blocked dry-run observation. It exposes no mode, broker,
+local-paper, Alpaca, scheduler, or runtime selector.
+
 ## Paper Signal Refresh
 
 Run:

@@ -75,6 +75,8 @@ Checked-in semantic-target capabilities include:
   one-evaluation-to-one-orchestration consumption claims;
 - second-layer no-network activation-consumption rehearsal with immutable,
   evidence-verified allowed, blocked, restart, and single-consumption results;
+- reviewed-request activated dry-run CLI with no mode, broker, paper, Alpaca,
+  scheduler, runtime, or order-submission capability;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -95,6 +97,12 @@ wrappers are not exposed operationally.
 The activation-consumption rehearsal is separate from the base orchestration
 rehearsal to avoid circular authorization evidence. It binds the completed base
 report by path and digest and remains API-only.
+
+The only semantic-target operator command is
+`quant dry-run activated-target`. It consumes a schema-versioned reviewed
+request, verifies exact passing activation-consumption rehearsal evidence, and
+hardcodes the activated dry-run path. Semantic local paper and Alpaca remain
+API-only.
 
 ## Safety And Activation Boundary
 
@@ -132,7 +140,7 @@ Before connecting semantic targets to recurring operations:
    boundary;
 2. review the controlled orchestration and reconciliation-failure rehearsal
    evidence;
-3. review the activation-consumption rehearsal evidence;
+3. review the activated dry-run operator boundary;
 4. separately review any CLI, runtime-clone, or recurring scheduler exposure;
 5. obtain explicit approval before every broker order-capable rehearsal.
 

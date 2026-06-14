@@ -1,9 +1,10 @@
 # Runbook
 
 This runbook documents current CLI operations. The CLI commands below are the
-legacy signal-oriented lane unless stated otherwise. The semantic-target
-architecture is currently library/API driven and has no CLI or recurring
-scheduler entry point. See
+legacy signal-oriented lane unless stated otherwise. Semantic-target execution
+remains library/API driven except for the activated dry-run command documented
+below. No semantic-target command reaches local paper, Alpaca, or a recurring
+scheduler. See
 [current_system_status.md](current_system_status.md).
 
 ## Local Backtest
@@ -119,6 +120,27 @@ data/workflows/dry-run-refresh/
 
 Add `--publish-status-path site/status.json` when the run should refresh the
 static dashboard health payload.
+
+## Run A Reviewed Activated Semantic-Target Dry-Run
+
+```bash
+quant dry-run activated-target \
+  --request-path reviewed/activated-dry-run-request.json \
+  --activation-root data/semantic-target/activation \
+  --output-root data/semantic-target/dry-run
+```
+
+The schema-versioned request artifact names the exact authorization, base
+rehearsal, passing activation-consumption rehearsal, contributor set, strategy
+decisions, and strategy evaluations. It also embeds the reviewed risk policy,
+account snapshot, execution policy, reference price, identifiers, and
+evaluation time.
+
+The command preserves an immutable copy of the request, revalidates and
+atomically consumes activation evidence, and runs only the semantic-target
+dry-run path. It has no mode or broker selector and cannot invoke local paper
+or Alpaca. Blocked activation creates request and activation evidence but no
+strategy, portfolio, risk, lifecycle, or dry-run workflow artifacts.
 
 ## Run The Service Wrapper
 
