@@ -131,6 +131,8 @@ before proceeding.
    events, and failed reconciliation.
 4. Review the API-only operational activation gate, which currently supports
    dry-run and local semantic paper and explicitly blocks Alpaca paper.
-5. Review any proposed CLI, runtime-clone, or scheduler exposure separately.
-6. Require explicit approval immediately before any broker order-capable
+5. Review the activated local orchestration wrappers and their atomic
+   one-evaluation-to-one-orchestration consumption claim.
+6. Review any proposed CLI, runtime-clone, or scheduler exposure separately.
+7. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

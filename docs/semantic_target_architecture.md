@@ -316,3 +316,26 @@ Gate v1 supports only `dry_run` and `semantic_paper`. It deliberately blocks
 `alpaca_paper`, and it has no CLI, scheduler, runtime-clone, broker, or workflow
 invocation boundary. A later reviewed exposure stage must consume an allowed
 evaluation and revalidate it before doing any operational work.
+
+## Activated Local Orchestration
+
+The API-only activated wrappers consume the gate for dry-run and local
+semantic paper without exposing either path operationally:
+
+```text
+authorization and exact rehearsal evidence
+  -> immediate activation re-evaluation
+  -> atomic one-evaluation-to-one-orchestration consumption claim
+  -> allowed: controlled dry-run or local semantic-paper orchestration
+  -> blocked: durable evaluation and consumption evidence, then stop
+```
+
+The immutable consumption artifact binds the activation evaluation ID, scope,
+and orchestration ID. Concurrent or later attempts to use the same evaluation
+for another orchestration fail closed. Allowed consumption evidence is included
+in portfolio and risk target evidence and therefore in orchestration identity.
+
+The original controlled orchestration APIs remain available without activation
+so the local rehearsal can construct the evidence required by the gate.
+Activated wrappers are the reviewed consumer boundary. They still have no CLI,
+Alpaca, scheduler, runtime-clone, or server entry point.

@@ -2,6 +2,7 @@ from quant.models.activation import (
     ActivationDecision,
     ActivationEffectiveStatus,
     SemanticTargetActivationAuthorization,
+    SemanticTargetActivationConsumption,
     SemanticTargetActivationEvaluation,
     SemanticTargetActivationScope,
 )
@@ -154,6 +155,7 @@ __all__ = [
     "SemanticTargetWorkflowRecord",
     "SemanticTargetWorkflowStatus",
     "SemanticTargetActivationAuthorization",
+    "SemanticTargetActivationConsumption",
     "SemanticTargetActivationEvaluation",
     "SemanticTargetActivationScope",
     "DashboardHealthIssue",

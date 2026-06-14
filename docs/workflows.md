@@ -34,6 +34,13 @@ semantic-paper scopes; Alpaca paper is explicitly unsupported. The gate does
 not expose or invoke a workflow, broker adapter, CLI command, scheduler, or
 runtime service.
 
+Separate API-only activated wrappers consume an allowed evaluation for exactly
+one dry-run or local semantic-paper orchestration. They immediately re-evaluate
+authorization and rehearsal evidence, atomically bind the evaluation to one
+orchestration, and stop before target or execution artifacts when blocked.
+These wrappers remain unavailable to CLI, Alpaca, schedulers, and runtime
+services.
+
 ## Paper Signal Refresh
 
 Run:

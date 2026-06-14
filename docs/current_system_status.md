@@ -71,6 +71,8 @@ Checked-in semantic-target capabilities include:
 - immutable, time-bounded semantic-target activation authorizations and
   durable evaluation artifacts that bind the exact verified local rehearsal
   report;
+- API-only activated dry-run and local semantic-paper wrappers with atomic
+  one-evaluation-to-one-orchestration consumption claims;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -82,6 +84,11 @@ Activation gate v1 can evaluate authorization only for semantic dry-run and
 local semantic paper. It explicitly blocks Alpaca paper scope and does not
 itself invoke an authorized workflow. Activation artifacts are written under
 the caller-selected root in `authorizations/` and `evaluations/`.
+
+The separate activated wrappers revalidate and consume gate evidence before
+calling controlled dry-run or local semantic paper. Blocked activation creates
+no strategy, portfolio, risk, lifecycle, or semantic-paper artifacts. These
+wrappers are not exposed operationally.
 
 ## Safety And Activation Boundary
 
@@ -119,7 +126,7 @@ Before connecting semantic targets to recurring operations:
    boundary;
 2. review the controlled orchestration and reconciliation-failure rehearsal
    evidence;
-3. review the separate operational activation gate before any exposure;
+3. review the activated local orchestration consumption boundary;
 4. separately review any CLI, runtime-clone, or recurring scheduler exposure;
 5. obtain explicit approval before every broker order-capable rehearsal.
 

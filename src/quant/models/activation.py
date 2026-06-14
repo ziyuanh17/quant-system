@@ -83,3 +83,17 @@ class SemanticTargetActivationEvaluation(FrozenModel):
         if self.decision == ActivationDecision.BLOCKED and not self.issues:
             raise ValueError("blocked activation evaluations require issues")
         return self
+
+
+class SemanticTargetActivationConsumption(FrozenModel):
+    """Immutable binding of one activation evaluation to one orchestration."""
+
+    schema_version: Literal[1] = 1
+    consumption_id: str = Field(min_length=1)
+    orchestration_id: str = Field(min_length=1)
+    requested_scope: SemanticTargetActivationScope
+    activation_evaluation_id: str = Field(min_length=1)
+    activation_decision: ActivationDecision
+    consumed_at: AwareDatetime
+    activation_evaluation_path: str = Field(min_length=1)
+    reason: str = Field(min_length=1)

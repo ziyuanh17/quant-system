@@ -1,3 +1,9 @@
+from quant.workflows.activated_semantic_targets import (
+    ActivatedSemanticTargetWorkflowResult,
+    load_semantic_target_activation_consumption,
+    run_activated_semantic_target_dry_run_workflow,
+    run_activated_semantic_target_paper_workflow,
+)
 from quant.workflows.paper_signal_refresh import (
     WorkflowRunFailed,
     run_alpaca_paper_refresh_workflow,
@@ -27,6 +33,10 @@ from quant.workflows.semantic_targets import (
 
 __all__ = [
     "WorkflowRunFailed",
+    "ActivatedSemanticTargetWorkflowResult",
+    "load_semantic_target_activation_consumption",
+    "run_activated_semantic_target_dry_run_workflow",
+    "run_activated_semantic_target_paper_workflow",
     "run_alpaca_paper_refresh_workflow",
     "run_dry_run_refresh_workflow",
     "run_paper_signal_refresh_workflow",
