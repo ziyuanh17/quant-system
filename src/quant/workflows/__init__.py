@@ -74,6 +74,15 @@ from quant.workflows.supervised_autonomous_dry_run_rehearsal import (
     load_and_verify_supervised_autonomous_dry_run_rehearsal,
     run_supervised_autonomous_dry_run_local_rehearsal,
 )
+from quant.workflows.supervised_provider_assembly import (
+    LOCAL_HEALTH_SOURCE_ID,
+    LOCAL_PROVIDER_ASSEMBLY_VERSION,
+    LOCAL_REQUEST_SOURCE_ID,
+    assemble_local_supervised_provider_inputs,
+    load_supervised_provider_assembly_manifest,
+    load_supervised_provider_assembly_record,
+    write_supervised_provider_assembly_manifest,
+)
 from quant.workflows.supervised_provider_inputs import (
     evaluate_supervised_health_snapshot,
     load_supervised_health_snapshot,
@@ -144,4 +153,11 @@ __all__ = [
     "write_supervised_health_snapshot",
     "write_supervised_provider_policy",
     "write_supervised_request_envelope",
+    "LOCAL_PROVIDER_ASSEMBLY_VERSION",
+    "LOCAL_HEALTH_SOURCE_ID",
+    "LOCAL_REQUEST_SOURCE_ID",
+    "assemble_local_supervised_provider_inputs",
+    "load_supervised_provider_assembly_manifest",
+    "load_supervised_provider_assembly_record",
+    "write_supervised_provider_assembly_manifest",
 ]

@@ -85,3 +85,5 @@ The first complete no-network rehearsal is recorded in
 The reviewed contracts for production-shaped health snapshots and fresh
 request envelopes are documented in
 [supervised_provider_contracts.md](supervised_provider_contracts.md).
+The API-only local assembly of those inputs is documented in
+[local_supervised_provider_assembly.md](local_supervised_provider_assembly.md).

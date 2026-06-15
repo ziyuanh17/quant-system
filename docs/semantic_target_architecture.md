@@ -434,3 +434,10 @@ versions, required health components, and maximum input ages. Immutable health
 snapshots are converted to fail-closed cycle health checks. Immutable request
 envelopes are released only when source, cycle, authorization, and freshness
 all match.
+
+The local provider assembly implements the first source for those contract
+objects. A content-bound manifest names exact provider-policy, authorization,
+contributor-set, strategy-target, and evaluation artifacts. Assembly validates
+their hashes, identities, freshness, authorization scope, active aggregation,
+and dry-run account inputs before writing one health snapshot and request
+envelope. It does not run the supervisor.

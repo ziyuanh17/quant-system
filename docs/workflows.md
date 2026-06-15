@@ -95,6 +95,12 @@ current and healthy. Requests proceed only when source, cycle, authorization,
 generation time, expiry, and maximum age all match the versioned provider
 policy. Provider mismatches stop before the autonomous workflow.
 
+The API-only local provider assembly consumes one content-bound manifest of
+reviewed semantic-target artifacts. It validates every file hash and required
+identity before writing one immutable health snapshot and request envelope.
+Restart verifies the manifest and output hashes. It does not run the
+supervisor or expose any operational path.
+
 ## Paper Signal Refresh
 
 Run:

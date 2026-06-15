@@ -108,3 +108,8 @@ separately decide which local components build the health snapshot and request
 envelope, where those artifacts are delivered, and how unavailable inputs are
 reported. That future design must remain broker-free until separately
 reviewed.
+
+The first API-only local implementation is documented in
+[local_supervised_provider_assembly.md](local_supervised_provider_assembly.md).
+It builds the contract objects only from exact content-hashed reviewed
+semantic-target artifacts.

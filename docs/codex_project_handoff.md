@@ -151,7 +151,9 @@ before proceeding.
     before proposing any deployment mechanism.
 12. Build and rehearse a local no-network provider assembly before proposing
     any deployment mechanism.
-13. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+13. Review the local provider assembly and its no-network rehearsal before
+    proposing any deployment mechanism.
+14. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-14. Require explicit approval immediately before any broker order-capable
+15. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

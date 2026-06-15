@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted provider-contract bundle:
-  `7cce343`
+- Reviewed source commit before this uncommitted provider-assembly bundle:
+  `2f6df02`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -149,12 +149,19 @@ scenarios and produced 10 cycle events, 8 health checks, 5 autonomous dry-run
 records, and zero order, fill, semantic-paper, or Alpaca directories. See
 [supervised_autonomous_dry_run_rehearsal.md](supervised_autonomous_dry_run_rehearsal.md).
 
-The current uncommitted provider-contract bundle also adds immutable,
+The checked-in provider-contract baseline includes immutable,
 production-shaped health snapshots and request envelopes. Versioned policy
 validation fails closed on missing, stale, expired, future-dated, wrong-source,
 wrong-cycle, or unauthorized inputs. These adapters remain API-only and have
 no deployment or operational connection. See
 [supervised_provider_contracts.md](supervised_provider_contracts.md).
+
+The current uncommitted review bundle adds an API-only local provider assembly.
+It consumes exact content-hashed reviewed semantic-target artifacts and writes
+one health snapshot and request envelope only after strict identity,
+freshness, authorization, aggregation, and dry-run account validation. It
+does not run the supervisor or connect to deployment. See
+[local_supervised_provider_assembly.md](local_supervised_provider_assembly.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -208,8 +215,9 @@ Before connecting semantic targets to recurring operations:
 4. review the API-only supervised dry-run service and its no-network
    rehearsal;
 5. review the supervised health and fresh-request provider contracts;
-6. separately review any CLI, runtime-clone, or recurring scheduler exposure;
-7. obtain explicit approval before every broker order-capable rehearsal.
+6. review and rehearse the local supervised provider assembly;
+7. separately review any CLI, runtime-clone, or recurring scheduler exposure;
+8. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 

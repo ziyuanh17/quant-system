@@ -324,6 +324,76 @@ class SupervisedRequestEnvelope(FrozenModel):
         return self
 
 
+class SupervisedProviderAssemblyManifest(FrozenModel):
+    """Content-bound inputs for one local no-network provider assembly."""
+
+    schema_version: Literal[1] = 1
+    assembly_id: str = Field(min_length=1)
+    service_id: str = Field(min_length=1)
+    cycle_index: int = Field(ge=1)
+    provider_policy_path: str = Field(min_length=1)
+    provider_policy_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    authorization_path: str = Field(min_length=1)
+    authorization_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    contributor_set_path: str = Field(min_length=1)
+    contributor_set_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    strategy_decision_paths: tuple[str, ...] = Field(min_length=1)
+    strategy_decision_sha256s: tuple[str, ...] = Field(min_length=1)
+    strategy_evaluation_paths: tuple[str, ...] = Field(min_length=1)
+    strategy_evaluation_sha256s: tuple[str, ...] = Field(min_length=1)
+    risk_policy: ResearchRiskPolicy
+    portfolio_target_id: str = Field(min_length=1)
+    portfolio_target_revision: int = Field(ge=1)
+    risk_target_id: str = Field(min_length=1)
+    risk_target_revision: int = Field(ge=1)
+    account: LiveAccountSnapshot
+    execution_policy: ExecutionLifecyclePolicy
+    reference_price: float = Field(gt=0)
+    generated_at: AwareDatetime
+    valid_until: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def paths_and_hashes_align(self) -> "SupervisedProviderAssemblyManifest":
+        if len(self.strategy_decision_paths) != len(
+            self.strategy_decision_sha256s
+        ):
+            raise ValueError("strategy decision paths and hashes must align")
+        if len(self.strategy_evaluation_paths) != len(
+            self.strategy_evaluation_sha256s
+        ):
+            raise ValueError("strategy evaluation paths and hashes must align")
+        if len(set(self.strategy_decision_paths)) != len(
+            self.strategy_decision_paths
+        ):
+            raise ValueError("strategy decision paths must be unique")
+        if len(set(self.strategy_evaluation_paths)) != len(
+            self.strategy_evaluation_paths
+        ):
+            raise ValueError("strategy evaluation paths must be unique")
+        if self.valid_until <= self.generated_at:
+            raise ValueError("assembly validity interval must be positive")
+        return self
+
+
+class SupervisedProviderAssemblyRecord(FrozenModel):
+    """Immutable result linking one local provider assembly."""
+
+    schema_version: Literal[1] = 1
+    assembly_id: str = Field(min_length=1)
+    manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    service_id: str = Field(min_length=1)
+    cycle_index: int = Field(ge=1)
+    health_snapshot_id: str = Field(min_length=1)
+    request_envelope_id: str = Field(min_length=1)
+    health_snapshot_path: str = Field(min_length=1)
+    health_snapshot_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    request_envelope_path: str = Field(min_length=1)
+    request_envelope_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    assembled_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+
 class SupervisedDryRunHealthCheck(FrozenModel):
     """Immutable health decision for one supervised service cycle."""
 
