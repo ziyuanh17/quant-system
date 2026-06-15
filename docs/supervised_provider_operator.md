@@ -48,6 +48,11 @@ Both invocations returned the same completed assembly and supervised-service
 result. The evidence tree contained 20 files and no `orders`, `fills`,
 `semantic-paper`, or `alpaca` directory.
 
+The separate
+[evidence-verified command rehearsal](supervised_provider_operator_rehearsal.md)
+also covers fresh completion, restart reuse, stale-input blocking, and
+changed-input blocking through the actual executable.
+
 ## Review Boundary
 
 This command is finite, manually started, local, and dry-run-only. It does not

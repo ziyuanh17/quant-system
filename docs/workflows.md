@@ -113,6 +113,12 @@ assembly rehearsal, single-cycle service policy, and evidence output root. It
 assembles the provider inputs and runs one supervised dry-run cycle. It has no
 recurring, deployment, paper, Alpaca, broker, or order capability.
 
+Its separate actual-command rehearsal captures immutable executable and source
+identity, arguments, exit code, stdout, and stderr for fresh completion,
+restart reuse, stale-input blocking, and changed-input blocking. The verifier
+reopens every linked artifact and rescans the evidence tree for operational
+directories.
+
 ## Paper Signal Refresh
 
 Run:

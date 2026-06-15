@@ -138,15 +138,16 @@ side discussions.
 | 118 | Supervised Health And Fresh-Request Provider Contracts v1 | Done | Define versioned, immutable, fail-closed health snapshots and request envelopes that bind exact source, cycle, authorization, and freshness without deployment exposure. |
 | 119 | Local Supervised Provider Assembly v1 | Done | Build one health snapshot and fresh-request envelope from exact content-hashed reviewed semantic-target artifacts, with strict validation and restart verification. |
 | 120 | Local Supervised Provider Assembly Rehearsal v1 | Done | Produce and verify immutable no-network evidence for assembly, restart, tamper detection, stale-input rejection, provider-to-supervisor completion, and zero operational output. |
-| 121 | Supervised Provider Dry-Run Operator Boundary v1 | In Review | Expose one manually started reviewed-request command that assembles exact local inputs and runs exactly one supervised dry-run cycle without recurring or operational capability. |
+| 121 | Supervised Provider Dry-Run Operator Boundary v1 | Done | Expose one manually started reviewed-request command that assembles exact local inputs and runs exactly one supervised dry-run cycle without recurring or operational capability. |
+| 122 | Supervised Provider Operator Command Rehearsal v1 | In Review | Produce and verify immutable actual-command evidence for fresh completion, restart reuse, stale-input blocking, changed-input blocking, and zero operational output. |
 
 ## Current Recommendation
 
-Review **Supervised Provider Dry-Run Operator Boundary v1**, then decide
-whether to add a separate evidence-verified command rehearsal covering fresh
-completion, restart reuse, stale-input blocking, and tamper detection. Do not
-expose launchd, runtime deployment, recurring scheduling, semantic local
-paper, Alpaca semantic targets, or broker submission as part of that review.
+Review **Supervised Provider Operator Command Rehearsal v1**, then decide
+whether the next stage should remain manually started while supporting more
+than one freshly assembled dry-run cycle. Do not expose launchd, runtime
+deployment, recurring scheduling, semantic local paper, Alpaca semantic
+targets, or broker submission as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

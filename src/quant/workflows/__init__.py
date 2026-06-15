@@ -104,6 +104,11 @@ from quant.workflows.supervised_provider_operator import (
     run_supervised_provider_operator_request,
     write_supervised_provider_operator_request,
 )
+from quant.workflows.supervised_provider_operator_rehearsal import (
+    SUPERVISED_PROVIDER_OPERATOR_REHEARSAL_POLICY,
+    load_and_verify_supervised_provider_operator_rehearsal,
+    run_supervised_provider_operator_command_rehearsal,
+)
 
 __all__ = [
     "WorkflowRunFailed",
@@ -178,4 +183,7 @@ __all__ = [
     "load_supervised_provider_operator_request",
     "run_supervised_provider_operator_request",
     "write_supervised_provider_operator_request",
+    "SUPERVISED_PROVIDER_OPERATOR_REHEARSAL_POLICY",
+    "load_and_verify_supervised_provider_operator_rehearsal",
+    "run_supervised_provider_operator_command_rehearsal",
 ]

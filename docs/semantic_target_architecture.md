@@ -454,3 +454,8 @@ request, assembles one cycle of provider inputs, and runs exactly one
 supervised dry-run cycle. Its durable result hashes the final assembly and
 service records. It cannot select recurring execution, deployment, paper,
 Alpaca, or a broker.
+
+An evidence-verified actual-command rehearsal binds the exact executable and
+passing assembly rehearsal, then proves fresh completion, restart reuse,
+stale-input blocking, and changed-input blocking. This adds confidence in the
+operator surface without expanding its authority.

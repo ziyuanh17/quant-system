@@ -109,7 +109,11 @@ from quant.models.operations import (
 from quant.models.operator import (
     ActivatedDryRunOperatorRequest,
     ActivatedDryRunRequestInspection,
+    SupervisedProviderOperatorCommandObservation,
     SupervisedProviderOperatorRecord,
+    SupervisedProviderOperatorRehearsalReport,
+    SupervisedProviderOperatorRehearsalScenario,
+    SupervisedProviderOperatorRehearsalScenarioResult,
     SupervisedProviderOperatorRequest,
 )
 from quant.models.reconciliation import (
@@ -163,6 +167,10 @@ __all__ = [
     "ActivatedDryRunOperatorRequest",
     "ActivatedDryRunRequestInspection",
     "SupervisedProviderOperatorRecord",
+    "SupervisedProviderOperatorCommandObservation",
+    "SupervisedProviderOperatorRehearsalReport",
+    "SupervisedProviderOperatorRehearsalScenario",
+    "SupervisedProviderOperatorRehearsalScenarioResult",
     "SupervisedProviderOperatorRequest",
     "AutonomousDryRunAuthorization",
     "AutonomousDryRunLoopManifest",

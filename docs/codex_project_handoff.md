@@ -150,8 +150,9 @@ before proceeding.
 11. Define and review production health and fresh-request provider contracts
     before proposing any deployment mechanism.
 12. Review the checked-in local provider assembly and no-network rehearsal.
-13. Review the uncommitted bounded, manually started assembly-to-supervisor
-    dry-run operator boundary and its actual local command evidence.
+13. Review the checked-in bounded, manually started assembly-to-supervisor
+    dry-run operator boundary and its uncommitted evidence-verified
+    actual-command rehearsal.
 14. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
 15. Require explicit approval immediately before any broker order-capable

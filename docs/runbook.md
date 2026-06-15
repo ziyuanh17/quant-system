@@ -19,7 +19,8 @@ quant dry-run supervised-provider \
 The reviewed request fixes the output root and exact content-hashed inputs.
 The command has no paper, Alpaca, broker, scheduler, runtime, mode, or
 cycle-count selector. See
-[supervised_provider_operator.md](supervised_provider_operator.md).
+[supervised_provider_operator.md](supervised_provider_operator.md) and its
+[actual-command rehearsal](supervised_provider_operator_rehearsal.md).
 
 ## Local Backtest
 
