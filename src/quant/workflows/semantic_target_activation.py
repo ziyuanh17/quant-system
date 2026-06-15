@@ -105,6 +105,26 @@ def evaluate_semantic_target_activation(
         return evaluation
 
 
+def inspect_semantic_target_activation(
+    *,
+    evaluation_id: str,
+    authorization: SemanticTargetActivationAuthorization,
+    requested_scope: SemanticTargetActivationScope,
+    rehearsal_report_path: Path,
+    evaluated_at: datetime,
+) -> SemanticTargetActivationEvaluation:
+    """Evaluate activation evidence without writing or consuming artifacts."""
+    _require_safe_component(evaluation_id, "evaluation ID")
+    _require_safe_component(authorization.authorization_id, "authorization ID")
+    return _evaluate(
+        evaluation_id=evaluation_id,
+        authorization=authorization,
+        requested_scope=requested_scope,
+        rehearsal_report_path=rehearsal_report_path,
+        evaluated_at=evaluated_at,
+    )
+
+
 def load_semantic_target_activation_evaluation(
     path: Path,
 ) -> SemanticTargetActivationEvaluation:

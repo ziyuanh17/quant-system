@@ -54,6 +54,12 @@ dry-run safety, and exits nonzero for blocked activation, blocked target
 stages, or a blocked dry-run observation. It exposes no mode, broker,
 local-paper, Alpaca, scheduler, or runtime selector.
 
+`quant dry-run inspect-activated-target` is the read-only companion command.
+It checks and explains the request using the current time, but writes no files
+and does not consume activation or run any workflow. Inspection is useful
+before execution, but it is not approval and cannot guarantee that a later run
+will still be valid.
+
 ## Paper Signal Refresh
 
 Run:

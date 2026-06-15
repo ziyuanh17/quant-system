@@ -126,15 +126,15 @@ side discussions.
 | 106 | Activated Local Semantic-Target Orchestration v1 | Done | Revalidate and atomically consume one activation evaluation for exactly one API-only dry-run or local semantic-paper orchestration, with durable blocked evidence and no operational exposure. |
 | 107 | Activation-Consumption Local Rehearsal v1 | Done | Add a second-layer immutable no-network rehearsal proving allowed restart behavior, blocked authorization, and one-evaluation-to-one-orchestration enforcement. |
 | 108 | Activated Semantic-Target Dry-Run Operator Boundary v1 | Done | Expose one reviewed-request CLI command hardcoded to activated dry-run, with immutable request evidence and no paper, Alpaca, scheduler, runtime, or order capability. |
-| 109 | Activated Dry-Run Local Operator Rehearsal v1 | In Review | Run the actual activated dry-run command twice with reviewed synthetic inputs and verify one durable intended order, no duplicate evidence, no broker order, and no fill. |
+| 109 | Activated Dry-Run Local Operator Rehearsal v1 | Done | Run the actual activated dry-run command twice with reviewed synthetic inputs and verify one durable intended order, no duplicate evidence, no broker order, and no fill. |
+| 110 | Activated Dry-Run Request Inspection v1 | In Review | Add a read-only CLI command that explains present request validity and intended orders without writing evidence, consuming activation, or running a workflow. |
 
 ## Current Recommendation
 
-Review **Activated Dry-Run Local Operator Rehearsal v1**, then decide whether
-the activated dry-run command is ready for repeated manual use with newly
-reviewed request files. Do not expose semantic local paper, Alpaca semantic
-targets, runtime-clone deployment, or recurring scheduler as part of that
-review.
+Review **Activated Dry-Run Request Inspection v1**, then use it to inspect one
+newly reviewed request before deciding whether to run that request manually.
+Do not expose semantic local paper, Alpaca semantic targets, runtime-clone
+deployment, or recurring scheduler as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

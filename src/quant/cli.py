@@ -87,6 +87,7 @@ from quant.strategies import (
 )
 from quant.workflows import (
     WorkflowRunFailed,
+    inspect_activated_dry_run_operator_request,
     run_activated_dry_run_operator_request,
     run_alpaca_paper_refresh_workflow,
     run_dry_run_refresh_workflow,
@@ -408,6 +409,62 @@ def dry_run_activated_target(
         record.status != SemanticTargetWorkflowStatus.DRY_RUN_OBSERVED
         or record.dry_run_status == ExecutionDryRunStatus.BLOCKED
     ):
+        raise typer.Exit(code=1)
+
+
+@dry_run_app.command("inspect-activated-target")
+def dry_run_inspect_activated_target(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Activated dry-run request to inspect."),
+    ],
+) -> None:
+    """Explain and validate a request without creating or consuming evidence."""
+    try:
+        inspection = inspect_activated_dry_run_operator_request(request_path)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {inspection.request_id}")
+    typer.echo(f"Valid now: {'yes' if inspection.valid_now else 'no'}")
+    typer.echo(f"Summary: {inspection.summary}")
+    if inspection.symbol is not None:
+        typer.echo(f"Symbol: {inspection.symbol}")
+    if inspection.current_quantity is not None:
+        typer.echo(f"Current position: {inspection.current_quantity} shares")
+    if inspection.approved_target_quantity is not None:
+        typer.echo(
+            f"Approved target: {inspection.approved_target_quantity} shares"
+        )
+    if inspection.intended_order_side is None:
+        typer.echo("Intended order: none")
+    else:
+        typer.echo(
+            "Intended order: "
+            f"{inspection.intended_order_side.value.upper()} "
+            f"{inspection.intended_order_quantity} shares at reference price "
+            f"${inspection.reference_price:.2f} "
+            f"(${inspection.intended_order_notional:.2f} notional)"
+        )
+    typer.echo(
+        f"Authorization valid until: {inspection.authorization_valid_until}"
+    )
+    typer.echo(
+        "Base rehearsal passed: "
+        f"{'yes' if inspection.base_rehearsal_passed else 'no'}"
+    )
+    typer.echo(
+        "Activation-consumption rehearsal passed: "
+        + (
+            "yes"
+            if inspection.activation_consumption_rehearsal_passed
+            else "no"
+        )
+    )
+    for issue in inspection.issues:
+        typer.echo(f"Blocked because: {issue}")
+    typer.echo("Inspection created no activation or execution artifacts.")
+    if not inspection.valid_now:
         raise typer.Exit(code=1)
 
 

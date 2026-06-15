@@ -70,6 +70,50 @@ def test_activated_dry_run_cli_succeeds_and_is_restart_safe(tmp_path) -> None:
     )
 
 
+def test_inspect_activated_dry_run_request_explains_without_writing(
+    tmp_path,
+) -> None:
+    request_path = _request_path(tmp_path)
+    files_before = tuple(sorted(tmp_path.rglob("*")))
+
+    result = CliRunner().invoke(app, _inspect_args(request_path))
+
+    assert result.exit_code == 0
+    assert "Valid now: yes" in result.output
+    assert "Current position: 0 shares" in result.output
+    assert "Approved target: 2 shares" in result.output
+    assert "Intended order: BUY 2 shares" in result.output
+    assert "Inspection created no activation or execution artifacts." in (
+        result.output
+    )
+    assert tuple(sorted(tmp_path.rglob("*"))) == files_before
+
+
+def test_inspect_activated_dry_run_request_reports_block_without_writing(
+    tmp_path,
+) -> None:
+    request_path = _request_path(tmp_path, open_order_ids=("working-1",))
+    files_before = tuple(sorted(tmp_path.rglob("*")))
+
+    result = CliRunner().invoke(app, _inspect_args(request_path))
+
+    assert result.exit_code == 1
+    assert "Valid now: no" in result.output
+    assert "account snapshot contains unsettled working orders" in result.output
+    assert tuple(sorted(tmp_path.rglob("*"))) == files_before
+
+
+def test_inspection_does_not_consume_request_activation(tmp_path) -> None:
+    request_path = _request_path(tmp_path)
+
+    inspection = CliRunner().invoke(app, _inspect_args(request_path))
+    execution = CliRunner().invoke(app, _command_args(tmp_path, request_path))
+
+    assert inspection.exit_code == 0
+    assert execution.exit_code == 0
+    assert "Activation decision: allowed" in execution.output
+
+
 def test_activated_dry_run_cli_blocks_expired_authorization_before_targets(
     tmp_path,
 ) -> None:
@@ -129,6 +173,19 @@ def test_activated_dry_run_cli_has_no_mode_or_broker_selector() -> None:
     assert "broker" not in result.output.lower()
 
 
+def test_activated_dry_run_inspection_has_only_request_selector() -> None:
+    result = CliRunner().invoke(
+        app, ["dry-run", "inspect-activated-target", "--help"]
+    )
+
+    assert result.exit_code == 0
+    assert "--request-path" in result.output
+    assert "--activation-root" not in result.output
+    assert "--output-root" not in result.output
+    assert "--mode" not in result.output
+    assert "broker" not in result.output.lower()
+
+
 def test_activated_dry_run_cli_exits_nonzero_for_blocked_observation(
     tmp_path,
 ) -> None:
@@ -166,6 +223,15 @@ def _command_args(root: Path, request_path: Path) -> list[str]:
         str(root / "activation"),
         "--output-root",
         str(root / "output"),
+    ]
+
+
+def _inspect_args(request_path: Path) -> list[str]:
+    return [
+        "dry-run",
+        "inspect-activated-target",
+        "--request-path",
+        str(request_path),
     ]
 
 
@@ -301,4 +367,4 @@ def _request_path(
 
 
 def _now() -> datetime:
-    return datetime(2026, 6, 14, 16, tzinfo=UTC)
+    return datetime.now(UTC)

@@ -77,6 +77,8 @@ Checked-in semantic-target capabilities include:
   evidence-verified allowed, blocked, restart, and single-consumption results;
 - reviewed-request activated dry-run CLI with no mode, broker, paper, Alpaca,
   scheduler, runtime, or order-submission capability;
+- read-only activated dry-run request inspection that explains current
+  validity and intended orders without writing or consuming evidence;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -98,10 +100,11 @@ The activation-consumption rehearsal is separate from the base orchestration
 rehearsal to avoid circular authorization evidence. It binds the completed base
 report by path and digest and remains API-only.
 
-The only semantic-target operator command is
-`quant dry-run activated-target`. It consumes a schema-versioned reviewed
-request, verifies exact passing activation-consumption rehearsal evidence, and
-hardcodes the activated dry-run path. Semantic local paper and Alpaca remain
+The semantic-target operator commands are limited to
+`quant dry-run inspect-activated-target`, which only reads and explains a
+request, and `quant dry-run activated-target`, which consumes a
+schema-versioned reviewed request and hardcodes the activated dry-run path.
+Neither command can select semantic local paper or Alpaca; those paths remain
 API-only.
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.

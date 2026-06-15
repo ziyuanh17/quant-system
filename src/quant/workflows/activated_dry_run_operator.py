@@ -1,13 +1,38 @@
-"""Execute reviewed activated dry-run operator requests."""
+"""Inspect and execute reviewed activated dry-run operator requests."""
 
 import json
 import os
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 
-from quant.models.activation import SemanticTargetActivationAuthorization
-from quant.models.execution import TradingMode, TradingSafetyCheck
-from quant.models.operator import ActivatedDryRunOperatorRequest
+from quant.execution import (
+    ACCOUNT_WIDE_EXACT_RECONCILIATION_POLICY,
+    DETECT_ONLY_DRIFT_POLICY,
+    SINGLE_MARKET_ORDER_POLICY,
+)
+from quant.models.activation import (
+    SemanticTargetActivationAuthorization,
+    SemanticTargetActivationScope,
+)
+from quant.models.execution import OrderSide, TradingMode, TradingSafetyCheck
+from quant.models.operator import (
+    ActivatedDryRunOperatorRequest,
+    ActivatedDryRunRequestInspection,
+)
+from quant.models.targets import (
+    ContributorSet,
+    PortfolioTargetStatus,
+    RiskTargetStatus,
+    StrategyEvaluation,
+    StrategyEvaluationOutcome,
+    StrategyTargetDecision,
+)
+from quant.research.portfolio_targets import (
+    aggregate_strategy_targets,
+    evaluate_research_risk_target,
+)
 from quant.research.target_artifacts import (
     load_contributor_set,
     load_strategy_evaluation,
@@ -20,13 +45,161 @@ from quant.workflows.activated_semantic_targets import (
 from quant.workflows.activation_consumption_rehearsal import (
     load_and_verify_activation_consumption_rehearsal,
 )
-from quant.workflows.semantic_target_activation import rehearsal_report_sha256
+from quant.workflows.semantic_target_activation import (
+    inspect_semantic_target_activation,
+    rehearsal_report_sha256,
+)
+from quant.workflows.semantic_target_rehearsal import (
+    load_and_verify_semantic_target_rehearsal,
+)
 
 
 @dataclass(frozen=True)
 class ActivatedDryRunOperatorResult:
     request_artifact_path: Path
     activated_workflow: ActivatedSemanticTargetWorkflowResult
+
+
+def inspect_activated_dry_run_operator_request(
+    request_path: Path,
+    *,
+    inspected_at: datetime | None = None,
+) -> ActivatedDryRunRequestInspection:
+    """Explain a request without writing, consuming, or executing artifacts."""
+    request = load_activated_dry_run_operator_request(request_path)
+    current_time = inspected_at or datetime.now(UTC)
+    issues: list[str] = []
+    authorization = SemanticTargetActivationAuthorization.model_validate_json(
+        Path(request.authorization_path).read_text()
+    )
+    activation = inspect_semantic_target_activation(
+        evaluation_id=request.activation_evaluation_id,
+        authorization=authorization,
+        requested_scope=SemanticTargetActivationScope.DRY_RUN,
+        rehearsal_report_path=Path(request.rehearsal_report_path),
+        evaluated_at=current_time,
+    )
+    issues.extend(activation.issues)
+
+    try:
+        base_rehearsal_passed = load_and_verify_semantic_target_rehearsal(
+            Path(request.rehearsal_report_path)
+        ).passed
+    except (OSError, ValueError):
+        base_rehearsal_passed = False
+    activation_consumption_rehearsal_passed = False
+    try:
+        activation_rehearsal = (
+            load_and_verify_activation_consumption_rehearsal(
+                Path(request.activation_consumption_rehearsal_report_path)
+            )
+        )
+        activation_consumption_rehearsal_passed = (
+            activation_rehearsal.passed
+            and rehearsal_report_sha256(Path(request.rehearsal_report_path))
+            == activation_rehearsal.base_rehearsal_report_sha256
+        )
+        if not activation_consumption_rehearsal_passed:
+            issues.append(
+                "activation-consumption rehearsal does not match the "
+                "passing base rehearsal"
+            )
+    except (OSError, ValueError) as error:
+        issues.append(
+            f"activation-consumption rehearsal verification failed: {error}"
+        )
+
+    contributor_set = load_contributor_set(Path(request.contributor_set_path))
+    decisions = tuple(
+        load_strategy_target_decision(Path(path))
+        for path in request.strategy_decision_paths
+    )
+    evaluations = tuple(
+        load_strategy_evaluation(Path(path))
+        for path in request.strategy_evaluation_paths
+    )
+    issues.extend(
+        _strategy_evaluation_issues(contributor_set, decisions, evaluations)
+    )
+    portfolio_target = aggregate_strategy_targets(
+        portfolio_target_id=request.portfolio_target_id,
+        revision=request.portfolio_target_revision,
+        contributor_set=contributor_set,
+        decisions=decisions,
+        evaluated_at=current_time,
+    )
+    if portfolio_target.status != PortfolioTargetStatus.AGGREGATED:
+        issues.append(portfolio_target.reason)
+        issues.extend(
+            item.reason
+            for item in portfolio_target.contribution_evaluations
+            if item.target_value is None
+        )
+    risk_target = evaluate_research_risk_target(
+        risk_target_id=request.risk_target_id,
+        revision=request.risk_target_revision,
+        portfolio_target=portfolio_target,
+        policy=request.risk_policy,
+        evaluated_at=current_time,
+    )
+    if risk_target.status != RiskTargetStatus.APPROVED:
+        issues.extend(risk_target.reasons)
+
+    target = risk_target.approved_target_value
+    if target is not None and target != target.to_integral_value():
+        issues.append("operational dry-run requires a whole-share target")
+    if request.account.open_order_ids:
+        issues.append("account snapshot contains unsettled working orders")
+    issues.extend(_execution_policy_issues(request))
+
+    current = next(
+        (
+            position.quantity
+            for position in request.account.positions
+            if position.symbol == contributor_set.symbol
+        ),
+        0,
+    )
+    side: OrderSide | None = None
+    quantity: int | None = None
+    notional: float | None = None
+    if target is not None and target == target.to_integral_value():
+        delta = int(target) - current
+        if delta:
+            side = OrderSide.BUY if delta > 0 else OrderSide.SELL
+            quantity = abs(delta)
+            notional = quantity * request.reference_price
+
+    valid = not issues
+    summary = _inspection_summary(
+        valid=valid,
+        symbol=contributor_set.symbol,
+        current=current,
+        target=target,
+        side=side,
+        quantity=quantity,
+    )
+    return ActivatedDryRunRequestInspection(
+        request_id=request.request_id,
+        inspected_at=current_time,
+        valid_now=valid,
+        issues=tuple(dict.fromkeys(issues)),
+        symbol=contributor_set.symbol,
+        current_quantity=current,
+        approved_target_quantity=target,
+        intended_order_side=side,
+        intended_order_quantity=quantity,
+        intended_order_notional=notional,
+        reference_price=request.reference_price,
+        authorization_id=authorization.authorization_id,
+        authorization_effective_status=activation.effective_status,
+        authorization_valid_until=authorization.valid_until,
+        base_rehearsal_passed=base_rehearsal_passed,
+        activation_consumption_rehearsal_passed=(
+            activation_consumption_rehearsal_passed
+        ),
+        summary=summary,
+    )
 
 
 def run_activated_dry_run_operator_request(
@@ -127,6 +300,92 @@ def _persist_or_verify_request(
 
 def _allowed_dry_run_check() -> TradingSafetyCheck:
     return TradingSafetyCheck(mode=TradingMode.DRY_RUN, allowed=True)
+
+
+def _strategy_evaluation_issues(
+    contributor_set: ContributorSet,
+    decisions: tuple[StrategyTargetDecision, ...],
+    evaluations: tuple[StrategyEvaluation, ...],
+) -> tuple[str, ...]:
+    expected = {
+        (item.strategy_id, item.strategy_version)
+        for item in contributor_set.expected_contributors
+    }
+    seen: set[tuple[str, str]] = set()
+    decision_by_id = {item.decision_id: item for item in decisions}
+    issues: list[str] = []
+    if len(decision_by_id) != len(decisions):
+        issues.append("strategy decision IDs are not unique")
+    for evaluation in evaluations:
+        identity = (evaluation.strategy_id, evaluation.strategy_version)
+        if (
+            identity not in expected
+            or evaluation.symbol != contributor_set.symbol
+        ):
+            issues.append(
+                "a strategy evaluation is outside the contributor set"
+            )
+        if identity in seen:
+            issues.append("a contributor has more than one strategy evaluation")
+        seen.add(identity)
+        if evaluation.outcome != StrategyEvaluationOutcome.UNAVAILABLE:
+            decision = decision_by_id.get(
+                evaluation.effective_target_decision_id or ""
+            )
+            if decision is None or (
+                decision.strategy_id,
+                decision.strategy_version,
+                decision.symbol,
+            ) != (
+                evaluation.strategy_id,
+                evaluation.strategy_version,
+                evaluation.symbol,
+            ):
+                issues.append(
+                    "a strategy evaluation does not reference its "
+                    "effective decision"
+                )
+    if seen != expected:
+        issues.append("every expected contributor requires one evaluation")
+    return tuple(issues)
+
+
+def _execution_policy_issues(
+    request: ActivatedDryRunOperatorRequest,
+) -> tuple[str, ...]:
+    policy = request.execution_policy
+    issues: list[str] = []
+    if policy.execution_policy_version != SINGLE_MARKET_ORDER_POLICY:
+        issues.append("execution policy version is not supported")
+    if (
+        policy.reconciliation_policy_version
+        != ACCOUNT_WIDE_EXACT_RECONCILIATION_POLICY
+    ):
+        issues.append("reconciliation policy version is not supported")
+    if policy.drift_policy_version != DETECT_ONLY_DRIFT_POLICY:
+        issues.append("drift policy version is not supported")
+    return tuple(issues)
+
+
+def _inspection_summary(
+    *,
+    valid: bool,
+    symbol: str,
+    current: int,
+    target: Decimal | None,
+    side: OrderSide | None,
+    quantity: int | None,
+) -> str:
+    if not valid:
+        return "The request is blocked and must not be run."
+    if target is None:
+        return "The request has no approved target."
+    if side is None or quantity is None:
+        return f"{symbol} is already at the approved target of {target} shares."
+    return (
+        f"The dry-run would record an intended {side.value.upper()} "
+        f"of {quantity} {symbol} shares, moving from {current} to {target}."
+    )
 
 
 def _write_model_exclusive(

@@ -95,7 +95,10 @@ from quant.models.operations import (
     HealthStatus,
     RunLockRecord,
 )
-from quant.models.operator import ActivatedDryRunOperatorRequest
+from quant.models.operator import (
+    ActivatedDryRunOperatorRequest,
+    ActivatedDryRunRequestInspection,
+)
 from quant.models.reconciliation import (
     ProviderReconciliationReport,
     ReconciliationDifference,
@@ -145,6 +148,7 @@ __all__ = [
     "ActivationDecision",
     "ActivationEffectiveStatus",
     "ActivatedDryRunOperatorRequest",
+    "ActivatedDryRunRequestInspection",
     "BacktestConfig",
     "AssetTradingDetails",
     "BacktestArtifactPaths",

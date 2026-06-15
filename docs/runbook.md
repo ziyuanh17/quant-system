@@ -121,6 +121,22 @@ data/workflows/dry-run-refresh/
 Add `--publish-status-path site/status.json` when the run should refresh the
 static dashboard health payload.
 
+## Inspect A Reviewed Activated Semantic-Target Dry-Run Request
+
+Before running a reviewed request, inspect it:
+
+```bash
+quant dry-run inspect-activated-target \
+  --request-path reviewed/activated-dry-run-request.json
+```
+
+This read-only command checks the files named by the request, evaluates
+authorization and target freshness at the current time, and explains the
+current position, approved target, and intended order. It does not approve the
+request, reserve it, consume its one-use activation, create evidence files, or
+run a dry-run. A later run must repeat all safety checks because account state
+and time-sensitive inputs may change after inspection.
+
 ## Run A Reviewed Activated Semantic-Target Dry-Run
 
 ```bash

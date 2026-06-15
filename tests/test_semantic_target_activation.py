@@ -14,6 +14,7 @@ from quant.workflows import (
     SEMANTIC_TARGET_ORCHESTRATION_POLICY,
     SEMANTIC_TARGET_REHEARSAL_POLICY,
     evaluate_semantic_target_activation,
+    inspect_semantic_target_activation,
     load_semantic_target_activation_authorization,
     rehearsal_report_sha256,
     run_semantic_target_local_rehearsal,
@@ -50,6 +51,22 @@ def test_activation_allows_reviewed_local_scopes_and_is_restart_safe(
     assert first.issues == ()
     assert len(tuple((output_root / "evaluations").glob("*.json"))) == 1
     assert len(tuple((output_root / "authorizations").rglob("*.json"))) == 1
+
+
+def test_activation_inspection_evaluates_without_writing(tmp_path) -> None:
+    report_path, authorization = _authorized_rehearsal(tmp_path)
+    activation_root = tmp_path / "activation"
+
+    evaluation = inspect_semantic_target_activation(
+        evaluation_id="inspection-dry-run",
+        authorization=authorization,
+        requested_scope=SemanticTargetActivationScope.DRY_RUN,
+        rehearsal_report_path=report_path,
+        evaluated_at=_now(),
+    )
+
+    assert evaluation.decision == ActivationDecision.ALLOWED
+    assert not activation_root.exists()
 
 
 def test_activation_v1_blocks_alpaca_even_when_authorized(tmp_path) -> None:

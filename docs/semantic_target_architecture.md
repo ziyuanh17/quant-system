@@ -382,3 +382,9 @@ activation-consumption rehearsal, contributor, decision, and evaluation
 artifacts. The CLI command has no mode or broker selector. Local semantic
 paper, Alpaca, scheduler, runtime-clone deployment, and order submission remain
 outside the operator boundary.
+
+The read-only `inspect-activated-target` command loads the same request and
+explains whether it is valid at inspection time, the current and approved
+share quantities, and the intended order. It creates and consumes nothing.
+This is a preview for a human operator, not an authorization or execution
+claim; the execution command still performs its own durable checks.
