@@ -144,7 +144,10 @@ before proceeding.
    scheduler connection.
 9. Review the finite manually started autonomous dry-run loop before any
    recurring scheduler proposal.
-10. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+10. Review the bounded API-only supervised dry-run service and rehearse all
+    health, shutdown, blocked, error, and restart paths before proposing
+    deployment.
+11. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-11. Require explicit approval immediately before any broker order-capable
+12. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

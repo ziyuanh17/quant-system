@@ -93,6 +93,20 @@ runtime-deployment, or network capability.
 The first actual command result is recorded in
 [finite_autonomous_dry_run_loop_rehearsal.md](finite_autonomous_dry_run_loop_rehearsal.md).
 
+## Supervised API-Only Service
+
+The supervised autonomous dry-run service can obtain one fresh request per
+cycle. A supervisor is a small controller that checks whether automation may
+continue. It checks an explicit shutdown signal and persists a health decision
+before each dry-run, then stops on any degraded, failed, blocked, or uncertain
+condition.
+
+The service is still bounded by a maximum cycle count and maximum runtime. Its
+append-only cycle events support restart after the last completed cycle. It
+has no CLI, scheduler, launchd, runtime, paper, Alpaca, or broker connection.
+See
+[supervised_autonomous_dry_run_service.md](supervised_autonomous_dry_run_service.md).
+
 ## No-Network Rehearsal
 
 The API-only local rehearsal creates isolated synthetic scenarios for:

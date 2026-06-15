@@ -64,6 +64,11 @@ from quant.workflows.semantic_targets import (
     run_semantic_target_dry_run_workflow,
     run_semantic_target_paper_workflow,
 )
+from quant.workflows.supervised_autonomous_dry_run import (
+    load_supervised_dry_run_cycle_events,
+    load_supervised_dry_run_service_record,
+    run_supervised_autonomous_dry_run_service,
+)
 
 __all__ = [
     "WorkflowRunFailed",
@@ -110,4 +115,7 @@ __all__ = [
     "write_semantic_target_activation_authorization",
     "SemanticTargetWorkflowResult",
     "write_data_refresh_workflow_record",
+    "load_supervised_dry_run_cycle_events",
+    "load_supervised_dry_run_service_record",
+    "run_supervised_autonomous_dry_run_service",
 ]

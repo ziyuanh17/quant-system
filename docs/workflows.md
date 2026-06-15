@@ -76,6 +76,14 @@ before starting, stops on the first blocked result, and writes one immutable
 loop summary. It exposes no request discovery, unbounded iterations, paper,
 Alpaca, broker, scheduler, or runtime selector.
 
+The API-only supervised autonomous dry-run service obtains one fresh request
+per cycle while an immutable policy remains within its cycle and runtime
+bounds. It checks an explicit shutdown signal and one durable health decision
+before every run. Any degraded health, blocked run, provider error, or bound
+stops the service. Append-only cycle events support restart without repeating
+completed cycles. No CLI, scheduler, launchd, runtime, paper, Alpaca, or broker
+path calls this service.
+
 ## Paper Signal Refresh
 
 Run:

@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted reconciliation-failure bundle:
-  `cacf25a`
+- Reviewed source commit before this uncommitted supervised-service bundle:
+  `f4a5f53`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -85,6 +85,9 @@ Checked-in semantic-target capabilities include:
   runs, restart safety, expiry, target limits, and halt-after-block behavior;
 - finite manually started autonomous dry-run CLI that accepts one
   content-bound request manifest, stops on block, and cannot run indefinitely;
+- bounded API-only supervised autonomous dry-run service with fresh requests,
+  per-cycle health and shutdown checks, append-only cycle events, and restart
+  continuation;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -133,6 +136,13 @@ rehearsals for two successful requests, then separately proved that a
 working-order block stopped before the second request. Both rehearsals produced
 zero order and fill files. See
 [finite_autonomous_dry_run_loop_rehearsal.md](finite_autonomous_dry_run_loop_rehearsal.md).
+
+The supervised autonomous dry-run service is API-only and uncommitted for
+review. It checks health and an explicit shutdown signal before every cycle,
+stops on any degraded or blocked condition, and uses append-only cycle events
+for restart continuation. It is not connected to CLI, launchd, runtime
+deployment, paper, Alpaca, a broker, or a recurring scheduler. See
+[supervised_autonomous_dry_run_service.md](supervised_autonomous_dry_run_service.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -183,8 +193,10 @@ Before connecting semantic targets to recurring operations:
 2. review the controlled orchestration and reconciliation-failure rehearsal
    evidence;
 3. review the activated dry-run operator boundary;
-4. separately review any CLI, runtime-clone, or recurring scheduler exposure;
-5. obtain explicit approval before every broker order-capable rehearsal.
+4. review the API-only supervised dry-run service and its future no-network
+   rehearsal;
+5. separately review any CLI, runtime-clone, or recurring scheduler exposure;
+6. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 

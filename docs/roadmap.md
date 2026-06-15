@@ -131,16 +131,17 @@ side discussions.
 | 111 | Activated Dry-Run Request Inspection Rehearsal v1 | In Review | Run the actual inspection command twice with fresh synthetic reviewed inputs and verify identical explanations, unchanged files, and no activation consumption or workflow output. |
 | 112 | Bounded Autonomous Semantic-Target Dry-Run API v1 | Done | Authorize repeated broker-free dry-runs within exact deployment limits, atomically record each attempt, and halt later runs after any blocked outcome. |
 | 113 | Autonomous Dry-Run Local Rehearsal v1 | Done | Produce and execute immutable no-network evidence for repeated allowed runs, restart idempotency, expiry, target limits, and halt-after-block behavior. |
-| 114 | Finite Autonomous Dry-Run Operator Loop v1 | In Review | Expose one manually started dry-run command that processes an exact content-bound finite request list, stops on block, and has no recurring or broker capability. |
-| 115 | Finite Autonomous Dry-Run Loop Rehearsal v1 | In Review | Run the actual command for exact-list completion, restart reuse, and stop-on-block behavior while proving zero order and fill output. |
+| 114 | Finite Autonomous Dry-Run Operator Loop v1 | Done | Expose one manually started dry-run command that processes an exact content-bound finite request list, stops on block, and has no recurring or broker capability. |
+| 115 | Finite Autonomous Dry-Run Loop Rehearsal v1 | Done | Run the actual command for exact-list completion, restart reuse, and stop-on-block behavior while proving zero order and fill output. |
+| 116 | Supervised Autonomous Dry-Run Service API v1 | In Review | Add a bounded API-only supervisor with fresh requests, per-cycle health and shutdown checks, append-only cycle events, and restart continuation without CLI, scheduler, runtime, paper, Alpaca, or broker exposure. |
 
 ## Current Recommendation
 
-Review **Finite Autonomous Dry-Run Operator Loop v1** together with its local
-command rehearsal, then decide whether to design a supervised recurring
-dry-run service with explicit health, freshness, and shutdown rules. Do not
-expose semantic local paper, Alpaca semantic targets, or broker submission as
-part of that design.
+Review **Supervised Autonomous Dry-Run Service API v1**, then build a
+no-network service rehearsal that verifies healthy continuation, every stop
+condition, restart recovery, and zero operational output. Do not expose the
+service through CLI, launchd, runtime deployment, semantic local paper, Alpaca
+semantic targets, or broker submission as part of that rehearsal.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

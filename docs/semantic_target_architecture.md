@@ -414,3 +414,11 @@ authorization and finite ordered request list by content hash. It verifies all
 inputs before starting, sleeps only between successful requests, stops on the
 first block, and persists one restart-safe loop summary. It cannot discover or
 generate additional requests.
+
+The supervised autonomous dry-run service is a separate API-only controller
+that can obtain one fresh request per cycle. Before every run it checks an
+explicit shutdown signal and persists a health decision. Degraded or failed
+health, a blocked run, provider error, maximum cycle count, or maximum runtime
+stops the service. Append-only cycle events let a restart continue after the
+last completed cycle without repeating it. The service has no CLI, launchd,
+runtime, paper, Alpaca, broker, or scheduler connection.

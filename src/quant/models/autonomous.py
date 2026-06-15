@@ -25,6 +25,32 @@ class AutonomousDryRunStatus(StrEnum):
     BLOCKED = "blocked"
 
 
+class SupervisedDryRunHealthStatus(StrEnum):
+    """Health decision made immediately before one supervised cycle."""
+
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"
+    FAILED = "failed"
+
+
+class SupervisedDryRunCycleOutcome(StrEnum):
+    """Durable outcome of one supervised service cycle."""
+
+    SUCCEEDED = "succeeded"
+    BLOCKED = "blocked"
+    HEALTH_STOP = "health_stop"
+    SHUTDOWN_STOP = "shutdown_stop"
+    RUNTIME_STOP = "runtime_stop"
+    ERROR_STOP = "error_stop"
+
+
+class SupervisedDryRunServiceStatus(StrEnum):
+    """Final state of one bounded supervised service invocation."""
+
+    COMPLETED = "completed"
+    STOPPED = "stopped"
+
+
 class AutonomousDryRunRehearsalScenario(StrEnum):
     """Required no-network autonomous dry-run rehearsal scenarios."""
 
@@ -164,6 +190,121 @@ class AutonomousDryRunLoopRecord(FrozenModel):
         return self
 
 
+class SupervisedDryRunServicePolicy(FrozenModel):
+    """Immutable bounds for one API-only supervised dry-run service."""
+
+    schema_version: Literal[1] = 1
+    service_id: str = Field(min_length=1)
+    policy_version: str = Field(min_length=1)
+    authorization_id: str = Field(min_length=1)
+    authorization_revision: int = Field(ge=1)
+    maximum_cycles: int = Field(ge=1)
+    interval_seconds: float = Field(ge=0)
+    maximum_runtime_seconds: float = Field(gt=0)
+    created_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+
+class SupervisedDryRunHealthCheck(FrozenModel):
+    """Immutable health decision for one supervised service cycle."""
+
+    schema_version: Literal[1] = 1
+    check_id: str = Field(min_length=1)
+    service_id: str = Field(min_length=1)
+    cycle_index: int = Field(ge=1)
+    status: SupervisedDryRunHealthStatus
+    checked_at: AwareDatetime
+    reasons: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def unhealthy_checks_explain_reason(
+        self,
+    ) -> "SupervisedDryRunHealthCheck":
+        if (
+            self.status != SupervisedDryRunHealthStatus.HEALTHY
+            and not self.reasons
+        ):
+            raise ValueError("unhealthy supervised checks require a reason")
+        return self
+
+
+class SupervisedDryRunCycleEvent(FrozenModel):
+    """Append-only evidence for one supervised check-and-run cycle."""
+
+    schema_version: Literal[1] = 1
+    event_id: str = Field(min_length=1)
+    service_id: str = Field(min_length=1)
+    policy_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    sequence: int = Field(ge=1)
+    cycle_index: int = Field(ge=1)
+    occurred_at: AwareDatetime
+    outcome: SupervisedDryRunCycleOutcome
+    reason: str = Field(min_length=1)
+    health_check_id: str | None = None
+    run_id: str | None = None
+    run_status: AutonomousDryRunStatus | None = None
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def run_evidence_matches_outcome(self) -> "SupervisedDryRunCycleEvent":
+        run_outcomes = {
+            SupervisedDryRunCycleOutcome.SUCCEEDED,
+            SupervisedDryRunCycleOutcome.BLOCKED,
+        }
+        if self.outcome in run_outcomes:
+            if (
+                self.health_check_id is None
+                or self.run_id is None
+                or self.run_status is None
+            ):
+                raise ValueError(
+                    "run cycle events require health and run evidence"
+                )
+            expected = (
+                AutonomousDryRunStatus.SUCCEEDED
+                if self.outcome == SupervisedDryRunCycleOutcome.SUCCEEDED
+                else AutonomousDryRunStatus.BLOCKED
+            )
+            if self.run_status != expected:
+                raise ValueError("run cycle outcome and run status must match")
+        elif self.run_id is not None or self.run_status is not None:
+            raise ValueError("stop events cannot claim a completed run")
+        if (
+            self.outcome == SupervisedDryRunCycleOutcome.HEALTH_STOP
+            and self.health_check_id is None
+        ):
+            raise ValueError("health-stop event requires a health check")
+        return self
+
+
+class SupervisedDryRunServiceRecord(FrozenModel):
+    """Immutable final summary of one bounded supervised dry-run service."""
+
+    schema_version: Literal[1] = 1
+    service_id: str = Field(min_length=1)
+    policy_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    authorization_id: str = Field(min_length=1)
+    authorization_revision: int = Field(ge=1)
+    status: SupervisedDryRunServiceStatus
+    completed_cycles: int = Field(ge=0)
+    started_at: AwareDatetime
+    completed_at: AwareDatetime
+    reason: str = Field(min_length=1)
+    cycle_event_paths: tuple[str, ...] = ()
+    run_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def evidence_counts_are_consistent(
+        self,
+    ) -> "SupervisedDryRunServiceRecord":
+        if self.completed_cycles > len(self.run_ids):
+            raise ValueError("completed cycles cannot exceed recorded runs")
+        if len(self.run_ids) > len(self.cycle_event_paths):
+            raise ValueError("recorded runs cannot exceed cycle events")
+        return self
+
+
 class AutonomousDryRunRehearsalScenarioResult(FrozenModel):
     """Evidence summary for one autonomous dry-run rehearsal scenario."""
 
@@ -181,9 +322,7 @@ class AutonomousDryRunRehearsalScenarioResult(FrozenModel):
         self,
     ) -> "AutonomousDryRunRehearsalScenarioResult":
         if not (
-            len(self.run_ids)
-            == len(self.run_statuses)
-            == len(self.run_paths)
+            len(self.run_ids) == len(self.run_statuses) == len(self.run_paths)
         ):
             raise ValueError("autonomous rehearsal run evidence must align")
         return self
