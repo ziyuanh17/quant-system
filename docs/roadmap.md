@@ -130,14 +130,15 @@ side discussions.
 | 110 | Activated Dry-Run Request Inspection v1 | Done | Add a read-only CLI command that explains present request validity and intended orders without writing evidence, consuming activation, or running a workflow. |
 | 111 | Activated Dry-Run Request Inspection Rehearsal v1 | In Review | Run the actual inspection command twice with fresh synthetic reviewed inputs and verify identical explanations, unchanged files, and no activation consumption or workflow output. |
 | 112 | Bounded Autonomous Semantic-Target Dry-Run API v1 | In Review | Authorize repeated broker-free dry-runs within exact deployment limits, atomically record each attempt, and halt later runs after any blocked outcome. |
+| 113 | Autonomous Dry-Run Local Rehearsal v1 | In Review | Produce and execute immutable no-network evidence for repeated allowed runs, restart idempotency, expiry, target limits, and halt-after-block behavior. |
 
 ## Current Recommendation
 
-Review **Bounded Autonomous Semantic-Target Dry-Run API v1**, then build a
-no-network local rehearsal proving repeated allowed runs, restart safety,
-authorization expiry, limit enforcement, and halt-on-block behavior. Do not
-expose semantic local paper, Alpaca semantic targets, runtime-clone deployment,
-or a recurring scheduler as part of that rehearsal.
+Review **Bounded Autonomous Semantic-Target Dry-Run API v1** together with
+**Autonomous Dry-Run Local Rehearsal v1**, then decide whether to expose a
+finite, manually started autonomous dry-run loop. Do not expose semantic local
+paper, Alpaca semantic targets, runtime-clone deployment, launchd, or an
+unbounded recurring scheduler as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

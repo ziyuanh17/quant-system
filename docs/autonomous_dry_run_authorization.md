@@ -75,3 +75,22 @@ silently skip a blocked result and continue.
 The runner is API-only. There is no CLI, scheduler, launchd service, runtime
 deployment, paper-trading path, Alpaca path, network call, or broker-order
 capability in this stage.
+
+## No-Network Rehearsal
+
+The API-only local rehearsal creates isolated synthetic scenarios for:
+
+```text
+two repeated allowed runs under one authorization
+restart idempotency for one exact run
+expired authorization blocking
+target-limit blocking
+halt of later runs after a working-order block
+```
+
+The rehearsal writes one immutable report and links every authorization,
+autonomous run record, and resulting dry-run workflow record. Reopening the
+report verifies the linked evidence instead of rerunning the scenarios.
+
+The first complete local result is recorded in
+[autonomous_dry_run_rehearsal.md](autonomous_dry_run_rehearsal.md).

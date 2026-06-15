@@ -402,3 +402,8 @@ This removes per-order human review from routine dry-runs while preserving
 human approval for deployment limits and exception recovery. It is not
 connected to a CLI, scheduler, runtime service, paper trading, Alpaca, or a
 broker.
+
+The separate no-network autonomous rehearsal verifies repeated allowed runs,
+restart idempotency, expiry and target-limit blocking, and halt-after-block
+behavior. Its immutable report reopens and checks every linked authorization,
+run record, and workflow record.

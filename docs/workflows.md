@@ -66,6 +66,10 @@ claimed and durably recorded. An expired or exceeded authorization, an
 out-of-scope target, or any blocked run halts later attempts under that
 authorization. No CLI, scheduler, paper, Alpaca, or broker path calls it.
 
+The autonomous dry-run local rehearsal runs five isolated synthetic scenarios
+and writes an immutable report that verifies every linked authorization, run
+record, and dry-run workflow record. It remains API-only and no-network.
+
 ## Paper Signal Refresh
 
 Run:

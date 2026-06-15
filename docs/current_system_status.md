@@ -81,6 +81,8 @@ Checked-in semantic-target capabilities include:
   validity and intended orders without writing or consuming evidence;
 - API-only bounded autonomous dry-run authorization with exact deployment
   limits, atomic run claims, durable run outcomes, and halt-on-block behavior;
+- evidence-verified no-network autonomous dry-run rehearsal covering repeated
+  runs, restart safety, expiry, target limits, and halt-after-block behavior;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -113,6 +115,11 @@ The autonomous dry-run runner is also API-only. It permits repeated routine
 dry-runs under one bounded deployment authorization, but it has no scheduler
 or broker connection. See
 [autonomous_dry_run_authorization.md](autonomous_dry_run_authorization.md).
+
+On June 15, 2026, its complete no-network rehearsal passed repeated-run,
+restart, expiry, target-limit, and halt-after-block scenarios. It produced no
+order files, fill files, or semantic-paper directories. See
+[autonomous_dry_run_rehearsal.md](autonomous_dry_run_rehearsal.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation

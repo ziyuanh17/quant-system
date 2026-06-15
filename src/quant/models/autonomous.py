@@ -25,6 +25,16 @@ class AutonomousDryRunStatus(StrEnum):
     BLOCKED = "blocked"
 
 
+class AutonomousDryRunRehearsalScenario(StrEnum):
+    """Required no-network autonomous dry-run rehearsal scenarios."""
+
+    REPEATED_ALLOWED_RUNS = "repeated_allowed_runs"
+    RESTART_IDEMPOTENCY = "restart_idempotency"
+    EXPIRED_AUTHORIZATION_BLOCK = "expired_authorization_block"
+    TARGET_LIMIT_BLOCK = "target_limit_block"
+    HALT_AFTER_BLOCK = "halt_after_block"
+
+
 class AutonomousDryRunAuthorization(FrozenModel):
     """Immutable permission for a bounded series of broker-free dry-runs."""
 
@@ -99,3 +109,54 @@ class AutonomousDryRunRecord(FrozenModel):
     dry_run_status: str | None = None
     reason: str = Field(min_length=1)
     evidence_refs: tuple[str, ...] = ()
+
+
+class AutonomousDryRunRehearsalScenarioResult(FrozenModel):
+    """Evidence summary for one autonomous dry-run rehearsal scenario."""
+
+    scenario: AutonomousDryRunRehearsalScenario
+    passed: bool
+    authorization_path: str = Field(min_length=1)
+    run_ids: tuple[str, ...] = Field(min_length=1)
+    run_statuses: tuple[AutonomousDryRunStatus, ...] = Field(min_length=1)
+    run_paths: tuple[str, ...] = Field(min_length=1)
+    workflow_paths: tuple[str, ...] = ()
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def evidence_sequences_must_align(
+        self,
+    ) -> "AutonomousDryRunRehearsalScenarioResult":
+        if not (
+            len(self.run_ids)
+            == len(self.run_statuses)
+            == len(self.run_paths)
+        ):
+            raise ValueError("autonomous rehearsal run evidence must align")
+        return self
+
+
+class AutonomousDryRunRehearsalReport(FrozenModel):
+    """Immutable report for bounded autonomous dry-run rehearsal evidence."""
+
+    schema_version: Literal[1] = 1
+    rehearsal_id: str = Field(min_length=1)
+    rehearsal_policy_version: str = Field(min_length=1)
+    evaluated_at: AwareDatetime
+    passed: bool
+    scenarios: tuple[AutonomousDryRunRehearsalScenarioResult, ...] = Field(
+        min_length=1
+    )
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def passed_must_match_scenarios(
+        self,
+    ) -> "AutonomousDryRunRehearsalReport":
+        if self.passed != all(item.passed for item in self.scenarios):
+            raise ValueError("autonomous rehearsal passed status must match")
+        if len({item.scenario for item in self.scenarios}) != len(
+            self.scenarios
+        ):
+            raise ValueError("autonomous rehearsal scenarios must be unique")
+        return self
