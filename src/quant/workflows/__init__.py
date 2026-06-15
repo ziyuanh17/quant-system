@@ -69,6 +69,11 @@ from quant.workflows.supervised_autonomous_dry_run import (
     load_supervised_dry_run_service_record,
     run_supervised_autonomous_dry_run_service,
 )
+from quant.workflows.supervised_autonomous_dry_run_rehearsal import (
+    SUPERVISED_DRY_RUN_REHEARSAL_POLICY,
+    load_and_verify_supervised_autonomous_dry_run_rehearsal,
+    run_supervised_autonomous_dry_run_local_rehearsal,
+)
 
 __all__ = [
     "WorkflowRunFailed",
@@ -118,4 +123,7 @@ __all__ = [
     "load_supervised_dry_run_cycle_events",
     "load_supervised_dry_run_service_record",
     "run_supervised_autonomous_dry_run_service",
+    "SUPERVISED_DRY_RUN_REHEARSAL_POLICY",
+    "load_and_verify_supervised_autonomous_dry_run_rehearsal",
+    "run_supervised_autonomous_dry_run_local_rehearsal",
 ]

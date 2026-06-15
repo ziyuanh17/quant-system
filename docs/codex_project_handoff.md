@@ -147,7 +147,9 @@ before proceeding.
 10. Review the bounded API-only supervised dry-run service and rehearse all
     health, shutdown, blocked, error, and restart paths before proposing
     deployment.
-11. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+11. Define and review production health and fresh-request provider contracts
+    before proposing any deployment mechanism.
+12. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-12. Require explicit approval immediately before any broker order-capable
+13. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

@@ -61,6 +61,19 @@ class AutonomousDryRunRehearsalScenario(StrEnum):
     HALT_AFTER_BLOCK = "halt_after_block"
 
 
+class SupervisedDryRunRehearsalScenario(StrEnum):
+    """Required no-network supervised-service rehearsal scenarios."""
+
+    HEALTHY_CONTINUATION = "healthy_continuation"
+    DEGRADED_HEALTH_STOP = "degraded_health_stop"
+    FAILED_HEALTH_STOP = "failed_health_stop"
+    EXPLICIT_SHUTDOWN_STOP = "explicit_shutdown_stop"
+    BLOCKED_RUN_STOP = "blocked_run_stop"
+    PROVIDER_ERROR_STOP = "provider_error_stop"
+    RUNTIME_BOUND_STOP = "runtime_bound_stop"
+    RESTART_CONTINUATION = "restart_continuation"
+
+
 class AutonomousDryRunAuthorization(FrozenModel):
     """Immutable permission for a bounded series of broker-free dry-runs."""
 
@@ -302,6 +315,63 @@ class SupervisedDryRunServiceRecord(FrozenModel):
             raise ValueError("completed cycles cannot exceed recorded runs")
         if len(self.run_ids) > len(self.cycle_event_paths):
             raise ValueError("recorded runs cannot exceed cycle events")
+        return self
+
+
+class SupervisedDryRunRehearsalScenarioResult(FrozenModel):
+    """Evidence summary for one supervised-service rehearsal scenario."""
+
+    scenario: SupervisedDryRunRehearsalScenario
+    passed: bool
+    service_id: str = Field(min_length=1)
+    service_status: SupervisedDryRunServiceStatus
+    cycle_outcomes: tuple[SupervisedDryRunCycleOutcome, ...] = Field(
+        min_length=1
+    )
+    service_record_path: str = Field(min_length=1)
+    cycle_event_paths: tuple[str, ...] = Field(min_length=1)
+    health_check_paths: tuple[str, ...] = ()
+    run_record_paths: tuple[str, ...] = ()
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def cycle_evidence_must_align(
+        self,
+    ) -> "SupervisedDryRunRehearsalScenarioResult":
+        if len(self.cycle_outcomes) != len(self.cycle_event_paths):
+            raise ValueError("supervised rehearsal cycle evidence must align")
+        return self
+
+
+class SupervisedDryRunRehearsalReport(FrozenModel):
+    """Immutable report for a no-network supervised-service rehearsal."""
+
+    schema_version: Literal[1] = 1
+    rehearsal_id: str = Field(min_length=1)
+    rehearsal_policy_version: str = Field(min_length=1)
+    evidence_root: str = Field(min_length=1)
+    evaluated_at: AwareDatetime
+    passed: bool
+    scenarios: tuple[SupervisedDryRunRehearsalScenarioResult, ...] = Field(
+        min_length=1
+    )
+    prohibited_artifact_paths: tuple[str, ...] = ()
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def passed_must_match_evidence(
+        self,
+    ) -> "SupervisedDryRunRehearsalReport":
+        expected = (
+            all(item.passed for item in self.scenarios)
+            and not self.prohibited_artifact_paths
+        )
+        if self.passed != expected:
+            raise ValueError("supervised rehearsal passed status must match")
+        if len({item.scenario for item in self.scenarios}) != len(
+            self.scenarios
+        ):
+            raise ValueError("supervised rehearsal scenarios must be unique")
         return self
 
 

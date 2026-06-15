@@ -422,3 +422,8 @@ health, a blocked run, provider error, maximum cycle count, or maximum runtime
 stops the service. Append-only cycle events let a restart continue after the
 last completed cycle without repeating it. The service has no CLI, launchd,
 runtime, paper, Alpaca, broker, or scheduler connection.
+
+Its separate no-network rehearsal verifies healthy continuation, degraded and
+failed health stops, explicit shutdown, blocked-run stop, provider-error stop,
+runtime-bound stop, and restart continuation. The evidence verifier rescans
+the rehearsal tree for prohibited operational directories.

@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted supervised-service bundle:
-  `f4a5f53`
+- Reviewed source commit before this uncommitted supervised-rehearsal bundle:
+  `718df9f`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -137,12 +137,18 @@ working-order block stopped before the second request. Both rehearsals produced
 zero order and fill files. See
 [finite_autonomous_dry_run_loop_rehearsal.md](finite_autonomous_dry_run_loop_rehearsal.md).
 
-The supervised autonomous dry-run service is API-only and uncommitted for
-review. It checks health and an explicit shutdown signal before every cycle,
+The supervised autonomous dry-run service is API-only in the checked-in
+baseline. It checks health and an explicit shutdown signal before every cycle,
 stops on any degraded or blocked condition, and uses append-only cycle events
 for restart continuation. It is not connected to CLI, launchd, runtime
 deployment, paper, Alpaca, a broker, or a recurring scheduler. See
 [supervised_autonomous_dry_run_service.md](supervised_autonomous_dry_run_service.md).
+
+The current uncommitted review bundle adds its evidence-verified no-network
+rehearsal. On June 15, 2026, the rehearsal passed eight scenarios and produced
+10 cycle events, 8 health checks, 5 autonomous dry-run records, and zero order,
+fill, semantic-paper, or Alpaca directories. See
+[supervised_autonomous_dry_run_rehearsal.md](supervised_autonomous_dry_run_rehearsal.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -193,7 +199,7 @@ Before connecting semantic targets to recurring operations:
 2. review the controlled orchestration and reconciliation-failure rehearsal
    evidence;
 3. review the activated dry-run operator boundary;
-4. review the API-only supervised dry-run service and its future no-network
+4. review the API-only supervised dry-run service and its no-network
    rehearsal;
 5. separately review any CLI, runtime-clone, or recurring scheduler exposure;
 6. obtain explicit approval before every broker order-capable rehearsal.

@@ -133,15 +133,16 @@ side discussions.
 | 113 | Autonomous Dry-Run Local Rehearsal v1 | Done | Produce and execute immutable no-network evidence for repeated allowed runs, restart idempotency, expiry, target limits, and halt-after-block behavior. |
 | 114 | Finite Autonomous Dry-Run Operator Loop v1 | Done | Expose one manually started dry-run command that processes an exact content-bound finite request list, stops on block, and has no recurring or broker capability. |
 | 115 | Finite Autonomous Dry-Run Loop Rehearsal v1 | Done | Run the actual command for exact-list completion, restart reuse, and stop-on-block behavior while proving zero order and fill output. |
-| 116 | Supervised Autonomous Dry-Run Service API v1 | In Review | Add a bounded API-only supervisor with fresh requests, per-cycle health and shutdown checks, append-only cycle events, and restart continuation without CLI, scheduler, runtime, paper, Alpaca, or broker exposure. |
+| 116 | Supervised Autonomous Dry-Run Service API v1 | Done | Add a bounded API-only supervisor with fresh requests, per-cycle health and shutdown checks, append-only cycle events, and restart continuation without CLI, scheduler, runtime, paper, Alpaca, or broker exposure. |
+| 117 | Supervised Autonomous Dry-Run Service Rehearsal v1 | In Review | Produce and verify immutable no-network evidence for healthy continuation, every fail-closed stop, restart recovery, and zero operational output. |
 
 ## Current Recommendation
 
-Review **Supervised Autonomous Dry-Run Service API v1**, then build a
-no-network service rehearsal that verifies healthy continuation, every stop
-condition, restart recovery, and zero operational output. Do not expose the
-service through CLI, launchd, runtime deployment, semantic local paper, Alpaca
-semantic targets, or broker submission as part of that rehearsal.
+Review **Supervised Autonomous Dry-Run Service Rehearsal v1**, then define the
+production health and fresh-request provider contracts required by a future
+deployment. Do not expose the service through CLI, launchd, runtime deployment,
+semantic local paper, Alpaca semantic targets, or broker submission as part of
+that design.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

@@ -84,6 +84,11 @@ stops the service. Append-only cycle events support restart without repeating
 completed cycles. No CLI, scheduler, launchd, runtime, paper, Alpaca, or broker
 path calls this service.
 
+The supervised-service no-network rehearsal runs eight isolated synthetic
+scenarios and writes one immutable report linking every service record, cycle
+event, health check, and autonomous run. Reopening the report verifies those
+links and confirms that no order, fill, or semantic-paper directory appeared.
+
 ## Paper Signal Refresh
 
 Run:

@@ -78,3 +78,6 @@ This stage proves the service contract and local behavior only. It does not
 provide request discovery, a production health provider, a CLI command,
 launchd configuration, runtime deployment, notification delivery, paper
 execution, or broker access.
+
+The first complete no-network rehearsal is recorded in
+[supervised_autonomous_dry_run_rehearsal.md](supervised_autonomous_dry_run_rehearsal.md).
