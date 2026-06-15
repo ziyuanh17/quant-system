@@ -101,6 +101,12 @@ identity before writing one immutable health snapshot and request envelope.
 Restart verifies the manifest and output hashes. It does not run the
 supervisor or expose any operational path.
 
+The provider-assembly no-network rehearsal runs seven isolated scenarios and
+writes one immutable report linking inputs, legitimate assembly records,
+generated provider inputs, rejection reasons, and one completed supervised
+dry-run service record. Reopening the report verifies those links and rescans
+the evidence tree for prohibited operational directories.
+
 ## Paper Signal Refresh
 
 Run:

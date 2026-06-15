@@ -136,15 +136,17 @@ side discussions.
 | 116 | Supervised Autonomous Dry-Run Service API v1 | Done | Add a bounded API-only supervisor with fresh requests, per-cycle health and shutdown checks, append-only cycle events, and restart continuation without CLI, scheduler, runtime, paper, Alpaca, or broker exposure. |
 | 117 | Supervised Autonomous Dry-Run Service Rehearsal v1 | Done | Produce and verify immutable no-network evidence for healthy continuation, every fail-closed stop, restart recovery, and zero operational output. |
 | 118 | Supervised Health And Fresh-Request Provider Contracts v1 | Done | Define versioned, immutable, fail-closed health snapshots and request envelopes that bind exact source, cycle, authorization, and freshness without deployment exposure. |
-| 119 | Local Supervised Provider Assembly v1 | In Review | Build one health snapshot and fresh-request envelope from exact content-hashed reviewed semantic-target artifacts, with strict validation and restart verification. |
+| 119 | Local Supervised Provider Assembly v1 | Done | Build one health snapshot and fresh-request envelope from exact content-hashed reviewed semantic-target artifacts, with strict validation and restart verification. |
+| 120 | Local Supervised Provider Assembly Rehearsal v1 | In Review | Produce and verify immutable no-network evidence for assembly, restart, tamper detection, stale-input rejection, provider-to-supervisor completion, and zero operational output. |
 
 ## Current Recommendation
 
-Review **Local Supervised Provider Assembly v1**, then run a no-network
-assembly rehearsal covering successful assembly, restart, changed inputs and
-outputs, stale evidence, and one provider-to-supervisor cycle. Do not expose
-the service through CLI, launchd, runtime deployment, semantic local paper,
-Alpaca semantic targets, or broker submission as part of that rehearsal.
+Review **Local Supervised Provider Assembly Rehearsal v1**, then decide whether
+the next stage should design a bounded, manually started local operator
+boundary that assembles reviewed inputs and runs the supervised dry-run
+service. Do not expose launchd, runtime deployment, recurring scheduling,
+semantic local paper, Alpaca semantic targets, or broker submission as part of
+that decision.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

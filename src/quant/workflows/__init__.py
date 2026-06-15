@@ -83,6 +83,11 @@ from quant.workflows.supervised_provider_assembly import (
     load_supervised_provider_assembly_record,
     write_supervised_provider_assembly_manifest,
 )
+from quant.workflows.supervised_provider_assembly_rehearsal import (
+    SUPERVISED_PROVIDER_ASSEMBLY_REHEARSAL_POLICY,
+    load_and_verify_supervised_provider_assembly_rehearsal,
+    run_supervised_provider_assembly_local_rehearsal,
+)
 from quant.workflows.supervised_provider_inputs import (
     evaluate_supervised_health_snapshot,
     load_supervised_health_snapshot,
@@ -160,4 +165,7 @@ __all__ = [
     "load_supervised_provider_assembly_manifest",
     "load_supervised_provider_assembly_record",
     "write_supervised_provider_assembly_manifest",
+    "SUPERVISED_PROVIDER_ASSEMBLY_REHEARSAL_POLICY",
+    "load_and_verify_supervised_provider_assembly_rehearsal",
+    "run_supervised_provider_assembly_local_rehearsal",
 ]

@@ -441,3 +441,9 @@ contributor-set, strategy-target, and evaluation artifacts. Assembly validates
 their hashes, identities, freshness, authorization scope, active aggregation,
 and dry-run account inputs before writing one health snapshot and request
 envelope. It does not run the supervisor.
+
+Its separate no-network rehearsal verifies successful assembly, restart
+reuse, changed-input rejection, changed-output detection, stale target and
+account rejection, and one provider-to-supervisor cycle. The rehearsal remains
+API-only and produces no operational order, fill, semantic-paper, or Alpaca
+directories.

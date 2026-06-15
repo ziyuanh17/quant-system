@@ -112,4 +112,7 @@ reviewed.
 The first API-only local implementation is documented in
 [local_supervised_provider_assembly.md](local_supervised_provider_assembly.md).
 It builds the contract objects only from exact content-hashed reviewed
-semantic-target artifacts.
+semantic-target artifacts. Its
+[no-network rehearsal](local_supervised_provider_assembly_rehearsal.md)
+verifies accepted, rejected, restart, tamper-detection, and
+provider-to-supervisor behavior without operational exposure.

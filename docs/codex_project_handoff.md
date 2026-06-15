@@ -149,10 +149,10 @@ before proceeding.
     deployment.
 11. Define and review production health and fresh-request provider contracts
     before proposing any deployment mechanism.
-12. Build and rehearse a local no-network provider assembly before proposing
-    any deployment mechanism.
-13. Review the local provider assembly and its no-network rehearsal before
-    proposing any deployment mechanism.
+12. Review the checked-in local provider assembly and the uncommitted
+    no-network rehearsal evidence before proposing any deployment mechanism.
+13. Decide whether the next stage should design a bounded, manually started
+    assembly-to-supervisor dry-run operator boundary.
 14. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
 15. Require explicit approval immediately before any broker order-capable

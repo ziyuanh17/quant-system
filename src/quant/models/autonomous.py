@@ -82,6 +82,26 @@ class SupervisedDryRunRehearsalScenario(StrEnum):
     RESTART_CONTINUATION = "restart_continuation"
 
 
+class SupervisedProviderAssemblyRehearsalScenario(StrEnum):
+    """Required no-network provider-assembly rehearsal scenarios."""
+
+    SUCCESSFUL_ASSEMBLY = "successful_assembly"
+    RESTART_REUSE = "restart_reuse"
+    CHANGED_INPUT_REJECTED = "changed_input_rejected"
+    CHANGED_OUTPUT_DETECTED = "changed_output_detected"
+    STALE_TARGET_REJECTED = "stale_target_rejected"
+    STALE_ACCOUNT_REJECTED = "stale_account_rejected"
+    PROVIDER_TO_SUPERVISOR = "provider_to_supervisor"
+
+
+class SupervisedProviderAssemblyRehearsalOutcome(StrEnum):
+    """Observed result of one provider-assembly rehearsal scenario."""
+
+    ASSEMBLED = "assembled"
+    REJECTED = "rejected"
+    SUPERVISOR_COMPLETED = "supervisor_completed"
+
+
 class AutonomousDryRunAuthorization(FrozenModel):
     """Immutable permission for a bounded series of broker-free dry-runs."""
 
@@ -392,6 +412,60 @@ class SupervisedProviderAssemblyRecord(FrozenModel):
     request_envelope_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     assembled_at: AwareDatetime
     evidence_refs: tuple[str, ...] = ()
+
+
+class SupervisedProviderAssemblyRehearsalScenarioResult(FrozenModel):
+    """Evidence summary for one provider-assembly rehearsal scenario."""
+
+    scenario: SupervisedProviderAssemblyRehearsalScenario
+    passed: bool
+    outcome: SupervisedProviderAssemblyRehearsalOutcome
+    assembly_record_paths: tuple[str, ...] = ()
+    service_record_paths: tuple[str, ...] = ()
+    evidence_paths: tuple[str, ...] = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+
+class SupervisedProviderAssemblyRehearsalReport(FrozenModel):
+    """Immutable report for the local provider-assembly rehearsal."""
+
+    schema_version: Literal[1] = 1
+    rehearsal_id: str = Field(min_length=1)
+    rehearsal_policy_version: str = Field(min_length=1)
+    evidence_root: str = Field(min_length=1)
+    evaluated_at: AwareDatetime
+    passed: bool
+    scenarios: tuple[SupervisedProviderAssemblyRehearsalScenarioResult, ...] = (
+        Field(min_length=1)
+    )
+    prohibited_artifact_paths: tuple[str, ...] = ()
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def passed_must_match_evidence(
+        self,
+    ) -> "SupervisedProviderAssemblyRehearsalReport":
+        expected = (
+            all(item.passed for item in self.scenarios)
+            and not self.prohibited_artifact_paths
+        )
+        if self.passed != expected:
+            raise ValueError(
+                "provider-assembly rehearsal passed status must match"
+            )
+        if len({item.scenario for item in self.scenarios}) != len(
+            self.scenarios
+        ):
+            raise ValueError(
+                "provider-assembly rehearsal scenarios must be unique"
+            )
+        if {item.scenario for item in self.scenarios} != set(
+            SupervisedProviderAssemblyRehearsalScenario
+        ):
+            raise ValueError(
+                "provider-assembly rehearsal must include every scenario"
+            )
+        return self
 
 
 class SupervisedDryRunHealthCheck(FrozenModel):

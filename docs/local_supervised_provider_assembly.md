@@ -75,6 +75,10 @@ record only after verifying the manifest and output files still match.
 ## Review Boundary
 
 This stage proves deterministic local assembly from already reviewed files.
-The next stage should run a no-network assembly rehearsal covering successful
-assembly, restart, changed input, changed output, stale target, stale account,
-and one complete provider-to-supervisor cycle.
+Its separate
+[local no-network rehearsal](local_supervised_provider_assembly_rehearsal.md)
+now covers successful assembly, restart, changed input, changed output, stale
+target, stale account, and one complete provider-to-supervisor cycle.
+
+Neither the assembly nor its rehearsal exposes CLI, deployment, scheduler,
+paper, Alpaca, broker, or order-submission behavior.
