@@ -193,6 +193,13 @@ def load_supervised_provider_operator_record(
     )
 
 
+def verify_supervised_provider_operator_record(
+    record: SupervisedProviderOperatorRecord,
+) -> None:
+    """Verify one operator record and all directly linked result evidence."""
+    _verify_record_evidence(record)
+
+
 def _validate_request_scope(
     request: SupervisedProviderOperatorRequest,
     service_id: str,

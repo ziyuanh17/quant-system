@@ -119,6 +119,12 @@ restart reuse, stale-input blocking, and changed-input blocking. The verifier
 reopens every linked artifact and rescans the evidence tree for operational
 directories.
 
+The manually started `quant dry-run supervised-provider-finite` command
+processes only an exact content-hashed ordered request list. Every request
+independently assembles fresh inputs for one supervised dry-run cycle. The
+runner preflights all linked hashes, stops durably on the first block, and
+cannot discover more work or continue indefinitely.
+
 ## Paper Signal Refresh
 
 Run:

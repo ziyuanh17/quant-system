@@ -37,6 +37,13 @@ from quant.workflows.autonomous_dry_run_rehearsal import (
     load_and_verify_autonomous_dry_run_rehearsal,
     run_autonomous_dry_run_local_rehearsal,
 )
+from quant.workflows.finite_supervised_provider import (
+    finite_supervised_provider_manifest_for_paths,
+    load_finite_supervised_provider_manifest,
+    load_finite_supervised_provider_record,
+    run_finite_supervised_provider_loop,
+    write_finite_supervised_provider_manifest,
+)
 from quant.workflows.paper_signal_refresh import (
     WorkflowRunFailed,
     run_alpaca_paper_refresh_workflow,
@@ -102,6 +109,7 @@ from quant.workflows.supervised_provider_operator import (
     load_supervised_provider_operator_record,
     load_supervised_provider_operator_request,
     run_supervised_provider_operator_request,
+    verify_supervised_provider_operator_record,
     write_supervised_provider_operator_request,
 )
 from quant.workflows.supervised_provider_operator_rehearsal import (
@@ -127,6 +135,11 @@ __all__ = [
     "AUTONOMOUS_DRY_RUN_REHEARSAL_POLICY",
     "load_and_verify_autonomous_dry_run_rehearsal",
     "run_autonomous_dry_run_local_rehearsal",
+    "finite_supervised_provider_manifest_for_paths",
+    "load_finite_supervised_provider_manifest",
+    "load_finite_supervised_provider_record",
+    "run_finite_supervised_provider_loop",
+    "write_finite_supervised_provider_manifest",
     "inspect_activated_dry_run_operator_request",
     "ACTIVATION_CONSUMPTION_REHEARSAL_POLICY",
     "load_and_verify_activation_consumption_rehearsal",
@@ -182,6 +195,7 @@ __all__ = [
     "load_supervised_provider_operator_record",
     "load_supervised_provider_operator_request",
     "run_supervised_provider_operator_request",
+    "verify_supervised_provider_operator_record",
     "write_supervised_provider_operator_request",
     "SUPERVISED_PROVIDER_OPERATOR_REHEARSAL_POLICY",
     "load_and_verify_supervised_provider_operator_rehearsal",

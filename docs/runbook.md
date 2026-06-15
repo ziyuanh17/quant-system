@@ -22,6 +22,16 @@ cycle-count selector. See
 [supervised_provider_operator.md](supervised_provider_operator.md) and its
 [actual-command rehearsal](supervised_provider_operator_rehearsal.md).
 
+Run an exact finite list of independently fresh supervised-provider requests:
+
+```bash
+quant dry-run supervised-provider-finite \
+  --manifest-path reviewed/finite-supervised-provider.json
+```
+
+The command stops on the first blocked request and cannot discover additional
+work. See [finite_supervised_provider.md](finite_supervised_provider.md).
+
 ## Local Backtest
 
 ```bash

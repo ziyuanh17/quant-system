@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted supervised-provider command
-  rehearsal bundle: `80d5dc2`
+- Reviewed source commit before this uncommitted finite supervised-provider
+  bundle: `7e3e06c`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -175,12 +175,20 @@ command completed twice with the same durable result and produced 20 evidence
 files with no order, fill, semantic-paper, or Alpaca directory. See
 [supervised_provider_operator.md](supervised_provider_operator.md).
 
-The current uncommitted review bundle adds its evidence-verified actual-command
-rehearsal. On June 15, 2026, fresh completion, restart reuse, stale-input
-blocking, and changed-input blocking all passed across five command
-invocations. The report linked 46 scenario evidence paths and found no order,
-fill, semantic-paper, or Alpaca directory. See
+The checked-in evidence-verified actual-command rehearsal covers fresh
+completion, restart reuse, stale-input blocking, and changed-input blocking.
+All four scenarios passed across five command invocations. The report linked
+46 scenario evidence paths and found no order, fill, semantic-paper, or Alpaca
+directory. See
 [supervised_provider_operator_rehearsal.md](supervised_provider_operator_rehearsal.md).
+
+The current uncommitted review bundle adds
+`quant dry-run supervised-provider-finite`. It processes one exact ordered
+list of independently fresh one-cycle requests and stops on the first block.
+On June 15, 2026, the actual command completed a two-request list twice with
+one durable summary, then separately completed 1/3 requests before blocking on
+a stale second request and leaving the third request untouched. See
+[finite_supervised_provider.md](finite_supervised_provider.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -237,8 +245,9 @@ Before connecting semantic targets to recurring operations:
 6. review the local supervised provider assembly and its no-network rehearsal;
 7. review the manually started supervised-provider dry-run operator boundary;
 8. review its evidence-verified actual-command rehearsal;
-9. separately review any runtime-clone or recurring scheduler exposure;
-10. obtain explicit approval before every broker order-capable rehearsal.
+9. review the finite fresh supervised-provider operator boundary;
+10. separately review any runtime-clone or recurring scheduler exposure;
+11. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 

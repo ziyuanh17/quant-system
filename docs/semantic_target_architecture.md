@@ -459,3 +459,9 @@ An evidence-verified actual-command rehearsal binds the exact executable and
 passing assembly rehearsal, then proves fresh completion, restart reuse,
 stale-input blocking, and changed-input blocking. This adds confidence in the
 operator surface without expanding its authority.
+
+The finite supervised-provider boundary composes multiple independently fresh
+one-cycle requests without turning the supervisor into a recurring service. A
+content-bound manifest fixes the complete ordered request list and loop output
+root. The runner verifies all linked hashes before the first cycle, stops on
+the first block, and creates no mechanism for discovering later work.

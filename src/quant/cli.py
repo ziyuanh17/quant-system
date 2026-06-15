@@ -71,6 +71,7 @@ from quant.models.execution_lifecycle import ExecutionDryRunStatus
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.operations import HealthReport, HealthStatus
+from quant.models.operator import FiniteSupervisedProviderStatus
 from quant.models.reconciliation import ProviderReconciliationReport
 from quant.models.scheduler import ScheduledTaskResult
 from quant.models.validation import ValidationReport
@@ -96,6 +97,7 @@ from quant.workflows import (
     run_alpaca_paper_refresh_workflow,
     run_dry_run_refresh_workflow,
     run_finite_autonomous_dry_run_loop,
+    run_finite_supervised_provider_loop,
     run_paper_signal_refresh_workflow,
     run_supervised_provider_operator_request,
 )
@@ -533,6 +535,36 @@ def dry_run_supervised_provider(
     typer.echo(f"Status: {record.service_status.value}")
     typer.echo(f"Record: {record.service_record_path}")
     if record.service_status != SupervisedDryRunServiceStatus.COMPLETED:
+        raise typer.Exit(code=1)
+
+
+@dry_run_app.command("supervised-provider-finite")
+def dry_run_supervised_provider_finite(
+    manifest_path: Annotated[
+        Path,
+        typer.Option(help="Exact finite supervised-provider manifest."),
+    ],
+) -> None:
+    """Run one finite ordered list of fresh supervised-provider requests."""
+    try:
+        record = run_finite_supervised_provider_loop(
+            manifest_path=manifest_path
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Loop: {record.loop_id}")
+    typer.echo(f"Status: {record.status.value}")
+    typer.echo(
+        f"Completed: {len(record.completed_request_ids)}/"
+        f"{record.requested_count}"
+    )
+    for request_id in record.completed_request_ids:
+        typer.echo(f"Request: {request_id} (completed)")
+    if record.blocked_request_id is not None:
+        typer.echo(f"Blocked request: {record.blocked_request_id}")
+    typer.echo(f"Reason: {record.reason}")
+    if record.status == FiniteSupervisedProviderStatus.BLOCKED:
         raise typer.Exit(code=1)
 
 

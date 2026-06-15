@@ -126,6 +126,104 @@ class SupervisedProviderOperatorRecord(FrozenModel):
     evidence_refs: tuple[str, ...] = ()
 
 
+class FiniteSupervisedProviderStatus(StrEnum):
+    """Terminal status of one finite supervised-provider request list."""
+
+    COMPLETED = "completed"
+    BLOCKED = "blocked"
+
+
+class FiniteSupervisedProviderManifest(FrozenModel):
+    """Immutable ordered list of fresh supervised-provider requests."""
+
+    schema_version: Literal[1] = 1
+    loop_id: str = Field(min_length=1)
+    request_paths: tuple[str, ...] = Field(min_length=1)
+    request_sha256s: tuple[str, ...] = Field(min_length=1)
+    output_root: str = Field(min_length=1)
+    created_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+    @field_validator("loop_id")
+    @classmethod
+    def loop_id_must_be_safe_path_component(cls, value: str) -> str:
+        if value in {".", ".."} or "/" in value or "\\" in value:
+            raise ValueError("finite supervised-provider loop ID must be safe")
+        return value
+
+    @model_validator(mode="after")
+    def request_paths_and_hashes_must_align(
+        self,
+    ) -> "FiniteSupervisedProviderManifest":
+        if len(self.request_paths) != len(self.request_sha256s):
+            raise ValueError(
+                "finite provider request paths and hashes must align"
+            )
+        if len(set(self.request_paths)) != len(self.request_paths):
+            raise ValueError("finite provider request paths must be unique")
+        return self
+
+
+class FiniteSupervisedProviderRecord(FrozenModel):
+    """Immutable summary of one finite supervised-provider request list."""
+
+    schema_version: Literal[1] = 1
+    loop_id: str = Field(min_length=1)
+    manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    status: FiniteSupervisedProviderStatus
+    requested_count: int = Field(ge=1)
+    completed_request_ids: tuple[str, ...] = ()
+    operator_record_paths: tuple[str, ...] = ()
+    operator_record_sha256s: tuple[str, ...] = ()
+    blocked_request_id: str | None = None
+    blocked_operator_record_path: str | None = None
+    blocked_operator_record_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    started_at: AwareDatetime
+    completed_at: AwareDatetime
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def evidence_must_match_status(self) -> "FiniteSupervisedProviderRecord":
+        if not (
+            len(self.completed_request_ids)
+            == len(self.operator_record_paths)
+            == len(self.operator_record_sha256s)
+        ):
+            raise ValueError("finite provider completed evidence must align")
+        if len(self.completed_request_ids) > self.requested_count:
+            raise ValueError("finite provider loop completed extra requests")
+        if len(set(self.completed_request_ids)) != len(
+            self.completed_request_ids
+        ):
+            raise ValueError(
+                "finite provider completed request IDs must be unique"
+            )
+        if self.status == FiniteSupervisedProviderStatus.COMPLETED and (
+            len(self.completed_request_ids) != self.requested_count
+            or self.blocked_request_id is not None
+        ):
+            raise ValueError(
+                "completed finite provider loop must finish all work"
+            )
+        if (
+            self.status == FiniteSupervisedProviderStatus.BLOCKED
+            and self.blocked_request_id is None
+        ):
+            raise ValueError("blocked finite provider loop requires request ID")
+        if self.status == FiniteSupervisedProviderStatus.BLOCKED and (
+            len(self.completed_request_ids) >= self.requested_count
+            or self.blocked_request_id in self.completed_request_ids
+        ):
+            raise ValueError("blocked finite provider loop must stop early")
+        if (self.blocked_operator_record_path is None) != (
+            self.blocked_operator_record_sha256 is None
+        ):
+            raise ValueError("blocked finite provider evidence must align")
+        return self
+
+
 class SupervisedProviderOperatorRehearsalScenario(StrEnum):
     """Required actual-command supervised-provider rehearsal scenarios."""
 
@@ -220,9 +318,9 @@ class SupervisedProviderOperatorRehearsalReport(FrozenModel):
         if len(set(self.source_paths)) != len(self.source_paths):
             raise ValueError("operator rehearsal source paths must be unique")
         scenarios = {item.scenario for item in self.scenarios}
-        if scenarios != set(
-            SupervisedProviderOperatorRehearsalScenario
-        ) or len(scenarios) != len(self.scenarios):
+        if scenarios != set(SupervisedProviderOperatorRehearsalScenario) or len(
+            scenarios
+        ) != len(self.scenarios):
             raise ValueError("operator rehearsal must include every scenario")
         expected = (
             all(item.passed for item in self.scenarios)
