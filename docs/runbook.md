@@ -2,10 +2,24 @@
 
 This runbook documents current CLI operations. The CLI commands below are the
 legacy signal-oriented lane unless stated otherwise. Semantic-target execution
-remains library/API driven except for the activated dry-run command documented
+remains library/API driven except for the bounded dry-run commands documented
 below. No semantic-target command reaches local paper, Alpaca, or a recurring
 scheduler. See
 [current_system_status.md](current_system_status.md).
+
+## Supervised Provider Dry-Run
+
+Run one reviewed local assembly through one supervised dry-run cycle:
+
+```bash
+quant dry-run supervised-provider \
+  --request-path reviewed/supervised-provider-request.json
+```
+
+The reviewed request fixes the output root and exact content-hashed inputs.
+The command has no paper, Alpaca, broker, scheduler, runtime, mode, or
+cycle-count selector. See
+[supervised_provider_operator.md](supervised_provider_operator.md).
 
 ## Local Backtest
 

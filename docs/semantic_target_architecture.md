@@ -447,3 +447,10 @@ reuse, changed-input rejection, changed-output detection, stale target and
 account rejection, and one provider-to-supervisor cycle. The rehearsal remains
 API-only and produces no operational order, fill, semantic-paper, or Alpaca
 directories.
+
+The first operator exposure for this path is intentionally narrow:
+`quant dry-run supervised-provider` consumes one content-bound reviewed
+request, assembles one cycle of provider inputs, and runs exactly one
+supervised dry-run cycle. Its durable result hashes the final assembly and
+service records. It cannot select recurring execution, deployment, paper,
+Alpaca, or a broker.

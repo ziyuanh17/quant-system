@@ -107,6 +107,12 @@ generated provider inputs, rejection reasons, and one completed supervised
 dry-run service record. Reopening the report verifies those links and rescans
 the evidence tree for prohibited operational directories.
 
+The manually started `quant dry-run supervised-provider` command consumes one
+immutable reviewed request that binds the exact assembly manifest, passing
+assembly rehearsal, single-cycle service policy, and evidence output root. It
+assembles the provider inputs and runs one supervised dry-run cycle. It has no
+recurring, deployment, paper, Alpaca, broker, or order capability.
+
 ## Paper Signal Refresh
 
 Run:

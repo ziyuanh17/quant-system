@@ -6,6 +6,10 @@ from typing import Literal
 from pydantic import AwareDatetime, Field, field_validator
 
 from quant.models.activation import ActivationEffectiveStatus
+from quant.models.autonomous import (
+    SupervisedDryRunServicePolicy,
+    SupervisedDryRunServiceStatus,
+)
 from quant.models.base import FrozenModel
 from quant.models.execution import LiveAccountSnapshot, OrderSide
 from quant.models.execution_lifecycle import ExecutionLifecyclePolicy
@@ -78,3 +82,44 @@ class ActivatedDryRunRequestInspection(FrozenModel):
     base_rehearsal_passed: bool = False
     activation_consumption_rehearsal_passed: bool = False
     summary: str = Field(min_length=1)
+
+
+class SupervisedProviderOperatorRequest(FrozenModel):
+    """Immutable reviewed request for one local assembly-to-supervisor run."""
+
+    schema_version: Literal[1] = 1
+    request_id: str = Field(min_length=1)
+    assembly_manifest_path: str = Field(min_length=1)
+    assembly_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    assembly_rehearsal_report_path: str = Field(min_length=1)
+    assembly_rehearsal_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    service_policy: SupervisedDryRunServicePolicy
+    output_root: str = Field(min_length=1)
+    created_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+    @field_validator("request_id")
+    @classmethod
+    def request_id_must_be_safe_path_component(cls, value: str) -> str:
+        if value in {".", ".."} or "/" in value or "\\" in value:
+            raise ValueError(
+                "supervised provider operator request ID must be safe"
+            )
+        return value
+
+
+class SupervisedProviderOperatorRecord(FrozenModel):
+    """Immutable result of one local assembly-to-supervisor operator run."""
+
+    schema_version: Literal[1] = 1
+    request_id: str = Field(min_length=1)
+    request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    assembly_id: str = Field(min_length=1)
+    service_id: str = Field(min_length=1)
+    service_status: SupervisedDryRunServiceStatus
+    assembly_record_path: str = Field(min_length=1)
+    assembly_record_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    service_record_path: str = Field(min_length=1)
+    service_record_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    completed_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()

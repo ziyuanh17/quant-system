@@ -53,7 +53,10 @@ from quant.features import (
     load_feature_csv,
     write_feature_artifact,
 )
-from quant.models.autonomous import AutonomousDryRunStatus
+from quant.models.autonomous import (
+    AutonomousDryRunStatus,
+    SupervisedDryRunServiceStatus,
+)
 from quant.models.backtest import BacktestConfig, BacktestResult
 from quant.models.execution import (
     OrderRequest,
@@ -94,6 +97,7 @@ from quant.workflows import (
     run_dry_run_refresh_workflow,
     run_finite_autonomous_dry_run_loop,
     run_paper_signal_refresh_workflow,
+    run_supervised_provider_operator_request,
 )
 
 app = typer.Typer(no_args_is_help=True)
@@ -505,6 +509,30 @@ def dry_run_autonomous_finite_loop(
         f"Record: {output_root / 'loops' / f'{record.loop_id}.json'}"
     )
     if record.status == AutonomousDryRunStatus.BLOCKED:
+        raise typer.Exit(code=1)
+
+
+@dry_run_app.command("supervised-provider")
+def dry_run_supervised_provider(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Exact reviewed supervised-provider request."),
+    ],
+) -> None:
+    """Assemble reviewed inputs and run one supervised dry-run cycle."""
+    try:
+        record = run_supervised_provider_operator_request(
+            request_path=request_path
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {record.request_id}")
+    typer.echo(f"Assembly: {record.assembly_id}")
+    typer.echo(f"Service: {record.service_id}")
+    typer.echo(f"Status: {record.service_status.value}")
+    typer.echo(f"Record: {record.service_record_path}")
+    if record.service_status != SupervisedDryRunServiceStatus.COMPLETED:
         raise typer.Exit(code=1)
 
 

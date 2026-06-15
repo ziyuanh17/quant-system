@@ -98,6 +98,12 @@ from quant.workflows.supervised_provider_inputs import (
     write_supervised_provider_policy,
     write_supervised_request_envelope,
 )
+from quant.workflows.supervised_provider_operator import (
+    load_supervised_provider_operator_record,
+    load_supervised_provider_operator_request,
+    run_supervised_provider_operator_request,
+    write_supervised_provider_operator_request,
+)
 
 __all__ = [
     "WorkflowRunFailed",
@@ -168,4 +174,8 @@ __all__ = [
     "SUPERVISED_PROVIDER_ASSEMBLY_REHEARSAL_POLICY",
     "load_and_verify_supervised_provider_assembly_rehearsal",
     "run_supervised_provider_assembly_local_rehearsal",
+    "load_supervised_provider_operator_record",
+    "load_supervised_provider_operator_request",
+    "run_supervised_provider_operator_request",
+    "write_supervised_provider_operator_request",
 ]
