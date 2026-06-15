@@ -74,6 +74,16 @@ from quant.workflows.supervised_autonomous_dry_run_rehearsal import (
     load_and_verify_supervised_autonomous_dry_run_rehearsal,
     run_supervised_autonomous_dry_run_local_rehearsal,
 )
+from quant.workflows.supervised_provider_inputs import (
+    evaluate_supervised_health_snapshot,
+    load_supervised_health_snapshot,
+    load_supervised_provider_policy,
+    load_supervised_request_envelope,
+    resolve_supervised_request_envelope,
+    write_supervised_health_snapshot,
+    write_supervised_provider_policy,
+    write_supervised_request_envelope,
+)
 
 __all__ = [
     "WorkflowRunFailed",
@@ -126,4 +136,12 @@ __all__ = [
     "SUPERVISED_DRY_RUN_REHEARSAL_POLICY",
     "load_and_verify_supervised_autonomous_dry_run_rehearsal",
     "run_supervised_autonomous_dry_run_local_rehearsal",
+    "evaluate_supervised_health_snapshot",
+    "load_supervised_health_snapshot",
+    "load_supervised_provider_policy",
+    "load_supervised_request_envelope",
+    "resolve_supervised_request_envelope",
+    "write_supervised_health_snapshot",
+    "write_supervised_provider_policy",
+    "write_supervised_request_envelope",
 ]

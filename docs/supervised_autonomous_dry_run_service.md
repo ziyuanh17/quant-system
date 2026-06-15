@@ -81,3 +81,7 @@ execution, or broker access.
 
 The first complete no-network rehearsal is recorded in
 [supervised_autonomous_dry_run_rehearsal.md](supervised_autonomous_dry_run_rehearsal.md).
+
+The reviewed contracts for production-shaped health snapshots and fresh
+request envelopes are documented in
+[supervised_provider_contracts.md](supervised_provider_contracts.md).

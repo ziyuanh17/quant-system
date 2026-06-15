@@ -149,7 +149,9 @@ before proceeding.
     deployment.
 11. Define and review production health and fresh-request provider contracts
     before proposing any deployment mechanism.
-12. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+12. Build and rehearse a local no-network provider assembly before proposing
+    any deployment mechanism.
+13. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-13. Require explicit approval immediately before any broker order-capable
+14. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

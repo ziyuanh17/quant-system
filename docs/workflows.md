@@ -89,6 +89,12 @@ scenarios and writes one immutable report linking every service record, cycle
 event, health check, and autonomous run. Reopening the report verifies those
 links and confirms that no order, fill, or semantic-paper directory appeared.
 
+The API-only supervised provider adapters validate immutable health snapshots
+and request envelopes. Health proceeds only when every required component is
+current and healthy. Requests proceed only when source, cycle, authorization,
+generation time, expiry, and maximum age all match the versioned provider
+policy. Provider mismatches stop before the autonomous workflow.
+
 ## Paper Signal Refresh
 
 Run:

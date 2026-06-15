@@ -427,3 +427,10 @@ Its separate no-network rehearsal verifies healthy continuation, degraded and
 failed health stops, explicit shutdown, blocked-run stop, provider-error stop,
 runtime-bound stop, and restart continuation. The evidence verifier rescans
 the rehearsal tree for prohibited operational directories.
+
+The production-shaped provider boundary remains API-only. A versioned provider
+policy binds the exact authorization, allowed health and request source
+versions, required health components, and maximum input ages. Immutable health
+snapshots are converted to fail-closed cycle health checks. Immutable request
+envelopes are released only when source, cycle, authorization, and freshness
+all match.

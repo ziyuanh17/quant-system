@@ -51,6 +51,14 @@ class SupervisedDryRunServiceStatus(StrEnum):
     STOPPED = "stopped"
 
 
+class SupervisedProviderComponentStatus(StrEnum):
+    """Reported state of one required supervised-service input component."""
+
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"
+    FAILED = "failed"
+
+
 class AutonomousDryRunRehearsalScenario(StrEnum):
     """Required no-network autonomous dry-run rehearsal scenarios."""
 
@@ -216,6 +224,104 @@ class SupervisedDryRunServicePolicy(FrozenModel):
     maximum_runtime_seconds: float = Field(gt=0)
     created_at: AwareDatetime
     evidence_refs: tuple[str, ...] = ()
+
+
+class SupervisedProviderPolicy(FrozenModel):
+    """Versioned validity rules for health and fresh-request providers."""
+
+    schema_version: Literal[1] = 1
+    provider_policy_version: str = Field(min_length=1)
+    service_id: str = Field(min_length=1)
+    authorization_id: str = Field(min_length=1)
+    authorization_revision: int = Field(ge=1)
+    health_source_id: str = Field(min_length=1)
+    health_source_version: str = Field(min_length=1)
+    request_source_id: str = Field(min_length=1)
+    request_source_version: str = Field(min_length=1)
+    required_health_components: tuple[str, ...] = Field(min_length=1)
+    maximum_health_age_seconds: int = Field(gt=0)
+    maximum_request_age_seconds: int = Field(gt=0)
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def required_components_are_unique(self) -> "SupervisedProviderPolicy":
+        if len(set(self.required_health_components)) != len(
+            self.required_health_components
+        ):
+            raise ValueError("required health components must be unique")
+        return self
+
+
+class SupervisedHealthComponentObservation(FrozenModel):
+    """Immutable observation of one required provider health component."""
+
+    schema_version: Literal[1] = 1
+    component_id: str = Field(min_length=1)
+    status: SupervisedProviderComponentStatus
+    observed_at: AwareDatetime
+    valid_until: AwareDatetime
+    reason: str = Field(min_length=1)
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validity_interval_is_positive(
+        self,
+    ) -> "SupervisedHealthComponentObservation":
+        if self.valid_until <= self.observed_at:
+            raise ValueError(
+                "health component validity interval must be positive"
+            )
+        return self
+
+
+class SupervisedHealthSnapshot(FrozenModel):
+    """Complete immutable health-source input for one supervised cycle."""
+
+    schema_version: Literal[1] = 1
+    snapshot_id: str = Field(min_length=1)
+    service_id: str = Field(min_length=1)
+    cycle_index: int = Field(ge=1)
+    health_source_id: str = Field(min_length=1)
+    health_source_version: str = Field(min_length=1)
+    generated_at: AwareDatetime
+    components: tuple[SupervisedHealthComponentObservation, ...] = Field(
+        min_length=1
+    )
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def components_are_unique(self) -> "SupervisedHealthSnapshot":
+        component_ids = tuple(item.component_id for item in self.components)
+        if len(set(component_ids)) != len(component_ids):
+            raise ValueError("health snapshot components must be unique")
+        if any(
+            item.observed_at > self.generated_at for item in self.components
+        ):
+            raise ValueError("health snapshot cannot predate its observations")
+        return self
+
+
+class SupervisedRequestEnvelope(FrozenModel):
+    """Immutable source envelope for one fresh autonomous dry-run request."""
+
+    schema_version: Literal[1] = 1
+    envelope_id: str = Field(min_length=1)
+    service_id: str = Field(min_length=1)
+    cycle_index: int = Field(ge=1)
+    request_source_id: str = Field(min_length=1)
+    request_source_version: str = Field(min_length=1)
+    generated_at: AwareDatetime
+    valid_until: AwareDatetime
+    request: AutonomousDryRunRequest
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validity_interval_is_positive(self) -> "SupervisedRequestEnvelope":
+        if self.valid_until <= self.generated_at:
+            raise ValueError(
+                "request envelope validity interval must be positive"
+            )
+        return self
 
 
 class SupervisedDryRunHealthCheck(FrozenModel):
