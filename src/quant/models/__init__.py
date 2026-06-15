@@ -11,6 +11,12 @@ from quant.models.activation import (
     SemanticTargetActivationEvaluation,
     SemanticTargetActivationScope,
 )
+from quant.models.autonomous import (
+    AutonomousDryRunAuthorization,
+    AutonomousDryRunRecord,
+    AutonomousDryRunRequest,
+    AutonomousDryRunStatus,
+)
 from quant.models.backtest import (
     BacktestArtifactPaths,
     BacktestConfig,
@@ -149,6 +155,10 @@ __all__ = [
     "ActivationEffectiveStatus",
     "ActivatedDryRunOperatorRequest",
     "ActivatedDryRunRequestInspection",
+    "AutonomousDryRunAuthorization",
+    "AutonomousDryRunRecord",
+    "AutonomousDryRunRequest",
+    "AutonomousDryRunStatus",
     "BacktestConfig",
     "AssetTradingDetails",
     "BacktestArtifactPaths",

@@ -18,6 +18,10 @@ from quant.workflows.activation_consumption_rehearsal import (
     load_and_verify_activation_consumption_rehearsal,
     run_activation_consumption_local_rehearsal,
 )
+from quant.workflows.autonomous_dry_run import (
+    load_autonomous_dry_run_record,
+    run_authorized_autonomous_dry_run,
+)
 from quant.workflows.paper_signal_refresh import (
     WorkflowRunFailed,
     run_alpaca_paper_refresh_workflow,
@@ -50,6 +54,8 @@ __all__ = [
     "WorkflowRunFailed",
     "ActivatedSemanticTargetWorkflowResult",
     "ActivatedDryRunOperatorResult",
+    "load_autonomous_dry_run_record",
+    "run_authorized_autonomous_dry_run",
     "inspect_activated_dry_run_operator_request",
     "ACTIVATION_CONSUMPTION_REHEARSAL_POLICY",
     "load_and_verify_activation_consumption_rehearsal",

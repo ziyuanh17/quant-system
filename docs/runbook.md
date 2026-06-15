@@ -137,6 +137,9 @@ request, reserve it, consume its one-use activation, create evidence files, or
 run a dry-run. A later run must repeat all safety checks because account state
 and time-sensitive inputs may change after inspection.
 
+The first actual inspection-command rehearsal is recorded in
+[activated_dry_run_request_inspection_rehearsal.md](activated_dry_run_request_inspection_rehearsal.md).
+
 ## Run A Reviewed Activated Semantic-Target Dry-Run
 
 ```bash

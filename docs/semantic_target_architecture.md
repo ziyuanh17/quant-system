@@ -388,3 +388,17 @@ explains whether it is valid at inspection time, the current and approved
 share quantities, and the intended order. It creates and consumes nothing.
 This is a preview for a human operator, not an authorization or execution
 claim; the execution command still performs its own durable checks.
+
+## Bounded Autonomous Dry-Runs
+
+The API-only autonomous dry-run runner allows repeated broker-free runs under
+one immutable deployment authorization. The authorization limits the exact
+symbol, contributor-set revision, strategy versions, target size, validity
+window, run count, and minimum interval. Each run is atomically claimed and
+durably recorded. A blocked attempt halts later attempts under that
+authorization until a new authorization revision is issued.
+
+This removes per-order human review from routine dry-runs while preserving
+human approval for deployment limits and exception recovery. It is not
+connected to a CLI, scheduler, runtime service, paper trading, Alpaca, or a
+broker.

@@ -79,6 +79,8 @@ Checked-in semantic-target capabilities include:
   scheduler, runtime, or order-submission capability;
 - read-only activated dry-run request inspection that explains current
   validity and intended orders without writing or consuming evidence;
+- API-only bounded autonomous dry-run authorization with exact deployment
+  limits, atomic run claims, durable run outcomes, and halt-on-block behavior;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -107,11 +109,22 @@ schema-versioned reviewed request and hardcodes the activated dry-run path.
 Neither command can select semantic local paper or Alpaca; those paths remain
 API-only.
 
+The autonomous dry-run runner is also API-only. It permits repeated routine
+dry-runs under one bounded deployment authorization, but it has no scheduler
+or broker connection. See
+[autonomous_dry_run_authorization.md](autonomous_dry_run_authorization.md).
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill
 directories in the operator output. See
 [activated_dry_run_operator_rehearsal.md](activated_dry_run_operator_rehearsal.md).
+
+On June 14, 2026, the read-only inspection command also passed a separate
+local synthetic rehearsal. Running inspection twice produced the same
+explanation, left all 137 prerequisite files hash-identical, created no
+operator activation or output directory, and consumed no activation. See
+[activated_dry_run_request_inspection_rehearsal.md](activated_dry_run_request_inspection_rehearsal.md).
 
 ## Safety And Activation Boundary
 

@@ -139,7 +139,10 @@ before proceeding.
    proposing any operator exposure.
 7. Review the activated dry-run CLI boundary; it is the only semantic-target
    operator command and cannot select paper or Alpaca.
-8. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+8. Review the bounded autonomous dry-run API and rehearse its repeated-run,
+   restart, expiry, limit, and halt-on-block behavior before proposing a
+   scheduler connection.
+9. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-9. Require explicit approval immediately before any broker order-capable
+10. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

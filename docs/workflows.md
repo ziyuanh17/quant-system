@@ -60,6 +60,12 @@ and does not consume activation or run any workflow. Inspection is useful
 before execution, but it is not approval and cannot guarantee that a later run
 will still be valid.
 
+The API-only autonomous dry-run workflow permits repeated broker-free runs
+under one bounded deployment authorization. Every attempt is atomically
+claimed and durably recorded. An expired or exceeded authorization, an
+out-of-scope target, or any blocked run halts later attempts under that
+authorization. No CLI, scheduler, paper, Alpaca, or broker path calls it.
+
 ## Paper Signal Refresh
 
 Run:

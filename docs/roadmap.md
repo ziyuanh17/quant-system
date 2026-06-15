@@ -127,14 +127,17 @@ side discussions.
 | 107 | Activation-Consumption Local Rehearsal v1 | Done | Add a second-layer immutable no-network rehearsal proving allowed restart behavior, blocked authorization, and one-evaluation-to-one-orchestration enforcement. |
 | 108 | Activated Semantic-Target Dry-Run Operator Boundary v1 | Done | Expose one reviewed-request CLI command hardcoded to activated dry-run, with immutable request evidence and no paper, Alpaca, scheduler, runtime, or order capability. |
 | 109 | Activated Dry-Run Local Operator Rehearsal v1 | Done | Run the actual activated dry-run command twice with reviewed synthetic inputs and verify one durable intended order, no duplicate evidence, no broker order, and no fill. |
-| 110 | Activated Dry-Run Request Inspection v1 | In Review | Add a read-only CLI command that explains present request validity and intended orders without writing evidence, consuming activation, or running a workflow. |
+| 110 | Activated Dry-Run Request Inspection v1 | Done | Add a read-only CLI command that explains present request validity and intended orders without writing evidence, consuming activation, or running a workflow. |
+| 111 | Activated Dry-Run Request Inspection Rehearsal v1 | In Review | Run the actual inspection command twice with fresh synthetic reviewed inputs and verify identical explanations, unchanged files, and no activation consumption or workflow output. |
+| 112 | Bounded Autonomous Semantic-Target Dry-Run API v1 | In Review | Authorize repeated broker-free dry-runs within exact deployment limits, atomically record each attempt, and halt later runs after any blocked outcome. |
 
 ## Current Recommendation
 
-Review **Activated Dry-Run Request Inspection v1**, then use it to inspect one
-newly reviewed request before deciding whether to run that request manually.
-Do not expose semantic local paper, Alpaca semantic targets, runtime-clone
-deployment, or recurring scheduler as part of that review.
+Review **Bounded Autonomous Semantic-Target Dry-Run API v1**, then build a
+no-network local rehearsal proving repeated allowed runs, restart safety,
+authorization expiry, limit enforcement, and halt-on-block behavior. Do not
+expose semantic local paper, Alpaca semantic targets, runtime-clone deployment,
+or a recurring scheduler as part of that rehearsal.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed
