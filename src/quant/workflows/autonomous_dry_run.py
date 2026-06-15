@@ -147,6 +147,44 @@ def load_autonomous_dry_run_record(path: Path) -> AutonomousDryRunRecord:
     return AutonomousDryRunRecord.model_validate_json(path.read_text())
 
 
+def load_autonomous_dry_run_authorization(
+    path: Path,
+) -> AutonomousDryRunAuthorization:
+    """Load one immutable bounded autonomous dry-run authorization."""
+    return AutonomousDryRunAuthorization.model_validate_json(path.read_text())
+
+
+def load_autonomous_dry_run_request(path: Path) -> AutonomousDryRunRequest:
+    """Load one complete autonomous dry-run request."""
+    return AutonomousDryRunRequest.model_validate_json(path.read_text())
+
+
+def write_autonomous_dry_run_authorization(
+    authorization: AutonomousDryRunAuthorization,
+    output_root: Path,
+) -> Path:
+    """Write one immutable bounded autonomous dry-run authorization."""
+    _require_safe_component(authorization.authorization_id, "authorization ID")
+    path = (
+        output_root
+        / authorization.authorization_id
+        / f"{authorization.revision}.json"
+    )
+    _write_model_exclusive(path, authorization)
+    return path
+
+
+def write_autonomous_dry_run_request(
+    request: AutonomousDryRunRequest,
+    output_root: Path,
+) -> Path:
+    """Write one immutable complete autonomous dry-run request."""
+    _require_safe_component(request.run_id, "run ID")
+    path = output_root / f"{request.run_id}.json"
+    _write_model_exclusive(path, request)
+    return path
+
+
 def _authorization_issues(
     authorization: AutonomousDryRunAuthorization,
     request: AutonomousDryRunRequest,

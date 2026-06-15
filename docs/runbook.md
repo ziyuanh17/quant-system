@@ -166,6 +166,24 @@ The first local synthetic command rehearsal is recorded in
 In that result, `would_submit` means the system calculated and recorded the
 intended order; it does not mean an order was sent to a broker.
 
+## Run A Finite Autonomous Dry-Run List
+
+```bash
+quant dry-run autonomous-finite-loop \
+  --manifest-path reviewed/finite-autonomous-dry-run.json \
+  --output-root data/semantic-target/autonomous-dry-run
+```
+
+This manually started command processes only the exact request files named in
+the manifest. The manifest binds the authorization and every request by
+SHA-256 hash, so changed inputs are rejected before the first run. The command
+stops immediately on a blocked run and exits nonzero.
+
+There is no iterations option, request discovery, paper mode, Alpaca mode,
+broker selector, launchd service, or recurring scheduler connection. Starting
+the command authorizes no activity beyond the finite manifest and its bounded
+deployment authorization.
+
 ## Run The Service Wrapper
 
 ```bash

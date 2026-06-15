@@ -53,6 +53,7 @@ from quant.features import (
     load_feature_csv,
     write_feature_artifact,
 )
+from quant.models.autonomous import AutonomousDryRunStatus
 from quant.models.backtest import BacktestConfig, BacktestResult
 from quant.models.execution import (
     OrderRequest,
@@ -91,6 +92,7 @@ from quant.workflows import (
     run_activated_dry_run_operator_request,
     run_alpaca_paper_refresh_workflow,
     run_dry_run_refresh_workflow,
+    run_finite_autonomous_dry_run_loop,
     run_paper_signal_refresh_workflow,
 )
 
@@ -465,6 +467,44 @@ def dry_run_inspect_activated_target(
         typer.echo(f"Blocked because: {issue}")
     typer.echo("Inspection created no activation or execution artifacts.")
     if not inspection.valid_now:
+        raise typer.Exit(code=1)
+
+
+@dry_run_app.command("autonomous-finite-loop")
+def dry_run_autonomous_finite_loop(
+    manifest_path: Annotated[
+        Path,
+        typer.Option(help="Exact finite autonomous dry-run manifest."),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option(help="Directory for finite-loop dry-run evidence."),
+    ] = Path("data/semantic-target/autonomous-dry-run"),
+) -> None:
+    """Run one finite authorized dry-run request list and stop on block."""
+    try:
+        record = run_finite_autonomous_dry_run_loop(
+            manifest_path=manifest_path,
+            output_root=output_root,
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Loop: {record.loop_id}")
+    typer.echo(f"Status: {record.status.value}")
+    typer.echo(
+        f"Completed: {len(record.completed_run_ids)}/"
+        f"{record.requested_run_count}"
+    )
+    for run_id, status in zip(
+        record.completed_run_ids, record.run_statuses, strict=True
+    ):
+        typer.echo(f"Run: {run_id} ({status.value})")
+    typer.echo(f"Reason: {record.reason}")
+    typer.echo(
+        f"Record: {output_root / 'loops' / f'{record.loop_id}.json'}"
+    )
+    if record.status == AutonomousDryRunStatus.BLOCKED:
         raise typer.Exit(code=1)
 
 

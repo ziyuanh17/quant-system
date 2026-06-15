@@ -111,6 +111,59 @@ class AutonomousDryRunRecord(FrozenModel):
     evidence_refs: tuple[str, ...] = ()
 
 
+class AutonomousDryRunLoopManifest(FrozenModel):
+    """Immutable finite input list for one manually started dry-run loop."""
+
+    schema_version: Literal[1] = 1
+    loop_id: str = Field(min_length=1)
+    authorization_path: str = Field(min_length=1)
+    authorization_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    request_paths: tuple[str, ...] = Field(min_length=1)
+    request_sha256s: tuple[str, ...] = Field(min_length=1)
+    interval_seconds: float = Field(ge=0)
+    created_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def request_paths_must_be_unique(self) -> "AutonomousDryRunLoopManifest":
+        if len(set(self.request_paths)) != len(self.request_paths):
+            raise ValueError("finite-loop request paths must be unique")
+        if len(self.request_paths) != len(self.request_sha256s):
+            raise ValueError("finite-loop request paths and hashes must align")
+        return self
+
+
+class AutonomousDryRunLoopRecord(FrozenModel):
+    """Immutable summary of one finite manually started autonomous loop."""
+
+    schema_version: Literal[1] = 1
+    loop_id: str = Field(min_length=1)
+    manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    authorization_id: str = Field(min_length=1)
+    authorization_revision: int = Field(ge=1)
+    status: AutonomousDryRunStatus
+    requested_run_count: int = Field(ge=1)
+    completed_run_ids: tuple[str, ...] = ()
+    run_statuses: tuple[AutonomousDryRunStatus, ...] = ()
+    started_at: AwareDatetime
+    completed_at: AwareDatetime
+    stopped_early: bool
+    reason: str = Field(min_length=1)
+    run_record_paths: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def run_evidence_must_align(self) -> "AutonomousDryRunLoopRecord":
+        if not (
+            len(self.completed_run_ids)
+            == len(self.run_statuses)
+            == len(self.run_record_paths)
+        ):
+            raise ValueError("finite-loop run evidence must align")
+        if len(self.completed_run_ids) > self.requested_run_count:
+            raise ValueError("finite loop cannot complete extra requests")
+        return self
+
+
 class AutonomousDryRunRehearsalScenarioResult(FrozenModel):
     """Evidence summary for one autonomous dry-run rehearsal scenario."""
 

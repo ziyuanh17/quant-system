@@ -70,6 +70,12 @@ The autonomous dry-run local rehearsal runs five isolated synthetic scenarios
 and writes an immutable report that verifies every linked authorization, run
 record, and dry-run workflow record. It remains API-only and no-network.
 
+The finite autonomous dry-run operator command consumes one content-bound
+manifest and processes only its ordered request list. It verifies all hashes
+before starting, stops on the first blocked result, and writes one immutable
+loop summary. It exposes no request discovery, unbounded iterations, paper,
+Alpaca, broker, scheduler, or runtime selector.
+
 ## Paper Signal Refresh
 
 Run:

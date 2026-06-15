@@ -70,11 +70,28 @@ under that authorization.
 Recovery requires a new reviewed authorization revision. The runner does not
 silently skip a blocked result and continue.
 
-## Current Boundary
+## Finite Manually Started Loop
 
-The runner is API-only. There is no CLI, scheduler, launchd service, runtime
-deployment, paper-trading path, Alpaca path, network call, or broker-order
-capability in this stage.
+The only autonomous operator command is:
+
+```bash
+quant dry-run autonomous-finite-loop \
+  --manifest-path reviewed/finite-loop.json \
+  --output-root data/semantic-target/autonomous-dry-run
+```
+
+The manifest fixes one authorization, an exact ordered list of request files,
+their SHA-256 hashes, and a fixed interval between successful runs. The command
+verifies every input before the first run, processes only that finite list,
+and stops immediately when one run blocks. Restarting returns the same durable
+loop summary after completion.
+
+The command cannot discover requests, add iterations, change trading mode, or
+continue indefinitely. It has no paper, Alpaca, broker, scheduler, launchd,
+runtime-deployment, or network capability.
+
+The first actual command result is recorded in
+[finite_autonomous_dry_run_loop_rehearsal.md](finite_autonomous_dry_run_loop_rehearsal.md).
 
 ## No-Network Rehearsal
 

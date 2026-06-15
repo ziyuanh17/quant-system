@@ -83,6 +83,8 @@ Checked-in semantic-target capabilities include:
   limits, atomic run claims, durable run outcomes, and halt-on-block behavior;
 - evidence-verified no-network autonomous dry-run rehearsal covering repeated
   runs, restart safety, expiry, target limits, and halt-after-block behavior;
+- finite manually started autonomous dry-run CLI that accepts one
+  content-bound request manifest, stops on block, and cannot run indefinitely;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -120,6 +122,17 @@ On June 15, 2026, its complete no-network rehearsal passed repeated-run,
 restart, expiry, target-limit, and halt-after-block scenarios. It produced no
 order files, fill files, or semantic-paper directories. See
 [autonomous_dry_run_rehearsal.md](autonomous_dry_run_rehearsal.md).
+
+The autonomous operator command is limited to
+`quant dry-run autonomous-finite-loop`. It processes only the exact
+content-hashed request list in one manifest and has no recurring scheduler,
+paper, Alpaca, broker, or runtime-service connection.
+
+On June 15, 2026, the actual finite-loop command passed exact-list and restart
+rehearsals for two successful requests, then separately proved that a
+working-order block stopped before the second request. Both rehearsals produced
+zero order and fill files. See
+[finite_autonomous_dry_run_loop_rehearsal.md](finite_autonomous_dry_run_loop_rehearsal.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation

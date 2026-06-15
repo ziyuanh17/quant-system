@@ -129,16 +129,18 @@ side discussions.
 | 109 | Activated Dry-Run Local Operator Rehearsal v1 | Done | Run the actual activated dry-run command twice with reviewed synthetic inputs and verify one durable intended order, no duplicate evidence, no broker order, and no fill. |
 | 110 | Activated Dry-Run Request Inspection v1 | Done | Add a read-only CLI command that explains present request validity and intended orders without writing evidence, consuming activation, or running a workflow. |
 | 111 | Activated Dry-Run Request Inspection Rehearsal v1 | In Review | Run the actual inspection command twice with fresh synthetic reviewed inputs and verify identical explanations, unchanged files, and no activation consumption or workflow output. |
-| 112 | Bounded Autonomous Semantic-Target Dry-Run API v1 | In Review | Authorize repeated broker-free dry-runs within exact deployment limits, atomically record each attempt, and halt later runs after any blocked outcome. |
-| 113 | Autonomous Dry-Run Local Rehearsal v1 | In Review | Produce and execute immutable no-network evidence for repeated allowed runs, restart idempotency, expiry, target limits, and halt-after-block behavior. |
+| 112 | Bounded Autonomous Semantic-Target Dry-Run API v1 | Done | Authorize repeated broker-free dry-runs within exact deployment limits, atomically record each attempt, and halt later runs after any blocked outcome. |
+| 113 | Autonomous Dry-Run Local Rehearsal v1 | Done | Produce and execute immutable no-network evidence for repeated allowed runs, restart idempotency, expiry, target limits, and halt-after-block behavior. |
+| 114 | Finite Autonomous Dry-Run Operator Loop v1 | In Review | Expose one manually started dry-run command that processes an exact content-bound finite request list, stops on block, and has no recurring or broker capability. |
+| 115 | Finite Autonomous Dry-Run Loop Rehearsal v1 | In Review | Run the actual command for exact-list completion, restart reuse, and stop-on-block behavior while proving zero order and fill output. |
 
 ## Current Recommendation
 
-Review **Bounded Autonomous Semantic-Target Dry-Run API v1** together with
-**Autonomous Dry-Run Local Rehearsal v1**, then decide whether to expose a
-finite, manually started autonomous dry-run loop. Do not expose semantic local
-paper, Alpaca semantic targets, runtime-clone deployment, launchd, or an
-unbounded recurring scheduler as part of that review.
+Review **Finite Autonomous Dry-Run Operator Loop v1** together with its local
+command rehearsal, then decide whether to design a supervised recurring
+dry-run service with explicit health, freshness, and shutdown rules. Do not
+expose semantic local paper, Alpaca semantic targets, or broker submission as
+part of that design.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

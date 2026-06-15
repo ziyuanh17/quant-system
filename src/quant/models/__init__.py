@@ -13,6 +13,8 @@ from quant.models.activation import (
 )
 from quant.models.autonomous import (
     AutonomousDryRunAuthorization,
+    AutonomousDryRunLoopManifest,
+    AutonomousDryRunLoopRecord,
     AutonomousDryRunRecord,
     AutonomousDryRunRehearsalReport,
     AutonomousDryRunRehearsalScenario,
@@ -159,6 +161,8 @@ __all__ = [
     "ActivatedDryRunOperatorRequest",
     "ActivatedDryRunRequestInspection",
     "AutonomousDryRunAuthorization",
+    "AutonomousDryRunLoopManifest",
+    "AutonomousDryRunLoopRecord",
     "AutonomousDryRunRecord",
     "AutonomousDryRunRehearsalReport",
     "AutonomousDryRunRehearsalScenario",

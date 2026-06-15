@@ -407,3 +407,10 @@ The separate no-network autonomous rehearsal verifies repeated allowed runs,
 restart idempotency, expiry and target-limit blocking, and halt-after-block
 behavior. Its immutable report reopens and checks every linked authorization,
 run record, and workflow record.
+
+The finite autonomous dry-run operator loop exposes this API through one
+manually started dry-run command. Its immutable manifest binds the exact
+authorization and finite ordered request list by content hash. It verifies all
+inputs before starting, sleeps only between successful requests, stops on the
+first block, and persists one restart-safe loop summary. It cannot discover or
+generate additional requests.

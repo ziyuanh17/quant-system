@@ -20,7 +20,17 @@ from quant.workflows.activation_consumption_rehearsal import (
 )
 from quant.workflows.autonomous_dry_run import (
     load_autonomous_dry_run_record,
+    load_autonomous_dry_run_request,
     run_authorized_autonomous_dry_run,
+    write_autonomous_dry_run_authorization,
+    write_autonomous_dry_run_request,
+)
+from quant.workflows.autonomous_dry_run_loop import (
+    autonomous_dry_run_loop_manifest_for_paths,
+    load_autonomous_dry_run_loop_manifest,
+    load_autonomous_dry_run_loop_record,
+    run_finite_autonomous_dry_run_loop,
+    write_autonomous_dry_run_loop_manifest,
 )
 from quant.workflows.autonomous_dry_run_rehearsal import (
     AUTONOMOUS_DRY_RUN_REHEARSAL_POLICY,
@@ -60,7 +70,15 @@ __all__ = [
     "ActivatedSemanticTargetWorkflowResult",
     "ActivatedDryRunOperatorResult",
     "load_autonomous_dry_run_record",
+    "load_autonomous_dry_run_request",
     "run_authorized_autonomous_dry_run",
+    "write_autonomous_dry_run_authorization",
+    "write_autonomous_dry_run_request",
+    "autonomous_dry_run_loop_manifest_for_paths",
+    "load_autonomous_dry_run_loop_manifest",
+    "load_autonomous_dry_run_loop_record",
+    "run_finite_autonomous_dry_run_loop",
+    "write_autonomous_dry_run_loop_manifest",
     "AUTONOMOUS_DRY_RUN_REHEARSAL_POLICY",
     "load_and_verify_autonomous_dry_run_rehearsal",
     "run_autonomous_dry_run_local_rehearsal",
