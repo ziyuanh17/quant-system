@@ -142,6 +142,13 @@ empty reviewed directories, request-limit blocks, changed linked evidence, and
 finite-loop stop-on-block behavior. The report reopens all linked evidence and
 checks that no operational directories were created.
 
+The manually started `quant dry-run supervised-provider-discover` command
+consumes one reviewed discovery request. It verifies the exact
+discovery-handoff rehearsal, runs discovery only, writes one operator record,
+and exits nonzero if discovery blocks. It may write a finite manifest but does
+not run it, and exposes no scheduler, runtime, paper, Alpaca, broker, mode,
+output-root, or iteration selector.
+
 ## Paper Signal Refresh
 
 Run:

@@ -45,7 +45,7 @@ reviewed source changes through GitHub before updating the runtime clone.
 
 - Git branch: `main`
 - Current reviewed GitHub source commit before the uncommitted
-  supervised-provider discovery handoff-rehearsal bundle: `0a8d7d7`
+  supervised-provider discovery operator-boundary bundle: `949b6bb`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - The runtime clone version is not established by this source document. Audit
   it before operational work.
@@ -155,9 +155,10 @@ before proceeding.
 14. Review the checked-in finite fresh supervised-provider operator and its
     checked-in actual-command rehearsal.
 15. Review the checked-in API-only supervised-provider request discovery.
-16. Review the uncommitted discovery handoff-rehearsal bundle before proposing
-    a discovery operator boundary or recurring deployment.
-17. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+16. Review the checked-in discovery handoff rehearsal.
+17. Review the uncommitted discovery operator-boundary bundle before proposing
+    actual-command rehearsal or recurring deployment.
+18. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-18. Require explicit approval immediately before any broker order-capable
+19. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

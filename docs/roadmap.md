@@ -143,13 +143,14 @@ side discussions.
 | 123 | Finite Fresh Supervised-Provider Operator v1 | Done | Process one exact content-bound ordered list of independently fresh one-cycle requests, with preflight validation, restart reuse, and stop-on-block behavior. |
 | 124 | Finite Supervised-Provider Command Rehearsal v1 | Done | Produce and verify immutable actual-command evidence for exact-list completion, restart reuse, preflight rejection, stop-on-block behavior, and zero operational output. |
 | 125 | API-Only Supervised-Provider Request Discovery v1 | Done | Discover reviewed one-cycle request files into one exact finite manifest with immutable completed or blocked evidence, without running the loop or exposing scheduler, runtime, paper, Alpaca, broker, or order capability. |
-| 126 | Supervised-Provider Discovery Handoff Rehearsal v1 | In Review | Produce and verify no-network evidence for discovery-to-loop handoff, restart reuse, blocked discovery inputs, and finite-loop stop-on-block behavior without adding operational exposure. |
+| 126 | Supervised-Provider Discovery Handoff Rehearsal v1 | Done | Produce and verify no-network evidence for discovery-to-loop handoff, restart reuse, blocked discovery inputs, and finite-loop stop-on-block behavior without adding operational exposure. |
+| 127 | Supervised-Provider Discovery Operator Boundary v1 | In Review | Expose one manually started reviewed-request command that runs discovery only, writes immutable operator evidence, and cannot run finite loops or select scheduler, runtime, paper, Alpaca, broker, or order behavior. |
 
 ## Current Recommendation
 
-Review **Supervised-Provider Discovery Handoff Rehearsal v1**, then decide
-whether the next stage should design a bounded, manually started discovery
-operator boundary. Do not expose launchd, runtime deployment, recurring
+Review **Supervised-Provider Discovery Operator Boundary v1**, then decide
+whether the next stage should add actual-command rehearsal evidence for the
+discovery-only CLI. Do not expose launchd, runtime deployment, recurring
 scheduling, semantic local paper, Alpaca semantic targets, or broker submission
 as part of that review.
 

@@ -71,7 +71,10 @@ from quant.models.execution_lifecycle import ExecutionDryRunStatus
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.operations import HealthReport, HealthStatus
-from quant.models.operator import FiniteSupervisedProviderStatus
+from quant.models.operator import (
+    FiniteSupervisedProviderStatus,
+    SupervisedProviderDiscoveryStatus,
+)
 from quant.models.reconciliation import ProviderReconciliationReport
 from quant.models.scheduler import ScheduledTaskResult
 from quant.models.validation import ValidationReport
@@ -99,6 +102,7 @@ from quant.workflows import (
     run_finite_autonomous_dry_run_loop,
     run_finite_supervised_provider_loop,
     run_paper_signal_refresh_workflow,
+    run_supervised_provider_discovery_operator_request,
     run_supervised_provider_operator_request,
 )
 
@@ -535,6 +539,31 @@ def dry_run_supervised_provider(
     typer.echo(f"Status: {record.service_status.value}")
     typer.echo(f"Record: {record.service_record_path}")
     if record.service_status != SupervisedDryRunServiceStatus.COMPLETED:
+        raise typer.Exit(code=1)
+
+
+@dry_run_app.command("supervised-provider-discover")
+def dry_run_supervised_provider_discover(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Exact reviewed discovery request."),
+    ],
+) -> None:
+    """Run one reviewed discovery-only supervised-provider request."""
+    try:
+        record = run_supervised_provider_discovery_operator_request(
+            request_path=request_path
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {record.request_id}")
+    typer.echo(f"Discovery: {record.discovery_id}")
+    typer.echo(f"Status: {record.discovery_status.value}")
+    typer.echo(f"Result: {record.discovery_result_path}")
+    if record.finite_manifest_path is not None:
+        typer.echo(f"Finite manifest: {record.finite_manifest_path}")
+    if record.discovery_status == SupervisedProviderDiscoveryStatus.BLOCKED:
         raise typer.Exit(code=1)
 
 

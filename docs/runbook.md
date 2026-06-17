@@ -33,11 +33,18 @@ The command stops on the first blocked request and cannot discover additional
 work. See [finite_supervised_provider.md](finite_supervised_provider.md) and
 its [actual-command rehearsal](finite_supervised_provider_rehearsal.md).
 
-Reviewed request discovery is currently API-only. It can verify a reviewed
-directory of one-cycle request files and produce a finite manifest, but there
-is no discovery CLI and no recurring, paper, Alpaca, broker, runtime, or order
-path. See
-[supervised_provider_discovery.md](supervised_provider_discovery.md).
+Run one reviewed discovery-only request:
+
+```bash
+quant dry-run supervised-provider-discover \
+  --request-path reviewed/supervised-provider-discovery-request.json
+```
+
+The reviewed request fixes the discovery policy, output root, and exact
+handoff-rehearsal evidence. The command may produce a finite manifest, but it
+does not run that manifest. It has no recurring, paper, Alpaca, broker,
+runtime, mode, output-root, or cycle-count selector. See
+[supervised_provider_discovery_operator.md](supervised_provider_discovery_operator.md).
 
 ## Local Backtest
 

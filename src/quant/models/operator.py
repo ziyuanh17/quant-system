@@ -217,6 +217,58 @@ class SupervisedProviderDiscoveryResult(FrozenModel):
         return self
 
 
+class SupervisedProviderDiscoveryOperatorRequest(FrozenModel):
+    """Immutable reviewed request for one discovery-only operator run."""
+
+    schema_version: Literal[1] = 1
+    request_id: str = Field(min_length=1)
+    discovery_policy: SupervisedProviderDiscoveryPolicy
+    output_root: str = Field(min_length=1)
+    discovery_rehearsal_report_path: str = Field(min_length=1)
+    discovery_rehearsal_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    created_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+    @field_validator("request_id")
+    @classmethod
+    def request_id_must_be_safe_path_component(cls, value: str) -> str:
+        if value in {".", ".."} or "/" in value or "\\" in value:
+            raise ValueError(
+                "supervised provider discovery operator request ID must be safe"
+            )
+        return value
+
+
+class SupervisedProviderDiscoveryOperatorRecord(FrozenModel):
+    """Immutable result of one discovery-only operator run."""
+
+    schema_version: Literal[1] = 1
+    request_id: str = Field(min_length=1)
+    request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    discovery_id: str = Field(min_length=1)
+    discovery_status: SupervisedProviderDiscoveryStatus
+    discovery_result_path: str = Field(min_length=1)
+    discovery_result_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    finite_manifest_path: str | None = None
+    finite_manifest_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    completed_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def manifest_evidence_must_align(
+        self,
+    ) -> "SupervisedProviderDiscoveryOperatorRecord":
+        if (self.finite_manifest_path is None) != (
+            self.finite_manifest_sha256 is None
+        ):
+            raise ValueError(
+                "discovery operator manifest evidence must align"
+            )
+        return self
+
+
 class FiniteSupervisedProviderManifest(FrozenModel):
     """Immutable ordered list of fresh supervised-provider requests."""
 

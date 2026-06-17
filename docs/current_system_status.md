@@ -9,7 +9,7 @@ separately from fresh read-only evidence.
 
 - Branch: `main`
 - Reviewed source commit before this uncommitted supervised-provider discovery
-  handoff-rehearsal bundle: `0a8d7d7`
+  operator-boundary bundle: `949b6bb`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -207,15 +207,24 @@ completed or blocked discovery result. It does not run the finite loop and has
 no CLI, scheduler, runtime, paper, Alpaca, broker, or order capability. See
 [supervised_provider_discovery.md](supervised_provider_discovery.md).
 
-The current uncommitted review bundle adds its no-network handoff rehearsal.
-It proves discovery-to-loop completion, restart reuse, empty-directory block,
-over-limit block, changed-input block, and finite-loop stop-on-block handoff
-without adding operational exposure. On June 16, 2026, the local rehearsal
-passed all six scenarios, bound 122 Python source files, linked 122 scenario
-evidence paths, verified six discovery results, three finite manifests, three
-finite loop records, and found no order, fill, semantic-paper, or Alpaca
-directory. See
+The checked-in no-network discovery handoff rehearsal proves
+discovery-to-loop completion, restart reuse, empty-directory block, over-limit
+block, changed-input block, and finite-loop stop-on-block handoff without
+adding operational exposure. On June 16, 2026, the local rehearsal passed all
+six scenarios, bound 122 Python source files, linked 122 scenario evidence
+paths, verified six discovery results, three finite manifests, three finite
+loop records, and found no order, fill, semantic-paper, or Alpaca directory.
+See
 [supervised_provider_discovery_rehearsal.md](supervised_provider_discovery_rehearsal.md).
+
+The current uncommitted review bundle adds the manually started
+`quant dry-run supervised-provider-discover` command. It consumes one reviewed
+discovery request, verifies the exact discovery-handoff rehearsal, runs
+discovery only, writes one operator record, and exits nonzero when discovery
+blocks. It may write a finite manifest but does not run it, and it has no
+scheduler, runtime, paper, Alpaca, broker, mode, output-root, or iteration
+selector. See
+[supervised_provider_discovery_operator.md](supervised_provider_discovery_operator.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
