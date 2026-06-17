@@ -133,6 +133,90 @@ class FiniteSupervisedProviderStatus(StrEnum):
     BLOCKED = "blocked"
 
 
+class SupervisedProviderDiscoveryStatus(StrEnum):
+    """Terminal status of one reviewed request discovery pass."""
+
+    COMPLETED = "completed"
+    BLOCKED = "blocked"
+
+
+class SupervisedProviderDiscoveryPolicy(FrozenModel):
+    """Immutable API-only policy for discovering reviewed request files."""
+
+    schema_version: Literal[1] = 1
+    discovery_id: str = Field(min_length=1)
+    discovery_policy_version: str = Field(min_length=1)
+    request_directory: str = Field(min_length=1)
+    request_glob: str = "*.json"
+    maximum_requests: int = Field(ge=1)
+    finite_loop_id: str = Field(min_length=1)
+    finite_output_root: str = Field(min_length=1)
+    created_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+    @field_validator("discovery_id", "finite_loop_id")
+    @classmethod
+    def identifiers_must_be_safe_path_components(cls, value: str) -> str:
+        if value in {".", ".."} or "/" in value or "\\" in value:
+            raise ValueError(
+                "provider discovery IDs must be safe path components"
+            )
+        return value
+
+    @field_validator("request_glob")
+    @classmethod
+    def request_glob_must_be_narrow(cls, value: str) -> str:
+        if value != "*.json":
+            raise ValueError("provider discovery only supports *.json")
+        return value
+
+
+class SupervisedProviderDiscoveryResult(FrozenModel):
+    """Immutable result of one API-only reviewed request discovery pass."""
+
+    schema_version: Literal[1] = 1
+    discovery_id: str = Field(min_length=1)
+    discovery_policy_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    status: SupervisedProviderDiscoveryStatus
+    discovered_at: AwareDatetime
+    request_paths: tuple[str, ...] = ()
+    request_sha256s: tuple[str, ...] = ()
+    finite_manifest_path: str | None = None
+    finite_manifest_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    blocked_reason: str | None = None
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def evidence_must_match_status(
+        self,
+    ) -> "SupervisedProviderDiscoveryResult":
+        if len(self.request_paths) != len(self.request_sha256s):
+            raise ValueError("provider discovery request evidence must align")
+        if len(set(self.request_paths)) != len(self.request_paths):
+            raise ValueError("provider discovery request paths must be unique")
+        if (self.finite_manifest_path is None) != (
+            self.finite_manifest_sha256 is None
+        ):
+            raise ValueError("provider discovery manifest evidence must align")
+        if self.status == SupervisedProviderDiscoveryStatus.COMPLETED and (
+            not self.request_paths
+            or self.finite_manifest_path is None
+            or self.blocked_reason is not None
+        ):
+            raise ValueError(
+                "completed provider discovery requires manifest evidence"
+            )
+        if self.status == SupervisedProviderDiscoveryStatus.BLOCKED and (
+            self.blocked_reason is None or self.finite_manifest_path is not None
+        ):
+            raise ValueError(
+                "blocked provider discovery requires only a blocked reason"
+            )
+        return self
+
+
 class FiniteSupervisedProviderManifest(FrozenModel):
     """Immutable ordered list of fresh supervised-provider requests."""
 

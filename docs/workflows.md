@@ -130,6 +130,12 @@ captures command output for exact-list completion, restart reuse, preflight
 rejection, and stop-on-block behavior, and verifies all linked loop evidence
 without adding operational capability.
 
+The API-only supervised-provider request discovery contract reads a reviewed
+directory of one-cycle operator request files, verifies each file and linked
+assembly artifact, and writes one exact finite manifest plus a durable
+completed or blocked discovery result. It does not run the finite loop and has
+no CLI, scheduler, launchd, runtime, paper, Alpaca, broker, or order path.
+
 ## Paper Signal Refresh
 
 Run:

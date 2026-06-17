@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted finite supervised-provider
-  command-rehearsal bundle: `346f028`
+- Reviewed source commit before this uncommitted supervised-provider request
+  discovery bundle: `45c99f9`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -88,6 +88,9 @@ Checked-in semantic-target capabilities include:
 - bounded API-only supervised autonomous dry-run service with fresh requests,
   per-cycle health and shutdown checks, append-only cycle events, and restart
   continuation;
+- API-only supervised-provider request discovery that turns reviewed
+  one-cycle request files into one exact finite manifest with immutable
+  completed or blocked evidence, without running the loop;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
@@ -190,12 +193,20 @@ before blocking on a stale second request and leaving the third request
 untouched. See
 [finite_supervised_provider.md](finite_supervised_provider.md).
 
-The current uncommitted review bundle adds its evidence-verified
-actual-command rehearsal. On June 15, 2026, exact-list completion, restart
-reuse, preflight rejection, and stop-on-block all passed across five command
-invocations. The report linked 119 scenario evidence paths, bound 120 Python
-source files, and found no order, fill, semantic-paper, or Alpaca directory.
-See [finite_supervised_provider_rehearsal.md](finite_supervised_provider_rehearsal.md).
+The checked-in evidence-verified actual-command rehearsal for the finite
+supervised-provider command passed exact-list completion, restart reuse,
+preflight rejection, and stop-on-block across five command invocations. The
+report linked 119 scenario evidence paths, bound 120 Python source files, and
+found no order, fill, semantic-paper, or Alpaca directory. See
+[finite_supervised_provider_rehearsal.md](finite_supervised_provider_rehearsal.md).
+
+The current uncommitted review bundle adds API-only supervised-provider
+request discovery. Discovery scans one reviewed directory
+for `*.json` one-cycle operator requests, verifies request and linked assembly
+evidence, and writes one finite manifest plus a durable completed or blocked
+discovery result. It does not run the finite loop and has no CLI, scheduler,
+runtime, paper, Alpaca, broker, or order capability. See
+[supervised_provider_discovery.md](supervised_provider_discovery.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation

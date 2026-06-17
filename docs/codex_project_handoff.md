@@ -44,8 +44,8 @@ reviewed source changes through GitHub before updating the runtime clone.
 ## Current Source State
 
 - Git branch: `main`
-- Current reviewed GitHub source commit before the uncommitted semantic-target
-  reconciliation-failure bundle: `cacf25a`
+- Current reviewed GitHub source commit before the uncommitted
+  supervised-provider request discovery bundle: `45c99f9`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - The runtime clone version is not established by this source document. Audit
   it before operational work.
@@ -153,9 +153,11 @@ before proceeding.
 13. Review the checked-in bounded, manually started assembly-to-supervisor
     dry-run operator boundary and its checked-in actual-command rehearsal.
 14. Review the checked-in finite fresh supervised-provider operator and its
-    uncommitted actual-command rehearsal before proposing request discovery
-    or recurring deployment.
-14. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+    checked-in actual-command rehearsal.
+15. Review the uncommitted API-only supervised-provider request discovery
+    bundle before proposing request-discovery rehearsal or recurring
+    deployment.
+16. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-15. Require explicit approval immediately before any broker order-capable
+17. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

@@ -33,6 +33,12 @@ The command stops on the first blocked request and cannot discover additional
 work. See [finite_supervised_provider.md](finite_supervised_provider.md) and
 its [actual-command rehearsal](finite_supervised_provider_rehearsal.md).
 
+Reviewed request discovery is currently API-only. It can verify a reviewed
+directory of one-cycle request files and produce a finite manifest, but there
+is no discovery CLI and no recurring, paper, Alpaca, broker, runtime, or order
+path. See
+[supervised_provider_discovery.md](supervised_provider_discovery.md).
+
 ## Local Backtest
 
 ```bash
