@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted supervised-provider request
-  discovery bundle: `45c99f9`
+- Reviewed source commit before this uncommitted supervised-provider discovery
+  handoff-rehearsal bundle: `0a8d7d7`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -200,13 +200,22 @@ report linked 119 scenario evidence paths, bound 120 Python source files, and
 found no order, fill, semantic-paper, or Alpaca directory. See
 [finite_supervised_provider_rehearsal.md](finite_supervised_provider_rehearsal.md).
 
-The current uncommitted review bundle adds API-only supervised-provider
-request discovery. Discovery scans one reviewed directory
-for `*.json` one-cycle operator requests, verifies request and linked assembly
-evidence, and writes one finite manifest plus a durable completed or blocked
-discovery result. It does not run the finite loop and has no CLI, scheduler,
-runtime, paper, Alpaca, broker, or order capability. See
+The checked-in API-only supervised-provider request discovery scans one
+reviewed directory for `*.json` one-cycle operator requests, verifies request
+and linked assembly evidence, and writes one finite manifest plus a durable
+completed or blocked discovery result. It does not run the finite loop and has
+no CLI, scheduler, runtime, paper, Alpaca, broker, or order capability. See
 [supervised_provider_discovery.md](supervised_provider_discovery.md).
+
+The current uncommitted review bundle adds its no-network handoff rehearsal.
+It proves discovery-to-loop completion, restart reuse, empty-directory block,
+over-limit block, changed-input block, and finite-loop stop-on-block handoff
+without adding operational exposure. On June 16, 2026, the local rehearsal
+passed all six scenarios, bound 122 Python source files, linked 122 scenario
+evidence paths, verified six discovery results, three finite manifests, three
+finite loop records, and found no order, fill, semantic-paper, or Alpaca
+directory. See
+[supervised_provider_discovery_rehearsal.md](supervised_provider_discovery_rehearsal.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation

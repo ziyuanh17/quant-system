@@ -142,15 +142,16 @@ side discussions.
 | 122 | Supervised Provider Operator Command Rehearsal v1 | Done | Produce and verify immutable actual-command evidence for fresh completion, restart reuse, stale-input blocking, changed-input blocking, and zero operational output. |
 | 123 | Finite Fresh Supervised-Provider Operator v1 | Done | Process one exact content-bound ordered list of independently fresh one-cycle requests, with preflight validation, restart reuse, and stop-on-block behavior. |
 | 124 | Finite Supervised-Provider Command Rehearsal v1 | Done | Produce and verify immutable actual-command evidence for exact-list completion, restart reuse, preflight rejection, stop-on-block behavior, and zero operational output. |
-| 125 | API-Only Supervised-Provider Request Discovery v1 | In Review | Discover reviewed one-cycle request files into one exact finite manifest with immutable completed or blocked evidence, without running the loop or exposing scheduler, runtime, paper, Alpaca, broker, or order capability. |
+| 125 | API-Only Supervised-Provider Request Discovery v1 | Done | Discover reviewed one-cycle request files into one exact finite manifest with immutable completed or blocked evidence, without running the loop or exposing scheduler, runtime, paper, Alpaca, broker, or order capability. |
+| 126 | Supervised-Provider Discovery Handoff Rehearsal v1 | In Review | Produce and verify no-network evidence for discovery-to-loop handoff, restart reuse, blocked discovery inputs, and finite-loop stop-on-block behavior without adding operational exposure. |
 
 ## Current Recommendation
 
-Review **API-Only Supervised-Provider Request Discovery v1**, then decide
-whether the next stage should add a no-network rehearsal for discovery and its
-handoff to the finite supervised-provider loop. Do not expose launchd, runtime
-deployment, recurring scheduling, semantic local paper, Alpaca semantic
-targets, or broker submission as part of that review.
+Review **Supervised-Provider Discovery Handoff Rehearsal v1**, then decide
+whether the next stage should design a bounded, manually started discovery
+operator boundary. Do not expose launchd, runtime deployment, recurring
+scheduling, semantic local paper, Alpaca semantic targets, or broker submission
+as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

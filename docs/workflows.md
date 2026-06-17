@@ -136,6 +136,12 @@ assembly artifact, and writes one exact finite manifest plus a durable
 completed or blocked discovery result. It does not run the finite loop and has
 no CLI, scheduler, launchd, runtime, paper, Alpaca, broker, or order path.
 
+The discovery handoff rehearsal verifies that contract end to end without
+network access. It covers successful discovery-to-loop handoff, restart reuse,
+empty reviewed directories, request-limit blocks, changed linked evidence, and
+finite-loop stop-on-block behavior. The report reopens all linked evidence and
+checks that no operational directories were created.
+
 ## Paper Signal Refresh
 
 Run:

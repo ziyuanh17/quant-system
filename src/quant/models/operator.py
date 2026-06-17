@@ -326,6 +326,17 @@ class FiniteSupervisedProviderRehearsalScenario(StrEnum):
     STOP_ON_BLOCK = "stop_on_block"
 
 
+class SupervisedProviderDiscoveryRehearsalScenario(StrEnum):
+    """Required no-network supervised-provider discovery scenarios."""
+
+    DISCOVERY_TO_LOOP = "discovery_to_loop"
+    RESTART_REUSE = "restart_reuse"
+    EMPTY_DIRECTORY_BLOCK = "empty_directory_block"
+    OVER_LIMIT_BLOCK = "over_limit_block"
+    CHANGED_INPUT_BLOCK = "changed_input_block"
+    STOP_ON_BLOCK_HANDOFF = "stop_on_block_handoff"
+
+
 class SupervisedProviderOperatorCommandObservation(FrozenModel):
     """Immutable observation of one actual operator command invocation."""
 
@@ -424,6 +435,37 @@ class FiniteSupervisedProviderRehearsalScenarioResult(FrozenModel):
         return self
 
 
+class SupervisedProviderDiscoveryRehearsalScenarioResult(FrozenModel):
+    """Evidence summary for one discovery handoff rehearsal scenario."""
+
+    scenario: SupervisedProviderDiscoveryRehearsalScenario
+    passed: bool
+    discovery_result_paths: tuple[str, ...] = Field(min_length=1)
+    discovery_result_sha256s: tuple[str, ...] = Field(min_length=1)
+    finite_manifest_paths: tuple[str, ...] = ()
+    finite_manifest_sha256s: tuple[str, ...] = ()
+    loop_record_paths: tuple[str, ...] = ()
+    loop_record_sha256s: tuple[str, ...] = ()
+    evidence_paths: tuple[str, ...] = Field(min_length=1)
+    evidence_sha256s: tuple[str, ...] = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def paths_and_hashes_must_align(
+        self,
+    ) -> "SupervisedProviderDiscoveryRehearsalScenarioResult":
+        if (
+            len(self.discovery_result_paths)
+            != len(self.discovery_result_sha256s)
+            or len(self.finite_manifest_paths)
+            != len(self.finite_manifest_sha256s)
+            or len(self.loop_record_paths) != len(self.loop_record_sha256s)
+            or len(self.evidence_paths) != len(self.evidence_sha256s)
+        ):
+            raise ValueError("discovery rehearsal paths and hashes must align")
+        return self
+
+
 class SupervisedProviderOperatorRehearsalReport(FrozenModel):
     """Immutable actual-command supervised-provider rehearsal report."""
 
@@ -507,4 +549,47 @@ class FiniteSupervisedProviderRehearsalReport(FrozenModel):
         )
         if self.passed != expected:
             raise ValueError("finite rehearsal passed status must match")
+        return self
+
+
+class SupervisedProviderDiscoveryRehearsalReport(FrozenModel):
+    """Immutable no-network supervised-provider discovery rehearsal report."""
+
+    schema_version: Literal[1] = 1
+    rehearsal_id: str = Field(min_length=1)
+    rehearsal_policy_version: str = Field(min_length=1)
+    evidence_root: str = Field(min_length=1)
+    source_paths: tuple[str, ...] = Field(min_length=1)
+    source_sha256s: tuple[str, ...] = Field(min_length=1)
+    prerequisite_report_path: str = Field(min_length=1)
+    prerequisite_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    evaluated_at: AwareDatetime
+    passed: bool
+    scenarios: tuple[
+        SupervisedProviderDiscoveryRehearsalScenarioResult, ...
+    ] = Field(min_length=1)
+    prohibited_artifact_paths: tuple[str, ...] = ()
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def passed_must_match_complete_scenarios(
+        self,
+    ) -> "SupervisedProviderDiscoveryRehearsalReport":
+        if len(self.source_paths) != len(self.source_sha256s):
+            raise ValueError("discovery rehearsal source paths must align")
+        if len(set(self.source_paths)) != len(self.source_paths):
+            raise ValueError("discovery rehearsal source paths must be unique")
+        scenarios = {item.scenario for item in self.scenarios}
+        if scenarios != set(
+            SupervisedProviderDiscoveryRehearsalScenario
+        ) or len(scenarios) != len(self.scenarios):
+            raise ValueError(
+                "discovery rehearsal must include every scenario"
+            )
+        expected = (
+            all(item.passed for item in self.scenarios)
+            and not self.prohibited_artifact_paths
+        )
+        if self.passed != expected:
+            raise ValueError("discovery rehearsal passed status must match")
         return self
