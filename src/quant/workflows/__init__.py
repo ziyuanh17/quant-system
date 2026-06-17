@@ -44,6 +44,11 @@ from quant.workflows.finite_supervised_provider import (
     run_finite_supervised_provider_loop,
     write_finite_supervised_provider_manifest,
 )
+from quant.workflows.finite_supervised_provider_rehearsal import (
+    FINITE_SUPERVISED_PROVIDER_REHEARSAL_POLICY,
+    load_and_verify_finite_supervised_provider_rehearsal,
+    run_finite_supervised_provider_command_rehearsal,
+)
 from quant.workflows.paper_signal_refresh import (
     WorkflowRunFailed,
     run_alpaca_paper_refresh_workflow,
@@ -140,6 +145,9 @@ __all__ = [
     "load_finite_supervised_provider_record",
     "run_finite_supervised_provider_loop",
     "write_finite_supervised_provider_manifest",
+    "FINITE_SUPERVISED_PROVIDER_REHEARSAL_POLICY",
+    "load_and_verify_finite_supervised_provider_rehearsal",
+    "run_finite_supervised_provider_command_rehearsal",
     "inspect_activated_dry_run_operator_request",
     "ACTIVATION_CONSUMPTION_REHEARSAL_POLICY",
     "load_and_verify_activation_consumption_rehearsal",

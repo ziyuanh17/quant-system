@@ -60,6 +60,11 @@ third request: not run
 
 No order, fill, semantic-paper, or Alpaca directory appeared.
 
+The separate
+[evidence-verified command rehearsal](finite_supervised_provider_rehearsal.md)
+covers exact-list completion, restart reuse, preflight rejection, and
+stop-on-block behavior through the actual executable.
+
 ## Review Boundary
 
 This stage supports multiple fresh cycles only inside one manually started,

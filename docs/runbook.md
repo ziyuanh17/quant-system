@@ -30,7 +30,8 @@ quant dry-run supervised-provider-finite \
 ```
 
 The command stops on the first blocked request and cannot discover additional
-work. See [finite_supervised_provider.md](finite_supervised_provider.md).
+work. See [finite_supervised_provider.md](finite_supervised_provider.md) and
+its [actual-command rehearsal](finite_supervised_provider_rehearsal.md).
 
 ## Local Backtest
 

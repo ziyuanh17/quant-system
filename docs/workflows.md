@@ -125,6 +125,11 @@ independently assembles fresh inputs for one supervised dry-run cycle. The
 runner preflights all linked hashes, stops durably on the first block, and
 cannot discover more work or continue indefinitely.
 
+Its separate actual-command rehearsal binds executable and source identity,
+captures command output for exact-list completion, restart reuse, preflight
+rejection, and stop-on-block behavior, and verifies all linked loop evidence
+without adding operational capability.
+
 ## Paper Signal Refresh
 
 Run:

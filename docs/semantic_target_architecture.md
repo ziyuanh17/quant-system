@@ -465,3 +465,8 @@ one-cycle requests without turning the supervisor into a recurring service. A
 content-bound manifest fixes the complete ordered request list and loop output
 root. The runner verifies all linked hashes before the first cycle, stops on
 the first block, and creates no mechanism for discovering later work.
+
+Its actual-command rehearsal binds executable and source identity and verifies
+exact-list completion, restart reuse, preflight rejection, and stop-on-block
+behavior. This preserves the distinction between finite manual operation and
+recurring automation.
