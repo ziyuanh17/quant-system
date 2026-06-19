@@ -9,7 +9,7 @@ separately from fresh read-only evidence.
 
 - Branch: `main`
 - Reviewed source commit before this uncommitted supervised-provider discovery
-  operator-boundary bundle: `949b6bb`
+  operator-command-rehearsal bundle: `992b845`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -217,14 +217,23 @@ loop records, and found no order, fill, semantic-paper, or Alpaca directory.
 See
 [supervised_provider_discovery_rehearsal.md](supervised_provider_discovery_rehearsal.md).
 
-The current uncommitted review bundle adds the manually started
-`quant dry-run supervised-provider-discover` command. It consumes one reviewed
-discovery request, verifies the exact discovery-handoff rehearsal, runs
-discovery only, writes one operator record, and exits nonzero when discovery
-blocks. It may write a finite manifest but does not run it, and it has no
-scheduler, runtime, paper, Alpaca, broker, mode, output-root, or iteration
-selector. See
+The checked-in manually started `quant dry-run supervised-provider-discover`
+command consumes one reviewed discovery request, verifies the exact
+discovery-handoff rehearsal, runs discovery only, writes one operator record,
+and exits nonzero when discovery blocks. It may write a finite manifest but
+does not run it, and it has no scheduler, runtime, paper, Alpaca, broker, mode,
+output-root, or iteration selector. See
 [supervised_provider_discovery_operator.md](supervised_provider_discovery_operator.md).
+
+The current uncommitted review bundle adds actual-command rehearsal evidence
+for that discovery-only CLI. It covers fresh completion, restart reuse,
+blocked discovery, and tampered rehearsal rejection while verifying no
+finite-loop execution or operational output. On June 17, 2026, the local
+actual-command rehearsal passed all four scenarios, bound 124 Python source
+files, captured five command observations, verified three operator records,
+linked 301 scenario evidence paths, and found no order, fill, semantic-paper,
+or Alpaca directory. See
+[supervised_provider_discovery_operator_rehearsal.md](supervised_provider_discovery_operator_rehearsal.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation

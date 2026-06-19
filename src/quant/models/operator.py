@@ -389,6 +389,15 @@ class SupervisedProviderDiscoveryRehearsalScenario(StrEnum):
     STOP_ON_BLOCK_HANDOFF = "stop_on_block_handoff"
 
 
+class SupervisedProviderDiscoveryOperatorRehearsalScenario(StrEnum):
+    """Required actual-command discovery operator rehearsal scenarios."""
+
+    FRESH_COMPLETION = "fresh_completion"
+    RESTART_REUSE = "restart_reuse"
+    BLOCKED_DISCOVERY = "blocked_discovery"
+    TAMPERED_REHEARSAL_BLOCK = "tampered_rehearsal_block"
+
+
 class SupervisedProviderOperatorCommandObservation(FrozenModel):
     """Immutable observation of one actual operator command invocation."""
 
@@ -411,6 +420,22 @@ class FiniteSupervisedProviderCommandObservation(FrozenModel):
     schema_version: Literal[1] = 1
     observation_id: str = Field(min_length=1)
     scenario: FiniteSupervisedProviderRehearsalScenario
+    sequence: int = Field(ge=1)
+    executable_path: str = Field(min_length=1)
+    executable_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    arguments: tuple[str, ...] = Field(min_length=1)
+    exit_code: int
+    stdout: str
+    stderr: str
+    observed_at: AwareDatetime
+
+
+class SupervisedProviderDiscoveryOperatorCommandObservation(FrozenModel):
+    """Immutable observation of one discovery operator command."""
+
+    schema_version: Literal[1] = 1
+    observation_id: str = Field(min_length=1)
+    scenario: SupervisedProviderDiscoveryOperatorRehearsalScenario
     sequence: int = Field(ge=1)
     executable_path: str = Field(min_length=1)
     executable_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -515,6 +540,36 @@ class SupervisedProviderDiscoveryRehearsalScenarioResult(FrozenModel):
             or len(self.evidence_paths) != len(self.evidence_sha256s)
         ):
             raise ValueError("discovery rehearsal paths and hashes must align")
+        return self
+
+
+class SupervisedProviderDiscoveryOperatorRehearsalScenarioResult(FrozenModel):
+    """Evidence summary for one discovery operator command scenario."""
+
+    scenario: SupervisedProviderDiscoveryOperatorRehearsalScenario
+    passed: bool
+    command_observation_paths: tuple[str, ...] = Field(min_length=1)
+    command_observation_sha256s: tuple[str, ...] = Field(min_length=1)
+    operator_record_paths: tuple[str, ...] = ()
+    operator_record_sha256s: tuple[str, ...] = ()
+    evidence_paths: tuple[str, ...] = Field(min_length=1)
+    evidence_sha256s: tuple[str, ...] = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def paths_and_hashes_must_align(
+        self,
+    ) -> "SupervisedProviderDiscoveryOperatorRehearsalScenarioResult":
+        if (
+            len(self.command_observation_paths)
+            != len(self.command_observation_sha256s)
+            or len(self.operator_record_paths)
+            != len(self.operator_record_sha256s)
+            or len(self.evidence_paths) != len(self.evidence_sha256s)
+        ):
+            raise ValueError(
+                "discovery operator rehearsal paths and hashes must align"
+            )
         return self
 
 
@@ -644,4 +699,55 @@ class SupervisedProviderDiscoveryRehearsalReport(FrozenModel):
         )
         if self.passed != expected:
             raise ValueError("discovery rehearsal passed status must match")
+        return self
+
+
+class SupervisedProviderDiscoveryOperatorRehearsalReport(FrozenModel):
+    """Immutable actual-command discovery operator rehearsal report."""
+
+    schema_version: Literal[1] = 1
+    rehearsal_id: str = Field(min_length=1)
+    rehearsal_policy_version: str = Field(min_length=1)
+    evidence_root: str = Field(min_length=1)
+    executable_path: str = Field(min_length=1)
+    executable_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_paths: tuple[str, ...] = Field(min_length=1)
+    source_sha256s: tuple[str, ...] = Field(min_length=1)
+    prerequisite_report_path: str = Field(min_length=1)
+    prerequisite_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    evaluated_at: AwareDatetime
+    passed: bool
+    scenarios: tuple[
+        SupervisedProviderDiscoveryOperatorRehearsalScenarioResult, ...
+    ] = Field(min_length=1)
+    prohibited_artifact_paths: tuple[str, ...] = ()
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def passed_must_match_complete_scenarios(
+        self,
+    ) -> "SupervisedProviderDiscoveryOperatorRehearsalReport":
+        if len(self.source_paths) != len(self.source_sha256s):
+            raise ValueError(
+                "discovery operator rehearsal source paths must align"
+            )
+        if len(set(self.source_paths)) != len(self.source_paths):
+            raise ValueError(
+                "discovery operator rehearsal source paths must be unique"
+            )
+        scenarios = {item.scenario for item in self.scenarios}
+        if scenarios != set(
+            SupervisedProviderDiscoveryOperatorRehearsalScenario
+        ) or len(scenarios) != len(self.scenarios):
+            raise ValueError(
+                "discovery operator rehearsal must include every scenario"
+            )
+        expected = (
+            all(item.passed for item in self.scenarios)
+            and not self.prohibited_artifact_paths
+        )
+        if self.passed != expected:
+            raise ValueError(
+                "discovery operator rehearsal passed status must match"
+            )
         return self
