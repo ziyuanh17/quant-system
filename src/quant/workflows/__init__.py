@@ -107,6 +107,13 @@ from quant.workflows.supervised_provider_discovery import (
     verify_supervised_provider_discovery_result,
     write_supervised_provider_discovery_policy,
 )
+from quant.workflows.supervised_provider_discovery_loop_operator import (
+    load_supervised_provider_discovery_loop_operator_record,
+    load_supervised_provider_discovery_loop_operator_request,
+    run_supervised_provider_discovery_loop_operator_request,
+    verify_supervised_provider_discovery_loop_operator_record,
+    write_supervised_provider_discovery_loop_operator_request,
+)
 from quant.workflows.supervised_provider_discovery_operator import (
     load_supervised_provider_discovery_operator_record,
     load_supervised_provider_discovery_operator_request,
@@ -234,6 +241,11 @@ __all__ = [
     "run_supervised_provider_discovery_operator_request",
     "verify_supervised_provider_discovery_operator_record",
     "write_supervised_provider_discovery_operator_request",
+    "load_supervised_provider_discovery_loop_operator_record",
+    "load_supervised_provider_discovery_loop_operator_request",
+    "run_supervised_provider_discovery_loop_operator_request",
+    "verify_supervised_provider_discovery_loop_operator_record",
+    "write_supervised_provider_discovery_loop_operator_request",
     "SUPERVISED_PROVIDER_DISCOVERY_OPERATOR_REHEARSAL_POLICY",
     "load_and_verify_supervised_provider_discovery_operator_rehearsal",
     "run_supervised_provider_discovery_operator_command_rehearsal",

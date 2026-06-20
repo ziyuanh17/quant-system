@@ -154,6 +154,14 @@ arguments, exit code, stdout, and stderr for fresh completion, restart reuse,
 blocked discovery, and tampered rehearsal evidence. The verifier reopens every
 linked artifact and confirms that no operational directories were created.
 
+The manually started `quant dry-run supervised-provider-discover-finite`
+command consumes one reviewed composition request. It verifies the
+discovery-only command rehearsal, runs one reviewed discovery-only operator
+request, and then runs only the exact finite manifest produced by discovery.
+It writes one composition record, exits nonzero on discovery or finite-loop
+blocks, and exposes no scheduler, runtime, paper, Alpaca, broker, mode,
+output-root, or iteration selector.
+
 ## Paper Signal Refresh
 
 Run:

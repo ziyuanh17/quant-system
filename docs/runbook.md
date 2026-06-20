@@ -46,6 +46,19 @@ does not run that manifest. It has no recurring, paper, Alpaca, broker,
 runtime, mode, output-root, or cycle-count selector. See
 [supervised_provider_discovery_operator.md](supervised_provider_discovery_operator.md).
 
+Run one reviewed discovery-to-finite-loop request:
+
+```bash
+quant dry-run supervised-provider-discover-finite \
+  --request-path reviewed/supervised-provider-discovery-loop-request.json
+```
+
+The reviewed request fixes the exact discovery-only operator request and
+command-rehearsal evidence. The command runs discovery first, then only the
+finite manifest produced by that discovery result. It has no recurring, paper,
+Alpaca, broker, runtime, mode, output-root, or cycle-count selector. See
+[supervised_provider_discovery_loop_operator.md](supervised_provider_discovery_loop_operator.md).
+
 ## Local Backtest
 
 ```bash

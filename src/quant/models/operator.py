@@ -140,6 +140,13 @@ class SupervisedProviderDiscoveryStatus(StrEnum):
     BLOCKED = "blocked"
 
 
+class SupervisedProviderDiscoveryLoopStatus(StrEnum):
+    """Terminal status of one discovery-to-loop composition."""
+
+    COMPLETED = "completed"
+    BLOCKED = "blocked"
+
+
 class SupervisedProviderDiscoveryPolicy(FrozenModel):
     """Immutable API-only policy for discovering reviewed request files."""
 
@@ -266,6 +273,83 @@ class SupervisedProviderDiscoveryOperatorRecord(FrozenModel):
             raise ValueError(
                 "discovery operator manifest evidence must align"
             )
+        return self
+
+
+class SupervisedProviderDiscoveryLoopOperatorRequest(FrozenModel):
+    """Immutable reviewed request for one discovery-to-loop composition."""
+
+    schema_version: Literal[1] = 1
+    request_id: str = Field(min_length=1)
+    discovery_operator_request_path: str = Field(min_length=1)
+    discovery_operator_request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    discovery_operator_rehearsal_report_path: str = Field(min_length=1)
+    discovery_operator_rehearsal_report_sha256: str = Field(
+        pattern=r"^[0-9a-f]{64}$"
+    )
+    output_root: str = Field(min_length=1)
+    created_at: AwareDatetime
+    evidence_refs: tuple[str, ...] = ()
+
+    @field_validator("request_id")
+    @classmethod
+    def request_id_must_be_safe_path_component(cls, value: str) -> str:
+        if value in {".", ".."} or "/" in value or "\\" in value:
+            raise ValueError(
+                "supervised provider discovery-loop request ID must be safe"
+            )
+        return value
+
+
+class SupervisedProviderDiscoveryLoopOperatorRecord(FrozenModel):
+    """Immutable result of one discovery-to-loop composition."""
+
+    schema_version: Literal[1] = 1
+    request_id: str = Field(min_length=1)
+    request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    status: SupervisedProviderDiscoveryLoopStatus
+    discovery_operator_record_path: str = Field(min_length=1)
+    discovery_operator_record_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    finite_manifest_path: str | None = None
+    finite_manifest_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    finite_loop_record_path: str | None = None
+    finite_loop_record_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    completed_at: AwareDatetime
+    reason: str = Field(min_length=1)
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def evidence_must_match_status(
+        self,
+    ) -> "SupervisedProviderDiscoveryLoopOperatorRecord":
+        if (self.finite_manifest_path is None) != (
+            self.finite_manifest_sha256 is None
+        ):
+            raise ValueError(
+                "discovery-loop manifest evidence must align"
+            )
+        if (self.finite_loop_record_path is None) != (
+            self.finite_loop_record_sha256 is None
+        ):
+            raise ValueError(
+                "discovery-loop finite record evidence must align"
+            )
+        if (
+            self.status == SupervisedProviderDiscoveryLoopStatus.COMPLETED
+            and self.finite_loop_record_path is None
+        ):
+            raise ValueError(
+                "completed discovery-loop composition requires loop record"
+            )
+        if (
+            self.status == SupervisedProviderDiscoveryLoopStatus.BLOCKED
+            and self.reason == "completed"
+        ):
+            raise ValueError("blocked discovery-loop requires blocked reason")
         return self
 
 

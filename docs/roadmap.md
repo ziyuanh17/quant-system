@@ -145,13 +145,14 @@ side discussions.
 | 125 | API-Only Supervised-Provider Request Discovery v1 | Done | Discover reviewed one-cycle request files into one exact finite manifest with immutable completed or blocked evidence, without running the loop or exposing scheduler, runtime, paper, Alpaca, broker, or order capability. |
 | 126 | Supervised-Provider Discovery Handoff Rehearsal v1 | Done | Produce and verify no-network evidence for discovery-to-loop handoff, restart reuse, blocked discovery inputs, and finite-loop stop-on-block behavior without adding operational exposure. |
 | 127 | Supervised-Provider Discovery Operator Boundary v1 | Done | Expose one manually started reviewed-request command that runs discovery only, writes immutable operator evidence, and cannot run finite loops or select scheduler, runtime, paper, Alpaca, broker, or order behavior. |
-| 128 | Supervised-Provider Discovery Operator Command Rehearsal v1 | In Review | Produce and verify actual-command evidence for discovery-only CLI completion, restart reuse, blocked discovery, tampered rehearsal rejection, and zero operational output. |
+| 128 | Supervised-Provider Discovery Operator Command Rehearsal v1 | Done | Produce and verify actual-command evidence for discovery-only CLI completion, restart reuse, blocked discovery, tampered rehearsal rejection, and zero operational output. |
+| 129 | Manual Discovery-To-Loop Operator Composition v1 | In Review | Expose one manually started reviewed-request command that runs discovery and then exactly the discovered finite manifest, with durable composition evidence and no scheduler, runtime, paper, Alpaca, broker, or order capability. |
 
 ## Current Recommendation
 
-Review **Supervised-Provider Discovery Operator Command Rehearsal v1**, then
-decide whether the next stage should design a bounded manual discovery-to-loop
-operator composition. Do not expose launchd, runtime deployment, recurring
+Review **Manual Discovery-To-Loop Operator Composition v1**, then decide
+whether the next stage should add actual-command rehearsal evidence for the
+composed command. Do not expose launchd, runtime deployment, recurring
 scheduling, semantic local paper, Alpaca semantic targets, or broker submission
 as part of that review.
 

@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted supervised-provider discovery
-  operator-command-rehearsal bundle: `992b845`
+- Reviewed source commit before this uncommitted manual discovery-to-loop
+  composition bundle: `d75c702`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -225,15 +225,23 @@ does not run it, and it has no scheduler, runtime, paper, Alpaca, broker, mode,
 output-root, or iteration selector. See
 [supervised_provider_discovery_operator.md](supervised_provider_discovery_operator.md).
 
-The current uncommitted review bundle adds actual-command rehearsal evidence
-for that discovery-only CLI. It covers fresh completion, restart reuse,
-blocked discovery, and tampered rehearsal rejection while verifying no
-finite-loop execution or operational output. On June 17, 2026, the local
-actual-command rehearsal passed all four scenarios, bound 124 Python source
-files, captured five command observations, verified three operator records,
-linked 301 scenario evidence paths, and found no order, fill, semantic-paper,
-or Alpaca directory. See
+The checked-in actual-command rehearsal for the discovery-only CLI covers
+fresh completion, restart reuse, blocked discovery, and tampered rehearsal
+rejection while verifying no finite-loop execution or operational output. On
+June 17, 2026, the local actual-command rehearsal passed all four scenarios,
+bound 124 Python source files, captured five command observations, verified
+three operator records, linked 301 scenario evidence paths, and found no
+order, fill, semantic-paper, or Alpaca directory. See
 [supervised_provider_discovery_operator_rehearsal.md](supervised_provider_discovery_operator_rehearsal.md).
+
+The current uncommitted review bundle adds the manually started
+`quant dry-run supervised-provider-discover-finite` command. It consumes one
+reviewed composition request, verifies the discovery-only command rehearsal,
+runs one reviewed discovery-only operator request, and then runs only the
+exact finite manifest produced by discovery. It writes one composition record,
+exits nonzero on discovery or finite-loop blocks, and has no scheduler,
+runtime, paper, Alpaca, broker, mode, output-root, or iteration selector. See
+[supervised_provider_discovery_loop_operator.md](supervised_provider_discovery_loop_operator.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
