@@ -162,6 +162,12 @@ It writes one composition record, exits nonzero on discovery or finite-loop
 blocks, and exposes no scheduler, runtime, paper, Alpaca, broker, mode,
 output-root, or iteration selector.
 
+Its actual-command rehearsal captures executable and source identity, command
+arguments, exit code, stdout, and stderr for completion, restart reuse,
+blocked discovery, blocked finite loop, and tampered prerequisite rehearsal
+evidence. The verifier reopens every linked artifact and confirms that no
+operational directories were created.
+
 ## Paper Signal Refresh
 
 Run:
