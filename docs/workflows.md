@@ -199,6 +199,12 @@ synthetic-input actual-command rehearsal from the runtime clone with evidence
 under `/tmp`. It still excludes runtime `data` and `logs`, `.env`,
 credentials, launchd, scheduler, paper, Alpaca, broker, order, and fill paths.
 
+The runtime command rehearsal passed from the runtime clone with evidence
+under `/tmp`. All five synthetic scenarios verified, the runtime clone stayed
+clean, runtime operational directory timestamps did not change, and no
+credentials, launchd, scheduler, paper, Alpaca, broker, order, or fill path was
+used.
+
 ## Paper Signal Refresh
 
 Run:
