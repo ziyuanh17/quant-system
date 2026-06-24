@@ -1,0 +1,10 @@
+{
+  "batch_id": "aapl-strategy-research-batch-v1",
+  "immutable_artifacts": [
+    {
+      "relative_path": "batch.json",
+      "sha256": "96bdb6874d12bd46c7df11e5e342e220c34e6e46ea3ce19f642a0dec93c4d023"
+    }
+  ],
+  "schema_version": 1
+}

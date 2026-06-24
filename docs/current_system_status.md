@@ -357,6 +357,16 @@ technical features, requires the `ma_5` and `ma_20` columns, computes input
 hashes, and writes the immutable batch artifact. It does not fetch data, run
 backtests, touch runtime state, use broker credentials, or submit orders.
 
+The first AAPL research batch artifact has been materialized under
+`data/research/strategy-batches/aapl-strategy-research-batch-v1/`. It uses
+1006 validated historical AAPL market-bar rows for 2020-01-01 through
+2024-01-01, generated technical features with matching row count, and verifies
+through the immutable batch manifest. The captured input hashes are:
+`b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2` for
+market bars and
+`fe9895a8bc2e3ec6909b49c577ddfd8c6c64427ae728577b824635a80e7d4c55` for
+features.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

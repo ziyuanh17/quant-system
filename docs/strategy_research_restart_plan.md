@@ -115,6 +115,17 @@ validates the market-bar CSV, loads the feature CSV, requires the `ma_5` and
 batch, and writes the immutable batch artifact. It does not fetch data or run a
 backtest.
 
+The first materialized artifact is:
+
+```text
+data/research/strategy-batches/aapl-strategy-research-batch-v1/
+```
+
+It references `data/normalized/market_bars/AAPL.csv` and
+`data/features/technical/AAPL.csv`, both with 1006 data rows. The batch
+manifest verifies, and the batch still carries `order_submission_authorized:
+false`.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and
@@ -202,7 +213,8 @@ The next implementation should be research-only:
 ```text
 Strategy Research Batch v1
   -> define candidate specs under ResearchBatchSpec
-  -> refresh or locate validated AAPL data
+  -> refresh or locate validated AAPL data [done]
+  -> materialize the immutable batch artifact [done]
   -> run baseline and target-native simulations
   -> persist immutable evaluation artifacts
   -> write a research report with pass/fail decisions
