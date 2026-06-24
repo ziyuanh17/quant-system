@@ -9,7 +9,7 @@ separately from fresh read-only evidence.
 
 - Branch: `main`
 - Reviewed source commit before this uncommitted runtime-copy rehearsal
-  design bundle: `8e5f7bd`
+  attempt bundle: `6d2d9d5`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -266,13 +266,23 @@ clone, running workflows, loading launchd, recurring scheduling, semantic
 local paper, Alpaca, broker access, or order submission. See
 [supervised_provider_discovery_loop_source_promotion_review.md](supervised_provider_discovery_loop_source_promotion_review.md).
 
-The current uncommitted review bundle designs a runtime-clone copy rehearsal.
-That design is limited to clean-state checks, scheduler-unloaded checks,
-fast-forward planning, package import, and CLI help verification. It does not
-authorize executing the copy, running workflows, sourcing credentials, loading
-launchd, recurring scheduling, semantic local paper, Alpaca, broker access, or
-order submission. See
+The checked-in runtime-clone copy rehearsal design is limited to clean-state
+checks, scheduler-unloaded checks, fast-forward planning, package import, and
+CLI help verification. It does not authorize running workflows, sourcing
+credentials, loading launchd, recurring scheduling, semantic local paper,
+Alpaca, broker access, or order submission. See
 [supervised_provider_discovery_loop_runtime_copy_rehearsal_design.md](supervised_provider_discovery_loop_runtime_copy_rehearsal_design.md).
+
+The current uncommitted review bundle records a runtime-copy rehearsal attempt
+that initially blocked. Read-only preflight found the development workspace
+clean and the Alpaca paper launchd service unloaded, but the runtime clone had
+unrelated web-app modifications and `data/web/`. Those runtime-clone changes
+were preserved in `stash@{0}` with the message
+`runtime-clone-web-app-wip-before-discovery-loop-rehearsal-2026-06-23`, and
+the runtime clone now reports clean at `5da3147`. The rehearsal stopped before
+`git fetch`, `git merge`, import, help, workflow execution, credentials,
+launchd, scheduler, paper, Alpaca, broker, order, or fill activity. See
+[supervised_provider_discovery_loop_runtime_copy_rehearsal.md](supervised_provider_discovery_loop_runtime_copy_rehearsal.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -335,10 +345,11 @@ Before connecting semantic targets to recurring operations:
     rehearsal;
 12. review the checked-in source-only promotion boundary;
 13. review the checked-in source-only promotion review;
-14. review the runtime-clone copy rehearsal design before executing any
-    runtime-clone copy/import/help rehearsal;
-15. separately review any runtime-clone or recurring scheduler exposure;
-16. obtain explicit approval before every broker order-capable rehearsal.
+14. review the checked-in runtime-clone copy rehearsal design;
+15. retry the no-workflow copy/import/help rehearsal from the clean runtime
+    clone;
+16. separately review any runtime-clone or recurring scheduler exposure;
+17. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 

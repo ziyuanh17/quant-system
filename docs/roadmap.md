@@ -150,15 +150,16 @@ side discussions.
 | 130 | Manual Discovery-To-Loop Operator Command Rehearsal v1 | Done | Produce and verify actual-command evidence for completion, restart reuse, blocked discovery, blocked finite loop, tampered prerequisite rejection, and zero operational output. |
 | 131 | Discovery-To-Loop Promotion Boundary v1 | Done | Define the source-only review gate, required evidence, stop conditions, and next staged promotion levels before any runtime, scheduler, paper, Alpaca, broker, or order exposure. |
 | 132 | Discovery-To-Loop Source Promotion Review v1 | Done | Review the checked-in command, rehearsal, and promotion boundary as source evidence, and authorize only the design of a runtime-clone copy rehearsal. |
-| 133 | Discovery-To-Loop Runtime Copy Rehearsal Design v1 | In Review | Design a runtime-clone copy/import/help rehearsal for the reviewed source, explicitly excluding workflow execution, launchd, credentials, paper, Alpaca, broker, scheduler, and orders. |
+| 133 | Discovery-To-Loop Runtime Copy Rehearsal Design v1 | Done | Design a runtime-clone copy/import/help rehearsal for the reviewed source, explicitly excluding workflow execution, launchd, credentials, paper, Alpaca, broker, scheduler, and orders. |
+| 134 | Discovery-To-Loop Runtime Copy Rehearsal Attempt v1 | In Review | Run read-only preflight for the runtime-clone copy rehearsal, preserve unrelated runtime-clone web-app modifications in a stash, and restore the runtime clone to clean state before retry. |
 
 ## Current Recommendation
 
-Review **Discovery-To-Loop Runtime Copy Rehearsal Design v1**, then decide
-whether to execute that no-workflow runtime-clone copy/import/help rehearsal.
-Do not expose launchd, runtime deployment, recurring scheduling, semantic
-local paper, Alpaca semantic targets, or broker submission as part of that
-review.
+Review **Discovery-To-Loop Runtime Copy Rehearsal Attempt v1**, then retry the
+no-workflow runtime-clone copy/import/help rehearsal from the now-clean runtime
+clone. Do not expose launchd, runtime deployment, recurring scheduling,
+semantic local paper, Alpaca semantic targets, or broker submission as part of
+that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

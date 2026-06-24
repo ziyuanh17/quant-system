@@ -15,6 +15,8 @@ Start with these current, canonical documents:
   runtime-clone copy rehearsal.
 - [supervised_provider_discovery_loop_runtime_copy_rehearsal_design.md](supervised_provider_discovery_loop_runtime_copy_rehearsal_design.md):
   design for a no-workflow runtime-clone copy/import/help rehearsal.
+- [supervised_provider_discovery_loop_runtime_copy_rehearsal.md](supervised_provider_discovery_loop_runtime_copy_rehearsal.md):
+  blocked read-only runtime-clone preflight attempt.
 - [runbook.md](runbook.md): supported operator commands.
 - [trading_safety.md](trading_safety.md): safety gates.
 - [codex_project_handoff.md](codex_project_handoff.md): collaboration and host

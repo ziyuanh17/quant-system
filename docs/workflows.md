@@ -183,6 +183,12 @@ and command help only. It explicitly excludes request execution, credentials,
 launchd, scheduler, paper, Alpaca, broker, semantic-paper, order, and fill
 paths.
 
+The first runtime-copy rehearsal attempt stopped during read-only preflight
+because the runtime clone contained unrelated web-app modifications. Those
+changes were preserved in a runtime-clone Git stash and the clone now reports
+clean. The attempt did not fetch, merge, import, run command help, source
+credentials, load launchd, run workflows, or touch broker-connected paths.
+
 ## Paper Signal Refresh
 
 Run:
