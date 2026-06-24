@@ -30,6 +30,10 @@ Start with these current, canonical documents:
 - [supervised_provider_discovery_loop_manual_synthetic_readiness_review.md](supervised_provider_discovery_loop_manual_synthetic_readiness_review.md):
   decision to stop at manual synthetic dry-run readiness unless a separate
   non-synthetic request design is proposed.
+- [strategy_research_restart_plan.md](strategy_research_restart_plan.md):
+  research-only plan for restarting candidate strategy evaluation after the
+  operator-promotion sequence, including the implemented research-batch
+  contract.
 - [runbook.md](runbook.md): supported operator commands.
 - [trading_safety.md](trading_safety.md): safety gates.
 - [codex_project_handoff.md](codex_project_handoff.md): collaboration and host

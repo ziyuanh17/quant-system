@@ -158,14 +158,18 @@ side discussions.
 | 138 | Discovery-To-Loop Manual Operator Runbook Design v1 | Done | Design the future one-request manual dry-run operator runbook, including prechecks, command, archival requirements, pass/block criteria, and explicit non-authorization for launchd, scheduler, paper, Alpaca, broker, orders, and fills. |
 | 139 | Discovery-To-Loop Manual Operator Run v1 | In Review | Run one synthetic reviewed discovery-to-loop dry-run request from the runtime clone, archive evidence, and verify no runtime data, credentials, launchd, scheduler, paper, Alpaca, broker, orders, or fills changed. |
 | 140 | Discovery-To-Loop Manual Synthetic Readiness Review v1 | In Review | Review the synthetic manual operator evidence, stop at manual synthetic dry-run readiness, and require a separate design before any non-synthetic request or broader operator packaging. |
+| 141 | Strategy Research Restart Plan v1 | In Review | Stop the operator-promotion sequence and define the next research-only strategy batch, evidence requirements, evaluation rules, and safety boundary. |
+| 142 | Research Batch Contract v1 | In Review | Add a source-level research-batch spec and immutable batch artifact persistence that explicitly cannot authorize broker, runtime, scheduler, or order behavior. |
 
 ## Current Recommendation
 
 Review **Discovery-To-Loop Manual Operator Run v1** and **Manual Synthetic
 Readiness Review v1**, then stop this promotion sequence unless a specific
-non-synthetic request is proposed with a separate design. Do not expose
-launchd, runtime deployment, recurring scheduling, semantic local paper,
-Alpaca semantic targets, or broker submission as part of that review.
+non-synthetic request is proposed with a separate design. Review **Strategy
+Research Restart Plan v1** and **Research Batch Contract v1**, then resume
+research-only candidate evaluation. Do not expose launchd, runtime deployment,
+recurring scheduling, semantic local paper, Alpaca semantic targets, or broker
+submission as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

@@ -7,6 +7,7 @@ import pytest
 
 from quant.models.research import (
     EvaluationSplitPolicy,
+    ResearchBatchSpec,
     ResearchEnvironmentSnapshot,
     ResearchInputKind,
     ResearchInputSnapshot,
@@ -20,8 +21,11 @@ from quant.research import (
     append_research_trial,
     build_evaluation_id,
     create_evaluation_artifacts,
+    load_research_batch_spec,
     load_research_trials,
     verify_evaluation_artifacts,
+    verify_research_batch_artifacts,
+    write_research_batch_spec,
 )
 
 SHA256 = "a" * 64
@@ -131,6 +135,48 @@ def test_create_evaluation_artifacts_requires_matching_environment(
         create_evaluation_artifacts(candidate, environment, tmp_path)
 
 
+def test_write_research_batch_spec_creates_verifiable_manifest(
+    tmp_path,
+) -> None:
+    batch = _research_batch()
+
+    paths = write_research_batch_spec(batch, tmp_path)
+    batch_dir = tmp_path / batch.batch_id
+
+    assert paths.batch_id == batch.batch_id
+    assert load_research_batch_spec(batch_dir) == batch
+    verify_research_batch_artifacts(batch_dir)
+
+
+def test_write_research_batch_spec_rejects_identity_collision(
+    tmp_path,
+) -> None:
+    batch = _research_batch()
+    write_research_batch_spec(batch, tmp_path)
+
+    with pytest.raises(FileExistsError):
+        write_research_batch_spec(batch, tmp_path)
+
+
+def test_verify_research_batch_artifacts_detects_tampering(tmp_path) -> None:
+    batch = _research_batch()
+    write_research_batch_spec(batch, tmp_path)
+    batch_dir = tmp_path / batch.batch_id
+    (batch_dir / "batch.json").write_text("{}\n")
+
+    with pytest.raises(ValueError, match="research batch"):
+        verify_research_batch_artifacts(batch_dir)
+
+
+def test_write_research_batch_spec_rejects_unsafe_batch_path(
+    tmp_path,
+) -> None:
+    batch = _research_batch(batch_id="../outside")
+
+    with pytest.raises(ValueError, match="safe path segment"):
+        write_research_batch_spec(batch, tmp_path)
+
+
 def _candidate(*, candidate_id: str = "momentum-5-20") -> StrategyCandidateSpec:
     return StrategyCandidateSpec(
         candidate_id=candidate_id,
@@ -170,6 +216,28 @@ def _candidate(*, candidate_id: str = "momentum-5-20") -> StrategyCandidateSpec:
         source_commit="abc123",
         dependency_lock_sha256=SHA256,
         random_seed=7,
+    )
+
+
+def _research_batch(
+    *,
+    batch_id: str = "strategy-research-batch-v1",
+) -> ResearchBatchSpec:
+    return ResearchBatchSpec(
+        batch_id=batch_id,
+        objective="Evaluate a small AAPL research-only candidate batch.",
+        symbols=("AAPL",),
+        candidates=(_candidate(),),
+        evidence_required=(
+            "input data identity",
+            "backtest metrics",
+            "trial ledger entry",
+        ),
+        stop_conditions=(
+            "input data validation fails",
+            "work drifts toward broker or order paths",
+        ),
+        created_at=datetime(2026, 6, 24, tzinfo=UTC),
     )
 
 

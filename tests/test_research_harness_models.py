@@ -11,6 +11,7 @@ from quant.models.market import PriceData
 from quant.models.research import (
     EvaluationSplitPolicy,
     PointInTimePolicy,
+    ResearchBatchSpec,
     ResearchInputKind,
     ResearchInputSnapshot,
     ResearchParameter,
@@ -52,6 +53,43 @@ def test_candidate_spec_rejects_duplicate_parameter_names() -> None:
                 ResearchParameter(name="window", value=10),
                 ResearchParameter(name="window", value=20),
             )
+        )
+
+
+def test_research_batch_spec_round_trips_with_operational_guards() -> None:
+    batch = _research_batch()
+
+    loaded = ResearchBatchSpec.model_validate_json(batch.model_dump_json())
+
+    assert loaded == batch
+    assert loaded.schema_version == 1
+    assert loaded.broker_access_authorized is False
+    assert loaded.runtime_mutation_authorized is False
+    assert loaded.scheduler_authorized is False
+    assert loaded.order_submission_authorized is False
+
+
+def test_research_batch_spec_rejects_duplicate_candidate_ids() -> None:
+    candidate = _candidate_spec()
+
+    with pytest.raises(ValidationError, match="candidate IDs must be unique"):
+        _research_batch(candidates=(candidate, candidate))
+
+
+def test_research_batch_spec_rejects_out_of_scope_symbols() -> None:
+    candidate = _candidate_spec(symbols=("MSFT",))
+
+    with pytest.raises(ValidationError, match="outside the batch scope"):
+        _research_batch(candidates=(candidate,))
+
+
+def test_research_batch_spec_rejects_operational_authorization() -> None:
+    with pytest.raises(ValidationError):
+        ResearchBatchSpec.model_validate(
+            {
+                **_research_batch().model_dump(mode="json"),
+                "order_submission_authorized": True,
+            }
         )
 
 
@@ -131,20 +169,22 @@ def test_feature_strategy_adapter_builds_aligned_simulation_input() -> None:
 
 def _candidate_spec(
     *,
+    candidate_id: str = "momentum-5-20",
     parameters: tuple[ResearchParameter, ...] = (
         ResearchParameter(name="fast_window", value=5),
         ResearchParameter(name="slow_window", value=20),
     ),
+    symbols: tuple[str, ...] = ("AAPL",),
 ) -> StrategyCandidateSpec:
     return StrategyCandidateSpec(
-        candidate_id="momentum-5-20",
+        candidate_id=candidate_id,
         research_family_id="momentum-family",
         hypothesis_id="trend-following-1",
         hypothesis="Moving-average crossovers capture persistent trends.",
         strategy_name="momentum",
         strategy_version="1",
         parameters=parameters,
-        symbols=("AAPL",),
+        symbols=symbols,
         inputs=(
             ResearchInputSnapshot(
                 input_id="aapl-bars-v1",
@@ -171,6 +211,28 @@ def _candidate_spec(
         source_commit="abc123",
         dependency_lock_sha256=SHA256,
         random_seed=7,
+    )
+
+
+def _research_batch(
+    *,
+    candidates: tuple[StrategyCandidateSpec, ...] | None = None,
+) -> ResearchBatchSpec:
+    return ResearchBatchSpec(
+        batch_id="strategy-research-batch-v1",
+        objective="Evaluate a small AAPL research-only candidate batch.",
+        symbols=("AAPL",),
+        candidates=candidates or (_candidate_spec(),),
+        evidence_required=(
+            "input data identity",
+            "backtest metrics",
+            "trial ledger entry",
+        ),
+        stop_conditions=(
+            "input data validation fails",
+            "work drifts toward broker or order paths",
+        ),
+        created_at=datetime(2026, 6, 24, tzinfo=UTC),
     )
 
 

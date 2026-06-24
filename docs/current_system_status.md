@@ -332,6 +332,20 @@ preparation, launchd, recurring scheduling, semantic local paper, Alpaca,
 broker access, orders, or fills. See
 [supervised_provider_discovery_loop_manual_synthetic_readiness_review.md](supervised_provider_discovery_loop_manual_synthetic_readiness_review.md).
 
+The current review bundle also restarts strategy research. The plan returns to
+research-only candidate evaluation, beginning with refreshed baselines,
+target-native trend following, volatility-adjusted exposure, a mean-reversion
+counterweight, and a simple regime filter. It confines work to research/data
+artifacts and does not authorize runtime, launchd, scheduler, paper, Alpaca,
+broker, order, or fill paths. See
+[strategy_research_restart_plan.md](strategy_research_restart_plan.md).
+
+The source now includes a `ResearchBatchSpec` and immutable research-batch
+artifact helpers. A batch groups reviewed candidate specs before experiments
+run and carries explicit false guardrails for broker access, runtime mutation,
+scheduler use, and order submission. This is still research-only
+infrastructure; it does not make the semantic paper pipeline ready.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill
@@ -401,8 +415,10 @@ Before connecting semantic targets to recurring operations:
 19. review the manual synthetic operator run evidence and readiness review;
 20. stop this promotion sequence unless a concrete non-synthetic request is
     proposed with a separate design;
-21. separately review any runtime-clone or recurring scheduler exposure;
-22. obtain explicit approval before every broker order-capable rehearsal.
+21. review the research-batch contract and immutable batch artifact helpers;
+22. resume research-only strategy candidate evaluation under the restart plan;
+23. separately review any runtime-clone or recurring scheduler exposure;
+24. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 

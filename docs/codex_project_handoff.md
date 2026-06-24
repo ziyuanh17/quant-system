@@ -173,7 +173,9 @@ before proceeding.
     readiness review.
 29. Stop this promotion sequence unless a concrete non-synthetic request is
     proposed with a separate design.
-30. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
-   separately.
-31. Require explicit approval immediately before any broker order-capable
-   command or rehearsal.
+30. Review the research-batch contract and immutable batch artifact helpers.
+31. Resume research-only strategy candidate evaluation under the restart plan.
+32. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+    separately.
+33. Require explicit approval immediately before any broker order-capable
+    command or rehearsal.

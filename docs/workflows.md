@@ -220,6 +220,10 @@ The manual synthetic readiness review stops the promotion sequence at manual
 synthetic dry-run readiness. A non-synthetic request or broader operator
 packaging requires a separate design and review.
 
+The strategy research restart plan moves the next work back to research-only
+candidate evaluation. It keeps strategy experiments in research/data artifacts
+and away from runtime, scheduler, paper, Alpaca, broker, order, and fill paths.
+
 ## Paper Signal Refresh
 
 Run:

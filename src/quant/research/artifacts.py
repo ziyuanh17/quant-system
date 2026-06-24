@@ -10,12 +10,16 @@ from pydantic import BaseModel, ValidationError
 
 from quant.models.research import (
     ResearchArtifactDigest,
+    ResearchBatchArtifactPaths,
+    ResearchBatchSpec,
     ResearchEnvironmentSnapshot,
     ResearchEvaluationArtifactPaths,
     ResearchEvaluationManifest,
     ResearchTrialRecord,
     StrategyCandidateSpec,
 )
+
+RESEARCH_BATCH_SCHEMA_VERSION = 1
 
 
 def build_evaluation_id(
@@ -68,6 +72,70 @@ def create_evaluation_artifacts(
         manifest_json=str(manifest_path),
         trials_jsonl=str(trials_path),
     )
+
+
+def write_research_batch_spec(
+    batch: ResearchBatchSpec,
+    output_root: Path,
+) -> ResearchBatchArtifactPaths:
+    """Persist one immutable research-only batch specification."""
+    _require_safe_path_segment(batch.batch_id, "batch_id")
+    output_dir = output_root / batch.batch_id
+    output_dir.mkdir(parents=True, exist_ok=False)
+
+    batch_digest = _write_immutable_json(output_dir / "batch.json", batch)
+    manifest = {
+        "schema_version": RESEARCH_BATCH_SCHEMA_VERSION,
+        "batch_id": batch.batch_id,
+        "immutable_artifacts": (batch_digest,),
+    }
+    manifest_path = output_dir / "manifest.json"
+    _write_exclusive(manifest_path, _pretty_json_bytes(manifest))
+    return ResearchBatchArtifactPaths(
+        batch_id=batch.batch_id,
+        output_dir=str(output_dir),
+        batch_json=str(output_dir / "batch.json"),
+        manifest_json=str(manifest_path),
+    )
+
+
+def load_research_batch_spec(batch_dir: Path) -> ResearchBatchSpec:
+    """Load and validate one persisted research batch specification."""
+    return ResearchBatchSpec.model_validate_json(
+        (batch_dir / "batch.json").read_text()
+    )
+
+
+def verify_research_batch_artifacts(batch_dir: Path) -> None:
+    """Fail when immutable research batch content has changed."""
+    manifest = json.loads((batch_dir / "manifest.json").read_text())
+    if manifest.get("schema_version") != RESEARCH_BATCH_SCHEMA_VERSION:
+        raise ValueError(
+            "research batch manifest schema_version is unsupported"
+        )
+    try:
+        batch = load_research_batch_spec(batch_dir)
+    except ValidationError as exc:
+        raise ValueError("research batch artifact is invalid") from exc
+    if batch_dir.name != batch.batch_id:
+        raise ValueError(
+            "research batch directory name does not match batch_id"
+        )
+    if manifest.get("batch_id") != batch.batch_id:
+        raise ValueError("research batch manifest does not match batch_id")
+
+    expected_digest = ResearchArtifactDigest(
+        relative_path="batch.json",
+        sha256=hashlib.sha256(_pretty_json_bytes(batch)).hexdigest(),
+    )
+    artifacts = tuple(
+        ResearchArtifactDigest.model_validate(item)
+        for item in manifest.get("immutable_artifacts", ())
+    )
+    if artifacts != (expected_digest,):
+        raise ValueError("research batch manifest does not match batch content")
+    if _file_sha256(batch_dir / "batch.json") != expected_digest.sha256:
+        raise ValueError("immutable research batch artifact changed")
 
 
 def append_research_trial(

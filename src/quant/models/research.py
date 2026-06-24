@@ -2,6 +2,7 @@
 
 from datetime import date, datetime
 from enum import StrEnum
+from typing import Literal
 
 import pandas as pd
 from pydantic import Field, ValidationInfo, field_validator, model_validator
@@ -185,6 +186,65 @@ class StrategyCandidateSpec(FrozenModel):
         return scenarios
 
 
+class ResearchBatchSpec(FrozenModel):
+    """Reviewed group of strategy candidates for one research-only batch."""
+
+    schema_version: Literal[1] = 1
+    batch_id: str = Field(min_length=1)
+    objective: str = Field(min_length=1)
+    symbols: tuple[str, ...] = Field(min_length=1)
+    candidates: tuple[StrategyCandidateSpec, ...] = Field(min_length=1)
+    evidence_required: tuple[str, ...] = Field(min_length=1)
+    stop_conditions: tuple[str, ...] = Field(min_length=1)
+    created_at: datetime
+    broker_access_authorized: Literal[False] = False
+    runtime_mutation_authorized: Literal[False] = False
+    scheduler_authorized: Literal[False] = False
+    order_submission_authorized: Literal[False] = False
+
+    @field_validator("symbols")
+    @classmethod
+    def batch_symbols_must_be_unique(
+        cls, symbols: tuple[str, ...]
+    ) -> tuple[str, ...]:
+        _require_unique(symbols, "batch symbols")
+        return symbols
+
+    @field_validator("candidates")
+    @classmethod
+    def candidate_ids_must_be_unique(
+        cls, candidates: tuple[StrategyCandidateSpec, ...]
+    ) -> tuple[StrategyCandidateSpec, ...]:
+        _require_unique(
+            tuple(candidate.candidate_id for candidate in candidates),
+            "candidate IDs",
+        )
+        return candidates
+
+    @model_validator(mode="after")
+    def candidates_must_fit_batch_scope(self) -> "ResearchBatchSpec":
+        batch_symbols = set(self.symbols)
+        for candidate in self.candidates:
+            unknown = set(candidate.symbols) - batch_symbols
+            if unknown:
+                joined = ", ".join(sorted(unknown))
+                raise ValueError(
+                    f"candidate {candidate.candidate_id} has symbols outside "
+                    f"the batch scope: {joined}"
+                )
+        source_commits = {
+            candidate.source_commit for candidate in self.candidates
+        }
+        if len(source_commits) != 1:
+            raise ValueError("batch candidates must share one source commit")
+        dependency_locks = {
+            candidate.dependency_lock_sha256 for candidate in self.candidates
+        }
+        if len(dependency_locks) != 1:
+            raise ValueError("batch candidates must share one dependency lock")
+        return self
+
+
 class ResearchTrialRecord(FrozenModel):
     """Trial ledger entry; failed and abandoned attempts remain first-class."""
 
@@ -289,6 +349,15 @@ class ResearchEvaluationArtifactPaths(FrozenModel):
     @classmethod
     def evaluation_id_must_be_sha256(cls, value: str) -> str:
         return _validate_sha256(value)
+
+
+class ResearchBatchArtifactPaths(FrozenModel):
+    """Paths created for one immutable research batch specification."""
+
+    batch_id: str
+    output_dir: str
+    batch_json: str
+    manifest_json: str
 
 
 def _require_unique(values: tuple[str, ...], label: str) -> None:
