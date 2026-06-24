@@ -1,0 +1,26 @@
+{
+  "candidate_id": "aapl-feature-momentum-baseline-5-20-v1",
+  "evaluation_id": "34d23c2e4fea5590849b99c14ef3bd7e38c5afe8fa671bb1a59dd3abe6a0b431",
+  "immutable_artifacts": [
+    {
+      "relative_path": "candidate.json",
+      "sha256": "b1784659bc2a24d397431a4b70416c16856496e3b068cbe14b9d78859e382a93"
+    },
+    {
+      "relative_path": "environment.json",
+      "sha256": "48feecbb6464365ee33e5ae575d62340914697ac857f162bfd6d70d30feca892"
+    },
+    {
+      "relative_path": "inputs.json",
+      "sha256": "6f9130b0928147a35dd5df307b65ad54f300ecf71742f61ce85baf0d9b5870fb"
+    },
+    {
+      "relative_path": "splits.json",
+      "sha256": "a79ded85505a25a4b1d7c9011851518f3d864e9ca2ebde6a97cd15bdb75217b2"
+    },
+    {
+      "relative_path": "scenarios.json",
+      "sha256": "9e6edf59a122710d0864e499e8e11b2c86f3f29b7dd7e0ad994bc76b7556b22e"
+    }
+  ]
+}

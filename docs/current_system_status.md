@@ -367,6 +367,17 @@ market bars and
 `fe9895a8bc2e3ec6909b49c577ddfd8c6c64427ae728577b824635a80e7d4c55` for
 features.
 
+The first research evaluation run created five evaluation directories under
+`data/research/evaluations/`. The supported legacy momentum and
+feature-momentum baselines both completed with total return `1.227483`, final
+value `222748.28`, 25 trades, and max drawdown `-0.21010632998879852`; this
+confirms that the feature-backed baseline currently reproduces the price
+baseline on the same AAPL input. The target-native trend,
+volatility-adjusted trend, and mean-reversion candidates were recorded as
+abandoned trials because their concrete research strategy implementations are
+not available yet. No paper, broker, scheduler, runtime, order, or fill path
+was used.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

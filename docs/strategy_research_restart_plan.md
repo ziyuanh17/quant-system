@@ -126,6 +126,19 @@ It references `data/normalized/market_bars/AAPL.csv` and
 manifest verifies, and the batch still carries `order_submission_authorized:
 false`.
 
+The first evaluation run used this artifact and created per-candidate
+evaluation directories under:
+
+```text
+data/research/evaluations/
+```
+
+The two implemented legacy baselines completed and produced identical results:
+total return `1.227483`, final value `222748.28`, 25 trades, and max drawdown
+`-0.21010632998879852`. The three target-native candidates were not simulated
+yet; their trial ledgers record `abandoned` because their concrete research
+strategy implementations remain the next required source work.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and
@@ -215,7 +228,9 @@ Strategy Research Batch v1
   -> define candidate specs under ResearchBatchSpec
   -> refresh or locate validated AAPL data [done]
   -> materialize the immutable batch artifact [done]
-  -> run baseline and target-native simulations
+  -> run supported baseline simulations [done]
+  -> implement target-native candidate strategies
+  -> run target-native simulations
   -> persist immutable evaluation artifacts
   -> write a research report with pass/fail decisions
 ```

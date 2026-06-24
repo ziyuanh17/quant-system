@@ -10,6 +10,10 @@ from quant.research.artifacts import (
     verify_research_batch_artifacts,
     write_research_batch_spec,
 )
+from quant.research.batch_runner import (
+    SUPPORTED_AAPL_RESEARCH_CANDIDATES,
+    run_aapl_research_batch_v1_evaluations,
+)
 from quant.research.batches import (
     AAPL_RESEARCH_BATCH_SCHEMA_VERSION,
     AAPL_RESEARCH_BATCH_V1,
@@ -78,6 +82,7 @@ __all__ = [
     "PriceTargetStrategySimulationAdapter",
     "StrategySimulationAdapter",
     "SUM_ACTIVE_TARGETS_POLICY",
+    "SUPPORTED_AAPL_RESEARCH_CANDIDATES",
     "TargetSimulationAdapter",
     "aggregate_strategy_targets",
     "append_research_trial",
@@ -98,6 +103,7 @@ __all__ = [
     "load_target_frame",
     "investigate_legacy_equivalence",
     "resolve_legacy_available_cash_targets",
+    "run_aapl_research_batch_v1_evaluations",
     "evaluate_target_effective_status",
     "evaluate_research_risk_target",
     "require_operational_whole_share_targets",

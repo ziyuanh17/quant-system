@@ -163,6 +163,7 @@ side discussions.
 | 143 | AAPL Research Batch Definition v1 | In Review | Define the first five reviewed AAPL candidate specs as a pure research-only batch builder, requiring validated input snapshots before materialization or backtesting. |
 | 144 | AAPL Research Batch Materialization Gate v1 | In Review | Validate existing AAPL market-bar and feature CSV inputs, compute input hashes, and persist the reviewed batch artifact without fetching data, backtesting, runtime, scheduler, broker, or order behavior. |
 | 145 | AAPL Research Batch Artifact v1 | In Review | Refresh historical AAPL market data, build technical features, and persist the first immutable research batch artifact for five candidates without running backtests or touching operational paths. |
+| 146 | AAPL Baseline Research Evaluation v1 | In Review | Run the supported legacy momentum and feature-momentum baselines from the fixed AAPL batch, persist evaluation/trial artifacts, and record unimplemented target candidates as abandoned rather than simulated. |
 
 ## Current Recommendation
 

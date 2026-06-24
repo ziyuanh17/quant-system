@@ -1,0 +1,12 @@
+[
+  {
+    "availability_time_column": null,
+    "event_time_column": "date",
+    "input_id": "aapl-market-bars-b21ba6ad44dc",
+    "kind": "market_bars",
+    "path": "data/normalized/market_bars/AAPL.csv",
+    "point_in_time_policy": "event_time_only",
+    "schema_version": "aapl_research_inputs_v1",
+    "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+  }
+]
