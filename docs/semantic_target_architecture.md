@@ -470,3 +470,16 @@ Its actual-command rehearsal binds executable and source identity and verifies
 exact-list completion, restart reuse, preflight rejection, and stop-on-block
 behavior. This preserves the distinction between finite manual operation and
 recurring automation.
+
+The discovery-to-loop operator composes reviewed request discovery with the
+finite supervised-provider loop. It first runs one reviewed discovery-only
+operator request, then runs only the exact finite manifest produced by that
+discovery. It cannot choose another output root, switch modes, poll for more
+work, select paper or Alpaca, or reach a broker.
+
+Its actual-command rehearsal verifies completion, restart reuse, blocked
+discovery, blocked finite-loop execution, and tampered prerequisite rejection.
+The separate promotion boundary is intentionally source-only: it defines what
+evidence must be reviewed before considering a stronger operational level, but
+it does not deploy anything or add scheduling, runtime-clone mutation, paper,
+Alpaca, broker, or order capability.

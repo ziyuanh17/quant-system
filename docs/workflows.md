@@ -168,6 +168,11 @@ blocked discovery, blocked finite loop, and tampered prerequisite rehearsal
 evidence. The verifier reopens every linked artifact and confirms that no
 operational directories were created.
 
+The discovery-to-loop promotion boundary is source-only. It defines the
+evidence required before considering any stronger operational use of the
+manual command, but it does not add a runtime path, scheduler, launchd job,
+paper mode, Alpaca path, broker access, or order capability.
+
 ## Paper Signal Refresh
 
 Run:

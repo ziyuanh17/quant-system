@@ -147,15 +147,16 @@ side discussions.
 | 127 | Supervised-Provider Discovery Operator Boundary v1 | Done | Expose one manually started reviewed-request command that runs discovery only, writes immutable operator evidence, and cannot run finite loops or select scheduler, runtime, paper, Alpaca, broker, or order behavior. |
 | 128 | Supervised-Provider Discovery Operator Command Rehearsal v1 | Done | Produce and verify actual-command evidence for discovery-only CLI completion, restart reuse, blocked discovery, tampered rehearsal rejection, and zero operational output. |
 | 129 | Manual Discovery-To-Loop Operator Composition v1 | Done | Expose one manually started reviewed-request command that runs discovery and then exactly the discovered finite manifest, with durable composition evidence and no scheduler, runtime, paper, Alpaca, broker, or order capability. |
-| 130 | Manual Discovery-To-Loop Operator Command Rehearsal v1 | In Review | Produce and verify actual-command evidence for completion, restart reuse, blocked discovery, blocked finite loop, tampered prerequisite rejection, and zero operational output. |
+| 130 | Manual Discovery-To-Loop Operator Command Rehearsal v1 | Done | Produce and verify actual-command evidence for completion, restart reuse, blocked discovery, blocked finite loop, tampered prerequisite rejection, and zero operational output. |
+| 131 | Discovery-To-Loop Promotion Boundary v1 | In Review | Define the source-only review gate, required evidence, stop conditions, and next staged promotion levels before any runtime, scheduler, paper, Alpaca, broker, or order exposure. |
 
 ## Current Recommendation
 
-Review **Manual Discovery-To-Loop Operator Command Rehearsal v1**, then decide
-whether the next stage should define a separately reviewed promotion boundary.
-Do not expose launchd, runtime deployment, recurring scheduling, semantic
-local paper, Alpaca semantic targets, or broker submission as part of that
-review.
+Review **Discovery-To-Loop Promotion Boundary v1**, then decide whether the
+next stage should be a source-only promotion review or a runtime-clone
+no-network rehearsal design. Do not expose launchd, runtime deployment,
+recurring scheduling, semantic local paper, Alpaca semantic targets, or broker
+submission as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

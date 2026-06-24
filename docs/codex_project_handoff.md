@@ -45,7 +45,7 @@ reviewed source changes through GitHub before updating the runtime clone.
 
 - Git branch: `main`
 - Current reviewed GitHub source commit before the uncommitted
-  discovery-to-loop command rehearsal bundle: `d75c702`
+  promotion-boundary bundle: `ddca1e0`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - The runtime clone version is not established by this source document. Audit
   it before operational work.
@@ -159,9 +159,10 @@ before proceeding.
 17. Review the checked-in discovery operator boundary.
 18. Review the checked-in discovery operator command rehearsal.
 19. Review the checked-in manual discovery-to-loop composition command.
-20. Review the uncommitted discovery-to-loop actual-command rehearsal before
-    proposing promotion, runtime deployment, or recurring scheduling.
-21. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+20. Review the checked-in discovery-to-loop actual-command rehearsal.
+21. Review the uncommitted discovery-to-loop promotion boundary before
+    proposing runtime deployment or recurring scheduling.
+22. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-22. Require explicit approval immediately before any broker order-capable
+23. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

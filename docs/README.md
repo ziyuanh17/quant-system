@@ -7,6 +7,9 @@ Start with these current, canonical documents:
 - [architecture.md](architecture.md): system-wide component boundaries.
 - [semantic_target_architecture.md](semantic_target_architecture.md): semantic
   target contracts and execution lifecycle.
+- [supervised_provider_discovery_loop_promotion_boundary.md](supervised_provider_discovery_loop_promotion_boundary.md):
+  source-only review boundary before any stronger operational use of the
+  composed discovery-to-loop dry-run command.
 - [runbook.md](runbook.md): supported operator commands.
 - [trading_safety.md](trading_safety.md): safety gates.
 - [codex_project_handoff.md](codex_project_handoff.md): collaboration and host

@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted discovery-to-loop command
-  rehearsal bundle: `d75c702`
+- Reviewed source commit before this uncommitted promotion-boundary bundle:
+  `ddca1e0`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -235,7 +235,7 @@ order, fill, semantic-paper, or Alpaca directory. See
 [supervised_provider_discovery_operator_rehearsal.md](supervised_provider_discovery_operator_rehearsal.md).
 
 The checked-in manually started
-`quant dry-run supervised-provider-discover-finite` command. It consumes one
+`quant dry-run supervised-provider-discover-finite` command consumes one
 reviewed composition request, verifies the discovery-only command rehearsal,
 runs one reviewed discovery-only operator request, and then runs only the
 exact finite manifest produced by discovery. It writes one composition record,
@@ -243,14 +243,21 @@ exits nonzero on discovery or finite-loop blocks, and has no scheduler,
 runtime, paper, Alpaca, broker, mode, output-root, or iteration selector. See
 [supervised_provider_discovery_loop_operator.md](supervised_provider_discovery_loop_operator.md).
 
-The current uncommitted review bundle adds the actual-command rehearsal for
-`quant dry-run supervised-provider-discover-finite`. On June 19, 2026 local
-time, the rehearsal passed completion, restart reuse, blocked discovery,
-blocked finite loop, and tampered prerequisite rejection. The report bound 126
+The checked-in actual-command rehearsal for
+`quant dry-run supervised-provider-discover-finite` ran on June 19, 2026 local
+time and passed completion, restart reuse, blocked discovery, blocked finite
+loop, and tampered prerequisite rejection. The report bound 126
 Python source files, captured six command observations, verified four
 composition records, linked 1,519 scenario evidence paths, and found no order,
 fill, semantic-paper, or Alpaca directory. See
 [supervised_provider_discovery_loop_rehearsal.md](supervised_provider_discovery_loop_rehearsal.md).
+
+The current uncommitted review bundle defines the source-only promotion
+boundary for that command. Promotion means considering a stronger operational
+use than the current manual dry-run command; it does not authorize trading,
+runtime-clone mutation, launchd loading, recurring scheduling, semantic local
+paper, Alpaca, broker access, or order submission. See
+[supervised_provider_discovery_loop_promotion_boundary.md](supervised_provider_discovery_loop_promotion_boundary.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -309,8 +316,12 @@ Before connecting semantic targets to recurring operations:
 8. review its evidence-verified actual-command rehearsal;
 9. review the finite fresh supervised-provider operator boundary;
 10. review its evidence-verified actual-command rehearsal;
-11. separately review any runtime-clone or recurring scheduler exposure;
-12. obtain explicit approval before every broker order-capable rehearsal.
+11. review the discovery-to-loop operator boundary and actual-command
+    rehearsal;
+12. review the source-only promotion boundary before proposing runtime-clone
+    or recurring scheduler exposure;
+13. separately review any runtime-clone or recurring scheduler exposure;
+14. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 
