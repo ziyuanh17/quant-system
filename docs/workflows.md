@@ -177,6 +177,12 @@ The source promotion review accepts that checked-in source evidence only far
 enough to design a runtime-clone copy rehearsal. It does not authorize copying
 source, running workflows, loading launchd, or touching broker-connected paths.
 
+The runtime-copy rehearsal design keeps the next proposed runtime step narrow:
+fast-forward reviewed source into the runtime clone, then verify package import
+and command help only. It explicitly excludes request execution, credentials,
+launchd, scheduler, paper, Alpaca, broker, semantic-paper, order, and fill
+paths.
+
 ## Paper Signal Refresh
 
 Run:

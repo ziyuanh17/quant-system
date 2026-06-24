@@ -13,6 +13,8 @@ Start with these current, canonical documents:
 - [supervised_provider_discovery_loop_source_promotion_review.md](supervised_provider_discovery_loop_source_promotion_review.md):
   source-only decision record for whether the next stage may design a
   runtime-clone copy rehearsal.
+- [supervised_provider_discovery_loop_runtime_copy_rehearsal_design.md](supervised_provider_discovery_loop_runtime_copy_rehearsal_design.md):
+  design for a no-workflow runtime-clone copy/import/help rehearsal.
 - [runbook.md](runbook.md): supported operator commands.
 - [trading_safety.md](trading_safety.md): safety gates.
 - [codex_project_handoff.md](codex_project_handoff.md): collaboration and host
