@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted promotion-boundary bundle:
-  `ddca1e0`
+- Reviewed source commit before this uncommitted source-promotion review
+  bundle: `2fb9f13`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -252,12 +252,20 @@ composition records, linked 1,519 scenario evidence paths, and found no order,
 fill, semantic-paper, or Alpaca directory. See
 [supervised_provider_discovery_loop_rehearsal.md](supervised_provider_discovery_loop_rehearsal.md).
 
-The current uncommitted review bundle defines the source-only promotion
-boundary for that command. Promotion means considering a stronger operational
-use than the current manual dry-run command; it does not authorize trading,
-runtime-clone mutation, launchd loading, recurring scheduling, semantic local
-paper, Alpaca, broker access, or order submission. See
+The checked-in source-only promotion boundary defines the review line for that
+command. Promotion means considering a stronger operational use than the
+current manual dry-run command; it does not authorize trading, runtime-clone
+mutation, launchd loading, recurring scheduling, semantic local paper, Alpaca,
+broker access, or order submission. See
 [supervised_provider_discovery_loop_promotion_boundary.md](supervised_provider_discovery_loop_promotion_boundary.md).
+
+The current uncommitted review bundle records a source-only promotion review.
+It accepts the checked-in command, actual-command rehearsal, and promotion
+boundary as enough evidence to design a runtime-clone copy rehearsal. It does
+not authorize copying to the runtime clone, running workflows, loading
+launchd, recurring scheduling, semantic local paper, Alpaca, broker access, or
+order submission. See
+[supervised_provider_discovery_loop_source_promotion_review.md](supervised_provider_discovery_loop_source_promotion_review.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -318,10 +326,11 @@ Before connecting semantic targets to recurring operations:
 10. review its evidence-verified actual-command rehearsal;
 11. review the discovery-to-loop operator boundary and actual-command
     rehearsal;
-12. review the source-only promotion boundary before proposing runtime-clone
-    or recurring scheduler exposure;
-13. separately review any runtime-clone or recurring scheduler exposure;
-14. obtain explicit approval before every broker order-capable rehearsal.
+12. review the checked-in source-only promotion boundary;
+13. review the source-only promotion review before designing runtime-clone
+    copy rehearsal;
+14. separately review any runtime-clone or recurring scheduler exposure;
+15. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 

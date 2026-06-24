@@ -10,6 +10,9 @@ Start with these current, canonical documents:
 - [supervised_provider_discovery_loop_promotion_boundary.md](supervised_provider_discovery_loop_promotion_boundary.md):
   source-only review boundary before any stronger operational use of the
   composed discovery-to-loop dry-run command.
+- [supervised_provider_discovery_loop_source_promotion_review.md](supervised_provider_discovery_loop_source_promotion_review.md):
+  source-only decision record for whether the next stage may design a
+  runtime-clone copy rehearsal.
 - [runbook.md](runbook.md): supported operator commands.
 - [trading_safety.md](trading_safety.md): safety gates.
 - [codex_project_handoff.md](codex_project_handoff.md): collaboration and host

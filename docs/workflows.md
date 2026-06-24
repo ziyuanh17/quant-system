@@ -173,6 +173,10 @@ evidence required before considering any stronger operational use of the
 manual command, but it does not add a runtime path, scheduler, launchd job,
 paper mode, Alpaca path, broker access, or order capability.
 
+The source promotion review accepts that checked-in source evidence only far
+enough to design a runtime-clone copy rehearsal. It does not authorize copying
+source, running workflows, loading launchd, or touching broker-connected paths.
+
 ## Paper Signal Refresh
 
 Run:
