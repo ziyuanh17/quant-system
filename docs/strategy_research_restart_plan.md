@@ -108,6 +108,13 @@ touch runtime state, or contact a broker. It requires validated AAPL market-bar
 and feature input snapshots with real paths and SHA-256 hashes before a batch
 artifact can be materialized for actual research.
 
+The materialization helper,
+`write_aapl_strategy_research_batch_v1_artifacts`, now performs that gate. It
+validates the market-bar CSV, loads the feature CSV, requires the `ma_5` and
+`ma_20` feature columns, computes SHA-256 input identities, builds the reviewed
+batch, and writes the immutable batch artifact. It does not fetch data or run a
+backtest.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and
@@ -132,7 +139,9 @@ the immutable batch artifact.
 The AAPL batch builder uses this contract and inherits the same non-operational
 boundary. The next implementation step is to locate or refresh validated AAPL
 market bars and technical features, compute their hashes, and then persist one
-batch artifact under `data/research/`.
+batch artifact under `data/research/`. If no validated AAPL inputs exist
+locally, the next step is a research-data refresh only, not a paper or broker
+workflow.
 
 ## Evidence Required Per Candidate
 

@@ -11,8 +11,12 @@ from quant.research.artifacts import (
     write_research_batch_spec,
 )
 from quant.research.batches import (
+    AAPL_RESEARCH_BATCH_SCHEMA_VERSION,
     AAPL_RESEARCH_BATCH_V1,
     build_aapl_strategy_research_batch_v1,
+    build_feature_input_snapshot,
+    build_validated_market_bars_input_snapshot,
+    write_aapl_strategy_research_batch_v1_artifacts,
 )
 from quant.research.evaluator import (
     FeatureStrategySimulationAdapter,
@@ -67,6 +71,7 @@ __all__ = [
     "FixedSharesLegacyFeatureAdapter",
     "FixedSharesLegacyPriceAdapter",
     "APPROVE_OR_REJECT_RISK_POLICY",
+    "AAPL_RESEARCH_BATCH_SCHEMA_VERSION",
     "AAPL_RESEARCH_BATCH_V1",
     "LEGACY_AVAILABLE_CASH_POLICY",
     "PriceStrategySimulationAdapter",
@@ -76,8 +81,10 @@ __all__ = [
     "TargetSimulationAdapter",
     "aggregate_strategy_targets",
     "append_research_trial",
+    "build_feature_input_snapshot",
     "build_evaluation_id",
     "build_aapl_strategy_research_batch_v1",
+    "build_validated_market_bars_input_snapshot",
     "create_evaluation_artifacts",
     "load_research_batch_spec",
     "load_research_trials",
@@ -99,6 +106,7 @@ __all__ = [
     "verify_evaluation_artifacts",
     "write_legacy_equivalence_report",
     "write_research_batch_spec",
+    "write_aapl_strategy_research_batch_v1_artifacts",
     "write_contributor_set",
     "write_portfolio_target_decision",
     "write_risk_target_decision",

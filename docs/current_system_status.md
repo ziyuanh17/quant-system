@@ -352,6 +352,11 @@ trend, volatility-adjusted trend, and mean-reversion counterweight. The builder
 is pure and requires validated AAPL market-bar and feature input snapshots
 before a durable batch artifact or backtest can be produced.
 
+The research batch materializer now validates AAPL market bars, loads AAPL
+technical features, requires the `ma_5` and `ma_20` columns, computes input
+hashes, and writes the immutable batch artifact. It does not fetch data, run
+backtests, touch runtime state, use broker credentials, or submit orders.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

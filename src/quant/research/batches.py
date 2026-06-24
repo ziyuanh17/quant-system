@@ -1,9 +1,14 @@
 """Build reviewed research-only strategy batch specifications."""
 
+import hashlib
 from datetime import date, datetime
+from pathlib import Path
 
+from quant.data.validation import validate_market_bars_csv
+from quant.features.loader import load_feature_csv
 from quant.models.research import (
     EvaluationSplitPolicy,
+    ResearchBatchArtifactPaths,
     ResearchBatchSpec,
     ResearchEnvironmentSnapshot,
     ResearchInputKind,
@@ -12,8 +17,79 @@ from quant.models.research import (
     SimulationScenario,
     StrategyCandidateSpec,
 )
+from quant.research.artifacts import write_research_batch_spec
 
 AAPL_RESEARCH_BATCH_V1 = "aapl-strategy-research-batch-v1"
+AAPL_RESEARCH_BATCH_SCHEMA_VERSION = "aapl_research_inputs_v1"
+
+
+def write_aapl_strategy_research_batch_v1_artifacts(
+    *,
+    market_bars_path: Path,
+    feature_path: Path,
+    environment: ResearchEnvironmentSnapshot,
+    output_root: Path,
+    created_at: datetime,
+    min_rows: int = 1,
+) -> ResearchBatchArtifactPaths:
+    """Validate AAPL inputs and persist the first research-only batch."""
+    market_bars_input = build_validated_market_bars_input_snapshot(
+        market_bars_path, symbol="AAPL", min_rows=min_rows
+    )
+    feature_input = build_feature_input_snapshot(feature_path, symbol="AAPL")
+    batch = build_aapl_strategy_research_batch_v1(
+        market_bars_input=market_bars_input,
+        feature_input=feature_input,
+        environment=environment,
+        created_at=created_at,
+    )
+    return write_research_batch_spec(batch, output_root)
+
+
+def build_validated_market_bars_input_snapshot(
+    path: Path,
+    *,
+    symbol: str,
+    min_rows: int = 1,
+) -> ResearchInputSnapshot:
+    """Return an input snapshot after market-bar validation passes."""
+    report = validate_market_bars_csv(path, symbol, min_rows=min_rows)
+    if not report.passed:
+        raise ValueError(f"market bars validation failed for {symbol}: {path}")
+    digest = _file_sha256(path)
+    return ResearchInputSnapshot(
+        input_id=f"{symbol.lower()}-market-bars-{digest[:12]}",
+        kind=ResearchInputKind.MARKET_BARS,
+        path=str(path),
+        sha256=digest,
+        schema_version=AAPL_RESEARCH_BATCH_SCHEMA_VERSION,
+        event_time_column="date",
+    )
+
+
+def build_feature_input_snapshot(
+    path: Path,
+    *,
+    symbol: str,
+) -> ResearchInputSnapshot:
+    """Return an input snapshot after feature artifact validation passes."""
+    features = load_feature_csv(path, symbol)
+    missing = [
+        column
+        for column in ("ma_5", "ma_20")
+        if column not in features.frame.columns
+    ]
+    if missing:
+        raise ValueError(f"feature artifact is missing columns: {missing}")
+    digest = _file_sha256(path)
+    return ResearchInputSnapshot(
+        input_id=f"{symbol.lower()}-features-{digest[:12]}",
+        kind=ResearchInputKind.FEATURES,
+        path=str(path),
+        sha256=digest,
+        schema_version=AAPL_RESEARCH_BATCH_SCHEMA_VERSION,
+        event_time_column="date",
+    )
 
 
 def build_aapl_strategy_research_batch_v1(
@@ -260,3 +336,7 @@ def _require_input_kind(
 ) -> None:
     if input_snapshot.kind != expected:
         raise ValueError(f"{label} must have kind={expected.value}")
+
+
+def _file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
