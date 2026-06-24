@@ -205,6 +205,11 @@ clean, runtime operational directory timestamps did not change, and no
 credentials, launchd, scheduler, paper, Alpaca, broker, order, or fill path was
 used.
 
+The manual operator runbook design describes how a future human would run
+exactly one reviewed discovery-to-loop dry-run request. It is still a design:
+no request is prepared or executed, and it does not authorize launchd,
+scheduler, paper, Alpaca, broker, order, or fill paths.
+
 ## Paper Signal Refresh
 
 Run:

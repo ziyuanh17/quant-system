@@ -22,6 +22,8 @@ Start with these current, canonical documents:
   synthetic reviewed inputs.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal.md](supervised_provider_discovery_loop_runtime_command_rehearsal.md):
   runtime-clone no-network actual-command rehearsal evidence.
+- [supervised_provider_discovery_loop_manual_operator_runbook_design.md](supervised_provider_discovery_loop_manual_operator_runbook_design.md):
+  design for a future one-request manual dry-run operator runbook.
 - [runbook.md](runbook.md): supported operator commands.
 - [trading_safety.md](trading_safety.md): safety gates.
 - [codex_project_handoff.md](codex_project_handoff.md): collaboration and host

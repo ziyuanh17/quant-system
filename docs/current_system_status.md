@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted runtime-command rehearsal
-  bundle: `8d1398a`
+- Reviewed source commit before this uncommitted manual-operator runbook
+  design bundle: `435752a`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -296,8 +296,8 @@ evidence under `/tmp`, and excludes runtime data writes, `.env`, credentials,
 launchd, scheduler, paper, Alpaca, broker, orders, and fills. See
 [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md).
 
-The current uncommitted review bundle records the runtime-clone no-network
-actual-command rehearsal. It ran from the runtime clone at `8d1398a`, wrote
+The checked-in runtime-clone no-network actual-command rehearsal ran from the
+runtime clone at `8d1398a`, wrote
 evidence under `/tmp/quant-runtime-discovery-loop-command-rehearsal`, passed
 all five scenarios, captured six command observations and four composition
 records, linked 1,519 evidence paths, and found zero prohibited artifacts. The
@@ -306,6 +306,14 @@ runtime operational directory timestamps did not change, and no `.env`,
 credentials, launchd, scheduler, paper, Alpaca, broker, order, or fill path
 was used. See
 [supervised_provider_discovery_loop_runtime_command_rehearsal.md](supervised_provider_discovery_loop_runtime_command_rehearsal.md).
+
+The current uncommitted review bundle designs a future one-request manual
+operator runbook for `quant dry-run supervised-provider-discover-finite`. The
+design covers request prechecks, scheduler-unloaded checks, runtime directory
+snapshots, the exact manual command, archival requirements, pass/block
+criteria, and explicit non-authorization for launchd, recurring scheduling,
+semantic local paper, Alpaca, broker access, orders, and fills. See
+[supervised_provider_discovery_loop_manual_operator_runbook_design.md](supervised_provider_discovery_loop_manual_operator_runbook_design.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -371,10 +379,11 @@ Before connecting semantic targets to recurring operations:
 14. review the checked-in runtime-clone copy rehearsal design;
 15. review the checked-in runtime-clone copy/import/help rehearsal evidence;
 16. review the checked-in runtime-clone no-network command rehearsal design;
-17. review the runtime-clone no-network command rehearsal evidence before
-    designing any finite manual operator runbook;
-18. separately review any runtime-clone or recurring scheduler exposure;
-19. obtain explicit approval before every broker order-capable rehearsal.
+17. review the checked-in runtime-clone no-network command rehearsal evidence;
+18. review the manual operator runbook design before executing any manual
+    reviewed request;
+19. separately review any runtime-clone or recurring scheduler exposure;
+20. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 

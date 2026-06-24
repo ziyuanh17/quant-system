@@ -154,14 +154,15 @@ side discussions.
 | 134 | Discovery-To-Loop Runtime Copy Rehearsal Attempt v1 | Done | Run read-only preflight for the runtime-clone copy rehearsal, preserve unrelated runtime-clone web-app modifications in a stash, and restore the runtime clone to clean state before retry. |
 | 135 | Discovery-To-Loop Runtime Copy Import Help Rehearsal v1 | Done | Fast-forward the clean runtime clone to reviewed source and verify package import plus command help only, without workflow execution, credentials, launchd, scheduler, paper, Alpaca, broker, orders, or fills. |
 | 136 | Discovery-To-Loop Runtime Command Rehearsal Design v1 | Done | Design a runtime-clone no-network actual-command rehearsal using synthetic reviewed inputs under `/tmp`, excluding runtime data, credentials, launchd, scheduler, paper, Alpaca, broker, orders, and fills. |
-| 137 | Discovery-To-Loop Runtime Command Rehearsal v1 | In Review | Run the runtime-clone no-network actual-command rehearsal with synthetic reviewed inputs under `/tmp`, verifying all scenarios without changing runtime data, credentials, launchd, scheduler, paper, Alpaca, broker, orders, or fills. |
+| 137 | Discovery-To-Loop Runtime Command Rehearsal v1 | Done | Run the runtime-clone no-network actual-command rehearsal with synthetic reviewed inputs under `/tmp`, verifying all scenarios without changing runtime data, credentials, launchd, scheduler, paper, Alpaca, broker, orders, or fills. |
+| 138 | Discovery-To-Loop Manual Operator Runbook Design v1 | In Review | Design the future one-request manual dry-run operator runbook, including prechecks, command, archival requirements, pass/block criteria, and explicit non-authorization for launchd, scheduler, paper, Alpaca, broker, orders, and fills. |
 
 ## Current Recommendation
 
-Review **Discovery-To-Loop Runtime Command Rehearsal v1**, then decide whether
-the next stage should design a finite manual operator runbook. Do not expose
-launchd, runtime deployment, recurring scheduling, semantic local paper,
-Alpaca semantic targets, or broker submission as part of that review.
+Review **Discovery-To-Loop Manual Operator Runbook Design v1**, then decide
+whether to execute one reviewed manual dry-run request under that runbook. Do
+not expose launchd, runtime deployment, recurring scheduling, semantic local
+paper, Alpaca semantic targets, or broker submission as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

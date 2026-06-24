@@ -44,8 +44,8 @@ reviewed source changes through GitHub before updating the runtime clone.
 ## Current Source State
 
 - Git branch: `main`
-- Current reviewed GitHub source commit before the uncommitted runtime-command
-  rehearsal bundle: `8d1398a`
+- Current reviewed GitHub source commit before the uncommitted manual-operator
+  runbook design bundle: `435752a`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - The runtime clone version is not established by this source document. Audit
   it before operational work.
@@ -167,9 +167,10 @@ before proceeding.
     rehearsal. The unrelated web-app changes remain preserved in runtime clone
     `stash@{0}`.
 25. Review the checked-in runtime-clone no-network command rehearsal design.
-26. Review the uncommitted runtime-clone no-network command rehearsal evidence
-    before designing any finite manual operator runbook.
-27. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+26. Review the checked-in runtime-clone no-network command rehearsal evidence.
+27. Review the uncommitted manual operator runbook design before executing any
+    manual reviewed request.
+28. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-28. Require explicit approval immediately before any broker order-capable
+29. Require explicit approval immediately before any broker order-capable
    command or rehearsal.
