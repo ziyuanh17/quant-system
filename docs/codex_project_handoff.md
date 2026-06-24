@@ -174,8 +174,10 @@ before proceeding.
 29. Stop this promotion sequence unless a concrete non-synthetic request is
     proposed with a separate design.
 30. Review the research-batch contract and immutable batch artifact helpers.
-31. Resume research-only strategy candidate evaluation under the restart plan.
-32. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+31. Review the first AAPL research batch definition and locate or refresh
+    validated AAPL market-bar and feature input snapshots.
+32. Resume research-only strategy candidate evaluation under the restart plan.
+33. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
     separately.
-33. Require explicit approval immediately before any broker order-capable
+34. Require explicit approval immediately before any broker order-capable
     command or rehearsal.

@@ -346,6 +346,12 @@ run and carries explicit false guardrails for broker access, runtime mutation,
 scheduler use, and order submission. This is still research-only
 infrastructure; it does not make the semantic paper pipeline ready.
 
+The source also defines the first AAPL research batch builder. It produces five
+candidate specs: momentum baseline, feature-momentum baseline, target-native
+trend, volatility-adjusted trend, and mean-reversion counterweight. The builder
+is pure and requires validated AAPL market-bar and feature input snapshots
+before a durable batch artifact or backtest can be produced.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

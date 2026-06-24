@@ -10,6 +10,10 @@ from quant.research.artifacts import (
     verify_research_batch_artifacts,
     write_research_batch_spec,
 )
+from quant.research.batches import (
+    AAPL_RESEARCH_BATCH_V1,
+    build_aapl_strategy_research_batch_v1,
+)
 from quant.research.evaluator import (
     FeatureStrategySimulationAdapter,
     PriceStrategySimulationAdapter,
@@ -63,6 +67,7 @@ __all__ = [
     "FixedSharesLegacyFeatureAdapter",
     "FixedSharesLegacyPriceAdapter",
     "APPROVE_OR_REJECT_RISK_POLICY",
+    "AAPL_RESEARCH_BATCH_V1",
     "LEGACY_AVAILABLE_CASH_POLICY",
     "PriceStrategySimulationAdapter",
     "PriceTargetStrategySimulationAdapter",
@@ -72,6 +77,7 @@ __all__ = [
     "aggregate_strategy_targets",
     "append_research_trial",
     "build_evaluation_id",
+    "build_aapl_strategy_research_batch_v1",
     "create_evaluation_artifacts",
     "load_research_batch_spec",
     "load_research_trials",

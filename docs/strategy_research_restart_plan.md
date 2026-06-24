@@ -91,6 +91,23 @@ families:
 Use fixed, declared parameter grids. Do not expand the grid after seeing the
 results without recording the additional trials as a new batch.
 
+The first batch builder is implemented as
+`build_aapl_strategy_research_batch_v1`. It defines these reviewed candidate
+IDs:
+
+```text
+aapl-momentum-baseline-5-20-v1
+aapl-feature-momentum-baseline-5-20-v1
+aapl-target-native-trend-5-20-v1
+aapl-vol-adjusted-trend-5-20-20-v1
+aapl-mean-reversion-counterweight-5-20-v1
+```
+
+The builder is pure: it does not read files, refresh data, run backtests,
+touch runtime state, or contact a broker. It requires validated AAPL market-bar
+and feature input snapshots with real paths and SHA-256 hashes before a batch
+artifact can be materialized for actual research.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and
@@ -111,6 +128,11 @@ under a caller-provided research output root and fails on identity collisions
 or unsafe path segments. The verifier reloads the batch, checks the schema
 version, confirms the directory and manifest identity, and detects tampering of
 the immutable batch artifact.
+
+The AAPL batch builder uses this contract and inherits the same non-operational
+boundary. The next implementation step is to locate or refresh validated AAPL
+market bars and technical features, compute their hashes, and then persist one
+batch artifact under `data/research/`.
 
 ## Evidence Required Per Candidate
 

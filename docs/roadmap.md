@@ -160,6 +160,7 @@ side discussions.
 | 140 | Discovery-To-Loop Manual Synthetic Readiness Review v1 | In Review | Review the synthetic manual operator evidence, stop at manual synthetic dry-run readiness, and require a separate design before any non-synthetic request or broader operator packaging. |
 | 141 | Strategy Research Restart Plan v1 | In Review | Stop the operator-promotion sequence and define the next research-only strategy batch, evidence requirements, evaluation rules, and safety boundary. |
 | 142 | Research Batch Contract v1 | In Review | Add a source-level research-batch spec and immutable batch artifact persistence that explicitly cannot authorize broker, runtime, scheduler, or order behavior. |
+| 143 | AAPL Research Batch Definition v1 | In Review | Define the first five reviewed AAPL candidate specs as a pure research-only batch builder, requiring validated input snapshots before materialization or backtesting. |
 
 ## Current Recommendation
 
@@ -167,9 +168,10 @@ Review **Discovery-To-Loop Manual Operator Run v1** and **Manual Synthetic
 Readiness Review v1**, then stop this promotion sequence unless a specific
 non-synthetic request is proposed with a separate design. Review **Strategy
 Research Restart Plan v1** and **Research Batch Contract v1**, then resume
-research-only candidate evaluation. Do not expose launchd, runtime deployment,
-recurring scheduling, semantic local paper, Alpaca semantic targets, or broker
-submission as part of that review.
+research-only candidate evaluation by locating or refreshing validated AAPL
+input snapshots for **AAPL Research Batch Definition v1**. Do not expose
+launchd, runtime deployment, recurring scheduling, semantic local paper, Alpaca
+semantic targets, or broker submission as part of that review.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed
