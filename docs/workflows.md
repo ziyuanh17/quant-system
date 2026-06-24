@@ -189,6 +189,11 @@ changes were preserved in a runtime-clone Git stash and the clone now reports
 clean. The attempt did not fetch, merge, import, run command help, source
 credentials, load launchd, run workflows, or touch broker-connected paths.
 
+The successful retry fast-forwarded the clean runtime clone to reviewed source,
+then verified package import and command help only. The runtime clone remained
+clean afterward. No workflow request, `.env`, credentials, launchd, scheduler,
+paper, Alpaca, broker, order, or fill path was invoked.
+
 ## Paper Signal Refresh
 
 Run:
