@@ -194,6 +194,11 @@ then verified package import and command help only. The runtime clone remained
 clean afterward. No workflow request, `.env`, credentials, launchd, scheduler,
 paper, Alpaca, broker, order, or fill path was invoked.
 
+The runtime command rehearsal design proposes running the existing
+synthetic-input actual-command rehearsal from the runtime clone with evidence
+under `/tmp`. It still excludes runtime `data` and `logs`, `.env`,
+credentials, launchd, scheduler, paper, Alpaca, broker, order, and fill paths.
+
 ## Paper Signal Refresh
 
 Run:

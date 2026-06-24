@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted runtime-copy import/help
-  rehearsal bundle: `1a31de6`
+- Reviewed source commit before this uncommitted runtime-command rehearsal
+  design bundle: `365f6d4`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -280,15 +280,22 @@ and `data/web/`. Those runtime-clone changes were preserved in `stash@{0}`
 with the message
 `runtime-clone-web-app-wip-before-discovery-loop-rehearsal-2026-06-23`.
 
-The current uncommitted review bundle records the successful retry. The clean
-runtime clone fast-forwarded from `5da3147` to `1a31de6`, package import
-passed, and command help for
+The checked-in runtime-copy import/help rehearsal fast-forwarded the clean
+runtime clone from `5da3147` to `1a31de6`, package import passed, and command
+help for
 `quant dry-run supervised-provider-discover-finite` passed. The runtime clone
 remained clean after the checks, `data/web`, `data/semantic-target`,
 `data/scheduler`, and `data/paper` remained absent, and no workflow execution,
 credentials, launchd, scheduler, paper, Alpaca, broker, order, or fill
 activity occurred. See
 [supervised_provider_discovery_loop_runtime_copy_rehearsal.md](supervised_provider_discovery_loop_runtime_copy_rehearsal.md).
+
+The current uncommitted review bundle designs a runtime-clone no-network
+actual-command rehearsal. The design runs the existing synthetic-input
+rehearsal generator from the runtime clone, writes evidence under `/tmp`, and
+excludes runtime data writes, `.env`, credentials, launchd, scheduler, paper,
+Alpaca, broker, orders, and fills. See
+[supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -352,8 +359,9 @@ Before connecting semantic targets to recurring operations:
 12. review the checked-in source-only promotion boundary;
 13. review the checked-in source-only promotion review;
 14. review the checked-in runtime-clone copy rehearsal design;
-15. review the runtime-clone copy/import/help rehearsal evidence;
-16. design any runtime-clone no-network command rehearsal separately;
+15. review the checked-in runtime-clone copy/import/help rehearsal evidence;
+16. review the runtime-clone no-network command rehearsal design before
+    executing it;
 17. separately review any runtime-clone or recurring scheduler exposure;
 18. obtain explicit approval before every broker order-capable rehearsal.
 

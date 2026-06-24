@@ -44,8 +44,8 @@ reviewed source changes through GitHub before updating the runtime clone.
 ## Current Source State
 
 - Git branch: `main`
-- Current reviewed GitHub source commit before the uncommitted runtime-copy
-  import/help rehearsal bundle: `1a31de6`
+- Current reviewed GitHub source commit before the uncommitted runtime-command
+  rehearsal design bundle: `365f6d4`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - The runtime clone version is not established by this source document. Audit
   it before operational work.
@@ -163,10 +163,11 @@ before proceeding.
 21. Review the checked-in discovery-to-loop promotion boundary.
 22. Review the checked-in source-promotion review.
 23. Review the checked-in runtime-clone copy rehearsal design.
-24. Review the successful no-workflow runtime-clone copy/import/help
+24. Review the checked-in no-workflow runtime-clone copy/import/help
     rehearsal. The unrelated web-app changes remain preserved in runtime clone
     `stash@{0}`.
-25. Design any runtime-clone no-network command rehearsal separately.
+25. Review the uncommitted runtime-clone no-network command rehearsal design
+    before executing it.
 26. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
 27. Require explicit approval immediately before any broker order-capable
