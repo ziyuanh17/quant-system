@@ -45,7 +45,7 @@ reviewed source changes through GitHub before updating the runtime clone.
 
 - Git branch: `main`
 - Current reviewed GitHub source commit before the uncommitted manual-operator
-  runbook design bundle: `435752a`
+  run bundle: `56b45cc`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - The runtime clone version is not established by this source document. Audit
   it before operational work.
@@ -168,9 +168,12 @@ before proceeding.
     `stash@{0}`.
 25. Review the checked-in runtime-clone no-network command rehearsal design.
 26. Review the checked-in runtime-clone no-network command rehearsal evidence.
-27. Review the uncommitted manual operator runbook design before executing any
-    manual reviewed request.
-28. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
+27. Review the checked-in manual operator runbook design.
+28. Review the uncommitted manual synthetic operator run evidence and
+    readiness review.
+29. Stop this promotion sequence unless a concrete non-synthetic request is
+    proposed with a separate design.
+30. Review any proposed paper, Alpaca, runtime-clone, or scheduler exposure
    separately.
-29. Require explicit approval immediately before any broker order-capable
+31. Require explicit approval immediately before any broker order-capable
    command or rehearsal.

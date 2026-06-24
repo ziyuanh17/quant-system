@@ -8,8 +8,8 @@ separately from fresh read-only evidence.
 ## Source Baseline
 
 - Branch: `main`
-- Reviewed source commit before this uncommitted manual-operator runbook
-  design bundle: `435752a`
+- Reviewed source commit before this uncommitted manual-operator run bundle:
+  `56b45cc`
 - Repository: `https://github.com/ziyuanh17/quant-system`
 - Development workspace: `/Users/mochifufu/Code/quant-system`
 - Runtime clone: `/Users/mochifufu/Code/quant-system-runtime`
@@ -307,13 +307,30 @@ credentials, launchd, scheduler, paper, Alpaca, broker, order, or fill path
 was used. See
 [supervised_provider_discovery_loop_runtime_command_rehearsal.md](supervised_provider_discovery_loop_runtime_command_rehearsal.md).
 
-The current uncommitted review bundle designs a future one-request manual
-operator runbook for `quant dry-run supervised-provider-discover-finite`. The
-design covers request prechecks, scheduler-unloaded checks, runtime directory
-snapshots, the exact manual command, archival requirements, pass/block
-criteria, and explicit non-authorization for launchd, recurring scheduling,
-semantic local paper, Alpaca, broker access, orders, and fills. See
+The checked-in manual operator runbook design covers request prechecks,
+scheduler-unloaded checks, runtime directory snapshots, the exact manual
+command, archival requirements, pass/block criteria, and explicit
+non-authorization for launchd, recurring scheduling, semantic local paper,
+Alpaca, broker access, orders, and fills. See
 [supervised_provider_discovery_loop_manual_operator_runbook_design.md](supervised_provider_discovery_loop_manual_operator_runbook_design.md).
+
+The current uncommitted review bundle records one manually started synthetic
+discovery-to-loop dry-run request from the runtime clone. The runtime clone ran
+at `56b45cc`, the request and all outputs lived under
+`/tmp/quant-runtime-manual-discovery-loop-request`, the command exited `0`,
+the composition record verified as completed, and runtime operational
+directory timestamps did not change. No `.env`, credentials, launchd,
+scheduler, semantic local paper, Alpaca, broker, order, or fill path was used.
+See
+[supervised_provider_discovery_loop_manual_operator_run.md](supervised_provider_discovery_loop_manual_operator_run.md).
+
+The same review bundle adds a manual synthetic readiness review. It concludes
+that the system is ready only for manual synthetic dry-run readiness and should
+stop this promotion sequence unless a concrete non-synthetic request is
+proposed with a separate design. It does not authorize production request
+preparation, launchd, recurring scheduling, semantic local paper, Alpaca,
+broker access, orders, or fills. See
+[supervised_provider_discovery_loop_manual_synthetic_readiness_review.md](supervised_provider_discovery_loop_manual_synthetic_readiness_review.md).
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
@@ -380,10 +397,12 @@ Before connecting semantic targets to recurring operations:
 15. review the checked-in runtime-clone copy/import/help rehearsal evidence;
 16. review the checked-in runtime-clone no-network command rehearsal design;
 17. review the checked-in runtime-clone no-network command rehearsal evidence;
-18. review the manual operator runbook design before executing any manual
-    reviewed request;
-19. separately review any runtime-clone or recurring scheduler exposure;
-20. obtain explicit approval before every broker order-capable rehearsal.
+18. review the checked-in manual operator runbook design;
+19. review the manual synthetic operator run evidence and readiness review;
+20. stop this promotion sequence unless a concrete non-synthetic request is
+    proposed with a separate design;
+21. separately review any runtime-clone or recurring scheduler exposure;
+22. obtain explicit approval before every broker order-capable rehearsal.
 
 ## Documentation Rules
 

@@ -210,6 +210,16 @@ exactly one reviewed discovery-to-loop dry-run request. It is still a design:
 no request is prepared or executed, and it does not authorize launchd,
 scheduler, paper, Alpaca, broker, order, or fill paths.
 
+The first manual operator run used one synthetic reviewed request under `/tmp`
+from the runtime clone. It completed the discovery-to-loop dry-run, verified
+the resulting composition record, kept the runtime clone clean, and did not
+change runtime operational directory timestamps or touch credentials, launchd,
+scheduler, paper, Alpaca, broker, orders, or fills.
+
+The manual synthetic readiness review stops the promotion sequence at manual
+synthetic dry-run readiness. A non-synthetic request or broader operator
+packaging requires a separate design and review.
+
 ## Paper Signal Refresh
 
 Run:

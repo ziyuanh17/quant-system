@@ -24,6 +24,12 @@ Start with these current, canonical documents:
   runtime-clone no-network actual-command rehearsal evidence.
 - [supervised_provider_discovery_loop_manual_operator_runbook_design.md](supervised_provider_discovery_loop_manual_operator_runbook_design.md):
   design for a future one-request manual dry-run operator runbook.
+- [supervised_provider_discovery_loop_manual_operator_run.md](supervised_provider_discovery_loop_manual_operator_run.md):
+  evidence for one synthetic manual discovery-to-loop dry-run from the runtime
+  clone.
+- [supervised_provider_discovery_loop_manual_synthetic_readiness_review.md](supervised_provider_discovery_loop_manual_synthetic_readiness_review.md):
+  decision to stop at manual synthetic dry-run readiness unless a separate
+  non-synthetic request design is proposed.
 - [runbook.md](runbook.md): supported operator commands.
 - [trading_safety.md](trading_safety.md): safety gates.
 - [codex_project_handoff.md](codex_project_handoff.md): collaboration and host
