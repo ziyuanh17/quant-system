@@ -139,6 +139,35 @@ total return `1.227483`, final value `222748.28`, 25 trades, and max drawdown
 yet; their trial ledgers record `abandoned` because their concrete research
 strategy implementations remain the next required source work.
 
+The target-native strategy implementations are now present and the same batch
+was rerun. The runner reused the existing immutable evaluation directories and
+appended `trial-v2` entries rather than overwriting prior evidence. Latest
+target-candidate results:
+
+```text
+target-native trend:
+  total_return=0.000873
+  final_value=100087.34
+  trades=50
+  max_drawdown=-0.00041419746904647337
+
+volatility-adjusted trend:
+  total_return=0.000673
+  final_value=100067.25
+  trades=247
+  max_drawdown=-0.00043478379509664933
+
+mean-reversion counterweight:
+  total_return=-0.000967
+  final_value=99903.32
+  trades=43
+  max_drawdown=-0.0011619116433893018
+```
+
+The latest run also wrote `targets.csv` for each target-native candidate,
+preserving the resolved signed target history used by the target-order
+backtest.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and
@@ -229,9 +258,9 @@ Strategy Research Batch v1
   -> refresh or locate validated AAPL data [done]
   -> materialize the immutable batch artifact [done]
   -> run supported baseline simulations [done]
-  -> implement target-native candidate strategies
-  -> run target-native simulations
-  -> persist immutable evaluation artifacts
+  -> implement target-native candidate strategies [done]
+  -> run target-native simulations [done]
+  -> persist immutable evaluation artifacts [done]
   -> write a research report with pass/fail decisions
 ```
 

@@ -378,6 +378,17 @@ abandoned trials because their concrete research strategy implementations are
 not available yet. No paper, broker, scheduler, runtime, order, or fill path
 was used.
 
+The target-native research strategies are now implemented and the AAPL batch
+was rerun append-only. Each candidate has two trial-ledger entries: the prior
+baseline/abandoned evidence and a new successful `trial-v2`. Latest metrics:
+target-native trend returned `0.000873` with final value `100087.34`, 50
+trades, and max drawdown `-0.00041419746904647337`; volatility-adjusted trend
+returned `0.000673` with final value `100067.25`, 247 trades, and max drawdown
+`-0.00043478379509664933`; mean-reversion counterweight returned `-0.000967`
+with final value `99903.32`, 43 trades, and max drawdown
+`-0.0011619116433893018`. Target-history CSV artifacts were persisted for all
+three target-native candidates.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

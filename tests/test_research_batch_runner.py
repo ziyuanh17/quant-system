@@ -50,12 +50,12 @@ def test_run_aapl_research_batch_v1_evaluations_records_all_trials(
         "aapl-feature-momentum-baseline-5-20-v1": (
             ResearchTrialStatus.SUCCEEDED
         ),
-        "aapl-target-native-trend-5-20-v1": ResearchTrialStatus.ABANDONED,
+        "aapl-target-native-trend-5-20-v1": ResearchTrialStatus.SUCCEEDED,
         "aapl-vol-adjusted-trend-5-20-20-v1": (
-            ResearchTrialStatus.ABANDONED
+            ResearchTrialStatus.SUCCEEDED
         ),
         "aapl-mean-reversion-counterweight-5-20-v1": (
-            ResearchTrialStatus.ABANDONED
+            ResearchTrialStatus.SUCCEEDED
         ),
     }
 
@@ -81,14 +81,49 @@ def test_run_aapl_research_batch_v1_writes_backtest_artifacts(tmp_path) -> None:
     completed_dirs = [
         evaluation_dir
         for evaluation_dir in evaluation_dirs
-        if (evaluation_dir / "backtest" / "summary.json").is_file()
+        if (evaluation_dir / "backtests").is_dir()
     ]
 
-    assert len(completed_dirs) == 2
+    assert len(completed_dirs) == 5
     for evaluation_dir in completed_dirs:
-        assert (evaluation_dir / "backtest" / "trades.csv").is_file()
+        backtest_dirs = list((evaluation_dir / "backtests").glob("*"))
+        assert len(backtest_dirs) == 1
+        assert (backtest_dirs[0] / "trades.csv").is_file()
         trials = load_research_trials(evaluation_dir / "trials.jsonl")
-        assert len(trials[0].artifact_paths) == 2
+        assert len(trials[0].artifact_paths) in {2, 3}
+
+
+def test_run_aapl_research_batch_v1_appends_restart_trial(tmp_path) -> None:
+    environment = _environment()
+    batch_paths = write_aapl_strategy_research_batch_v1_artifacts(
+        market_bars_path=_write_market_bars(tmp_path),
+        feature_path=_write_features(tmp_path),
+        environment=environment,
+        output_root=tmp_path / "batches",
+        created_at=datetime(2026, 6, 24, tzinfo=UTC),
+        min_rows=20,
+    )
+    kwargs = {
+        "batch_dir": Path(batch_paths.output_dir),
+        "output_root": tmp_path / "evaluations",
+        "environment": environment,
+    }
+
+    run_aapl_research_batch_v1_evaluations(
+        **kwargs,
+        started_at=datetime(2026, 6, 24, 1, tzinfo=UTC),
+    )
+    evaluation_dirs = run_aapl_research_batch_v1_evaluations(
+        **kwargs,
+        started_at=datetime(2026, 6, 24, 2, tzinfo=UTC),
+    )
+
+    for evaluation_dir in evaluation_dirs:
+        trials = load_research_trials(evaluation_dir / "trials.jsonl")
+        assert [trial.trial_id for trial in trials] == [
+            f"{trials[0].candidate_id}-trial-v1",
+            f"{trials[0].candidate_id}-trial-v2",
+        ]
 
 
 def _environment() -> ResearchEnvironmentSnapshot:

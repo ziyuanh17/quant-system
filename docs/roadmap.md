@@ -164,6 +164,7 @@ side discussions.
 | 144 | AAPL Research Batch Materialization Gate v1 | In Review | Validate existing AAPL market-bar and feature CSV inputs, compute input hashes, and persist the reviewed batch artifact without fetching data, backtesting, runtime, scheduler, broker, or order behavior. |
 | 145 | AAPL Research Batch Artifact v1 | In Review | Refresh historical AAPL market data, build technical features, and persist the first immutable research batch artifact for five candidates without running backtests or touching operational paths. |
 | 146 | AAPL Baseline Research Evaluation v1 | In Review | Run the supported legacy momentum and feature-momentum baselines from the fixed AAPL batch, persist evaluation/trial artifacts, and record unimplemented target candidates as abandoned rather than simulated. |
+| 147 | AAPL Target-Native Research Evaluation v1 | In Review | Implement the three target-native research strategies, rerun the fixed AAPL batch append-only, persist signed target histories, and record successful target-candidate trial evidence. |
 
 ## Current Recommendation
 
