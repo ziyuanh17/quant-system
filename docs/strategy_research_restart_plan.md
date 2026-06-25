@@ -208,17 +208,6 @@ batch artifact under `data/research/`. If no validated AAPL inputs exist
 locally, the next step is a research-data refresh only, not a paper or broker
 workflow.
 
-`StrategyCandidateSpec` now carries an explicit comparison role. The default
-role is `declared_policy`, meaning the strategy is evaluated with its own
-declared sizing policy. A `sizing_ablation` candidate intentionally neutralizes
-or replaces sizing to inspect timing and direction separately, and the model
-requires such candidates to set `promotion_eligible: false`.
-
-Research decision reports now repeat the candidate comparison role and
-promotion eligibility, then validate those fields against the reviewed batch
-spec. That makes a report auditable on its own while still preventing a
-diagnostic ablation from being relabeled as promotion evidence.
-
 ## Evidence Required Per Candidate
 
 Each candidate should persist:
@@ -237,7 +226,6 @@ Each candidate should persist:
 - target history or signal history;
 - trade list;
 - comparison against buy-and-hold and existing momentum;
-- comparison role and promotion eligibility;
 - pass/fail decision under a declared evaluation policy.
 
 Every attempted parameter variation should enter the trial ledger, including
@@ -286,35 +274,7 @@ Strategy Research Batch v1
   -> run target-native simulations [done]
   -> persist immutable evaluation artifacts [done]
   -> write a research report with pass/fail decisions [done]
-  -> define fixed-share comparison batch [done]
-  -> run fixed-share comparison batch [done]
 ```
 
 Do not connect any passing candidate to dry-run, paper, Alpaca, scheduler, or
 runtime operation without a later promotion review.
-
-## Fixed-Share Comparison
-
-The fixed-share comparison batch is:
-
-```text
-data/research/strategy-batches/aapl-fixed-share-comparison-batch-v1/
-data/research/fixed-share-evaluations/
-```
-
-It compares all candidates through target-order semantics with small
-fixed/fractional share targets. This is a sizing ablation: it intentionally
-neutralizes strategy-declared sizing so direction and timing can be inspected
-separately. It is secondary evidence only. The primary strategy comparison
-must respect each strategy's declared sizing policy.
-
-| Candidate | Total Return | Final Value | Trades | Max Drawdown |
-| --- | ---: | ---: | ---: | ---: |
-| `aapl-fixed-share-momentum-5-20-v1` | `0.000994` | `100099.41` | `25` | `-0.0003782513660368636` |
-| `aapl-target-native-trend-5-20-v1` | `0.000873` | `100087.34` | `50` | `-0.00041419746904647337` |
-| `aapl-vol-adjusted-trend-5-20-20-v1` | `0.000673` | `100067.25` | `247` | `-0.00043478379509664933` |
-| `aapl-mean-reversion-counterweight-5-20-v1` | `-0.000967` | `99903.32` | `43` | `-0.0011619116433893018` |
-
-The fixed-share ablation does not promote target-native candidates and cannot
-promote a candidate by itself. The next research work should focus on strategy
-design and declared sizing, not operational activation.

@@ -397,29 +397,6 @@ beat or sufficiently justify a tradeoff against the control baseline. The
 report explicitly authorizes no dry-run, paper, Alpaca, broker, scheduler,
 runtime, order, or fill path.
 
-A second fixed-share comparison batch now exists under
-`data/research/strategy-batches/aapl-fixed-share-comparison-batch-v1/` with
-evaluations under `data/research/fixed-share-evaluations/`. It compares a
-one-share target-order legacy momentum baseline against one-share
-target-native candidates. Latest fixed-share metrics: fixed-share momentum
-returned `0.000994` with final value `100099.41`, 25 trades, and max drawdown
-`-0.0003782513660368636`; target-native trend returned `0.000873`; volatility
-adjusted trend returned `0.000673`; mean reversion returned `-0.000967`.
-This is a secondary sizing ablation, not the primary promotion comparison:
-it intentionally overrides each strategy's declared sizing to inspect timing
-and direction separately. It still does not promote any target-native
-candidate, and promotion decisions remain based on declared-policy evaluation
-where strategy-requested sizing is part of the strategy.
-
-The source model now encodes this distinction directly: research candidates
-default to `comparison_role: declared_policy`, while sizing-ablation candidates
-must set `promotion_eligible: false`. This keeps fixed-share diagnostics from
-becoming accidental promotion evidence.
-
-Research decision reports also carry `comparison_role` and
-`promotion_eligible` per candidate, and the source validator checks those
-fields against the reviewed batch spec before the report is trusted.
-
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

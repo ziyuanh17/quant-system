@@ -12,7 +12,6 @@ from quant.models.research import (
     EvaluationSplitPolicy,
     PointInTimePolicy,
     ResearchBatchSpec,
-    ResearchComparisonRole,
     ResearchInputKind,
     ResearchInputSnapshot,
     ResearchParameter,
@@ -45,8 +44,6 @@ def test_candidate_spec_round_trips_with_reproducibility_identity() -> None:
     assert loaded == candidate
     assert loaded.inputs[0].sha256 == SHA256
     assert loaded.simulation_scenarios[0].slippage_bps == 5
-    assert loaded.comparison_role == ResearchComparisonRole.DECLARED_POLICY
-    assert loaded.promotion_eligible is True
 
 
 def test_candidate_spec_rejects_duplicate_parameter_names() -> None:
@@ -56,17 +53,6 @@ def test_candidate_spec_rejects_duplicate_parameter_names() -> None:
                 ResearchParameter(name="window", value=10),
                 ResearchParameter(name="window", value=20),
             )
-        )
-
-
-def test_candidate_spec_rejects_promotion_eligible_sizing_ablation() -> None:
-    with pytest.raises(
-        ValidationError,
-        match="sizing-ablation candidates must not be promotion eligible",
-    ):
-        _candidate_spec(
-            comparison_role=ResearchComparisonRole.SIZING_ABLATION,
-            promotion_eligible=True,
         )
 
 
@@ -189,10 +175,6 @@ def _candidate_spec(
         ResearchParameter(name="slow_window", value=20),
     ),
     symbols: tuple[str, ...] = ("AAPL",),
-    comparison_role: ResearchComparisonRole = (
-        ResearchComparisonRole.DECLARED_POLICY
-    ),
-    promotion_eligible: bool = True,
 ) -> StrategyCandidateSpec:
     return StrategyCandidateSpec(
         candidate_id=candidate_id,
@@ -226,8 +208,6 @@ def _candidate_spec(
         ),
         benchmark_name="buy-and-hold",
         promotion_criteria_version="1",
-        comparison_role=comparison_role,
-        promotion_eligible=promotion_eligible,
         source_commit="abc123",
         dependency_lock_sha256=SHA256,
         random_seed=7,

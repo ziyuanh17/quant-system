@@ -10,9 +10,7 @@ from quant.models.research import (
 from quant.research import (
     load_research_trials,
     run_aapl_research_batch_v1_evaluations,
-    run_research_batch_evaluations,
     verify_evaluation_artifacts,
-    write_aapl_fixed_share_comparison_batch_v1_artifacts,
     write_aapl_strategy_research_batch_v1_artifacts,
 )
 
@@ -126,31 +124,6 @@ def test_run_aapl_research_batch_v1_appends_restart_trial(tmp_path) -> None:
             f"{trials[0].candidate_id}-trial-v1",
             f"{trials[0].candidate_id}-trial-v2",
         ]
-
-
-def test_run_fixed_share_comparison_batch_succeeds(tmp_path) -> None:
-    environment = _environment()
-    batch_paths = write_aapl_fixed_share_comparison_batch_v1_artifacts(
-        market_bars_path=_write_market_bars(tmp_path),
-        environment=environment,
-        output_root=tmp_path / "batches",
-        created_at=datetime(2026, 6, 24, tzinfo=UTC),
-        min_rows=20,
-    )
-
-    evaluation_dirs = run_research_batch_evaluations(
-        batch_dir=Path(batch_paths.output_dir),
-        output_root=tmp_path / "evaluations",
-        environment=environment,
-        started_at=datetime(2026, 6, 24, 1, tzinfo=UTC),
-    )
-
-    assert len(evaluation_dirs) == 4
-    for evaluation_dir in evaluation_dirs:
-        verify_evaluation_artifacts(evaluation_dir)
-        trials = load_research_trials(evaluation_dir / "trials.jsonl")
-        assert trials[0].status == ResearchTrialStatus.SUCCEEDED
-        assert (evaluation_dir / "backtests").is_dir()
 
 
 def _environment() -> ResearchEnvironmentSnapshot:

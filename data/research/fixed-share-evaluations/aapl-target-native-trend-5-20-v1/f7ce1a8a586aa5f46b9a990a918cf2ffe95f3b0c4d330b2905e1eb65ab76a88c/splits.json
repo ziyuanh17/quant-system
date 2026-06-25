@@ -1,8 +1,0 @@
-{
-  "development_end": "2021-12-31",
-  "development_start": "2020-01-01",
-  "holdout_end": "2023-12-31",
-  "holdout_start": "2023-01-01",
-  "validation_end": "2022-12-31",
-  "validation_start": "2022-01-01"
-}

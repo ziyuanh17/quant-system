@@ -158,28 +158,20 @@ side discussions.
 | 138 | Discovery-To-Loop Manual Operator Runbook Design v1 | Done | Design the future one-request manual dry-run operator runbook, including prechecks, command, archival requirements, pass/block criteria, and explicit non-authorization for launchd, scheduler, paper, Alpaca, broker, orders, and fills. |
 | 139 | Discovery-To-Loop Manual Operator Run v1 | In Review | Run one synthetic reviewed discovery-to-loop dry-run request from the runtime clone, archive evidence, and verify no runtime data, credentials, launchd, scheduler, paper, Alpaca, broker, orders, or fills changed. |
 | 140 | Discovery-To-Loop Manual Synthetic Readiness Review v1 | In Review | Review the synthetic manual operator evidence, stop at manual synthetic dry-run readiness, and require a separate design before any non-synthetic request or broader operator packaging. |
-| 141 | Strategy Research Restart Plan v1 | In Review | Stop the operator-promotion sequence and define the next research-only strategy batch, evidence requirements, evaluation rules, and safety boundary. |
-| 142 | Research Batch Contract v1 | In Review | Add a source-level research-batch spec and immutable batch artifact persistence that explicitly cannot authorize broker, runtime, scheduler, or order behavior. |
-| 143 | AAPL Research Batch Definition v1 | In Review | Define the first five reviewed AAPL candidate specs as a pure research-only batch builder, requiring validated input snapshots before materialization or backtesting. |
-| 144 | AAPL Research Batch Materialization Gate v1 | In Review | Validate existing AAPL market-bar and feature CSV inputs, compute input hashes, and persist the reviewed batch artifact without fetching data, backtesting, runtime, scheduler, broker, or order behavior. |
-| 145 | AAPL Research Batch Artifact v1 | In Review | Refresh historical AAPL market data, build technical features, and persist the first immutable research batch artifact for five candidates without running backtests or touching operational paths. |
-| 146 | AAPL Baseline Research Evaluation v1 | In Review | Run the supported legacy momentum and feature-momentum baselines from the fixed AAPL batch, persist evaluation/trial artifacts, and record unimplemented target candidates as abandoned rather than simulated. |
-| 147 | AAPL Target-Native Research Evaluation v1 | In Review | Implement the three target-native research strategies, rerun the fixed AAPL batch append-only, persist signed target histories, and record successful target-candidate trial evidence. |
-| 148 | AAPL Research Report v1 | In Review | Write the first batch report and decision artifact, passing only the control/parity baselines and failing target-native candidates for promotion without operational authorization. |
-| 149 | AAPL Fixed-Share Comparison Batch v1 | In Review | Define and run a fixed-share target-order comparison batch, confirming that target-native candidates still do not beat the one-share momentum baseline. |
-| 150 | Research Comparison-Role Guardrail v1 | In Review | Encode declared-policy versus sizing-ablation comparison roles in candidate specs and forbid sizing ablations from being promotion eligible. |
-| 151 | Research Decision-Report Guardrail v1 | In Review | Add typed decision-report validation so report-level comparison role and promotion eligibility must match the reviewed research batch. |
+| 141 | Strategy Research Restart Plan v1 | Done | Stop the operator-promotion sequence and define the next research-only strategy batch, evidence requirements, evaluation rules, and safety boundary. |
+| 142 | Research Batch Contract v1 | Done | Add a source-level research-batch spec and immutable batch artifact persistence that explicitly cannot authorize broker, runtime, scheduler, or order behavior. |
+| 143 | AAPL Research Batch Definition v1 | Done | Define the first five reviewed AAPL candidate specs as a pure research-only batch builder, requiring validated input snapshots before materialization or backtesting. |
+| 144 | AAPL Research Batch Materialization Gate v1 | Done | Validate existing AAPL market-bar and feature CSV inputs, compute input hashes, and persist the reviewed batch artifact without fetching data, backtesting, runtime, scheduler, broker, or order behavior. |
+| 145 | AAPL Research Batch Artifact v1 | Done | Refresh historical AAPL market data, build technical features, and persist the first immutable research batch artifact for five candidates without running backtests or touching operational paths. |
+| 146 | AAPL Baseline Research Evaluation v1 | Done | Run the supported legacy momentum and feature-momentum baselines from the fixed AAPL batch, persist evaluation/trial artifacts, and record unimplemented target candidates as abandoned rather than simulated. |
+| 147 | AAPL Target-Native Research Evaluation v1 | Done | Implement the three target-native research strategies, rerun the fixed AAPL batch append-only, persist signed target histories, and record successful target-candidate trial evidence. |
+| 148 | AAPL Research Report v1 | Done | Write the first batch report and decision artifact, passing only the control/parity baselines and failing target-native candidates for promotion without operational authorization. |
 
 ## Current Recommendation
 
-Review **Discovery-To-Loop Manual Operator Run v1** and **Manual Synthetic
-Readiness Review v1**, then stop this promotion sequence unless a specific
-non-synthetic request is proposed with a separate design. Review **Strategy
-Research Restart Plan v1** and **Research Batch Contract v1**, then resume
-research-only candidate evaluation by locating or refreshing validated AAPL
-input snapshots for **AAPL Research Batch Definition v1**. Do not expose
-launchd, runtime deployment, recurring scheduling, semantic local paper, Alpaca
-semantic targets, or broker submission as part of that review.
+Continue research-only strategy design under declared-policy sizing. Do not
+expose launchd, runtime deployment, recurring scheduling, semantic local paper,
+Alpaca semantic targets, or broker submission as part of that work.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

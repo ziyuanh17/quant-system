@@ -1,7 +1,0 @@
-{
-  "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
-  "evaluator_version": "fixed-share-comparison-v1",
-  "platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
-  "python_version": "3.14.5",
-  "source_commit": "3399101-dirty"
-}
