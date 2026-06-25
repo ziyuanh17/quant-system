@@ -416,6 +416,10 @@ default to `comparison_role: declared_policy`, while sizing-ablation candidates
 must set `promotion_eligible: false`. This keeps fixed-share diagnostics from
 becoming accidental promotion evidence.
 
+Research decision reports also carry `comparison_role` and
+`promotion_eligible` per candidate, and the source validator checks those
+fields against the reviewed batch spec before the report is trusted.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

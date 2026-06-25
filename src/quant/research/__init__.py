@@ -26,6 +26,10 @@ from quant.research.batches import (
     write_aapl_fixed_share_comparison_batch_v1_artifacts,
     write_aapl_strategy_research_batch_v1_artifacts,
 )
+from quant.research.decisions import (
+    load_research_decision_report,
+    validate_decision_report_against_batch,
+)
 from quant.research.evaluator import (
     FeatureStrategySimulationAdapter,
     PriceStrategySimulationAdapter,
@@ -98,6 +102,7 @@ __all__ = [
     "build_validated_market_bars_input_snapshot",
     "create_evaluation_artifacts",
     "load_research_batch_spec",
+    "load_research_decision_report",
     "load_research_trials",
     "load_contributor_set",
     "load_legacy_equivalence_report",
@@ -117,6 +122,7 @@ __all__ = [
     "signals_to_fixed_share_targets",
     "verify_research_batch_artifacts",
     "verify_evaluation_artifacts",
+    "validate_decision_report_against_batch",
     "write_legacy_equivalence_report",
     "write_research_batch_spec",
     "write_aapl_fixed_share_comparison_batch_v1_artifacts",

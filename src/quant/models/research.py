@@ -36,6 +36,12 @@ class ResearchComparisonRole(StrEnum):
     SIZING_ABLATION = "sizing_ablation"
 
 
+class ResearchDecisionOutcome(StrEnum):
+    PASS_AS_CONTROL = "pass_as_control"
+    PASS_FOR_PARITY = "pass_for_parity"
+    FAIL_PROMOTION = "fail_promotion"
+
+
 class ResearchEnvironmentSnapshot(FrozenModel):
     """Reproducibility identity for the code environment running evaluation."""
 
@@ -265,6 +271,65 @@ class ResearchBatchSpec(FrozenModel):
         if len(dependency_locks) != 1:
             raise ValueError("batch candidates must share one dependency lock")
         return self
+
+
+class ResearchOperationalAuthorization(FrozenModel):
+    """Explicit non-operational permissions carried by a research decision."""
+
+    alpaca_authorized: Literal[False] = False
+    broker_authorized: Literal[False] = False
+    dry_run_authorized: Literal[False] = False
+    order_submission_authorized: Literal[False] = False
+    paper_trading_authorized: Literal[False] = False
+    runtime_mutation_authorized: Literal[False] = False
+    scheduler_authorized: Literal[False] = False
+
+
+class ResearchCandidateDecision(FrozenModel):
+    """Pass/fail outcome for one research candidate in a report."""
+
+    candidate_id: str = Field(min_length=1)
+    decision: ResearchDecisionOutcome
+    reason: str = Field(min_length=1)
+    comparison_role: ResearchComparisonRole = (
+        ResearchComparisonRole.DECLARED_POLICY
+    )
+    promotion_eligible: bool = True
+
+    @model_validator(mode="after")
+    def sizing_ablations_are_not_promotion_eligible(
+        self,
+    ) -> "ResearchCandidateDecision":
+        if (
+            self.comparison_role == ResearchComparisonRole.SIZING_ABLATION
+            and self.promotion_eligible
+        ):
+            raise ValueError(
+                "sizing-ablation decisions must not be promotion eligible"
+            )
+        return self
+
+
+class ResearchDecisionReport(FrozenModel):
+    """Reviewed research report decisions with explicit safety boundaries."""
+
+    schema_version: Literal[1] = 1
+    batch_id: str = Field(min_length=1)
+    report_id: str = Field(min_length=1)
+    generated_at: datetime
+    operational_authorization: ResearchOperationalAuthorization
+    decisions: tuple[ResearchCandidateDecision, ...] = Field(min_length=1)
+
+    @field_validator("decisions")
+    @classmethod
+    def candidate_decisions_must_be_unique(
+        cls, decisions: tuple[ResearchCandidateDecision, ...]
+    ) -> tuple[ResearchCandidateDecision, ...]:
+        _require_unique(
+            tuple(decision.candidate_id for decision in decisions),
+            "decision candidate IDs",
+        )
+        return decisions
 
 
 class ResearchTrialRecord(FrozenModel):

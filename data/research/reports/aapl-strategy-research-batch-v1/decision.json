@@ -16,27 +16,37 @@
     {
       "candidate_id": "aapl-momentum-baseline-5-20-v1",
       "decision": "pass_as_control",
-      "reason": "Legacy price-momentum control for this batch."
+      "reason": "Legacy price-momentum control for this batch.",
+      "comparison_role": "declared_policy",
+      "promotion_eligible": true
     },
     {
       "candidate_id": "aapl-feature-momentum-baseline-5-20-v1",
       "decision": "pass_for_parity",
-      "reason": "Feature path exactly matched the legacy price-momentum baseline."
+      "reason": "Feature path exactly matched the legacy price-momentum baseline.",
+      "comparison_role": "declared_policy",
+      "promotion_eligible": true
     },
     {
       "candidate_id": "aapl-target-native-trend-5-20-v1",
       "decision": "fail_promotion",
-      "reason": "Return was far below the baseline despite low drawdown."
+      "reason": "Return was far below the baseline despite low drawdown.",
+      "comparison_role": "declared_policy",
+      "promotion_eligible": true
     },
     {
       "candidate_id": "aapl-vol-adjusted-trend-5-20-20-v1",
       "decision": "fail_promotion",
-      "reason": "Return was far below the baseline and turnover was high."
+      "reason": "Return was far below the baseline and turnover was high.",
+      "comparison_role": "declared_policy",
+      "promotion_eligible": true
     },
     {
       "candidate_id": "aapl-mean-reversion-counterweight-5-20-v1",
       "decision": "fail_promotion",
-      "reason": "Standalone result lost money in this batch."
+      "reason": "Standalone result lost money in this batch.",
+      "comparison_role": "declared_policy",
+      "promotion_eligible": true
     }
   ]
 }

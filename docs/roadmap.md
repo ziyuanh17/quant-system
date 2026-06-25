@@ -168,6 +168,7 @@ side discussions.
 | 148 | AAPL Research Report v1 | In Review | Write the first batch report and decision artifact, passing only the control/parity baselines and failing target-native candidates for promotion without operational authorization. |
 | 149 | AAPL Fixed-Share Comparison Batch v1 | In Review | Define and run a fixed-share target-order comparison batch, confirming that target-native candidates still do not beat the one-share momentum baseline. |
 | 150 | Research Comparison-Role Guardrail v1 | In Review | Encode declared-policy versus sizing-ablation comparison roles in candidate specs and forbid sizing ablations from being promotion eligible. |
+| 151 | Research Decision-Report Guardrail v1 | In Review | Add typed decision-report validation so report-level comparison role and promotion eligibility must match the reviewed research batch. |
 
 ## Current Recommendation
 

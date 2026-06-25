@@ -214,6 +214,11 @@ declared sizing policy. A `sizing_ablation` candidate intentionally neutralizes
 or replaces sizing to inspect timing and direction separately, and the model
 requires such candidates to set `promotion_eligible: false`.
 
+Research decision reports now repeat the candidate comparison role and
+promotion eligibility, then validate those fields against the reviewed batch
+spec. That makes a report auditable on its own while still preventing a
+diagnostic ablation from being relabeled as promotion evidence.
+
 ## Evidence Required Per Candidate
 
 Each candidate should persist:
