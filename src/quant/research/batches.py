@@ -20,6 +20,9 @@ from quant.models.research import (
 from quant.research.artifacts import write_research_batch_spec
 
 AAPL_RESEARCH_BATCH_V1 = "aapl-strategy-research-batch-v1"
+AAPL_FIXED_SHARE_COMPARISON_BATCH_V1 = (
+    "aapl-fixed-share-comparison-batch-v1"
+)
 AAPL_RESEARCH_BATCH_SCHEMA_VERSION = "aapl_research_inputs_v1"
 
 
@@ -40,6 +43,26 @@ def write_aapl_strategy_research_batch_v1_artifacts(
     batch = build_aapl_strategy_research_batch_v1(
         market_bars_input=market_bars_input,
         feature_input=feature_input,
+        environment=environment,
+        created_at=created_at,
+    )
+    return write_research_batch_spec(batch, output_root)
+
+
+def write_aapl_fixed_share_comparison_batch_v1_artifacts(
+    *,
+    market_bars_path: Path,
+    environment: ResearchEnvironmentSnapshot,
+    output_root: Path,
+    created_at: datetime,
+    min_rows: int = 1,
+) -> ResearchBatchArtifactPaths:
+    """Validate AAPL inputs and persist the fixed-share comparison batch."""
+    market_bars_input = build_validated_market_bars_input_snapshot(
+        market_bars_path, symbol="AAPL", min_rows=min_rows
+    )
+    batch = build_aapl_fixed_share_comparison_batch_v1(
+        market_bars_input=market_bars_input,
         environment=environment,
         created_at=created_at,
     )
@@ -152,6 +175,58 @@ def build_aapl_strategy_research_batch_v1(
     )
 
 
+def build_aapl_fixed_share_comparison_batch_v1(
+    *,
+    market_bars_input: ResearchInputSnapshot,
+    environment: ResearchEnvironmentSnapshot,
+    created_at: datetime,
+) -> ResearchBatchSpec:
+    """Return a fixed-share batch for fair target-native comparisons."""
+    _require_input_kind(
+        market_bars_input, ResearchInputKind.MARKET_BARS, "market_bars_input"
+    )
+    return ResearchBatchSpec(
+        batch_id=AAPL_FIXED_SHARE_COMPARISON_BATCH_V1,
+        objective=(
+            "Compare one-share AAPL legacy momentum against one-share "
+            "target-native research strategies without operational promotion."
+        ),
+        symbols=("AAPL",),
+        candidates=(
+            _fixed_share_momentum_baseline(environment, market_bars_input),
+            _target_native_trend(environment, market_bars_input),
+            _volatility_adjusted_trend(environment, market_bars_input),
+            _mean_reversion_counterweight(environment, market_bars_input),
+        ),
+        evidence_required=(
+            "candidate ID and family ID",
+            "hypothesis",
+            "strategy implementation version",
+            "parameter values",
+            "input data paths and hashes",
+            "split policy",
+            "fees, slippage, and initial cash",
+            "source commit",
+            "dependency lock hash",
+            "backtest metrics",
+            "target history",
+            "trade list",
+            "comparison against fixed-share momentum",
+            "pass/fail decision under a declared evaluation policy",
+            "trial ledger entry for every attempted variant",
+        ),
+        stop_conditions=(
+            "input data validation fails",
+            "a candidate cannot identify source or data hashes",
+            "split periods change after inspection",
+            "the trial ledger omits attempted variants",
+            "work drifts toward runtime, paper, Alpaca, broker, scheduler, "
+            "order, or fill paths",
+        ),
+        created_at=created_at,
+    )
+
+
 def _momentum_baseline(
     environment: ResearchEnvironmentSnapshot,
     market_bars_input: ResearchInputSnapshot,
@@ -167,6 +242,31 @@ def _momentum_baseline(
             ResearchParameter(name="fast_window", value=5),
             ResearchParameter(name="slow_window", value=20),
             ResearchParameter(name="sizing_policy", value="legacy_signal"),
+        ),
+        inputs=(market_bars_input,),
+        environment=environment,
+    )
+
+
+def _fixed_share_momentum_baseline(
+    environment: ResearchEnvironmentSnapshot,
+    market_bars_input: ResearchInputSnapshot,
+) -> StrategyCandidateSpec:
+    return _candidate(
+        candidate_id="aapl-fixed-share-momentum-5-20-v1",
+        research_family_id="fixed-share-momentum-baseline",
+        hypothesis_id="fixed-share-moving-average-cross-v1",
+        hypothesis=(
+            "A one-share moving-average crossover provides a fair target-order "
+            "baseline for one-share target-native strategies."
+        ),
+        strategy_name="fixed-share-momentum",
+        strategy_version="legacy_signal_adapter_v1",
+        parameters=(
+            ResearchParameter(name="fast_window", value=5),
+            ResearchParameter(name="slow_window", value=20),
+            ResearchParameter(name="target_shares", value=1),
+            ResearchParameter(name="sizing_policy", value="fixed_shares_v1"),
         ),
         inputs=(market_bars_input,),
         environment=environment,

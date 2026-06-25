@@ -274,7 +274,32 @@ Strategy Research Batch v1
   -> run target-native simulations [done]
   -> persist immutable evaluation artifacts [done]
   -> write a research report with pass/fail decisions [done]
+  -> define fixed-share comparison batch [done]
+  -> run fixed-share comparison batch [done]
 ```
 
 Do not connect any passing candidate to dry-run, paper, Alpaca, scheduler, or
 runtime operation without a later promotion review.
+
+## Fixed-Share Comparison
+
+The fixed-share comparison batch is:
+
+```text
+data/research/strategy-batches/aapl-fixed-share-comparison-batch-v1/
+data/research/fixed-share-evaluations/
+```
+
+It compares all candidates through target-order semantics with small
+fixed/fractional share targets.
+
+| Candidate | Total Return | Final Value | Trades | Max Drawdown |
+| --- | ---: | ---: | ---: | ---: |
+| `aapl-fixed-share-momentum-5-20-v1` | `0.000994` | `100099.41` | `25` | `-0.0003782513660368636` |
+| `aapl-target-native-trend-5-20-v1` | `0.000873` | `100087.34` | `50` | `-0.00041419746904647337` |
+| `aapl-vol-adjusted-trend-5-20-20-v1` | `0.000673` | `100067.25` | `247` | `-0.00043478379509664933` |
+| `aapl-mean-reversion-counterweight-5-20-v1` | `-0.000967` | `99903.32` | `43` | `-0.0011619116433893018` |
+
+The fixed-share comparison reduces the sizing mismatch, but it still does not
+promote target-native candidates. The next research work should focus on
+strategy design, not operational activation.

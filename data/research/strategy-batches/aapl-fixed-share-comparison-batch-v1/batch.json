@@ -1,0 +1,315 @@
+{
+  "batch_id": "aapl-fixed-share-comparison-batch-v1",
+  "broker_access_authorized": false,
+  "candidates": [
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-fixed-share-momentum-5-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "A one-share moving-average crossover provides a fair target-order baseline for one-share target-native strategies.",
+      "hypothesis_id": "fixed-share-moving-average-cross-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "target_shares",
+          "value": 1
+        },
+        {
+          "name": "sizing_policy",
+          "value": "fixed_shares_v1"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "fixed-share-momentum-baseline",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "3399101-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "fixed-share-momentum",
+      "strategy_version": "legacy_signal_adapter_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-target-native-trend-5-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "Expressing trend following as signed target shares makes long, flat, short, cover, and reversal semantics explicit.",
+      "hypothesis_id": "signed-target-trend-following-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "long_target_shares",
+          "value": 1
+        },
+        {
+          "name": "short_target_shares",
+          "value": -1
+        },
+        {
+          "name": "sizing_policy",
+          "value": "fixed_shares_v1"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "target-native-trend",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "3399101-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "target-native-trend",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-vol-adjusted-trend-5-20-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "Scaling target exposure down during higher recent volatility can reduce drawdown without destroying trend capture.",
+      "hypothesis_id": "volatility-scaled-target-trend-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "volatility_window",
+          "value": 20
+        },
+        {
+          "name": "base_target_shares",
+          "value": 1.0
+        },
+        {
+          "name": "min_target_shares",
+          "value": 0.25
+        },
+        {
+          "name": "max_target_shares",
+          "value": 1.0
+        },
+        {
+          "name": "sizing_policy",
+          "value": "fractional_research"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "volatility-adjusted-trend",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "3399101-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "volatility-adjusted-target-trend",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-mean-reversion-counterweight-5-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "A simple mean-reversion target can counterbalance trend signals when price stretches far from its recent average.",
+      "hypothesis_id": "moving-average-distance-reversion-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "lookback_window",
+          "value": 20
+        },
+        {
+          "name": "entry_zscore",
+          "value": 1.5
+        },
+        {
+          "name": "exit_zscore",
+          "value": 0.25
+        },
+        {
+          "name": "target_shares",
+          "value": 1
+        },
+        {
+          "name": "sizing_policy",
+          "value": "fixed_shares_v1"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "mean-reversion-counterweight",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "3399101-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "mean-reversion-counterweight",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    }
+  ],
+  "created_at": "2026-06-24T14:00:00Z",
+  "evidence_required": [
+    "candidate ID and family ID",
+    "hypothesis",
+    "strategy implementation version",
+    "parameter values",
+    "input data paths and hashes",
+    "split policy",
+    "fees, slippage, and initial cash",
+    "source commit",
+    "dependency lock hash",
+    "backtest metrics",
+    "target history",
+    "trade list",
+    "comparison against fixed-share momentum",
+    "pass/fail decision under a declared evaluation policy",
+    "trial ledger entry for every attempted variant"
+  ],
+  "objective": "Compare one-share AAPL legacy momentum against one-share target-native research strategies without operational promotion.",
+  "order_submission_authorized": false,
+  "runtime_mutation_authorized": false,
+  "scheduler_authorized": false,
+  "schema_version": 1,
+  "stop_conditions": [
+    "input data validation fails",
+    "a candidate cannot identify source or data hashes",
+    "split periods change after inspection",
+    "the trial ledger omits attempted variants",
+    "work drifts toward runtime, paper, Alpaca, broker, scheduler, order, or fill paths"
+  ],
+  "symbols": [
+    "AAPL"
+  ]
+}

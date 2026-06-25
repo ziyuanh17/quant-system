@@ -1,0 +1,16 @@
+{
+  "strategy_name": "fixed-share-momentum",
+  "symbol": "AAPL",
+  "config": {
+    "initial_cash": 100000.0,
+    "fees": 0.001,
+    "frequency": "1D"
+  },
+  "metrics": {
+    "total_return": 0.0009941161637878424,
+    "sharpe_ratio": 1.0171148098004161,
+    "max_drawdown": -0.0003782513660368636,
+    "total_trades": 25,
+    "final_value": 100099.41161637878
+  }
+}

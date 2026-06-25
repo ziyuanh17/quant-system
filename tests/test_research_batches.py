@@ -12,8 +12,10 @@ from quant.models.research import (
     ResearchInputSnapshot,
 )
 from quant.research import (
+    AAPL_FIXED_SHARE_COMPARISON_BATCH_V1,
     AAPL_RESEARCH_BATCH_SCHEMA_VERSION,
     AAPL_RESEARCH_BATCH_V1,
+    build_aapl_fixed_share_comparison_batch_v1,
     build_aapl_strategy_research_batch_v1,
     build_feature_input_snapshot,
     build_validated_market_bars_input_snapshot,
@@ -89,6 +91,23 @@ def test_build_aapl_strategy_research_batch_v1_uses_expected_inputs() -> None:
     for candidate_id, inputs in inputs_by_candidate.items():
         if candidate_id != "aapl-feature-momentum-baseline-5-20-v1":
             assert inputs[0].kind == ResearchInputKind.MARKET_BARS
+
+
+def test_build_aapl_fixed_share_batch_v1_defines_candidates() -> None:
+    batch = build_aapl_fixed_share_comparison_batch_v1(
+        market_bars_input=_market_bars_input(),
+        environment=_environment(),
+        created_at=datetime(2026, 6, 24, tzinfo=UTC),
+    )
+
+    assert batch.batch_id == AAPL_FIXED_SHARE_COMPARISON_BATCH_V1
+    assert tuple(candidate.candidate_id for candidate in batch.candidates) == (
+        "aapl-fixed-share-momentum-5-20-v1",
+        "aapl-target-native-trend-5-20-v1",
+        "aapl-vol-adjusted-trend-5-20-20-v1",
+        "aapl-mean-reversion-counterweight-5-20-v1",
+    )
+    assert batch.order_submission_authorized is False
 
 
 def test_build_aapl_research_batch_v1_rejects_wrong_input_kind() -> None:

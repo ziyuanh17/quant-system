@@ -26,6 +26,7 @@ from quant.research.artifacts import (
     verify_research_batch_artifacts,
 )
 from quant.research.target_artifacts import write_target_frame
+from quant.research.target_evaluator import signals_to_fixed_share_targets
 from quant.strategies import (
     FeatureMomentumConfig,
     FeatureMomentumStrategy,
@@ -45,7 +46,24 @@ SUPPORTED_AAPL_RESEARCH_CANDIDATES = (
     "aapl-target-native-trend-5-20-v1",
     "aapl-vol-adjusted-trend-5-20-20-v1",
     "aapl-mean-reversion-counterweight-5-20-v1",
+    "aapl-fixed-share-momentum-5-20-v1",
 )
+
+
+def run_research_batch_evaluations(
+    *,
+    batch_dir: Path,
+    output_root: Path,
+    environment: ResearchEnvironmentSnapshot,
+    started_at: datetime,
+) -> tuple[Path, ...]:
+    """Run supported candidates from any reviewed research batch."""
+    return run_aapl_research_batch_v1_evaluations(
+        batch_dir=batch_dir,
+        output_root=output_root,
+        environment=environment,
+        started_at=started_at,
+    )
 
 
 def run_aapl_research_batch_v1_evaluations(
@@ -127,6 +145,34 @@ def _run_supported_candidate(
                 )
             ),
             prices,
+        )
+    elif candidate.candidate_id == "aapl-fixed-share-momentum-5-20-v1":
+        prices = load_price_csv(
+            _input_path(candidate, ResearchInputKind.MARKET_BARS), "AAPL"
+        )
+        strategy = MomentumStrategy(
+            MomentumConfig(
+                fast_window=_int_parameter(candidate, "fast_window"),
+                slow_window=_int_parameter(candidate, "slow_window"),
+            )
+        )
+        targets = signals_to_fixed_share_targets(
+            strategy.generate_signals(prices),
+            shares=_decimal_parameter(candidate, "target_shares"),
+        )
+        result, trades = VectorBTTargetBacktester(
+            BacktestConfig(
+                initial_cash=scenario.initial_cash,
+                fees=scenario.fees,
+            )
+        ).run_resolved_targets(
+            strategy_name="fixed-share-momentum",
+            symbol="AAPL",
+            close=prices.close,
+            targets=targets,
+        )
+        extra_artifacts = (
+            str(write_target_frame(targets, output_dir / "targets.csv")),
         )
     elif candidate.candidate_id == "aapl-feature-momentum-baseline-5-20-v1":
         features = load_feature_csv(

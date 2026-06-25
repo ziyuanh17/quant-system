@@ -13,13 +13,17 @@ from quant.research.artifacts import (
 from quant.research.batch_runner import (
     SUPPORTED_AAPL_RESEARCH_CANDIDATES,
     run_aapl_research_batch_v1_evaluations,
+    run_research_batch_evaluations,
 )
 from quant.research.batches import (
+    AAPL_FIXED_SHARE_COMPARISON_BATCH_V1,
     AAPL_RESEARCH_BATCH_SCHEMA_VERSION,
     AAPL_RESEARCH_BATCH_V1,
+    build_aapl_fixed_share_comparison_batch_v1,
     build_aapl_strategy_research_batch_v1,
     build_feature_input_snapshot,
     build_validated_market_bars_input_snapshot,
+    write_aapl_fixed_share_comparison_batch_v1_artifacts,
     write_aapl_strategy_research_batch_v1_artifacts,
 )
 from quant.research.evaluator import (
@@ -75,6 +79,7 @@ __all__ = [
     "FixedSharesLegacyFeatureAdapter",
     "FixedSharesLegacyPriceAdapter",
     "APPROVE_OR_REJECT_RISK_POLICY",
+    "AAPL_FIXED_SHARE_COMPARISON_BATCH_V1",
     "AAPL_RESEARCH_BATCH_SCHEMA_VERSION",
     "AAPL_RESEARCH_BATCH_V1",
     "LEGACY_AVAILABLE_CASH_POLICY",
@@ -87,6 +92,7 @@ __all__ = [
     "aggregate_strategy_targets",
     "append_research_trial",
     "build_feature_input_snapshot",
+    "build_aapl_fixed_share_comparison_batch_v1",
     "build_evaluation_id",
     "build_aapl_strategy_research_batch_v1",
     "build_validated_market_bars_input_snapshot",
@@ -104,6 +110,7 @@ __all__ = [
     "investigate_legacy_equivalence",
     "resolve_legacy_available_cash_targets",
     "run_aapl_research_batch_v1_evaluations",
+    "run_research_batch_evaluations",
     "evaluate_target_effective_status",
     "evaluate_research_risk_target",
     "require_operational_whole_share_targets",
@@ -112,6 +119,7 @@ __all__ = [
     "verify_evaluation_artifacts",
     "write_legacy_equivalence_report",
     "write_research_batch_spec",
+    "write_aapl_fixed_share_comparison_batch_v1_artifacts",
     "write_aapl_strategy_research_batch_v1_artifacts",
     "write_contributor_set",
     "write_portfolio_target_decision",
