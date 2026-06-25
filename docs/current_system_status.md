@@ -411,6 +411,11 @@ and direction separately. It still does not promote any target-native
 candidate, and promotion decisions remain based on declared-policy evaluation
 where strategy-requested sizing is part of the strategy.
 
+The source model now encodes this distinction directly: research candidates
+default to `comparison_role: declared_policy`, while sizing-ablation candidates
+must set `promotion_eligible: false`. This keeps fixed-share diagnostics from
+becoming accidental promotion evidence.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

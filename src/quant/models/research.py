@@ -31,6 +31,11 @@ class ResearchTrialStatus(StrEnum):
     ABANDONED = "abandoned"
 
 
+class ResearchComparisonRole(StrEnum):
+    DECLARED_POLICY = "declared_policy"
+    SIZING_ABLATION = "sizing_ablation"
+
+
 class ResearchEnvironmentSnapshot(FrozenModel):
     """Reproducibility identity for the code environment running evaluation."""
 
@@ -138,6 +143,10 @@ class StrategyCandidateSpec(FrozenModel):
     simulation_scenarios: tuple[SimulationScenario, ...] = Field(min_length=1)
     benchmark_name: str = Field(min_length=1)
     promotion_criteria_version: str = Field(min_length=1)
+    comparison_role: ResearchComparisonRole = (
+        ResearchComparisonRole.DECLARED_POLICY
+    )
+    promotion_eligible: bool = True
     source_commit: str = Field(min_length=1)
     dependency_lock_sha256: str
     random_seed: int | None = None
@@ -184,6 +193,19 @@ class StrategyCandidateSpec(FrozenModel):
             "scenario names",
         )
         return scenarios
+
+    @model_validator(mode="after")
+    def sizing_ablations_are_not_promotion_eligible(
+        self,
+    ) -> "StrategyCandidateSpec":
+        if (
+            self.comparison_role == ResearchComparisonRole.SIZING_ABLATION
+            and self.promotion_eligible
+        ):
+            raise ValueError(
+                "sizing-ablation candidates must not be promotion eligible"
+            )
+        return self
 
 
 class ResearchBatchSpec(FrozenModel):

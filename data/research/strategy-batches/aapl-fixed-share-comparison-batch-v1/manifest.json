@@ -3,7 +3,7 @@
   "immutable_artifacts": [
     {
       "relative_path": "batch.json",
-      "sha256": "d5a0e87c0590c9da6e6e0a27c12674cff4437a2b9a7041ade3348e0c274c82f2"
+      "sha256": "7be53cae2f10971f739d416cc6ca257a0f976a160d2e189b129f643476c6d968"
     }
   ],
   "schema_version": 1

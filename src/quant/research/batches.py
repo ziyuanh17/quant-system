@@ -10,6 +10,7 @@ from quant.models.research import (
     EvaluationSplitPolicy,
     ResearchBatchArtifactPaths,
     ResearchBatchSpec,
+    ResearchComparisonRole,
     ResearchEnvironmentSnapshot,
     ResearchInputKind,
     ResearchInputSnapshot,
@@ -270,6 +271,8 @@ def _fixed_share_momentum_baseline(
         ),
         inputs=(market_bars_input,),
         environment=environment,
+        comparison_role=ResearchComparisonRole.SIZING_ABLATION,
+        promotion_eligible=False,
     )
 
 
@@ -390,6 +393,10 @@ def _candidate(
     parameters: tuple[ResearchParameter, ...],
     inputs: tuple[ResearchInputSnapshot, ...],
     environment: ResearchEnvironmentSnapshot,
+    comparison_role: ResearchComparisonRole = (
+        ResearchComparisonRole.DECLARED_POLICY
+    ),
+    promotion_eligible: bool = True,
 ) -> StrategyCandidateSpec:
     return StrategyCandidateSpec(
         candidate_id=candidate_id,
@@ -412,6 +419,8 @@ def _candidate(
         ),
         benchmark_name="buy-and-hold",
         promotion_criteria_version="research_only_v1",
+        comparison_role=comparison_role,
+        promotion_eligible=promotion_eligible,
         source_commit=environment.source_commit,
         dependency_lock_sha256=environment.dependency_lock_sha256,
         random_seed=7,

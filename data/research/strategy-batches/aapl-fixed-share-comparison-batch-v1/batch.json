@@ -39,6 +39,8 @@
         }
       ],
       "promotion_criteria_version": "research_only_v1",
+      "comparison_role": "sizing_ablation",
+      "promotion_eligible": false,
       "random_seed": 7,
       "research_family_id": "fixed-share-momentum-baseline",
       "simulation_scenarios": [

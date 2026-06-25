@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from quant.models.research import (
+    ResearchComparisonRole,
     ResearchEnvironmentSnapshot,
     ResearchInputKind,
     ResearchInputSnapshot,
@@ -106,6 +107,17 @@ def test_build_aapl_fixed_share_batch_v1_defines_candidates() -> None:
         "aapl-target-native-trend-5-20-v1",
         "aapl-vol-adjusted-trend-5-20-20-v1",
         "aapl-mean-reversion-counterweight-5-20-v1",
+    )
+    candidates_by_id = {
+        candidate.candidate_id: candidate for candidate in batch.candidates
+    }
+    fixed_share = candidates_by_id["aapl-fixed-share-momentum-5-20-v1"]
+    assert fixed_share.comparison_role == ResearchComparisonRole.SIZING_ABLATION
+    assert fixed_share.promotion_eligible is False
+    assert all(
+        candidate.comparison_role == ResearchComparisonRole.DECLARED_POLICY
+        for candidate_id, candidate in candidates_by_id.items()
+        if candidate_id != "aapl-fixed-share-momentum-5-20-v1"
     )
     assert batch.order_submission_authorized is False
 

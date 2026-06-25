@@ -208,6 +208,12 @@ batch artifact under `data/research/`. If no validated AAPL inputs exist
 locally, the next step is a research-data refresh only, not a paper or broker
 workflow.
 
+`StrategyCandidateSpec` now carries an explicit comparison role. The default
+role is `declared_policy`, meaning the strategy is evaluated with its own
+declared sizing policy. A `sizing_ablation` candidate intentionally neutralizes
+or replaces sizing to inspect timing and direction separately, and the model
+requires such candidates to set `promotion_eligible: false`.
+
 ## Evidence Required Per Candidate
 
 Each candidate should persist:
@@ -226,6 +232,7 @@ Each candidate should persist:
 - target history or signal history;
 - trade list;
 - comparison against buy-and-hold and existing momentum;
+- comparison role and promotion eligibility;
 - pass/fail decision under a declared evaluation policy.
 
 Every attempted parameter variation should enter the trial ledger, including
