@@ -7,6 +7,8 @@ from quant.strategies.feature_momentum import (
 )
 from quant.strategies.momentum import MomentumConfig, MomentumStrategy
 from quant.strategies.research_targets import (
+    DeclaredNotionalTrendConfig,
+    DeclaredNotionalTrendStrategy,
     MeanReversionCounterweightConfig,
     MeanReversionCounterweightStrategy,
     TargetNativeTrendConfig,
@@ -16,6 +18,8 @@ from quant.strategies.research_targets import (
 )
 
 __all__ = [
+    "DeclaredNotionalTrendConfig",
+    "DeclaredNotionalTrendStrategy",
     "FeatureMomentumConfig",
     "FeatureMomentumStrategy",
     "FeatureTargetStrategy",

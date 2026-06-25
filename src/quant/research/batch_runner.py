@@ -27,6 +27,8 @@ from quant.research.artifacts import (
 )
 from quant.research.target_artifacts import write_target_frame
 from quant.strategies import (
+    DeclaredNotionalTrendConfig,
+    DeclaredNotionalTrendStrategy,
     FeatureMomentumConfig,
     FeatureMomentumStrategy,
     MeanReversionCounterweightConfig,
@@ -43,6 +45,7 @@ SUPPORTED_AAPL_RESEARCH_CANDIDATES = (
     "aapl-momentum-baseline-5-20-v1",
     "aapl-feature-momentum-baseline-5-20-v1",
     "aapl-target-native-trend-5-20-v1",
+    "aapl-declared-notional-trend-5-20-100k-v1",
     "aapl-vol-adjusted-trend-5-20-20-v1",
     "aapl-mean-reversion-counterweight-5-20-v1",
 )
@@ -209,6 +212,33 @@ def _run_supported_candidate(
                     ),
                     max_target_shares=_decimal_parameter(
                         candidate, "max_target_shares"
+                    ),
+                )
+            ),
+            prices,
+        )
+        extra_artifacts = (
+            str(write_target_frame(targets, output_dir / "targets.csv")),
+        )
+    elif candidate.candidate_id == "aapl-declared-notional-trend-5-20-100k-v1":
+        prices = load_price_csv(
+            _input_path(candidate, ResearchInputKind.MARKET_BARS), "AAPL"
+        )
+        result, trades, targets = VectorBTTargetBacktester(
+            BacktestConfig(
+                initial_cash=scenario.initial_cash,
+                fees=scenario.fees,
+            )
+        ).run_with_trades(
+            DeclaredNotionalTrendStrategy(
+                DeclaredNotionalTrendConfig(
+                    fast_window=_int_parameter(candidate, "fast_window"),
+                    slow_window=_int_parameter(candidate, "slow_window"),
+                    long_target_notional=_decimal_parameter(
+                        candidate, "long_target_notional"
+                    ),
+                    short_target_notional=_decimal_parameter(
+                        candidate, "short_target_notional"
                     ),
                 )
             ),

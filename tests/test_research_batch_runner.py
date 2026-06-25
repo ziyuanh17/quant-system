@@ -37,7 +37,7 @@ def test_run_aapl_research_batch_v1_evaluations_records_all_trials(
         started_at=datetime(2026, 6, 24, 1, tzinfo=UTC),
     )
 
-    assert len(evaluation_dirs) == 5
+    assert len(evaluation_dirs) == 6
     statuses = {}
     for evaluation_dir in evaluation_dirs:
         verify_evaluation_artifacts(evaluation_dir)
@@ -51,6 +51,9 @@ def test_run_aapl_research_batch_v1_evaluations_records_all_trials(
             ResearchTrialStatus.SUCCEEDED
         ),
         "aapl-target-native-trend-5-20-v1": ResearchTrialStatus.SUCCEEDED,
+        "aapl-declared-notional-trend-5-20-100k-v1": (
+            ResearchTrialStatus.SUCCEEDED
+        ),
         "aapl-vol-adjusted-trend-5-20-20-v1": (
             ResearchTrialStatus.SUCCEEDED
         ),
@@ -84,7 +87,7 @@ def test_run_aapl_research_batch_v1_writes_backtest_artifacts(tmp_path) -> None:
         if (evaluation_dir / "backtests").is_dir()
     ]
 
-    assert len(completed_dirs) == 5
+    assert len(completed_dirs) == 6
     for evaluation_dir in completed_dirs:
         backtest_dirs = list((evaluation_dir / "backtests").glob("*"))
         assert len(backtest_dirs) == 1

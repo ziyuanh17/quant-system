@@ -6,6 +6,8 @@ import pandas as pd
 
 from quant.models.market import PriceData
 from quant.strategies import (
+    DeclaredNotionalTrendConfig,
+    DeclaredNotionalTrendStrategy,
     MeanReversionCounterweightConfig,
     MeanReversionCounterweightStrategy,
     TargetNativeTrendConfig,
@@ -28,6 +30,24 @@ def test_target_native_trend_emits_long_flat_short_targets() -> None:
     assert Decimal("0") in values
     assert Decimal("1") in values
     assert Decimal("-1") in values
+
+
+def test_declared_notional_trend_resolves_strategy_sizing_to_shares() -> None:
+    strategy = DeclaredNotionalTrendStrategy(
+        DeclaredNotionalTrendConfig(
+            fast_window=2,
+            slow_window=3,
+            long_target_notional=Decimal("120"),
+            short_target_notional=Decimal("-60"),
+        )
+    )
+
+    frame = strategy.generate_targets(
+        _prices([10, 11, 12, 11, 10, 9, 10, 11, 12])
+    )
+
+    assert Decimal("10") in frame.targets.tolist()
+    assert Decimal("-6.666666666666667") in frame.targets.tolist()
 
 
 def test_volatility_adjusted_trend_emits_fractional_research_targets() -> None:

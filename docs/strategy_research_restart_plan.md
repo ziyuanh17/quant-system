@@ -180,6 +180,11 @@ momentum for parity. The target-native candidates fail promotion from this
 batch because they do not beat or sufficiently justify a tradeoff against the
 control baseline.
 
+The next source candidate is a declared-notional target trend strategy. It is
+research-only and treats target notional exposure as a strategy hyperparameter,
+then resolves that declared exposure into signed share targets for the current
+target-amount backtester.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and

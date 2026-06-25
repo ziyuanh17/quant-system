@@ -48,6 +48,69 @@ class TargetNativeTrendStrategy:
         return StrategyTargetFrame(unit=TargetUnit.SHARES, targets=targets)
 
 
+class DeclaredNotionalTrendConfig(FrozenModel):
+    """Parameters for trend targets sized by strategy-declared notional."""
+
+    fast_window: int = Field(default=5, ge=2)
+    slow_window: int = Field(default=20, ge=3)
+    long_target_notional: Decimal = Decimal("100000")
+    short_target_notional: Decimal = Decimal("-100000")
+
+    @model_validator(mode="after")
+    def validate_declared_notional_config(
+        self,
+    ) -> "DeclaredNotionalTrendConfig":
+        if self.fast_window >= self.slow_window:
+            raise ValueError("fast_window must be smaller than slow_window")
+        if self.long_target_notional <= 0:
+            raise ValueError("long_target_notional must be positive")
+        if self.short_target_notional >= 0:
+            raise ValueError("short_target_notional must be negative")
+        return self
+
+
+class DeclaredNotionalTrendStrategy:
+    """Trend strategy whose sizing policy is declared target notional."""
+
+    name = "declared-notional-trend"
+
+    def __init__(
+        self, config: DeclaredNotionalTrendConfig | None = None
+    ) -> None:
+        self.config = config or DeclaredNotionalTrendConfig()
+
+    def generate_targets(self, prices: PriceData) -> StrategyTargetFrame:
+        close = prices.close
+        fast = close.rolling(self.config.fast_window).mean()
+        slow = close.rolling(self.config.slow_window).mean()
+
+        targets: list[Decimal] = []
+        for price, fast_value, slow_value in zip(
+            close, fast, slow, strict=True
+        ):
+            if pd.isna(price):
+                targets.append(Decimal("0"))
+                continue
+            price_decimal = Decimal(str(price))
+            if price_decimal <= 0:
+                targets.append(Decimal("0"))
+            elif fast_value > slow_value:
+                targets.append(
+                    self.config.long_target_notional / price_decimal
+                )
+            elif fast_value < slow_value:
+                targets.append(
+                    self.config.short_target_notional / price_decimal
+                )
+            else:
+                targets.append(Decimal("0"))
+
+        return StrategyTargetFrame(
+            unit=TargetUnit.SHARES,
+            targets=pd.Series(targets, index=close.index, dtype=object),
+        )
+
+
 class VolatilityAdjustedTrendConfig(FrozenModel):
     """Parameters for volatility-scaled trend targets."""
 

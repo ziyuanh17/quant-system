@@ -118,6 +118,7 @@ def build_aapl_strategy_research_batch_v1(
             _momentum_baseline(environment, market_bars_input),
             _feature_momentum_baseline(environment, feature_input),
             _target_native_trend(environment, market_bars_input),
+            _declared_notional_trend(environment, market_bars_input),
             _volatility_adjusted_trend(environment, market_bars_input),
             _mean_reversion_counterweight(environment, market_bars_input),
         ),
@@ -246,6 +247,34 @@ def _volatility_adjusted_trend(
             ResearchParameter(name="max_target_shares", value=1.0),
             ResearchParameter(
                 name="sizing_policy", value="fractional_research"
+            ),
+        ),
+        inputs=(market_bars_input,),
+        environment=environment,
+    )
+
+
+def _declared_notional_trend(
+    environment: ResearchEnvironmentSnapshot,
+    market_bars_input: ResearchInputSnapshot,
+) -> StrategyCandidateSpec:
+    return _candidate(
+        candidate_id="aapl-declared-notional-trend-5-20-100k-v1",
+        research_family_id="declared-notional-trend",
+        hypothesis_id="declared-notional-target-trend-v1",
+        hypothesis=(
+            "A trend strategy can own its sizing decision by declaring target "
+            "notional exposure and resolving that exposure to signed shares."
+        ),
+        strategy_name="declared-notional-trend",
+        strategy_version="research_target_v1",
+        parameters=(
+            ResearchParameter(name="fast_window", value=5),
+            ResearchParameter(name="slow_window", value=20),
+            ResearchParameter(name="long_target_notional", value=100_000),
+            ResearchParameter(name="short_target_notional", value=-100_000),
+            ResearchParameter(
+                name="sizing_policy", value="declared_notional_v1"
             ),
         ),
         inputs=(market_bars_input,),

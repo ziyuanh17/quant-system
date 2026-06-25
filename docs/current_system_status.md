@@ -397,6 +397,12 @@ beat or sufficiently justify a tradeoff against the control baseline. The
 report explicitly authorizes no dry-run, paper, Alpaca, broker, scheduler,
 runtime, order, or fill path.
 
+The source now includes a research-only declared-notional target candidate for
+the next batch materialization. It keeps sizing inside the strategy by
+declaring target notional exposure and resolving that exposure to signed share
+targets from current price. No historical AAPL report is changed by this
+source-only candidate addition.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

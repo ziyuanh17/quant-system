@@ -42,6 +42,7 @@ def test_build_aapl_strategy_research_batch_v1_defines_candidate_set() -> None:
         "aapl-momentum-baseline-5-20-v1",
         "aapl-feature-momentum-baseline-5-20-v1",
         "aapl-target-native-trend-5-20-v1",
+        "aapl-declared-notional-trend-5-20-100k-v1",
         "aapl-vol-adjusted-trend-5-20-20-v1",
         "aapl-mean-reversion-counterweight-5-20-v1",
     )
@@ -51,6 +52,7 @@ def test_build_aapl_strategy_research_batch_v1_defines_candidate_set() -> None:
         "momentum-baseline",
         "feature-momentum-baseline",
         "target-native-trend",
+        "declared-notional-trend",
         "volatility-adjusted-trend",
         "mean-reversion-counterweight",
     )

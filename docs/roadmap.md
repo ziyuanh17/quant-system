@@ -163,9 +163,10 @@ side discussions.
 | 143 | AAPL Research Batch Definition v1 | Done | Define the first five reviewed AAPL candidate specs as a pure research-only batch builder, requiring validated input snapshots before materialization or backtesting. |
 | 144 | AAPL Research Batch Materialization Gate v1 | Done | Validate existing AAPL market-bar and feature CSV inputs, compute input hashes, and persist the reviewed batch artifact without fetching data, backtesting, runtime, scheduler, broker, or order behavior. |
 | 145 | AAPL Research Batch Artifact v1 | Done | Refresh historical AAPL market data, build technical features, and persist the first immutable research batch artifact for five candidates without running backtests or touching operational paths. |
-| 146 | AAPL Baseline Research Evaluation v1 | Done | Run the supported legacy momentum and feature-momentum baselines from the fixed AAPL batch, persist evaluation/trial artifacts, and record unimplemented target candidates as abandoned rather than simulated. |
+| 146 | AAPL Baseline Research Evaluation v1 | Done | Run the supported legacy momentum and feature-momentum baselines from the reviewed AAPL batch, persist evaluation/trial artifacts, and record unimplemented target candidates as abandoned rather than simulated. |
 | 147 | AAPL Target-Native Research Evaluation v1 | Done | Implement the three target-native research strategies, rerun the fixed AAPL batch append-only, persist signed target histories, and record successful target-candidate trial evidence. |
 | 148 | AAPL Research Report v1 | Done | Write the first batch report and decision artifact, passing only the control/parity baselines and failing target-native candidates for promotion without operational authorization. |
+| 149 | Declared-Notional Target Candidate v1 | In Review | Add a research-only target-native trend candidate whose sizing policy declares target notional exposure and resolves it to signed share targets. |
 
 ## Current Recommendation
 
