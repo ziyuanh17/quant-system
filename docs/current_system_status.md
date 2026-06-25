@@ -389,6 +389,14 @@ with final value `99903.32`, 43 trades, and max drawdown
 `-0.0011619116433893018`. Target-history CSV artifacts were persisted for all
 three target-native candidates.
 
+The first AAPL research report is now written under
+`data/research/reports/aapl-strategy-research-batch-v1/`. It passes the legacy
+momentum baseline as the control and feature momentum for parity. The three
+target-native candidates fail promotion from this batch because they do not
+beat or sufficiently justify a tradeoff against the control baseline. The
+report explicitly authorizes no dry-run, paper, Alpaca, broker, scheduler,
+runtime, order, or fill path.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

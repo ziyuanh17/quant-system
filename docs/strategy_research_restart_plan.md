@@ -168,6 +168,18 @@ The latest run also wrote `targets.csv` for each target-native candidate,
 preserving the resolved signed target history used by the target-order
 backtest.
 
+The first report and decision artifact are:
+
+```text
+data/research/reports/aapl-strategy-research-batch-v1/report.md
+data/research/reports/aapl-strategy-research-batch-v1/decision.json
+```
+
+The report passes the legacy momentum baseline as the control and feature
+momentum for parity. The target-native candidates fail promotion from this
+batch because they do not beat or sufficiently justify a tradeoff against the
+control baseline.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and
@@ -261,7 +273,7 @@ Strategy Research Batch v1
   -> implement target-native candidate strategies [done]
   -> run target-native simulations [done]
   -> persist immutable evaluation artifacts [done]
-  -> write a research report with pass/fail decisions
+  -> write a research report with pass/fail decisions [done]
 ```
 
 Do not connect any passing candidate to dry-run, paper, Alpaca, scheduler, or
