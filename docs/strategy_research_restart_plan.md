@@ -291,7 +291,10 @@ data/research/fixed-share-evaluations/
 ```
 
 It compares all candidates through target-order semantics with small
-fixed/fractional share targets.
+fixed/fractional share targets. This is a sizing ablation: it intentionally
+neutralizes strategy-declared sizing so direction and timing can be inspected
+separately. It is secondary evidence only. The primary strategy comparison
+must respect each strategy's declared sizing policy.
 
 | Candidate | Total Return | Final Value | Trades | Max Drawdown |
 | --- | ---: | ---: | ---: | ---: |
@@ -300,6 +303,6 @@ fixed/fractional share targets.
 | `aapl-vol-adjusted-trend-5-20-20-v1` | `0.000673` | `100067.25` | `247` | `-0.00043478379509664933` |
 | `aapl-mean-reversion-counterweight-5-20-v1` | `-0.000967` | `99903.32` | `43` | `-0.0011619116433893018` |
 
-The fixed-share comparison reduces the sizing mismatch, but it still does not
-promote target-native candidates. The next research work should focus on
-strategy design, not operational activation.
+The fixed-share ablation does not promote target-native candidates and cannot
+promote a candidate by itself. The next research work should focus on strategy
+design and declared sizing, not operational activation.

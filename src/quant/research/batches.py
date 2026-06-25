@@ -181,7 +181,7 @@ def build_aapl_fixed_share_comparison_batch_v1(
     environment: ResearchEnvironmentSnapshot,
     created_at: datetime,
 ) -> ResearchBatchSpec:
-    """Return a fixed-share batch for fair target-native comparisons."""
+    """Return a fixed-share sizing-ablation batch for target strategies."""
     _require_input_kind(
         market_bars_input, ResearchInputKind.MARKET_BARS, "market_bars_input"
     )
@@ -257,7 +257,7 @@ def _fixed_share_momentum_baseline(
         research_family_id="fixed-share-momentum-baseline",
         hypothesis_id="fixed-share-moving-average-cross-v1",
         hypothesis=(
-            "A one-share moving-average crossover provides a fair target-order "
+            "A one-share moving-average crossover provides a sizing-ablation "
             "baseline for one-share target-native strategies."
         ),
         strategy_name="fixed-share-momentum",

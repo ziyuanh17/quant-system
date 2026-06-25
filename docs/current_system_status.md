@@ -405,8 +405,11 @@ target-native candidates. Latest fixed-share metrics: fixed-share momentum
 returned `0.000994` with final value `100099.41`, 25 trades, and max drawdown
 `-0.0003782513660368636`; target-native trend returned `0.000873`; volatility
 adjusted trend returned `0.000673`; mean reversion returned `-0.000967`.
-This fairer sizing comparison still does not promote any target-native
-candidate.
+This is a secondary sizing ablation, not the primary promotion comparison:
+it intentionally overrides each strategy's declared sizing to inspect timing
+and direction separately. It still does not promote any target-native
+candidate, and promotion decisions remain based on declared-policy evaluation
+where strategy-requested sizing is part of the strategy.
 
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation

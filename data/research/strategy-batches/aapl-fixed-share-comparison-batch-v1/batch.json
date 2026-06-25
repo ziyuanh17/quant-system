@@ -6,7 +6,7 @@
       "benchmark_name": "buy-and-hold",
       "candidate_id": "aapl-fixed-share-momentum-5-20-v1",
       "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
-      "hypothesis": "A one-share moving-average crossover provides a fair target-order baseline for one-share target-native strategies.",
+      "hypothesis": "A one-share moving-average crossover provides a sizing-ablation baseline for one-share target-native strategies.",
       "hypothesis_id": "fixed-share-moving-average-cross-v1",
       "inputs": [
         {

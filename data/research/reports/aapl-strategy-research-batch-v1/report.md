@@ -112,9 +112,16 @@ backtest directories.
 Do not promote any candidate to dry-run, paper, Alpaca, scheduler, broker, or
 order paths from this report.
 
-The next research step should either:
+Strategy-declared sizing is part of the strategy and remains the primary
+comparison policy. A strategy that deliberately requests a specific share
+amount should be evaluated with that requested amount unless a later portfolio
+or risk stage explicitly changes it and records why.
 
-- improve target-native sizing so target strategies can be fairly compared
-  against the legacy available-cash baseline; or
-- define a second research batch with a more explicit benchmark policy, such as
-  fixed-share baseline versus fixed-share target-native candidates.
+The fixed-share batch is therefore only a secondary sizing ablation. It asks
+whether the direction and timing logic still looks useful after sizing has
+been neutralized. It does not replace the declared-policy comparison and
+cannot promote a candidate by itself.
+
+The next research step should improve target-native strategy design and sizing
+under declared-policy evaluation, then use ablations only as supporting
+diagnostics.
