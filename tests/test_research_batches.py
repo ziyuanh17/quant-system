@@ -14,7 +14,9 @@ from quant.models.research import (
 from quant.research import (
     AAPL_RESEARCH_BATCH_SCHEMA_VERSION,
     AAPL_RESEARCH_BATCH_V1,
+    AAPL_RESEARCH_BATCH_V2,
     build_aapl_strategy_research_batch_v1,
+    build_aapl_strategy_research_batch_v2,
     build_feature_input_snapshot,
     build_validated_market_bars_input_snapshot,
     verify_research_batch_artifacts,
@@ -42,7 +44,6 @@ def test_build_aapl_strategy_research_batch_v1_defines_candidate_set() -> None:
         "aapl-momentum-baseline-5-20-v1",
         "aapl-feature-momentum-baseline-5-20-v1",
         "aapl-target-native-trend-5-20-v1",
-        "aapl-declared-notional-trend-5-20-100k-v1",
         "aapl-vol-adjusted-trend-5-20-20-v1",
         "aapl-mean-reversion-counterweight-5-20-v1",
     )
@@ -52,7 +53,6 @@ def test_build_aapl_strategy_research_batch_v1_defines_candidate_set() -> None:
         "momentum-baseline",
         "feature-momentum-baseline",
         "target-native-trend",
-        "declared-notional-trend",
         "volatility-adjusted-trend",
         "mean-reversion-counterweight",
     )
@@ -69,6 +69,33 @@ def test_build_aapl_strategy_research_batch_v1_defines_candidate_set() -> None:
         for candidate in batch.candidates
         for parameter in candidate.parameters
     )
+
+
+def test_build_aapl_strategy_research_batch_v2_adds_declared_notional() -> None:
+    batch = build_aapl_strategy_research_batch_v2(
+        market_bars_input=_market_bars_input(),
+        feature_input=_feature_input(),
+        environment=_environment(),
+        created_at=datetime(2026, 6, 25, tzinfo=UTC),
+    )
+
+    assert batch.batch_id == AAPL_RESEARCH_BATCH_V2
+    assert tuple(candidate.candidate_id for candidate in batch.candidates) == (
+        "aapl-momentum-baseline-5-20-v1",
+        "aapl-feature-momentum-baseline-5-20-v1",
+        "aapl-target-native-trend-5-20-v1",
+        "aapl-vol-adjusted-trend-5-20-20-v1",
+        "aapl-mean-reversion-counterweight-5-20-v1",
+        "aapl-declared-notional-trend-5-20-100k-v1",
+    )
+    declared_notional = batch.candidates[-1]
+    assert declared_notional.research_family_id == "declared-notional-trend"
+    assert any(
+        parameter.name == "sizing_policy"
+        and parameter.value == "declared_notional_v1"
+        for parameter in declared_notional.parameters
+    )
+    assert batch.order_submission_authorized is False
 
 
 def test_build_aapl_strategy_research_batch_v1_uses_expected_inputs() -> None:

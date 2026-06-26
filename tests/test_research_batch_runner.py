@@ -12,16 +12,17 @@ from quant.research import (
     run_aapl_research_batch_v1_evaluations,
     verify_evaluation_artifacts,
     write_aapl_strategy_research_batch_v1_artifacts,
+    write_aapl_strategy_research_batch_v2_artifacts,
 )
 
 SHA256 = "a" * 64
 
 
-def test_run_aapl_research_batch_v1_evaluations_records_all_trials(
+def test_run_aapl_research_batch_v2_evaluations_records_all_trials(
     tmp_path,
 ) -> None:
     environment = _environment()
-    batch_paths = write_aapl_strategy_research_batch_v1_artifacts(
+    batch_paths = write_aapl_strategy_research_batch_v2_artifacts(
         market_bars_path=_write_market_bars(tmp_path),
         feature_path=_write_features(tmp_path),
         environment=environment,
@@ -63,9 +64,9 @@ def test_run_aapl_research_batch_v1_evaluations_records_all_trials(
     }
 
 
-def test_run_aapl_research_batch_v1_writes_backtest_artifacts(tmp_path) -> None:
+def test_run_aapl_research_batch_v2_writes_backtest_artifacts(tmp_path) -> None:
     environment = _environment()
-    batch_paths = write_aapl_strategy_research_batch_v1_artifacts(
+    batch_paths = write_aapl_strategy_research_batch_v2_artifacts(
         market_bars_path=_write_market_bars(tmp_path),
         feature_path=_write_features(tmp_path),
         environment=environment,

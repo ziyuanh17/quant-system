@@ -20,6 +20,7 @@ from quant.models.research import (
 from quant.research.artifacts import write_research_batch_spec
 
 AAPL_RESEARCH_BATCH_V1 = "aapl-strategy-research-batch-v1"
+AAPL_RESEARCH_BATCH_V2 = "aapl-strategy-research-batch-v2"
 AAPL_RESEARCH_BATCH_SCHEMA_VERSION = "aapl_research_inputs_v1"
 
 
@@ -38,6 +39,29 @@ def write_aapl_strategy_research_batch_v1_artifacts(
     )
     feature_input = build_feature_input_snapshot(feature_path, symbol="AAPL")
     batch = build_aapl_strategy_research_batch_v1(
+        market_bars_input=market_bars_input,
+        feature_input=feature_input,
+        environment=environment,
+        created_at=created_at,
+    )
+    return write_research_batch_spec(batch, output_root)
+
+
+def write_aapl_strategy_research_batch_v2_artifacts(
+    *,
+    market_bars_path: Path,
+    feature_path: Path,
+    environment: ResearchEnvironmentSnapshot,
+    output_root: Path,
+    created_at: datetime,
+    min_rows: int = 1,
+) -> ResearchBatchArtifactPaths:
+    """Validate AAPL inputs and persist the second research-only batch."""
+    market_bars_input = build_validated_market_bars_input_snapshot(
+        market_bars_path, symbol="AAPL", min_rows=min_rows
+    )
+    feature_input = build_feature_input_snapshot(feature_path, symbol="AAPL")
+    batch = build_aapl_strategy_research_batch_v2(
         market_bars_input=market_bars_input,
         feature_input=feature_input,
         environment=environment,
@@ -118,7 +142,6 @@ def build_aapl_strategy_research_batch_v1(
             _momentum_baseline(environment, market_bars_input),
             _feature_momentum_baseline(environment, feature_input),
             _target_native_trend(environment, market_bars_input),
-            _declared_notional_trend(environment, market_bars_input),
             _volatility_adjusted_trend(environment, market_bars_input),
             _mean_reversion_counterweight(environment, market_bars_input),
         ),
@@ -150,6 +173,36 @@ def build_aapl_strategy_research_batch_v1(
             "order, or fill paths",
         ),
         created_at=created_at,
+    )
+
+
+def build_aapl_strategy_research_batch_v2(
+    *,
+    market_bars_input: ResearchInputSnapshot,
+    feature_input: ResearchInputSnapshot,
+    environment: ResearchEnvironmentSnapshot,
+    created_at: datetime,
+) -> ResearchBatchSpec:
+    """Return the second reviewed AAPL batch with declared-notional sizing."""
+    batch_v1 = build_aapl_strategy_research_batch_v1(
+        market_bars_input=market_bars_input,
+        feature_input=feature_input,
+        environment=environment,
+        created_at=created_at,
+    )
+    return batch_v1.model_copy(
+        update={
+            "batch_id": AAPL_RESEARCH_BATCH_V2,
+            "objective": (
+                "Evaluate AAPL target-native declared-policy sizing with a "
+                "declared-notional trend candidate before any paper, Alpaca, "
+                "scheduler, runtime, broker, order, or fill promotion."
+            ),
+            "candidates": (
+                *batch_v1.candidates,
+                _declared_notional_trend(environment, market_bars_input),
+            ),
+        }
     )
 
 

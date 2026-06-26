@@ -166,7 +166,7 @@ side discussions.
 | 146 | AAPL Baseline Research Evaluation v1 | Done | Run the supported legacy momentum and feature-momentum baselines from the reviewed AAPL batch, persist evaluation/trial artifacts, and record unimplemented target candidates as abandoned rather than simulated. |
 | 147 | AAPL Target-Native Research Evaluation v1 | Done | Implement the three target-native research strategies, rerun the fixed AAPL batch append-only, persist signed target histories, and record successful target-candidate trial evidence. |
 | 148 | AAPL Research Report v1 | Done | Write the first batch report and decision artifact, passing only the control/parity baselines and failing target-native candidates for promotion without operational authorization. |
-| 149 | Declared-Notional Target Candidate v1 | In Review | Add a research-only target-native trend candidate whose sizing policy declares target notional exposure and resolves it to signed share targets. |
+| 149 | Declared-Notional Target Candidate v1 | In Review | Add a research-only v2 AAPL batch candidate whose sizing policy declares target notional exposure and resolves it to signed share targets. |
 
 ## Current Recommendation
 
