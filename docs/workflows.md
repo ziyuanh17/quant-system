@@ -74,6 +74,12 @@ broker-network selector.
 command. It explains the intended local paper transition, writes no files, and
 does not consume activation.
 
+The first local semantic-paper canary rehearsal used a synthetic translated
+momentum target and ran the actual command twice. Both runs reused the same
+activation consumption, execution plan, local paper order, fill, and
+reconciliation evidence and reached satisfied execution. See
+[activated_semantic_paper_operator_rehearsal.md](activated_semantic_paper_operator_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

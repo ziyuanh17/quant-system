@@ -36,6 +36,8 @@ local semantic-paper safety, writes durable paper state, order, fill,
 reconciliation, lifecycle, and orchestration evidence, and exits nonzero if
 activation, targets, risk, execution, or reconciliation block. It has no mode,
 Alpaca, scheduler, runtime, or broker-network selector.
+See the first
+[local semantic-paper canary rehearsal](activated_semantic_paper_operator_rehearsal.md).
 
 Inspect the same request without writing files or consuming activation:
 

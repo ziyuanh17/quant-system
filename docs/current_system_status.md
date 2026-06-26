@@ -473,6 +473,14 @@ no Alpaca, scheduler, runtime, mode, or broker-network selector. The companion
 `quant semantic-paper inspect-activated-target` command explains the request
 without writing files or consuming activation.
 
+On June 26, 2026, the activated local semantic-paper command passed its first
+synthetic translated-momentum canary rehearsal. Inspection wrote no artifacts.
+Running the exact same request twice reached `execution_completed` and
+`satisfied`, leaving one local semantic-paper order, one fill, one
+reconciliation report, one orchestration record, and final AAPL local-paper
+position `+2`. See
+[activated_semantic_paper_operator_rehearsal.md](activated_semantic_paper_operator_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
