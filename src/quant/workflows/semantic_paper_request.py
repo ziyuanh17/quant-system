@@ -1,4 +1,4 @@
-"""Prepare reviewed local semantic-paper canary request artifacts."""
+"""Prepare reviewed local semantic-paper request artifacts."""
 
 import hashlib
 from dataclasses import dataclass
@@ -53,8 +53,8 @@ from quant.workflows.semantic_target_rehearsal import (
 
 
 @dataclass(frozen=True)
-class MomentumSemanticPaperCanaryRequestBundle:
-    """Paths and decision summary for one generated canary request."""
+class MomentumSemanticPaperRequestBundle:
+    """Paths and decision summary for one generated request."""
 
     request_path: Path
     output_root: Path
@@ -70,7 +70,7 @@ class MomentumSemanticPaperCanaryRequestBundle:
     target_quantity: int
 
 
-def prepare_momentum_semantic_paper_canary_request(
+def prepare_momentum_semantic_paper_request(
     *,
     request_id: str,
     data_path: Path,
@@ -86,7 +86,7 @@ def prepare_momentum_semantic_paper_canary_request(
     min_rows: int = 1,
     max_absolute_target: Decimal = Decimal("100"),
     valid_for_seconds: int = 3600,
-) -> MomentumSemanticPaperCanaryRequestBundle:
+) -> MomentumSemanticPaperRequestBundle:
     """Translate latest legacy momentum signal into a reviewed paper request."""
     _require_safe_component(request_id)
     if quantity < 1:
@@ -156,8 +156,8 @@ def prepare_momentum_semantic_paper_canary_request(
         issued_at=current_time,
         effective_at=current_time,
         valid_until=current_time + timedelta(seconds=valid_for_seconds),
-        issued_by="local-canary-generator",
-        reason="translated legacy momentum local semantic-paper canary",
+        issued_by="local-request-generator",
+        reason="translated legacy momentum local semantic-paper request",
         evidence_refs=(str(data_path),),
     )
     authorization_path = write_semantic_target_activation_authorization(
@@ -173,7 +173,7 @@ def prepare_momentum_semantic_paper_canary_request(
         ),
         max_age_seconds=valid_for_seconds,
         portfolio_policy_version="sum_active_targets_v1",
-        reason="single translated legacy momentum canary contributor",
+        reason="single translated legacy momentum contributor",
     )
     contributor_set_path = write_contributor_set(
         contributor_set, inputs_root / "contributor-sets"
@@ -186,7 +186,7 @@ def prepare_momentum_semantic_paper_canary_request(
         symbol=symbol,
         unit=TargetUnit.SHARES,
         target_value=Decimal(target_quantity),
-        sizing_policy_version="legacy_momentum_canary_v1",
+        sizing_policy_version="legacy_momentum_request_v1",
         input_data_id=f"{data_path.name}:{_file_sha256(data_path)}",
         generated_at=current_time,
         effective_at=current_time,
@@ -209,7 +209,7 @@ def prepare_momentum_semantic_paper_canary_request(
         evaluated_at=current_time,
         outcome=StrategyEvaluationOutcome.NEW_TARGET,
         effective_target_decision_id=decision.decision_id,
-        reason="canary evaluation references translated momentum target",
+        reason="request evaluation references translated momentum target",
         evidence_refs=(signal.idempotency_key,),
     )
     strategy_evaluation_path = write_strategy_evaluation(
@@ -246,12 +246,12 @@ def prepare_momentum_semantic_paper_canary_request(
         initial_cash=initial_cash,
         initial_positions=initial_positions,
         evaluated_at=current_time,
-        evidence_refs=("prepared:legacy-momentum-canary",),
+        evidence_refs=("prepared:legacy-momentum-request",),
     )
     request_path = write_activated_semantic_paper_operator_request(
         request, inputs_root / "requests"
     )
-    return MomentumSemanticPaperCanaryRequestBundle(
+    return MomentumSemanticPaperRequestBundle(
         request_path=request_path,
         output_root=output_root,
         activation_rehearsal_report_path=activation_rehearsal_report_path,

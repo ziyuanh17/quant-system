@@ -102,7 +102,7 @@ from quant.workflows import (
     WorkflowRunFailed,
     inspect_activated_dry_run_operator_request,
     inspect_activated_semantic_paper_operator_request,
-    prepare_momentum_semantic_paper_canary_request,
+    prepare_momentum_semantic_paper_request,
     run_activated_dry_run_operator_request,
     run_activated_semantic_paper_operator_request,
     run_alpaca_paper_refresh_workflow,
@@ -551,11 +551,11 @@ def semantic_paper_activated_target(
         raise typer.Exit(code=1)
 
 
-@semantic_paper_app.command("prepare-momentum-canary")
-def semantic_paper_prepare_momentum_canary(
+@semantic_paper_app.command("prepare-momentum-request")
+def semantic_paper_prepare_momentum_request(
     request_id: Annotated[
         str,
-        typer.Option(help="Safe ID for the generated canary request."),
+        typer.Option(help="Safe ID for the generated request."),
     ],
     data: Annotated[
         Path,
@@ -600,12 +600,12 @@ def semantic_paper_prepare_momentum_canary(
     ] = 3600,
     output_root: Annotated[
         Path,
-        typer.Option(help="Directory for generated canary request inputs."),
-    ] = Path("data/semantic-target/local-paper-canary"),
+        typer.Option(help="Directory for generated request inputs."),
+    ] = Path("data/semantic-target/local-paper-requests"),
 ) -> None:
     """Prepare a reviewed local-paper request from legacy momentum."""
     try:
-        bundle = prepare_momentum_semantic_paper_canary_request(
+        bundle = prepare_momentum_semantic_paper_request(
             request_id=request_id,
             data_path=data,
             symbol=symbol,

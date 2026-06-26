@@ -1,4 +1,4 @@
-"""Test translated legacy momentum semantic-paper canary preparation."""
+"""Test translated legacy momentum semantic-paper request preparation."""
 
 from pathlib import Path
 
@@ -8,7 +8,7 @@ from quant.cli import app
 from quant.models.execution import SemanticPaperBrokerState
 
 
-def test_prepare_momentum_canary_then_run_local_semantic_paper(
+def test_prepare_momentum_request_then_run_local_semantic_paper(
     tmp_path,
 ) -> None:
     data_path = _write_entry_prices(tmp_path)
@@ -16,9 +16,9 @@ def test_prepare_momentum_canary_then_run_local_semantic_paper(
         app,
         [
             "semantic-paper",
-            "prepare-momentum-canary",
+            "prepare-momentum-request",
             "--request-id",
-            "momentum-canary",
+            "momentum-request",
             "--data",
             str(data_path),
             "--symbol",
@@ -34,7 +34,7 @@ def test_prepare_momentum_canary_then_run_local_semantic_paper(
             "--initial-cash",
             "1000",
             "--output-root",
-            str(tmp_path / "canary"),
+            str(tmp_path / "requests"),
         ],
     )
 
@@ -82,9 +82,9 @@ def test_prepare_momentum_canary_then_run_local_semantic_paper(
     assert len(state.fills) == 1
 
 
-def test_prepare_momentum_canary_help_has_no_alpaca_or_scheduler() -> None:
+def test_prepare_momentum_request_help_has_no_alpaca_or_scheduler() -> None:
     result = CliRunner().invoke(
-        app, ["semantic-paper", "prepare-momentum-canary", "--help"]
+        app, ["semantic-paper", "prepare-momentum-request", "--help"]
     )
 
     assert result.exit_code == 0

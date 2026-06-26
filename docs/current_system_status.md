@@ -468,7 +468,7 @@ The source now exposes a bounded local semantic-paper operator boundary through
 activated request artifact, verifies activation-consumption rehearsal evidence,
 hardcodes local paper safety, and writes durable semantic-paper state, order,
 fill, reconciliation, lifecycle, and orchestration evidence. It is intended as
-the P0 infrastructure canary path for translated strategy targets. It exposes
+the P0 infrastructure path for translated strategy targets. It exposes
 no Alpaca, scheduler, runtime, mode, or broker-network selector. The companion
 `quant semantic-paper inspect-activated-target` command explains the request
 without writing files or consuming activation.
@@ -481,7 +481,7 @@ reconciliation report, one orchestration record, and final AAPL local-paper
 position `+2`. See
 [activated_semantic_paper_operator_rehearsal.md](activated_semantic_paper_operator_rehearsal.md).
 
-The source now includes `quant semantic-paper prepare-momentum-canary`. It
+The source now includes `quant semantic-paper prepare-momentum-request`. It
 validates a local market-bar CSV, runs the legacy momentum strategy, translates
 the latest signal into a whole-share semantic target, and writes a reviewed
 local semantic-paper request bundle. The command prepares evidence only; it

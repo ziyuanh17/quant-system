@@ -74,13 +74,13 @@ broker-network selector.
 command. It explains the intended local paper transition, writes no files, and
 does not consume activation.
 
-The first local semantic-paper canary rehearsal used a synthetic translated
+The first local semantic-paper request rehearsal used a synthetic translated
 momentum target and ran the actual command twice. Both runs reused the same
 activation consumption, execution plan, local paper order, fill, and
 reconciliation evidence and reached satisfied execution. See
 [activated_semantic_paper_operator_rehearsal.md](activated_semantic_paper_operator_rehearsal.md).
 
-`quant semantic-paper prepare-momentum-canary` prepares the reviewed request
+`quant semantic-paper prepare-momentum-request` prepares the reviewed request
 bundle for this local-paper path from the latest legacy momentum signal. It
 validates local market data and writes activation, contributor, strategy
 target, strategy evaluation, and operator request artifacts, but it does not

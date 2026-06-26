@@ -27,8 +27,8 @@ cycle-count selector. See
 Prepare a reviewed request bundle from the latest legacy momentum signal:
 
 ```bash
-quant semantic-paper prepare-momentum-canary \
-  --request-id reviewed-momentum-canary \
+quant semantic-paper prepare-momentum-request \
+  --request-id reviewed-momentum-request \
   --data data/normalized/market_bars/AAPL.csv \
   --symbol AAPL \
   --quantity 2
@@ -43,7 +43,7 @@ Run one reviewed activated semantic-target request through durable local paper:
 
 ```bash
 quant semantic-paper activated-target \
-  --request-path data/semantic-target/local-paper-canary/inputs/requests/reviewed-momentum-canary.json
+  --request-path data/semantic-target/local-paper-requests/inputs/requests/reviewed-momentum-request.json
 ```
 
 The command is local-only. It consumes one reviewed request artifact, hardcodes
@@ -52,7 +52,7 @@ reconciliation, lifecycle, and orchestration evidence, and exits nonzero if
 activation, targets, risk, execution, or reconciliation block. It has no mode,
 Alpaca, scheduler, runtime, or broker-network selector.
 See the first
-[local semantic-paper canary rehearsal](activated_semantic_paper_operator_rehearsal.md).
+[local semantic-paper request rehearsal](activated_semantic_paper_operator_rehearsal.md).
 
 Inspect the same request without writing files or consuming activation:
 
