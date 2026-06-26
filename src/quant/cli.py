@@ -1,6 +1,7 @@
 """Command-line interface for quant-system operations and research workflows."""
 
 import os
+from decimal import Decimal
 from pathlib import Path
 from typing import Annotated
 
@@ -101,6 +102,7 @@ from quant.workflows import (
     WorkflowRunFailed,
     inspect_activated_dry_run_operator_request,
     inspect_activated_semantic_paper_operator_request,
+    prepare_momentum_semantic_paper_canary_request,
     run_activated_dry_run_operator_request,
     run_activated_semantic_paper_operator_request,
     run_alpaca_paper_refresh_workflow,
@@ -547,6 +549,89 @@ def semantic_paper_activated_target(
         or record.execution_status != ExecutionPlanStatus.SATISFIED
     ):
         raise typer.Exit(code=1)
+
+
+@semantic_paper_app.command("prepare-momentum-canary")
+def semantic_paper_prepare_momentum_canary(
+    request_id: Annotated[
+        str,
+        typer.Option(help="Safe ID for the generated canary request."),
+    ],
+    data: Annotated[
+        Path,
+        typer.Option(help="CSV file with OHLCV market bars."),
+    ] = Path("data/sample_prices.csv"),
+    symbol: Annotated[str, typer.Option(help="Symbol to evaluate.")] = "AAPL",
+    quantity: Annotated[
+        int,
+        typer.Option(help="Long target shares for a buy signal."),
+    ] = 1,
+    current_position: Annotated[
+        int,
+        typer.Option(help="Initial local-paper position in shares."),
+    ] = 0,
+    current_average_price: Annotated[
+        float | None,
+        typer.Option(help="Average price for the initial position."),
+    ] = None,
+    initial_cash: Annotated[
+        float,
+        typer.Option(help="Initial local-paper cash balance."),
+    ] = 100_000,
+    fast_window: Annotated[
+        int,
+        typer.Option(help="Legacy momentum fast moving-average window."),
+    ] = 5,
+    slow_window: Annotated[
+        int,
+        typer.Option(help="Legacy momentum slow moving-average window."),
+    ] = 20,
+    min_rows: Annotated[
+        int,
+        typer.Option(help="Minimum market-bar rows required."),
+    ] = 1,
+    max_absolute_target: Annotated[
+        float,
+        typer.Option(help="Risk-policy max absolute approved target."),
+    ] = 100,
+    valid_for_seconds: Annotated[
+        int,
+        typer.Option(help="How long generated activation stays valid."),
+    ] = 3600,
+    output_root: Annotated[
+        Path,
+        typer.Option(help="Directory for generated canary request inputs."),
+    ] = Path("data/semantic-target/local-paper-canary"),
+) -> None:
+    """Prepare a reviewed local-paper request from legacy momentum."""
+    try:
+        bundle = prepare_momentum_semantic_paper_canary_request(
+            request_id=request_id,
+            data_path=data,
+            symbol=symbol,
+            quantity=quantity,
+            current_position=current_position,
+            current_average_price=current_average_price,
+            initial_cash=initial_cash,
+            fast_window=fast_window,
+            slow_window=slow_window,
+            min_rows=min_rows,
+            max_absolute_target=Decimal(str(max_absolute_target)),
+            valid_for_seconds=valid_for_seconds,
+            output_root=output_root,
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {bundle.request_path}")
+    typer.echo(f"Signal: {bundle.signal_action.value}")
+    typer.echo(f"Signal date: {bundle.signal_date}")
+    typer.echo(f"Reference price: {bundle.reference_price:,.2f}")
+    typer.echo(f"Target quantity: {bundle.target_quantity}")
+    typer.echo(
+        f"Activation rehearsal: {bundle.activation_rehearsal_report_path}"
+    )
+    typer.echo(f"Authorization: {bundle.authorization_path}")
 
 
 @semantic_paper_app.command("inspect-activated-target")

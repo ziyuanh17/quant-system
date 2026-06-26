@@ -80,6 +80,12 @@ activation consumption, execution plan, local paper order, fill, and
 reconciliation evidence and reached satisfied execution. See
 [activated_semantic_paper_operator_rehearsal.md](activated_semantic_paper_operator_rehearsal.md).
 
+`quant semantic-paper prepare-momentum-canary` prepares the reviewed request
+bundle for this local-paper path from the latest legacy momentum signal. It
+validates local market data and writes activation, contributor, strategy
+target, strategy evaluation, and operator request artifacts, but it does not
+run local paper or any broker-connected path.
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

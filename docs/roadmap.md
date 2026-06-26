@@ -171,15 +171,15 @@ side discussions.
 | 151 | AAPL Hysteresis-Notional Research Batch v3 | In Review | Add and run a research-only hysteresis declared-notional candidate, report the turnover-control result, and keep it failed for promotion without operational authorization. |
 | 152 | AAPL Rebalance-Band Notional Research Batch v4 | In Review | Add and run a research-only rebalance-band notional candidate, report the improved turnover result, and keep it out of operational promotion. |
 | 153 | Activated Local Semantic-Paper Operator Boundary v1 | Done | Expose one reviewed-request CLI command hardcoded to durable local semantic paper, with restart-safe satisfaction evidence and no Alpaca, scheduler, runtime, or broker-network capability. |
-| 154 | Activated Local Semantic-Paper Canary Rehearsal v1 | In Review | Run one synthetic translated-momentum request through the actual local semantic-paper CLI twice, proving satisfied execution and no duplicate local paper order or fill. |
+| 154 | Activated Local Semantic-Paper Canary Rehearsal v1 | Done | Run one synthetic translated-momentum request through the actual local semantic-paper CLI twice, proving satisfied execution and no duplicate local paper order or fill. |
+| 155 | Momentum Canary Request Generator v1 | In Review | Add a local-only CLI generator that validates market data, translates the latest legacy momentum signal into a reviewed semantic-paper request bundle, and does not execute it. |
 
 ## Current Recommendation
 
-Review **Activated Local Semantic-Paper Canary Rehearsal v1**, then decide
-whether to package a small reviewed request generator for translated legacy
-momentum canaries. Do not expose launchd, runtime deployment, recurring
-scheduling, Alpaca semantic targets, or broker-network submission as part of
-that work.
+Review **Momentum Canary Request Generator v1**, then run one generated request
+through inspection and local semantic paper as the next canary. Do not expose
+launchd, runtime deployment, recurring scheduling, Alpaca semantic targets, or
+broker-network submission as part of that work.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

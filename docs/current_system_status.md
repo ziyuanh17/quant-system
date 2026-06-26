@@ -481,6 +481,13 @@ reconciliation report, one orchestration record, and final AAPL local-paper
 position `+2`. See
 [activated_semantic_paper_operator_rehearsal.md](activated_semantic_paper_operator_rehearsal.md).
 
+The source now includes `quant semantic-paper prepare-momentum-canary`. It
+validates a local market-bar CSV, runs the legacy momentum strategy, translates
+the latest signal into a whole-share semantic target, and writes a reviewed
+local semantic-paper request bundle. The command prepares evidence only; it
+does not execute local paper, contact Alpaca, load a scheduler, mutate runtime,
+or submit broker-network orders.
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

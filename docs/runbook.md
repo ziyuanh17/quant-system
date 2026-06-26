@@ -24,11 +24,26 @@ cycle-count selector. See
 
 ## Local Semantic Paper
 
+Prepare a reviewed request bundle from the latest legacy momentum signal:
+
+```bash
+quant semantic-paper prepare-momentum-canary \
+  --request-id reviewed-momentum-canary \
+  --data data/normalized/market_bars/AAPL.csv \
+  --symbol AAPL \
+  --quantity 2
+```
+
+This command validates local market data, runs the legacy momentum signal,
+translates the latest signal into a whole-share semantic target, writes the
+activation and target request inputs, and stops. It does not execute local
+paper, contact Alpaca, load a scheduler, or submit any broker-network order.
+
 Run one reviewed activated semantic-target request through durable local paper:
 
 ```bash
 quant semantic-paper activated-target \
-  --request-path reviewed/activated-semantic-paper-request.json
+  --request-path data/semantic-target/local-paper-canary/inputs/requests/reviewed-momentum-canary.json
 ```
 
 The command is local-only. It consumes one reviewed request artifact, hardcodes

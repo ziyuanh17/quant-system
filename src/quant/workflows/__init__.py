@@ -61,6 +61,10 @@ from quant.workflows.paper_signal_refresh import (
     run_paper_signal_refresh_workflow,
     write_data_refresh_workflow_record,
 )
+from quant.workflows.semantic_paper_canary import (
+    MomentumSemanticPaperCanaryRequestBundle,
+    prepare_momentum_semantic_paper_canary_request,
+)
 from quant.workflows.semantic_target_activation import (
     SEMANTIC_TARGET_ORCHESTRATION_POLICY,
     SUPPORTED_ACTIVATION_SCOPES,
@@ -221,6 +225,8 @@ __all__ = [
     "rehearsal_report_sha256",
     "write_semantic_target_activation_authorization",
     "SemanticTargetWorkflowResult",
+    "MomentumSemanticPaperCanaryRequestBundle",
+    "prepare_momentum_semantic_paper_canary_request",
     "write_data_refresh_workflow_record",
     "load_supervised_dry_run_cycle_events",
     "load_supervised_dry_run_service_record",
