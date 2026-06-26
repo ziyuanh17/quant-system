@@ -172,14 +172,16 @@ side discussions.
 | 152 | AAPL Rebalance-Band Notional Research Batch v4 | In Review | Add and run a research-only rebalance-band notional candidate, report the improved turnover result, and keep it out of operational promotion. |
 | 153 | Activated Local Semantic-Paper Operator Boundary v1 | Done | Expose one reviewed-request CLI command hardcoded to durable local semantic paper, with restart-safe satisfaction evidence and no Alpaca, scheduler, runtime, or broker-network capability. |
 | 154 | Activated Local Semantic-Paper Canary Rehearsal v1 | Done | Run one synthetic translated-momentum request through the actual local semantic-paper CLI twice, proving satisfied execution and no duplicate local paper order or fill. |
-| 155 | Momentum Semantic-Paper Request Generator v1 | In Review | Add a local-only CLI generator that validates market data, translates the latest legacy momentum signal into a reviewed semantic-paper request bundle, and does not execute it. |
+| 155 | Momentum Semantic-Paper Request Generator v1 | Done | Add a local-only CLI generator that validates market data, translates the latest legacy momentum signal into a reviewed semantic-paper request bundle, and does not execute it. |
+| 156 | Momentum Semantic-Paper Request Rehearsal v1 | In Review | Run one generated request from local AAPL market data through inspection and local semantic paper twice, proving satisfied restart behavior without Alpaca, scheduler, runtime, or broker-network exposure. |
 
 ## Current Recommendation
 
-Review **Momentum Semantic-Paper Request Generator v1**, then run one generated
-request through inspection and local semantic paper as the next controlled
-rehearsal. Do not expose launchd, runtime deployment, recurring scheduling,
-Alpaca semantic targets, or broker-network submission as part of that work.
+Review **Momentum Semantic-Paper Request Rehearsal v1**, then decide whether the
+next stage should add a generated-request rehearsal that deliberately produces a
+nonzero local-paper target from local data. Do not expose launchd, runtime
+deployment, recurring scheduling, Alpaca semantic targets, or broker-network
+submission as part of that work.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

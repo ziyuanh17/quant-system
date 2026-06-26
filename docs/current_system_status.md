@@ -488,6 +488,14 @@ local semantic-paper request bundle. The command prepares evidence only; it
 does not execute local paper, contact Alpaca, load a scheduler, mutate runtime,
 or submit broker-network orders.
 
+On June 26, 2026, the request generator passed its first local-data rehearsal
+against `data/normalized/market_bars/AAPL.csv`. The latest legacy momentum
+signal was `hold` on `2023-12-29`, so the reviewed request targeted flat `AAPL`
+from an already-flat local-paper state. Inspection reported no intended order,
+and two local semantic-paper runs reused the same orchestration and reached
+`execution_completed` / `satisfied` with zero orders and zero fills. See
+[momentum_semantic_paper_request_rehearsal.md](momentum_semantic_paper_request_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

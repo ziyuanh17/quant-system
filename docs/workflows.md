@@ -86,6 +86,13 @@ validates local market data and writes activation, contributor, strategy
 target, strategy evaluation, and operator request artifacts, but it does not
 run local paper or any broker-connected path.
 
+The first generated-request rehearsal used the local AAPL market-bar file. The
+latest momentum signal was `hold`, so the request targeted flat AAPL from an
+already-flat local-paper state. Inspection found no intended order, and two
+local semantic-paper runs reached satisfied execution with zero orders and zero
+fills. See
+[momentum_semantic_paper_request_rehearsal.md](momentum_semantic_paper_request_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
