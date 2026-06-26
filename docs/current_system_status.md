@@ -415,6 +415,22 @@ the legacy momentum control, slightly worsens drawdown, and trades too often.
 The v2 report authorizes no dry-run, paper, Alpaca, broker, scheduler,
 runtime, order, or fill path.
 
+The source now includes a third research-only AAPL batch definition,
+`aapl-strategy-research-batch-v3`. V3 preserves the v2 candidates and adds a
+hysteresis declared-notional target trend candidate. The new candidate keeps
+strategy-owned notional sizing but adds entry and exit spread bands so small
+moving-average spread changes do not immediately flip exposure.
+
+The v3 batch artifact is now materialized under
+`data/research/strategy-batches/aapl-strategy-research-batch-v3/`, with
+evaluations under `data/research/evaluations-v3/` and a report under
+`data/research/reports/aapl-strategy-research-batch-v3/`. The hysteresis
+candidate returned `0.418560` with final value `141856.03`, 488 trades, max
+drawdown `-0.23307565652185935`, and Sharpe `0.567468`. It reduced turnover
+versus the v2 declared-notional candidate, but only from 532 to 488 trades
+while lowering return and worsening drawdown. It fails promotion and authorizes
+no dry-run, paper, Alpaca, broker, scheduler, runtime, order, or fill path.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

@@ -8,6 +8,8 @@ from quant.models.market import PriceData
 from quant.strategies import (
     DeclaredNotionalTrendConfig,
     DeclaredNotionalTrendStrategy,
+    HysteresisNotionalTrendConfig,
+    HysteresisNotionalTrendStrategy,
     MeanReversionCounterweightConfig,
     MeanReversionCounterweightStrategy,
     TargetNativeTrendConfig,
@@ -48,6 +50,28 @@ def test_declared_notional_trend_resolves_strategy_sizing_to_shares() -> None:
 
     assert Decimal("10") in frame.targets.tolist()
     assert Decimal("-6.666666666666667") in frame.targets.tolist()
+
+
+def test_hysteresis_notional_trend_carries_until_exit_band() -> None:
+    strategy = HysteresisNotionalTrendStrategy(
+        HysteresisNotionalTrendConfig(
+            fast_window=2,
+            slow_window=3,
+            long_target_notional=Decimal("120"),
+            short_target_notional=Decimal("-60"),
+            entry_spread=Decimal("0.01"),
+            exit_spread=Decimal("0.0025"),
+        )
+    )
+
+    frame = strategy.generate_targets(
+        _prices([10, 11, 12, 11, 10, 9, 10, 11, 12])
+    )
+
+    values = frame.targets.tolist()
+    assert Decimal("10") in values
+    assert Decimal("-6.666666666666667") in values
+    assert values.count(Decimal("0.0")) < len(values)
 
 
 def test_volatility_adjusted_trend_emits_fractional_research_targets() -> None:

@@ -198,6 +198,25 @@ The declared-notional candidate improves target-native return but fails
 promotion because it remains below the legacy momentum control and creates
 excessive turnover.
 
+The next source batch is `aapl-strategy-research-batch-v3`. It preserves the
+reported v2 batch and adds a hysteresis declared-notional target trend
+strategy. The new candidate keeps notional exposure as a strategy-owned
+hyperparameter, then requires the moving-average spread to cross an entry band
+before opening exposure and an exit band before flattening.
+
+The v3 batch has been materialized and run append-only under:
+
+```text
+data/research/strategy-batches/aapl-strategy-research-batch-v3/
+data/research/evaluations-v3/
+data/research/reports/aapl-strategy-research-batch-v3/
+```
+
+The hysteresis-notional candidate reduced turnover versus the v2
+declared-notional candidate, but only from 532 to 488 trades. It also lowered
+total return, worsened drawdown, and lowered Sharpe, so it fails promotion and
+serves as negative evidence for this simple turnover-control rule.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and

@@ -1,0 +1,76 @@
+{
+  "benchmark_name": "buy-and-hold",
+  "candidate_id": "aapl-vol-adjusted-trend-5-20-20-v1",
+  "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+  "hypothesis": "Scaling target exposure down during higher recent volatility can reduce drawdown without destroying trend capture.",
+  "hypothesis_id": "volatility-scaled-target-trend-v1",
+  "inputs": [
+    {
+      "availability_time_column": null,
+      "event_time_column": "date",
+      "input_id": "aapl-market-bars-b21ba6ad44dc",
+      "kind": "market_bars",
+      "path": "data/normalized/market_bars/AAPL.csv",
+      "point_in_time_policy": "event_time_only",
+      "schema_version": "aapl_research_inputs_v1",
+      "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+    }
+  ],
+  "parameters": [
+    {
+      "name": "fast_window",
+      "value": 5
+    },
+    {
+      "name": "slow_window",
+      "value": 20
+    },
+    {
+      "name": "volatility_window",
+      "value": 20
+    },
+    {
+      "name": "base_target_shares",
+      "value": 1.0
+    },
+    {
+      "name": "min_target_shares",
+      "value": 0.25
+    },
+    {
+      "name": "max_target_shares",
+      "value": 1.0
+    },
+    {
+      "name": "sizing_policy",
+      "value": "fractional_research"
+    }
+  ],
+  "promotion_criteria_version": "research_only_v1",
+  "random_seed": 7,
+  "research_family_id": "volatility-adjusted-trend",
+  "simulation_scenarios": [
+    {
+      "execution_delay_bars": 0,
+      "fees": 0.001,
+      "initial_cash": 100000.0,
+      "max_participation_rate": null,
+      "name": "base",
+      "slippage_bps": 5.0
+    }
+  ],
+  "source_commit": "2a02c3b-dirty",
+  "split_policy": {
+    "development_end": "2021-12-31",
+    "development_start": "2020-01-01",
+    "holdout_end": "2023-12-31",
+    "holdout_start": "2023-01-01",
+    "validation_end": "2022-12-31",
+    "validation_start": "2022-01-01"
+  },
+  "strategy_name": "volatility-adjusted-target-trend",
+  "strategy_version": "research_target_v1",
+  "symbols": [
+    "AAPL"
+  ]
+}

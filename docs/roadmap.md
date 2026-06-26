@@ -166,12 +166,13 @@ side discussions.
 | 146 | AAPL Baseline Research Evaluation v1 | Done | Run the supported legacy momentum and feature-momentum baselines from the reviewed AAPL batch, persist evaluation/trial artifacts, and record unimplemented target candidates as abandoned rather than simulated. |
 | 147 | AAPL Target-Native Research Evaluation v1 | Done | Implement the three target-native research strategies, rerun the fixed AAPL batch append-only, persist signed target histories, and record successful target-candidate trial evidence. |
 | 148 | AAPL Research Report v1 | Done | Write the first batch report and decision artifact, passing only the control/parity baselines and failing target-native candidates for promotion without operational authorization. |
-| 149 | Declared-Notional Target Candidate v1 | In Review | Add a research-only v2 AAPL batch candidate whose sizing policy declares target notional exposure and resolves it to signed share targets. |
-| 150 | AAPL Declared-Notional Research Batch v2 | In Review | Materialize and run the v2 AAPL batch, report declared-notional results, and keep all target-native candidates failed for promotion without operational authorization. |
+| 149 | Declared-Notional Target Candidate v1 | Done | Add a research-only v2 AAPL batch candidate whose sizing policy declares target notional exposure and resolves it to signed share targets. |
+| 150 | AAPL Declared-Notional Research Batch v2 | Done | Materialize and run the v2 AAPL batch, report declared-notional results, and keep all target-native candidates failed for promotion without operational authorization. |
+| 151 | AAPL Hysteresis-Notional Research Batch v3 | In Review | Add and run a research-only hysteresis declared-notional candidate, report the turnover-control result, and keep it failed for promotion without operational authorization. |
 
 ## Current Recommendation
 
-Review **AAPL Declared-Notional Research Batch v2**, then continue
+Review **AAPL Hysteresis-Notional Research Batch v3**, then continue
 research-only strategy design under declared-policy sizing. Do not expose
 launchd, runtime deployment, recurring scheduling, semantic local paper, Alpaca
 semantic targets, or broker submission as part of that work.

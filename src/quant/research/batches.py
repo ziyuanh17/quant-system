@@ -21,6 +21,7 @@ from quant.research.artifacts import write_research_batch_spec
 
 AAPL_RESEARCH_BATCH_V1 = "aapl-strategy-research-batch-v1"
 AAPL_RESEARCH_BATCH_V2 = "aapl-strategy-research-batch-v2"
+AAPL_RESEARCH_BATCH_V3 = "aapl-strategy-research-batch-v3"
 AAPL_RESEARCH_BATCH_SCHEMA_VERSION = "aapl_research_inputs_v1"
 
 
@@ -62,6 +63,29 @@ def write_aapl_strategy_research_batch_v2_artifacts(
     )
     feature_input = build_feature_input_snapshot(feature_path, symbol="AAPL")
     batch = build_aapl_strategy_research_batch_v2(
+        market_bars_input=market_bars_input,
+        feature_input=feature_input,
+        environment=environment,
+        created_at=created_at,
+    )
+    return write_research_batch_spec(batch, output_root)
+
+
+def write_aapl_strategy_research_batch_v3_artifacts(
+    *,
+    market_bars_path: Path,
+    feature_path: Path,
+    environment: ResearchEnvironmentSnapshot,
+    output_root: Path,
+    created_at: datetime,
+    min_rows: int = 1,
+) -> ResearchBatchArtifactPaths:
+    """Validate AAPL inputs and persist the third research-only batch."""
+    market_bars_input = build_validated_market_bars_input_snapshot(
+        market_bars_path, symbol="AAPL", min_rows=min_rows
+    )
+    feature_input = build_feature_input_snapshot(feature_path, symbol="AAPL")
+    batch = build_aapl_strategy_research_batch_v3(
         market_bars_input=market_bars_input,
         feature_input=feature_input,
         environment=environment,
@@ -206,6 +230,36 @@ def build_aapl_strategy_research_batch_v2(
     )
 
 
+def build_aapl_strategy_research_batch_v3(
+    *,
+    market_bars_input: ResearchInputSnapshot,
+    feature_input: ResearchInputSnapshot,
+    environment: ResearchEnvironmentSnapshot,
+    created_at: datetime,
+) -> ResearchBatchSpec:
+    """Return the third reviewed AAPL batch with hysteresis sizing."""
+    batch_v2 = build_aapl_strategy_research_batch_v2(
+        market_bars_input=market_bars_input,
+        feature_input=feature_input,
+        environment=environment,
+        created_at=created_at,
+    )
+    return batch_v2.model_copy(
+        update={
+            "batch_id": AAPL_RESEARCH_BATCH_V3,
+            "objective": (
+                "Evaluate AAPL target-native declared-policy sizing with a "
+                "hysteresis notional trend candidate before any paper, Alpaca, "
+                "scheduler, runtime, broker, order, or fill promotion."
+            ),
+            "candidates": (
+                *batch_v2.candidates,
+                _hysteresis_notional_trend(environment, market_bars_input),
+            ),
+        }
+    )
+
+
 def _momentum_baseline(
     environment: ResearchEnvironmentSnapshot,
     market_bars_input: ResearchInputSnapshot,
@@ -328,6 +382,36 @@ def _declared_notional_trend(
             ResearchParameter(name="short_target_notional", value=-100_000),
             ResearchParameter(
                 name="sizing_policy", value="declared_notional_v1"
+            ),
+        ),
+        inputs=(market_bars_input,),
+        environment=environment,
+    )
+
+
+def _hysteresis_notional_trend(
+    environment: ResearchEnvironmentSnapshot,
+    market_bars_input: ResearchInputSnapshot,
+) -> StrategyCandidateSpec:
+    return _candidate(
+        candidate_id="aapl-hysteresis-notional-trend-5-20-100k-v1",
+        research_family_id="hysteresis-notional-trend",
+        hypothesis_id="hysteresis-notional-target-trend-v1",
+        hypothesis=(
+            "A trend strategy can reduce turnover by declaring target notional "
+            "exposure only after a moving-average spread clears an entry band."
+        ),
+        strategy_name="hysteresis-notional-trend",
+        strategy_version="research_target_v1",
+        parameters=(
+            ResearchParameter(name="fast_window", value=5),
+            ResearchParameter(name="slow_window", value=20),
+            ResearchParameter(name="long_target_notional", value=100_000),
+            ResearchParameter(name="short_target_notional", value=-100_000),
+            ResearchParameter(name="entry_spread", value=0.01),
+            ResearchParameter(name="exit_spread", value=0.0025),
+            ResearchParameter(
+                name="sizing_policy", value="hysteresis_notional_v1"
             ),
         ),
         inputs=(market_bars_input,),

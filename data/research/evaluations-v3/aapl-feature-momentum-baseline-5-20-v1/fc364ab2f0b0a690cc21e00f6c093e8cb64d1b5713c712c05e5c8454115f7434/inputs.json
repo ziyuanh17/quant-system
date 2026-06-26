@@ -1,0 +1,12 @@
+[
+  {
+    "availability_time_column": null,
+    "event_time_column": "date",
+    "input_id": "aapl-features-fe9895a8bc2e",
+    "kind": "features",
+    "path": "data/features/technical/AAPL.csv",
+    "point_in_time_policy": "event_time_only",
+    "schema_version": "aapl_research_inputs_v1",
+    "sha256": "fe9895a8bc2e3ec6909b49c577ddfd8c6c64427ae728577b824635a80e7d4c55"
+  }
+]

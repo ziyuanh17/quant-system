@@ -1,0 +1,16 @@
+{
+  "strategy_name": "momentum",
+  "symbol": "AAPL",
+  "config": {
+    "initial_cash": 100000.0,
+    "fees": 0.001,
+    "frequency": "1D"
+  },
+  "metrics": {
+    "total_return": 1.227482816576008,
+    "sharpe_ratio": 1.2612695325979117,
+    "max_drawdown": -0.21010632998879852,
+    "total_trades": 25,
+    "final_value": 222748.2816576008
+  }
+}

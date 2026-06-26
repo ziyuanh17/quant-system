@@ -111,6 +111,84 @@ class DeclaredNotionalTrendStrategy:
         )
 
 
+class HysteresisNotionalTrendConfig(FrozenModel):
+    """Parameters for declared-notional trend targets with hysteresis."""
+
+    fast_window: int = Field(default=5, ge=2)
+    slow_window: int = Field(default=20, ge=3)
+    long_target_notional: Decimal = Decimal("100000")
+    short_target_notional: Decimal = Decimal("-100000")
+    entry_spread: Decimal = Decimal("0.01")
+    exit_spread: Decimal = Decimal("0.0025")
+
+    @model_validator(mode="after")
+    def validate_hysteresis_notional_config(
+        self,
+    ) -> "HysteresisNotionalTrendConfig":
+        if self.fast_window >= self.slow_window:
+            raise ValueError("fast_window must be smaller than slow_window")
+        if self.long_target_notional <= 0:
+            raise ValueError("long_target_notional must be positive")
+        if self.short_target_notional >= 0:
+            raise ValueError("short_target_notional must be negative")
+        if self.entry_spread <= 0:
+            raise ValueError("entry_spread must be positive")
+        if self.exit_spread < 0 or self.exit_spread >= self.entry_spread:
+            raise ValueError("exit_spread must be non-negative and below entry")
+        return self
+
+
+class HysteresisNotionalTrendStrategy:
+    """Declared-notional trend strategy with a moving-average spread band."""
+
+    name = "hysteresis-notional-trend"
+
+    def __init__(
+        self, config: HysteresisNotionalTrendConfig | None = None
+    ) -> None:
+        self.config = config or HysteresisNotionalTrendConfig()
+
+    def generate_targets(self, prices: PriceData) -> StrategyTargetFrame:
+        close = prices.close
+        fast = close.rolling(self.config.fast_window).mean()
+        slow = close.rolling(self.config.slow_window).mean()
+        spread = (fast - slow) / slow
+
+        side = Decimal("0")
+        targets: list[Decimal] = []
+        entry = float(self.config.entry_spread)
+        exit_ = float(self.config.exit_spread)
+        for price, spread_value in zip(close, spread, strict=True):
+            if pd.isna(price) or pd.isna(spread_value):
+                side = Decimal("0")
+                targets.append(Decimal("0"))
+                continue
+
+            if spread_value >= entry:
+                side = Decimal("1")
+            elif spread_value <= -entry:
+                side = Decimal("-1")
+            elif abs(float(spread_value)) <= exit_:
+                side = Decimal("0")
+
+            price_decimal = Decimal(str(price))
+            if price_decimal <= 0 or side == 0:
+                targets.append(Decimal("0"))
+            elif side > 0:
+                targets.append(
+                    self.config.long_target_notional / price_decimal
+                )
+            else:
+                targets.append(
+                    self.config.short_target_notional / price_decimal
+                )
+
+        return StrategyTargetFrame(
+            unit=TargetUnit.SHARES,
+            targets=pd.Series(targets, index=close.index, dtype=object),
+        )
+
+
 class VolatilityAdjustedTrendConfig(FrozenModel):
     """Parameters for volatility-scaled trend targets."""
 

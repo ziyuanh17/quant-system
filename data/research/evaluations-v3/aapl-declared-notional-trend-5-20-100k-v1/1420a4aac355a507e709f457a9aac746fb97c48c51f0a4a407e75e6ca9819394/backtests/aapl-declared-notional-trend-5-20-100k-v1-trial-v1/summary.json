@@ -1,0 +1,16 @@
+{
+  "strategy_name": "declared-notional-trend",
+  "symbol": "AAPL",
+  "config": {
+    "initial_cash": 100000.0,
+    "fees": 0.001,
+    "frequency": "1D"
+  },
+  "metrics": {
+    "total_return": 0.6800714873844431,
+    "sharpe_ratio": 0.7443396791720408,
+    "max_drawdown": -0.2111674998627756,
+    "total_trades": 532,
+    "final_value": 168007.14873844432
+  }
+}
