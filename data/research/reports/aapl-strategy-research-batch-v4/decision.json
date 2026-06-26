@@ -1,0 +1,57 @@
+{
+  "batch_id": "aapl-strategy-research-batch-v4",
+  "report_id": "aapl-strategy-research-batch-v4-report",
+  "schema_version": 1,
+  "generated_at": "2026-06-25T22:00:00Z",
+  "operational_authorization": {
+    "alpaca_authorized": false,
+    "broker_authorized": false,
+    "dry_run_authorized": false,
+    "order_submission_authorized": false,
+    "paper_trading_authorized": false,
+    "runtime_mutation_authorized": false,
+    "scheduler_authorized": false
+  },
+  "decisions": [
+    {
+      "candidate_id": "aapl-momentum-baseline-5-20-v1",
+      "decision": "pass_as_control",
+      "reason": "Legacy price-momentum control for this batch."
+    },
+    {
+      "candidate_id": "aapl-feature-momentum-baseline-5-20-v1",
+      "decision": "pass_for_parity",
+      "reason": "Feature path exactly matched the legacy price-momentum baseline."
+    },
+    {
+      "candidate_id": "aapl-target-native-trend-5-20-v1",
+      "decision": "fail_promotion",
+      "reason": "Return was far below the baseline despite low drawdown."
+    },
+    {
+      "candidate_id": "aapl-vol-adjusted-trend-5-20-20-v1",
+      "decision": "fail_promotion",
+      "reason": "Return was far below the baseline and turnover was high."
+    },
+    {
+      "candidate_id": "aapl-mean-reversion-counterweight-5-20-v1",
+      "decision": "fail_promotion",
+      "reason": "Standalone result lost money in this batch."
+    },
+    {
+      "candidate_id": "aapl-declared-notional-trend-5-20-100k-v1",
+      "decision": "fail_promotion",
+      "reason": "Declared-notional sizing improved target-native return but still trailed the control, had slightly worse drawdown, and traded too often."
+    },
+    {
+      "candidate_id": "aapl-hysteresis-notional-trend-5-20-100k-v1",
+      "decision": "fail_promotion",
+      "reason": "Hysteresis reduced declared-notional turnover only modestly while lowering return, worsening drawdown, and lowering Sharpe."
+    },
+    {
+      "candidate_id": "aapl-rebalance-band-notional-trend-5-20-100k-5pct-v1",
+      "decision": "promising_fail_operational_promotion",
+      "reason": "Rebalance-band sizing materially reduced turnover and improved target-native return, drawdown, and Sharpe versus declared-notional v2, but still trailed the legacy control on total return and Sharpe."
+    }
+  ]
+}

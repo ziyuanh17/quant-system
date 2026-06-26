@@ -12,17 +12,17 @@ from quant.research import (
     run_aapl_research_batch_v1_evaluations,
     verify_evaluation_artifacts,
     write_aapl_strategy_research_batch_v1_artifacts,
-    write_aapl_strategy_research_batch_v3_artifacts,
+    write_aapl_strategy_research_batch_v4_artifacts,
 )
 
 SHA256 = "a" * 64
 
 
-def test_run_aapl_research_batch_v3_evaluations_records_all_trials(
+def test_run_aapl_research_batch_v4_evaluations_records_all_trials(
     tmp_path,
 ) -> None:
     environment = _environment()
-    batch_paths = write_aapl_strategy_research_batch_v3_artifacts(
+    batch_paths = write_aapl_strategy_research_batch_v4_artifacts(
         market_bars_path=_write_market_bars(tmp_path),
         feature_path=_write_features(tmp_path),
         environment=environment,
@@ -38,7 +38,7 @@ def test_run_aapl_research_batch_v3_evaluations_records_all_trials(
         started_at=datetime(2026, 6, 24, 1, tzinfo=UTC),
     )
 
-    assert len(evaluation_dirs) == 7
+    assert len(evaluation_dirs) == 8
     statuses = {}
     for evaluation_dir in evaluation_dirs:
         verify_evaluation_artifacts(evaluation_dir)
@@ -58,6 +58,9 @@ def test_run_aapl_research_batch_v3_evaluations_records_all_trials(
         "aapl-hysteresis-notional-trend-5-20-100k-v1": (
             ResearchTrialStatus.SUCCEEDED
         ),
+        "aapl-rebalance-band-notional-trend-5-20-100k-5pct-v1": (
+            ResearchTrialStatus.SUCCEEDED
+        ),
         "aapl-vol-adjusted-trend-5-20-20-v1": (
             ResearchTrialStatus.SUCCEEDED
         ),
@@ -67,9 +70,9 @@ def test_run_aapl_research_batch_v3_evaluations_records_all_trials(
     }
 
 
-def test_run_aapl_research_batch_v3_writes_backtest_artifacts(tmp_path) -> None:
+def test_run_aapl_research_batch_v4_writes_backtest_artifacts(tmp_path) -> None:
     environment = _environment()
-    batch_paths = write_aapl_strategy_research_batch_v3_artifacts(
+    batch_paths = write_aapl_strategy_research_batch_v4_artifacts(
         market_bars_path=_write_market_bars(tmp_path),
         feature_path=_write_features(tmp_path),
         environment=environment,
@@ -91,7 +94,7 @@ def test_run_aapl_research_batch_v3_writes_backtest_artifacts(tmp_path) -> None:
         if (evaluation_dir / "backtests").is_dir()
     ]
 
-    assert len(completed_dirs) == 7
+    assert len(completed_dirs) == 8
     for evaluation_dir in completed_dirs:
         backtest_dirs = list((evaluation_dir / "backtests").glob("*"))
         assert len(backtest_dirs) == 1

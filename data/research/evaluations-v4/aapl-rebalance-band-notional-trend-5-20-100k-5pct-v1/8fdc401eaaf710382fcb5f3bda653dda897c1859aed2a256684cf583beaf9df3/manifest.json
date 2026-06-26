@@ -1,0 +1,26 @@
+{
+  "candidate_id": "aapl-rebalance-band-notional-trend-5-20-100k-5pct-v1",
+  "evaluation_id": "8fdc401eaaf710382fcb5f3bda653dda897c1859aed2a256684cf583beaf9df3",
+  "immutable_artifacts": [
+    {
+      "relative_path": "candidate.json",
+      "sha256": "04e9c53fc74c0298d25c6d84e82735b53b556e1aba7e7c0551e1f2f3a496738b"
+    },
+    {
+      "relative_path": "environment.json",
+      "sha256": "80e58bece0ba1c61f45f526c0c56b6b6fbacff842e0ecc3a2d64fc35d3ba2bc6"
+    },
+    {
+      "relative_path": "inputs.json",
+      "sha256": "578fc0a08e0253a4197c534feade6460a24631bb29a30e10295947ab1108c6bd"
+    },
+    {
+      "relative_path": "splits.json",
+      "sha256": "a79ded85505a25a4b1d7c9011851518f3d864e9ca2ebde6a97cd15bdb75217b2"
+    },
+    {
+      "relative_path": "scenarios.json",
+      "sha256": "9e6edf59a122710d0864e499e8e11b2c86f3f29b7dd7e0ad994bc76b7556b22e"
+    }
+  ]
+}

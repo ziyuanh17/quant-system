@@ -1,0 +1,589 @@
+{
+  "batch_id": "aapl-strategy-research-batch-v4",
+  "broker_access_authorized": false,
+  "candidates": [
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-momentum-baseline-5-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "A 5/20 moving-average crossover captures AAPL trends.",
+      "hypothesis_id": "trend-following-moving-average-cross-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "sizing_policy",
+          "value": "legacy_signal"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "momentum-baseline",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "c532a84-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "momentum",
+      "strategy_version": "legacy_signal_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-feature-momentum-baseline-5-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "A feature-backed 5/20 moving-average crossover reproduces the price momentum control while improving lineage.",
+      "hypothesis_id": "feature-moving-average-cross-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-features-fe9895a8bc2e",
+          "kind": "features",
+          "path": "data/features/technical/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "fe9895a8bc2e3ec6909b49c577ddfd8c6c64427ae728577b824635a80e7d4c55"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_column",
+          "value": "ma_5"
+        },
+        {
+          "name": "slow_column",
+          "value": "ma_20"
+        },
+        {
+          "name": "sizing_policy",
+          "value": "legacy_signal"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "feature-momentum-baseline",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "c532a84-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "feature-momentum",
+      "strategy_version": "legacy_feature_signal_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-target-native-trend-5-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "Expressing trend following as signed target shares makes long, flat, short, cover, and reversal semantics explicit.",
+      "hypothesis_id": "signed-target-trend-following-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "long_target_shares",
+          "value": 1
+        },
+        {
+          "name": "short_target_shares",
+          "value": -1
+        },
+        {
+          "name": "sizing_policy",
+          "value": "fixed_shares_v1"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "target-native-trend",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "c532a84-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "target-native-trend",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-vol-adjusted-trend-5-20-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "Scaling target exposure down during higher recent volatility can reduce drawdown without destroying trend capture.",
+      "hypothesis_id": "volatility-scaled-target-trend-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "volatility_window",
+          "value": 20
+        },
+        {
+          "name": "base_target_shares",
+          "value": 1.0
+        },
+        {
+          "name": "min_target_shares",
+          "value": 0.25
+        },
+        {
+          "name": "max_target_shares",
+          "value": 1.0
+        },
+        {
+          "name": "sizing_policy",
+          "value": "fractional_research"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "volatility-adjusted-trend",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "c532a84-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "volatility-adjusted-target-trend",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-mean-reversion-counterweight-5-20-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "A simple mean-reversion target can counterbalance trend signals when price stretches far from its recent average.",
+      "hypothesis_id": "moving-average-distance-reversion-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "lookback_window",
+          "value": 20
+        },
+        {
+          "name": "entry_zscore",
+          "value": 1.5
+        },
+        {
+          "name": "exit_zscore",
+          "value": 0.25
+        },
+        {
+          "name": "target_shares",
+          "value": 1
+        },
+        {
+          "name": "sizing_policy",
+          "value": "fixed_shares_v1"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "mean-reversion-counterweight",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "c532a84-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "mean-reversion-counterweight",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-declared-notional-trend-5-20-100k-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "A trend strategy can own its sizing decision by declaring target notional exposure and resolving that exposure to signed shares.",
+      "hypothesis_id": "declared-notional-target-trend-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "long_target_notional",
+          "value": 100000
+        },
+        {
+          "name": "short_target_notional",
+          "value": -100000
+        },
+        {
+          "name": "sizing_policy",
+          "value": "declared_notional_v1"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "declared-notional-trend",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "c532a84-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "declared-notional-trend",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-hysteresis-notional-trend-5-20-100k-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "A trend strategy can reduce turnover by declaring target notional exposure only after a moving-average spread clears an entry band.",
+      "hypothesis_id": "hysteresis-notional-target-trend-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "long_target_notional",
+          "value": 100000
+        },
+        {
+          "name": "short_target_notional",
+          "value": -100000
+        },
+        {
+          "name": "entry_spread",
+          "value": 0.01
+        },
+        {
+          "name": "exit_spread",
+          "value": 0.0025
+        },
+        {
+          "name": "sizing_policy",
+          "value": "hysteresis_notional_v1"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "hysteresis-notional-trend",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "c532a84-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "hysteresis-notional-trend",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    },
+    {
+      "benchmark_name": "buy-and-hold",
+      "candidate_id": "aapl-rebalance-band-notional-trend-5-20-100k-5pct-v1",
+      "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+      "hypothesis": "A trend strategy can reduce turnover by declaring target notional exposure but only resizing the signed share target after material target drift.",
+      "hypothesis_id": "rebalance-band-notional-target-trend-v1",
+      "inputs": [
+        {
+          "availability_time_column": null,
+          "event_time_column": "date",
+          "input_id": "aapl-market-bars-b21ba6ad44dc",
+          "kind": "market_bars",
+          "path": "data/normalized/market_bars/AAPL.csv",
+          "point_in_time_policy": "event_time_only",
+          "schema_version": "aapl_research_inputs_v1",
+          "sha256": "b21ba6ad44dcb408e8937f984d280f82a6d9c2e2a992f9a1cd69e6b8ed3720a2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "fast_window",
+          "value": 5
+        },
+        {
+          "name": "slow_window",
+          "value": 20
+        },
+        {
+          "name": "long_target_notional",
+          "value": 100000
+        },
+        {
+          "name": "short_target_notional",
+          "value": -100000
+        },
+        {
+          "name": "rebalance_threshold",
+          "value": 0.05
+        },
+        {
+          "name": "sizing_policy",
+          "value": "rebalance_band_notional_v1"
+        }
+      ],
+      "promotion_criteria_version": "research_only_v1",
+      "random_seed": 7,
+      "research_family_id": "rebalance-band-notional-trend",
+      "simulation_scenarios": [
+        {
+          "execution_delay_bars": 0,
+          "fees": 0.001,
+          "initial_cash": 100000.0,
+          "max_participation_rate": null,
+          "name": "base",
+          "slippage_bps": 5.0
+        }
+      ],
+      "source_commit": "c532a84-dirty",
+      "split_policy": {
+        "development_end": "2021-12-31",
+        "development_start": "2020-01-01",
+        "holdout_end": "2023-12-31",
+        "holdout_start": "2023-01-01",
+        "validation_end": "2022-12-31",
+        "validation_start": "2022-01-01"
+      },
+      "strategy_name": "rebalance-band-notional-trend",
+      "strategy_version": "research_target_v1",
+      "symbols": [
+        "AAPL"
+      ]
+    }
+  ],
+  "created_at": "2026-06-25T22:00:00Z",
+  "evidence_required": [
+    "candidate ID and family ID",
+    "hypothesis",
+    "strategy implementation version",
+    "parameter values",
+    "input data paths and hashes",
+    "feature artifact paths and hashes when used",
+    "split policy",
+    "fees, slippage, and initial cash",
+    "source commit",
+    "dependency lock hash",
+    "backtest metrics",
+    "target history or signal history",
+    "trade list",
+    "comparison against buy-and-hold and existing momentum",
+    "pass/fail decision under a declared evaluation policy",
+    "trial ledger entry for every attempted variant"
+  ],
+  "objective": "Evaluate AAPL target-native declared-policy sizing with a rebalance-band notional trend candidate before any paper, Alpaca, scheduler, runtime, broker, order, or fill promotion.",
+  "order_submission_authorized": false,
+  "runtime_mutation_authorized": false,
+  "scheduler_authorized": false,
+  "schema_version": 1,
+  "stop_conditions": [
+    "input data validation fails",
+    "feature lineage is missing",
+    "a candidate cannot identify source or data hashes",
+    "split periods change after inspection",
+    "the trial ledger omits attempted variants",
+    "work drifts toward runtime, paper, Alpaca, broker, scheduler, order, or fill paths"
+  ],
+  "symbols": [
+    "AAPL"
+  ]
+}

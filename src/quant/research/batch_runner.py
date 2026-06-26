@@ -37,6 +37,8 @@ from quant.strategies import (
     MeanReversionCounterweightStrategy,
     MomentumConfig,
     MomentumStrategy,
+    RebalanceBandNotionalTrendConfig,
+    RebalanceBandNotionalTrendStrategy,
     TargetNativeTrendConfig,
     TargetNativeTrendStrategy,
     VolatilityAdjustedTrendConfig,
@@ -49,6 +51,7 @@ SUPPORTED_AAPL_RESEARCH_CANDIDATES = (
     "aapl-target-native-trend-5-20-v1",
     "aapl-declared-notional-trend-5-20-100k-v1",
     "aapl-hysteresis-notional-trend-5-20-100k-v1",
+    "aapl-rebalance-band-notional-trend-5-20-100k-5pct-v1",
     "aapl-vol-adjusted-trend-5-20-20-v1",
     "aapl-mean-reversion-counterweight-5-20-v1",
 )
@@ -277,6 +280,39 @@ def _run_supported_candidate(
                         candidate, "entry_spread"
                     ),
                     exit_spread=_decimal_parameter(candidate, "exit_spread"),
+                )
+            ),
+            prices,
+        )
+        extra_artifacts = (
+            str(write_target_frame(targets, output_dir / "targets.csv")),
+        )
+    elif (
+        candidate.candidate_id
+        == "aapl-rebalance-band-notional-trend-5-20-100k-5pct-v1"
+    ):
+        prices = load_price_csv(
+            _input_path(candidate, ResearchInputKind.MARKET_BARS), "AAPL"
+        )
+        result, trades, targets = VectorBTTargetBacktester(
+            BacktestConfig(
+                initial_cash=scenario.initial_cash,
+                fees=scenario.fees,
+            )
+        ).run_with_trades(
+            RebalanceBandNotionalTrendStrategy(
+                RebalanceBandNotionalTrendConfig(
+                    fast_window=_int_parameter(candidate, "fast_window"),
+                    slow_window=_int_parameter(candidate, "slow_window"),
+                    long_target_notional=_decimal_parameter(
+                        candidate, "long_target_notional"
+                    ),
+                    short_target_notional=_decimal_parameter(
+                        candidate, "short_target_notional"
+                    ),
+                    rebalance_threshold=_decimal_parameter(
+                        candidate, "rebalance_threshold"
+                    ),
                 )
             ),
             prices,

@@ -1,0 +1,26 @@
+{
+  "candidate_id": "aapl-hysteresis-notional-trend-5-20-100k-v1",
+  "evaluation_id": "47a3937095abb9e9ad1058aa5dea27c482fe4189729099e32f553f6611da8a92",
+  "immutable_artifacts": [
+    {
+      "relative_path": "candidate.json",
+      "sha256": "fa68af5500ff9aa2ff3689eed6a478eaddc5348ea3ab42feb868e21da27181f2"
+    },
+    {
+      "relative_path": "environment.json",
+      "sha256": "80e58bece0ba1c61f45f526c0c56b6b6fbacff842e0ecc3a2d64fc35d3ba2bc6"
+    },
+    {
+      "relative_path": "inputs.json",
+      "sha256": "578fc0a08e0253a4197c534feade6460a24631bb29a30e10295947ab1108c6bd"
+    },
+    {
+      "relative_path": "splits.json",
+      "sha256": "a79ded85505a25a4b1d7c9011851518f3d864e9ca2ebde6a97cd15bdb75217b2"
+    },
+    {
+      "relative_path": "scenarios.json",
+      "sha256": "9e6edf59a122710d0864e499e8e11b2c86f3f29b7dd7e0ad994bc76b7556b22e"
+    }
+  ]
+}

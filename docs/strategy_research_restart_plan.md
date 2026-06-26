@@ -217,6 +217,26 @@ declared-notional candidate, but only from 532 to 488 trades. It also lowered
 total return, worsened drawdown, and lowered Sharpe, so it fails promotion and
 serves as negative evidence for this simple turnover-control rule.
 
+The next source batch is `aapl-strategy-research-batch-v4`. It preserves the
+reported v3 batch and adds a rebalance-band notional target trend strategy. The
+new candidate keeps the strategy's notional sizing decision intact but does not
+resize the signed share target for small price-driven changes. It only
+rebalances after at least `5%` target drift or a true signal-side change.
+
+The v4 batch has been materialized and run append-only under:
+
+```text
+data/research/strategy-batches/aapl-strategy-research-batch-v4/
+data/research/evaluations-v4/
+data/research/reports/aapl-strategy-research-batch-v4/
+```
+
+The rebalance-band notional candidate is the strongest target-native result so
+far: total return `0.709748`, final value `170974.83`, 101 trades, max drawdown
+`-0.2087666409999036`, and Sharpe `0.767985`. It improves materially over the
+v2 declared-notional candidate but still trails the legacy momentum control, so
+it remains research evidence rather than operational authorization.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and

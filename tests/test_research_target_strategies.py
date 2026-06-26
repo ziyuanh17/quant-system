@@ -12,6 +12,8 @@ from quant.strategies import (
     HysteresisNotionalTrendStrategy,
     MeanReversionCounterweightConfig,
     MeanReversionCounterweightStrategy,
+    RebalanceBandNotionalTrendConfig,
+    RebalanceBandNotionalTrendStrategy,
     TargetNativeTrendConfig,
     TargetNativeTrendStrategy,
     VolatilityAdjustedTrendConfig,
@@ -72,6 +74,29 @@ def test_hysteresis_notional_trend_carries_until_exit_band() -> None:
     assert Decimal("10") in values
     assert Decimal("-6.666666666666667") in values
     assert values.count(Decimal("0.0")) < len(values)
+
+
+def test_rebalance_band_notional_trend_ignores_small_target_drift() -> None:
+    strategy = RebalanceBandNotionalTrendStrategy(
+        RebalanceBandNotionalTrendConfig(
+            fast_window=2,
+            slow_window=3,
+            long_target_notional=Decimal("120"),
+            short_target_notional=Decimal("-60"),
+            rebalance_threshold=Decimal("0.10"),
+        )
+    )
+
+    frame = strategy.generate_targets(
+        _prices([10, 11, 12, 12.1, 12.2, 12.3, 10, 9, 8])
+    )
+
+    values = frame.targets.tolist()
+    assert values[2] == Decimal("10")
+    assert values[3] == Decimal("10")
+    assert values[4] == Decimal("10")
+    assert values[5] == Decimal("10")
+    assert Decimal("-7.5") in values
 
 
 def test_volatility_adjusted_trend_emits_fractional_research_targets() -> None:

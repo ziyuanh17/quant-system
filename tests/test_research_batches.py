@@ -16,9 +16,11 @@ from quant.research import (
     AAPL_RESEARCH_BATCH_V1,
     AAPL_RESEARCH_BATCH_V2,
     AAPL_RESEARCH_BATCH_V3,
+    AAPL_RESEARCH_BATCH_V4,
     build_aapl_strategy_research_batch_v1,
     build_aapl_strategy_research_batch_v2,
     build_aapl_strategy_research_batch_v3,
+    build_aapl_strategy_research_batch_v4,
     build_feature_input_snapshot,
     build_validated_market_bars_input_snapshot,
     verify_research_batch_artifacts,
@@ -124,6 +126,38 @@ def test_build_aapl_strategy_research_batch_v3_adds_hysteresis() -> None:
         parameter.name == "sizing_policy"
         and parameter.value == "hysteresis_notional_v1"
         for parameter in hysteresis.parameters
+    )
+    assert batch.order_submission_authorized is False
+
+
+def test_build_aapl_strategy_research_batch_v4_adds_rebalance_band() -> None:
+    batch = build_aapl_strategy_research_batch_v4(
+        market_bars_input=_market_bars_input(),
+        feature_input=_feature_input(),
+        environment=_environment(),
+        created_at=datetime(2026, 6, 25, tzinfo=UTC),
+    )
+
+    assert batch.batch_id == AAPL_RESEARCH_BATCH_V4
+    assert tuple(candidate.candidate_id for candidate in batch.candidates) == (
+        "aapl-momentum-baseline-5-20-v1",
+        "aapl-feature-momentum-baseline-5-20-v1",
+        "aapl-target-native-trend-5-20-v1",
+        "aapl-vol-adjusted-trend-5-20-20-v1",
+        "aapl-mean-reversion-counterweight-5-20-v1",
+        "aapl-declared-notional-trend-5-20-100k-v1",
+        "aapl-hysteresis-notional-trend-5-20-100k-v1",
+        "aapl-rebalance-band-notional-trend-5-20-100k-5pct-v1",
+    )
+    rebalance_band = batch.candidates[-1]
+    assert (
+        rebalance_band.research_family_id
+        == "rebalance-band-notional-trend"
+    )
+    assert any(
+        parameter.name == "sizing_policy"
+        and parameter.value == "rebalance_band_notional_v1"
+        for parameter in rebalance_band.parameters
     )
     assert batch.order_submission_authorized is False
 

@@ -1,0 +1,16 @@
+{
+  "strategy_name": "rebalance-band-notional-trend",
+  "symbol": "AAPL",
+  "config": {
+    "initial_cash": 100000.0,
+    "fees": 0.001,
+    "frequency": "1D"
+  },
+  "metrics": {
+    "total_return": 0.7097482848871308,
+    "sharpe_ratio": 0.7679854345950435,
+    "max_drawdown": -0.2087666409999036,
+    "total_trades": 101,
+    "final_value": 170974.82848871307
+  }
+}

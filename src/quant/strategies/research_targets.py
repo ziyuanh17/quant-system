@@ -189,6 +189,93 @@ class HysteresisNotionalTrendStrategy:
         )
 
 
+class RebalanceBandNotionalTrendConfig(FrozenModel):
+    """Parameters for declared-notional targets with rebalance tolerance."""
+
+    fast_window: int = Field(default=5, ge=2)
+    slow_window: int = Field(default=20, ge=3)
+    long_target_notional: Decimal = Decimal("100000")
+    short_target_notional: Decimal = Decimal("-100000")
+    rebalance_threshold: Decimal = Decimal("0.05")
+
+    @model_validator(mode="after")
+    def validate_rebalance_band_notional_config(
+        self,
+    ) -> "RebalanceBandNotionalTrendConfig":
+        if self.fast_window >= self.slow_window:
+            raise ValueError("fast_window must be smaller than slow_window")
+        if self.long_target_notional <= 0:
+            raise ValueError("long_target_notional must be positive")
+        if self.short_target_notional >= 0:
+            raise ValueError("short_target_notional must be negative")
+        if self.rebalance_threshold < 0:
+            raise ValueError("rebalance_threshold must be non-negative")
+        return self
+
+
+class RebalanceBandNotionalTrendStrategy:
+    """Declared-notional trend strategy that tolerates small target drift."""
+
+    name = "rebalance-band-notional-trend"
+
+    def __init__(
+        self, config: RebalanceBandNotionalTrendConfig | None = None
+    ) -> None:
+        self.config = config or RebalanceBandNotionalTrendConfig()
+
+    def generate_targets(self, prices: PriceData) -> StrategyTargetFrame:
+        close = prices.close
+        fast = close.rolling(self.config.fast_window).mean()
+        slow = close.rolling(self.config.slow_window).mean()
+
+        current_target = Decimal("0")
+        targets: list[Decimal] = []
+        for price, fast_value, slow_value in zip(
+            close, fast, slow, strict=True
+        ):
+            ideal_target = self._ideal_target(price, fast_value, slow_value)
+            if (
+                _target_side(ideal_target) != _target_side(current_target)
+                or self._should_rebalance(current_target, ideal_target)
+            ):
+                current_target = ideal_target
+            targets.append(current_target)
+
+        return StrategyTargetFrame(
+            unit=TargetUnit.SHARES,
+            targets=pd.Series(targets, index=close.index, dtype=object),
+        )
+
+    def _ideal_target(
+        self,
+        price: float,
+        fast_value: float,
+        slow_value: float,
+    ) -> Decimal:
+        if pd.isna(price):
+            return Decimal("0")
+        price_decimal = Decimal(str(price))
+        if price_decimal <= 0:
+            return Decimal("0")
+        if fast_value > slow_value:
+            return self.config.long_target_notional / price_decimal
+        if fast_value < slow_value:
+            return self.config.short_target_notional / price_decimal
+        return Decimal("0")
+
+    def _should_rebalance(
+        self,
+        current_target: Decimal,
+        ideal_target: Decimal,
+    ) -> bool:
+        if current_target == ideal_target:
+            return False
+        if ideal_target == 0:
+            return current_target != 0
+        drift = abs((ideal_target - current_target) / ideal_target)
+        return drift >= self.config.rebalance_threshold
+
+
 class VolatilityAdjustedTrendConfig(FrozenModel):
     """Parameters for volatility-scaled trend targets."""
 
@@ -317,3 +404,11 @@ def _target_frame_from_float_series(values: pd.Series) -> StrategyTargetFrame:
             dtype=object,
         ),
     )
+
+
+def _target_side(value: Decimal) -> int:
+    if value > 0:
+        return 1
+    if value < 0:
+        return -1
+    return 0

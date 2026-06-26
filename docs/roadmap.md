@@ -169,11 +169,12 @@ side discussions.
 | 149 | Declared-Notional Target Candidate v1 | Done | Add a research-only v2 AAPL batch candidate whose sizing policy declares target notional exposure and resolves it to signed share targets. |
 | 150 | AAPL Declared-Notional Research Batch v2 | Done | Materialize and run the v2 AAPL batch, report declared-notional results, and keep all target-native candidates failed for promotion without operational authorization. |
 | 151 | AAPL Hysteresis-Notional Research Batch v3 | In Review | Add and run a research-only hysteresis declared-notional candidate, report the turnover-control result, and keep it failed for promotion without operational authorization. |
+| 152 | AAPL Rebalance-Band Notional Research Batch v4 | In Review | Add and run a research-only rebalance-band notional candidate, report the improved turnover result, and keep it out of operational promotion. |
 
 ## Current Recommendation
 
-Review **AAPL Hysteresis-Notional Research Batch v3**, then continue
-research-only strategy design under declared-policy sizing. Do not expose
+Review **AAPL Rebalance-Band Notional Research Batch v4**, then continue
+research-only robustness testing under declared-policy sizing. Do not expose
 launchd, runtime deployment, recurring scheduling, semantic local paper, Alpaca
 semantic targets, or broker submission as part of that work.
 

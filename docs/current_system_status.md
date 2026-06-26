@@ -431,6 +431,26 @@ versus the v2 declared-notional candidate, but only from 532 to 488 trades
 while lowering return and worsening drawdown. It fails promotion and authorizes
 no dry-run, paper, Alpaca, broker, scheduler, runtime, order, or fill path.
 
+The source now includes a fourth research-only AAPL batch definition,
+`aapl-strategy-research-batch-v4`. V4 preserves the v3 candidates and adds a
+rebalance-band notional trend candidate. This candidate keeps notional sizing
+inside the strategy but avoids resizing the signed share target until the
+current target has drifted at least `5%` from the ideal notional-derived share
+target.
+
+The v4 batch artifact is now materialized under
+`data/research/strategy-batches/aapl-strategy-research-batch-v4/`, with
+evaluations under `data/research/evaluations-v4/` and a report under
+`data/research/reports/aapl-strategy-research-batch-v4/`. The rebalance-band
+candidate returned `0.709748` with final value `170974.83`, 101 trades, max
+drawdown `-0.2087666409999036`, and Sharpe `0.767985`. It is the strongest
+target-native result so far because it materially reduces turnover and improves
+return, drawdown, and Sharpe versus the v2 declared-notional candidate.
+However, it still trails the legacy momentum control on total return and
+Sharpe, so it is promising research evidence rather than operational
+authorization. The v4 report authorizes no dry-run, paper, Alpaca, broker,
+scheduler, runtime, order, or fill path.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill

@@ -1,0 +1,16 @@
+{
+  "strategy_name": "hysteresis-notional-trend",
+  "symbol": "AAPL",
+  "config": {
+    "initial_cash": 100000.0,
+    "fees": 0.001,
+    "frequency": "1D"
+  },
+  "metrics": {
+    "total_return": 0.41856034344065607,
+    "sharpe_ratio": 0.5674677904314791,
+    "max_drawdown": -0.23307565652185935,
+    "total_trades": 488,
+    "final_value": 141856.0343440656
+  }
+}
