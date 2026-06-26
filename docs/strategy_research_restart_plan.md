@@ -186,6 +186,18 @@ candidate is research-only and treats target notional exposure as a strategy
 hyperparameter, then resolves that declared exposure into signed share targets
 for the current target-amount backtester.
 
+The v2 batch has been materialized and run append-only under:
+
+```text
+data/research/strategy-batches/aapl-strategy-research-batch-v2/
+data/research/evaluations-v2/
+data/research/reports/aapl-strategy-research-batch-v2/
+```
+
+The declared-notional candidate improves target-native return but fails
+promotion because it remains below the legacy momentum control and creates
+excessive turnover.
+
 ## Implemented Batch Contract
 
 The repository now has a source-level `ResearchBatchSpec` contract and

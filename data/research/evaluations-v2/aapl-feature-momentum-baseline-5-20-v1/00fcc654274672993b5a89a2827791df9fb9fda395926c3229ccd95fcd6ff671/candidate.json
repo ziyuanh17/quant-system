@@ -1,0 +1,60 @@
+{
+  "benchmark_name": "buy-and-hold",
+  "candidate_id": "aapl-feature-momentum-baseline-5-20-v1",
+  "dependency_lock_sha256": "5c551be95ead494d9d7f24c0a89a003bcb70b3e6865f55dd41dafb1e23f21bac",
+  "hypothesis": "A feature-backed 5/20 moving-average crossover reproduces the price momentum control while improving lineage.",
+  "hypothesis_id": "feature-moving-average-cross-v1",
+  "inputs": [
+    {
+      "availability_time_column": null,
+      "event_time_column": "date",
+      "input_id": "aapl-features-fe9895a8bc2e",
+      "kind": "features",
+      "path": "data/features/technical/AAPL.csv",
+      "point_in_time_policy": "event_time_only",
+      "schema_version": "aapl_research_inputs_v1",
+      "sha256": "fe9895a8bc2e3ec6909b49c577ddfd8c6c64427ae728577b824635a80e7d4c55"
+    }
+  ],
+  "parameters": [
+    {
+      "name": "fast_column",
+      "value": "ma_5"
+    },
+    {
+      "name": "slow_column",
+      "value": "ma_20"
+    },
+    {
+      "name": "sizing_policy",
+      "value": "legacy_signal"
+    }
+  ],
+  "promotion_criteria_version": "research_only_v1",
+  "random_seed": 7,
+  "research_family_id": "feature-momentum-baseline",
+  "simulation_scenarios": [
+    {
+      "execution_delay_bars": 0,
+      "fees": 0.001,
+      "initial_cash": 100000.0,
+      "max_participation_rate": null,
+      "name": "base",
+      "slippage_bps": 5.0
+    }
+  ],
+  "source_commit": "ae1564e",
+  "split_policy": {
+    "development_end": "2021-12-31",
+    "development_start": "2020-01-01",
+    "holdout_end": "2023-12-31",
+    "holdout_start": "2023-01-01",
+    "validation_end": "2022-12-31",
+    "validation_start": "2022-01-01"
+  },
+  "strategy_name": "feature-momentum",
+  "strategy_version": "legacy_feature_signal_v1",
+  "symbols": [
+    "AAPL"
+  ]
+}

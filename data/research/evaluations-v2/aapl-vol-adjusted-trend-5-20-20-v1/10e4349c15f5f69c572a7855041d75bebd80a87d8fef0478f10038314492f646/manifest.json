@@ -1,0 +1,26 @@
+{
+  "candidate_id": "aapl-vol-adjusted-trend-5-20-20-v1",
+  "evaluation_id": "10e4349c15f5f69c572a7855041d75bebd80a87d8fef0478f10038314492f646",
+  "immutable_artifacts": [
+    {
+      "relative_path": "candidate.json",
+      "sha256": "2d2520bd697c73e79db9f2f0b5bb726f4401e4a91a61ef78716a4ed43c6c4d17"
+    },
+    {
+      "relative_path": "environment.json",
+      "sha256": "f0497e5f04f2558bd0f5480e34464d31000bb2d283386f05d6e21adf0a739f97"
+    },
+    {
+      "relative_path": "inputs.json",
+      "sha256": "578fc0a08e0253a4197c534feade6460a24631bb29a30e10295947ab1108c6bd"
+    },
+    {
+      "relative_path": "splits.json",
+      "sha256": "a79ded85505a25a4b1d7c9011851518f3d864e9ca2ebde6a97cd15bdb75217b2"
+    },
+    {
+      "relative_path": "scenarios.json",
+      "sha256": "9e6edf59a122710d0864e499e8e11b2c86f3f29b7dd7e0ad994bc76b7556b22e"
+    }
+  ]
+}

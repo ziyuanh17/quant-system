@@ -404,6 +404,17 @@ V2 adds a declared-notional target trend candidate that keeps sizing inside the
 strategy by declaring target notional exposure and resolving that exposure to
 signed share targets from current price.
 
+The v2 batch artifact is now materialized under
+`data/research/strategy-batches/aapl-strategy-research-batch-v2/`, with
+evaluations under `data/research/evaluations-v2/` and a report under
+`data/research/reports/aapl-strategy-research-batch-v2/`. The declared-notional
+candidate returned `0.680071` with final value `168007.15`, 532 trades, max
+drawdown `-0.2111674998627756`, and Sharpe `0.744340`. It improves on the
+earlier target-native candidates but still fails promotion because it trails
+the legacy momentum control, slightly worsens drawdown, and trades too often.
+The v2 report authorizes no dry-run, paper, Alpaca, broker, scheduler,
+runtime, order, or fill path.
+
 On June 14, 2026, the command passed one local synthetic operator rehearsal.
 Running the same request twice produced one durable `would_submit` observation
 for an intended `BUY 2 AAPL` order and created no paper, order, or fill
