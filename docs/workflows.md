@@ -60,6 +60,20 @@ and does not consume activation or run any workflow. Inspection is useful
 before execution, but it is not approval and cannot guarantee that a later run
 will still be valid.
 
+The activated local semantic-paper operator boundary consumes one
+schema-versioned reviewed request artifact through
+`quant semantic-paper activated-target`. It preserves the request, verifies the
+exact passing activation-consumption rehearsal, hardcodes local paper safety,
+and writes durable local paper state plus order, fill, reconciliation,
+lifecycle, and orchestration evidence. It exits nonzero for blocked
+activation, blocked target stages, failed execution satisfaction, or failed
+reconciliation. It exposes no mode, Alpaca, scheduler, runtime, or
+broker-network selector.
+
+`quant semantic-paper inspect-activated-target` is the read-only companion
+command. It explains the intended local paper transition, writes no files, and
+does not consume activation.
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

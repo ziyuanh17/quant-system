@@ -67,7 +67,10 @@ from quant.models.execution import (
     TradingSafetyCheck,
     TradingSafetyConfig,
 )
-from quant.models.execution_lifecycle import ExecutionDryRunStatus
+from quant.models.execution_lifecycle import (
+    ExecutionDryRunStatus,
+    ExecutionPlanStatus,
+)
 from quant.models.features import TechnicalFeatureConfig
 from quant.models.ingestion import IngestRequest
 from quant.models.operations import HealthReport, HealthStatus
@@ -97,7 +100,9 @@ from quant.strategies import (
 from quant.workflows import (
     WorkflowRunFailed,
     inspect_activated_dry_run_operator_request,
+    inspect_activated_semantic_paper_operator_request,
     run_activated_dry_run_operator_request,
+    run_activated_semantic_paper_operator_request,
     run_alpaca_paper_refresh_workflow,
     run_dry_run_refresh_workflow,
     run_finite_autonomous_dry_run_loop,
@@ -119,6 +124,7 @@ safety_app = typer.Typer(no_args_is_help=True)
 dry_run_app = typer.Typer(no_args_is_help=True)
 live_app = typer.Typer(no_args_is_help=True)
 web_app = typer.Typer(no_args_is_help=True)
+semantic_paper_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
@@ -129,6 +135,7 @@ app.add_typer(safety_app, name="safety")
 app.add_typer(dry_run_app, name="dry-run")
 app.add_typer(live_app, name="live")
 app.add_typer(web_app, name="web")
+app.add_typer(semantic_paper_app, name="semantic-paper")
 
 
 @app.callback()
@@ -460,6 +467,125 @@ def dry_run_inspect_activated_target(
             f"${inspection.reference_price:.2f} "
             f"(${inspection.intended_order_notional:.2f} notional)"
         )
+    typer.echo(
+        f"Authorization valid until: {inspection.authorization_valid_until}"
+    )
+    typer.echo(
+        "Base rehearsal passed: "
+        f"{'yes' if inspection.base_rehearsal_passed else 'no'}"
+    )
+    typer.echo(
+        "Activation-consumption rehearsal passed: "
+        + (
+            "yes"
+            if inspection.activation_consumption_rehearsal_passed
+            else "no"
+        )
+    )
+    for issue in inspection.issues:
+        typer.echo(f"Blocked because: {issue}")
+    typer.echo("Inspection created no activation or execution artifacts.")
+    if not inspection.valid_now:
+        raise typer.Exit(code=1)
+
+
+@semantic_paper_app.command("activated-target")
+def semantic_paper_activated_target(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Reviewed activated local semantic-paper request."),
+    ],
+    activation_root: Annotated[
+        Path,
+        typer.Option(help="Directory for activation evidence."),
+    ] = Path("data/semantic-target/activation"),
+    output_root: Annotated[
+        Path,
+        typer.Option(help="Directory for local semantic-paper evidence."),
+    ] = Path("data/semantic-target/local-paper"),
+) -> None:
+    """Run one reviewed activated target through local semantic paper."""
+    try:
+        result = run_activated_semantic_paper_operator_request(
+            request_path=request_path,
+            activation_root=activation_root,
+            output_root=output_root,
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    activated = result.activated_workflow
+    typer.echo(f"Request: {result.request_artifact_path}")
+    typer.echo(
+        f"Activation decision: {activated.activation_evaluation.decision.value}"
+    )
+    typer.echo(
+        f"Activation consumption: "
+        f"{activated.activation_consumption.consumption_id}"
+    )
+    if activated.workflow is None:
+        typer.echo(f"Blocked: {activated.activation_consumption.reason}")
+        raise typer.Exit(code=1)
+
+    record = activated.workflow.record
+    typer.echo(f"Orchestration: {record.orchestration_id}")
+    typer.echo(f"Workflow status: {record.status.value}")
+    execution_status = (
+        record.execution_status.value if record.execution_status else "none"
+    )
+    typer.echo(f"Execution status: {execution_status}")
+    typer.echo(
+        "Reconciliation: "
+        f"{record.reconciliation_report_id or 'none'}"
+    )
+    record_path = (
+        output_root / "orchestrations" / f"{record.orchestration_id}.json"
+    )
+    typer.echo(f"Record: {record_path}")
+    if (
+        record.status != SemanticTargetWorkflowStatus.EXECUTION_COMPLETED
+        or record.execution_status != ExecutionPlanStatus.SATISFIED
+    ):
+        raise typer.Exit(code=1)
+
+
+@semantic_paper_app.command("inspect-activated-target")
+def semantic_paper_inspect_activated_target(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Activated local semantic-paper request to inspect."),
+    ],
+) -> None:
+    """Explain and validate a local semantic-paper request without writing."""
+    try:
+        inspection = inspect_activated_semantic_paper_operator_request(
+            request_path
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {inspection.request_id}")
+    typer.echo(f"Valid now: {'yes' if inspection.valid_now else 'no'}")
+    typer.echo(f"Summary: {inspection.summary}")
+    if inspection.symbol is not None:
+        typer.echo(f"Symbol: {inspection.symbol}")
+    if inspection.current_quantity is not None:
+        typer.echo(f"Current position: {inspection.current_quantity} shares")
+    if inspection.approved_target_quantity is not None:
+        typer.echo(
+            f"Approved target: {inspection.approved_target_quantity} shares"
+        )
+    if inspection.intended_order_side is None:
+        typer.echo("Intended order: none")
+    else:
+        typer.echo(
+            "Intended order: "
+            f"{inspection.intended_order_side.value.upper()} "
+            f"{inspection.intended_order_quantity} shares at reference price "
+            f"${inspection.reference_price:.2f} "
+            f"(${inspection.intended_order_notional:.2f} notional)"
+        )
+    typer.echo(f"Initial cash: {inspection.initial_cash:,.2f}")
     typer.echo(
         f"Authorization valid until: {inspection.authorization_valid_until}"
     )

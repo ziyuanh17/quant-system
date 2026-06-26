@@ -2,9 +2,9 @@
 
 This runbook documents current CLI operations. The CLI commands below are the
 legacy signal-oriented lane unless stated otherwise. Semantic-target execution
-remains library/API driven except for the bounded dry-run commands documented
-below. No semantic-target command reaches local paper, Alpaca, or a recurring
-scheduler. See
+remains library/API driven except for the bounded dry-run and local
+semantic-paper commands documented below. No semantic-target command reaches
+Alpaca or a recurring scheduler. See
 [current_system_status.md](current_system_status.md).
 
 ## Supervised Provider Dry-Run
@@ -21,6 +21,28 @@ The command has no paper, Alpaca, broker, scheduler, runtime, mode, or
 cycle-count selector. See
 [supervised_provider_operator.md](supervised_provider_operator.md) and its
 [actual-command rehearsal](supervised_provider_operator_rehearsal.md).
+
+## Local Semantic Paper
+
+Run one reviewed activated semantic-target request through durable local paper:
+
+```bash
+quant semantic-paper activated-target \
+  --request-path reviewed/activated-semantic-paper-request.json
+```
+
+The command is local-only. It consumes one reviewed request artifact, hardcodes
+local semantic-paper safety, writes durable paper state, order, fill,
+reconciliation, lifecycle, and orchestration evidence, and exits nonzero if
+activation, targets, risk, execution, or reconciliation block. It has no mode,
+Alpaca, scheduler, runtime, or broker-network selector.
+
+Inspect the same request without writing files or consuming activation:
+
+```bash
+quant semantic-paper inspect-activated-target \
+  --request-path reviewed/activated-semantic-paper-request.json
+```
 
 Run an exact finite list of independently fresh supervised-provider requests:
 

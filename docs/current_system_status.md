@@ -463,6 +463,16 @@ explanation, left all 137 prerequisite files hash-identical, created no
 operator activation or output directory, and consumed no activation. See
 [activated_dry_run_request_inspection_rehearsal.md](activated_dry_run_request_inspection_rehearsal.md).
 
+The source now exposes a bounded local semantic-paper operator boundary through
+`quant semantic-paper activated-target`. The command consumes one reviewed
+activated request artifact, verifies activation-consumption rehearsal evidence,
+hardcodes local paper safety, and writes durable semantic-paper state, order,
+fill, reconciliation, lifecycle, and orchestration evidence. It is intended as
+the P0 infrastructure canary path for translated strategy targets. It exposes
+no Alpaca, scheduler, runtime, mode, or broker-network selector. The companion
+`quant semantic-paper inspect-activated-target` command explains the request
+without writing files or consuming activation.
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

@@ -170,13 +170,14 @@ side discussions.
 | 150 | AAPL Declared-Notional Research Batch v2 | Done | Materialize and run the v2 AAPL batch, report declared-notional results, and keep all target-native candidates failed for promotion without operational authorization. |
 | 151 | AAPL Hysteresis-Notional Research Batch v3 | In Review | Add and run a research-only hysteresis declared-notional candidate, report the turnover-control result, and keep it failed for promotion without operational authorization. |
 | 152 | AAPL Rebalance-Band Notional Research Batch v4 | In Review | Add and run a research-only rebalance-band notional candidate, report the improved turnover result, and keep it out of operational promotion. |
+| 153 | Activated Local Semantic-Paper Operator Boundary v1 | In Review | Expose one reviewed-request CLI command hardcoded to durable local semantic paper, with restart-safe satisfaction evidence and no Alpaca, scheduler, runtime, or broker-network capability. |
 
 ## Current Recommendation
 
-Review **AAPL Rebalance-Band Notional Research Batch v4**, then continue
-research-only robustness testing under declared-policy sizing. Do not expose
-launchd, runtime deployment, recurring scheduling, semantic local paper, Alpaca
-semantic targets, or broker submission as part of that work.
+Review **Activated Local Semantic-Paper Operator Boundary v1**, then run one
+local synthetic canary request using translated momentum-style target evidence.
+Do not expose launchd, runtime deployment, recurring scheduling, Alpaca
+semantic targets, or broker-network submission as part of that work.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed
