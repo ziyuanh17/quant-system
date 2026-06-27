@@ -107,6 +107,12 @@ requests, run local paper, load launchd, use credentials, contact Alpaca, or
 touch broker-network paths. See
 [semantic_paper_runtime_copy_rehearsal_design.md](semantic_paper_runtime_copy_rehearsal_design.md).
 
+The runtime-clone import/help-only rehearsal passed. The clean runtime clone
+fast-forwarded to reviewed source `2614ebc`, package import succeeded, and
+semantic-paper CLI help displayed without creating semantic-target outputs,
+local-paper outputs, scheduler outputs, orders, fills, or working-tree changes.
+See [semantic_paper_runtime_copy_rehearsal.md](semantic_paper_runtime_copy_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

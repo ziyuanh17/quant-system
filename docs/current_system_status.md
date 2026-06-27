@@ -512,6 +512,14 @@ generating requests, running local semantic paper, loading launchd, using
 credentials, contacting Alpaca, or touching broker-network paths. See
 [semantic_paper_runtime_copy_rehearsal_design.md](semantic_paper_runtime_copy_rehearsal_design.md).
 
+On June 26, 2026, that runtime-clone import/help-only rehearsal passed. The
+clean runtime clone fast-forwarded from `56b45cc` to reviewed source `2614ebc`.
+With bytecode writing disabled, package import and semantic-paper CLI help
+succeeded. The runtime clone stayed clean, `data/semantic-target` remained
+absent, no request generation or local semantic-paper command was run, and no
+new `__pycache__` directories were created. See
+[semantic_paper_runtime_copy_rehearsal.md](semantic_paper_runtime_copy_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
