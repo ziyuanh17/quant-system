@@ -196,6 +196,12 @@ checks remained absent, and runtime directory counts were unchanged around a
 help-only pass. See
 [semantic_target_alpaca_paper_runtime_rehearsal.md](semantic_target_alpaca_paper_runtime_rehearsal.md).
 
+The next semantic-target promotion design is an Alpaca paper request preparer.
+It would consume a reviewed local semantic-paper request, generate the
+portfolio/risk target artifacts needed by the Alpaca paper command, and write
+one reviewed request without broker access. See
+[semantic_target_alpaca_paper_request_preparation_design.md](semantic_target_alpaca_paper_request_preparation_design.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

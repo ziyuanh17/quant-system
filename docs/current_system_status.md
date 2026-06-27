@@ -615,6 +615,13 @@ runtime directory counts were unchanged around the help-only check. No Alpaca
 API call was made and no order-capable command was run. See
 [semantic_target_alpaca_paper_runtime_rehearsal.md](semantic_target_alpaca_paper_runtime_rehearsal.md).
 
+The next reviewed design is an Alpaca paper request preparer. It will consume
+an existing reviewed local semantic-paper request, deterministically materialize
+the portfolio and risk targets, and write one
+`SemanticTargetAlpacaPaperOperatorRequest` without sourcing credentials,
+contacting Alpaca, inspecting paper account state, or submitting orders. See
+[semantic_target_alpaca_paper_request_preparation_design.md](semantic_target_alpaca_paper_request_preparation_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
