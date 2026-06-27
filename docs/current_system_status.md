@@ -94,8 +94,10 @@ Checked-in semantic-target capabilities include:
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
   final operational risk checks, and recovery by deterministic client order ID.
 
-All semantic-target orchestration and Alpaca paths are API capabilities only.
-They are not exposed by the CLI, recurring scheduler, launchd wrapper, or
+Most semantic-target orchestration remains API-only. The reviewed CLI
+surfaces are limited to the documented dry-run, local semantic-paper, fake
+Alpaca paper rehearsal, and one-request Alpaca paper commands. No
+semantic-target path is exposed by the recurring scheduler, launchd wrapper, or
 runtime service.
 
 Activation gate v1 can evaluate authorization only for semantic dry-run and
@@ -589,20 +591,20 @@ restart reuse. It does not source credentials, contact Alpaca, load launchd, or
 submit broker-network orders. See
 [semantic_target_alpaca_paper_fake_cli.md](semantic_target_alpaca_paper_fake_cli.md).
 
-The next reviewed design is a one-request real Alpaca paper CLI command. The
-proposed command would consume one reviewed semantic-target request, verify
-all local artifacts before creating an Alpaca paper client, submit only the
-approved paper target delta when all gates pass, and write request-scoped
-evidence. It still excludes launchd, recurring scheduling, market-data
-research through Alpaca, non-paper Alpaca behavior, real-money trading, and
-automatic drift repair. See
-[semantic_target_alpaca_paper_cli_design.md](semantic_target_alpaca_paper_cli_design.md).
+The source now includes `quant semantic-target alpaca-paper`. The command
+consumes one reviewed semantic-target request, requires `--from-env`, verifies
+local artifacts and expiry before broker use, preserves the request under the
+request-scoped output root, and delegates to the restart-safe Alpaca paper
+executor. Source tests inject a fake paper broker client and prove one durable
+order, one fill, passing reconciliation, and satisfied execution. This stage
+made no real Alpaca API call and did not modify the runtime clone. See
+[semantic_target_alpaca_paper_cli.md](semantic_target_alpaca_paper_cli.md).
 
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
-- Broker-connected order submission requires the relevant safety gates and
-  explicit human approval immediately before an order-capable operation.
+- Broker-connected order submission requires the relevant safety gates and a
+  reviewed request immediately before an order-capable operation.
 - Semantic-target Alpaca submission additionally requires
   `alpaca_submission_enabled=True`.
 - Working orders block semantic-target execution.

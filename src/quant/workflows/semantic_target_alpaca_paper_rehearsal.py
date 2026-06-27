@@ -14,7 +14,9 @@ from quant.execution import (
     DETECT_ONLY_DRIFT_POLICY,
     LIVE_TRADING_CONFIRMATION,
     SINGLE_MARKET_ORDER_POLICY,
+    AlpacaSemanticTargetRunResult,
     FakeLiveBrokerClient,
+    LiveBrokerClient,
     run_alpaca_semantic_target_paper,
 )
 from quant.models.execution import (
@@ -33,7 +35,9 @@ from quant.models.operator import (
 from quant.models.targets import (
     ContributorSet,
     ContributorSpec,
+    PortfolioTargetDecision,
     ResearchRiskPolicy,
+    RiskTargetDecision,
     StrategyTargetDecision,
     TargetDeclaredStatus,
     TargetUnit,
@@ -74,6 +78,71 @@ def load_semantic_target_alpaca_paper_operator_request(
     """Load and validate one reviewed Alpaca paper operator request."""
     return SemanticTargetAlpacaPaperOperatorRequest.model_validate_json(
         path.read_text()
+    )
+
+
+def run_semantic_target_alpaca_paper_operator_request(
+    *,
+    request_path: Path,
+    broker_client: LiveBrokerClient,
+    evaluated_at: datetime | None = None,
+) -> AlpacaSemanticTargetRunResult:
+    """Run one reviewed semantic-target request against Alpaca paper."""
+    current_time = evaluated_at or datetime.now(UTC)
+    request = load_semantic_target_alpaca_paper_operator_request(request_path)
+    if current_time > request.valid_until:
+        raise ValueError("alpaca paper request is expired")
+    _verify_request_hashes(request)
+
+    contributor_set = load_contributor_set(Path(request.contributor_set_path))
+    decisions = tuple(
+        load_strategy_target_decision(Path(path))
+        for path in request.strategy_decision_paths
+    )
+    portfolio_target = load_portfolio_target_decision(
+        Path(request.portfolio_target_path)
+    )
+    risk_target = load_risk_target_decision(Path(request.risk_target_path))
+    _verify_request_scope(
+        request=request,
+        contributor_set=contributor_set,
+        portfolio_target=portfolio_target,
+        risk_target=risk_target,
+    )
+
+    output_root = Path(request.output_root)
+    preserved_request_path = _preserve_request(
+        request_path=request_path,
+        output_root=output_root,
+        request_id=request.request_id,
+    )
+    evidence_refs = tuple(
+        dict.fromkeys(
+            (
+                str(request_path),
+                str(preserved_request_path),
+                *request.evidence_refs,
+            )
+        )
+    )
+    return run_alpaca_semantic_target_paper(
+        risk_target=risk_target,
+        portfolio_target=portfolio_target,
+        contributor_set=contributor_set,
+        strategy_decisions=decisions,
+        risk_policy=request.risk_policy,
+        policy=request.execution_policy,
+        reference_price=request.reference_price,
+        safety_config=request.safety_config,
+        broker_client=broker_client,
+        artifact_root=output_root / "lifecycle",
+        order_output_dir=output_root / "orders",
+        fill_output_dir=output_root / "fills",
+        snapshot_output_dir=output_root / "snapshots",
+        reconciliation_output_dir=output_root / "reconciliations",
+        evaluated_at=current_time,
+        alpaca_submission_enabled=request.alpaca_submission_enabled,
+        evidence_refs=evidence_refs,
     )
 
 
@@ -330,6 +399,7 @@ def _request_for_source(
         ),
         output_root=str(output_root),
         evaluated_at=evaluated_at,
+        valid_until=evaluated_at + timedelta(minutes=30),
         alpaca_submission_enabled=True,
         allowed_symbol="AAPL",
         allowed_max_quantity=Decimal("2"),
@@ -353,6 +423,47 @@ def _verify_request_hashes(
         Path(request.portfolio_target_path), request.portfolio_target_sha256
     )
     _require_hash(Path(request.risk_target_path), request.risk_target_sha256)
+
+
+def _verify_request_scope(
+    *,
+    request: SemanticTargetAlpacaPaperOperatorRequest,
+    contributor_set: ContributorSet,
+    portfolio_target: PortfolioTargetDecision,
+    risk_target: RiskTargetDecision,
+) -> None:
+    if contributor_set.symbol != request.allowed_symbol:
+        raise ValueError("contributor set symbol is outside request scope")
+    if portfolio_target.symbol != request.allowed_symbol:
+        raise ValueError("portfolio target symbol is outside request scope")
+    if risk_target.symbol != request.allowed_symbol:
+        raise ValueError("risk target symbol is outside request scope")
+    if risk_target.approved_target_value is None:
+        raise ValueError("alpaca paper request requires approved risk target")
+    if risk_target.approved_target_value != (
+        risk_target.approved_target_value.to_integral_value()
+    ):
+        raise ValueError("alpaca paper request requires whole-share target")
+    if abs(risk_target.approved_target_value) > request.allowed_max_quantity:
+        raise ValueError("risk target quantity exceeds request maximum")
+
+
+def _preserve_request(
+    *, request_path: Path, output_root: Path, request_id: str
+) -> Path:
+    destination = output_root / "requests" / f"{request_id}.json"
+    payload = request_path.read_bytes()
+    if destination.exists():
+        if destination.read_bytes() != payload:
+            raise FileExistsError(
+                f"conflicting preserved request exists: {destination}"
+            )
+        return destination
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    with os.fdopen(os.open(destination, flags, 0o644), "wb") as handle:
+        handle.write(payload)
+    return destination
 
 
 def _evidence_paths(output_root: Path) -> tuple[Path, ...]:

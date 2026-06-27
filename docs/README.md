@@ -42,6 +42,9 @@ Start with these current, canonical documents:
   evidence for the fake-client CLI boundary for semantic-target Alpaca paper.
 - [semantic_target_alpaca_paper_cli_design.md](semantic_target_alpaca_paper_cli_design.md):
   design for the future one-request real Alpaca paper CLI command.
+- [semantic_target_alpaca_paper_cli.md](semantic_target_alpaca_paper_cli.md):
+  source evidence for the one-request semantic-target Alpaca paper CLI command
+  verified with an injected fake paper client.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

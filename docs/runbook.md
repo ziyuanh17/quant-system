@@ -391,13 +391,28 @@ the paper account was created.
 9. Re-run with the smallest dataset that reproduces the issue.
 10. Add a regression test before changing core accounting or signal behavior.
 
+## Semantic-Target Alpaca Paper
+
+Run one reviewed semantic-target request against Alpaca paper:
+
+```bash
+quant semantic-target alpaca-paper \
+  --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json \
+  --from-env
+```
+
+This command is broker-connected and may submit one Alpaca paper order when
+all request, safety, target, lifecycle, and reconciliation gates pass. Use it
+only with a reviewed request and paper credentials in the environment. It does
+not expose local-paper, dry-run, real-money, scheduler, launchd, or mode
+selection.
+
 ## Semantic-Target Review
 
 Semantic-target dry-run and local semantic paper have dedicated reviewed CLI
 commands documented above. Semantic-target Alpaca paper currently has a
-fake-client rehearsal command and a design for a future real paper command;
-there is no reviewed real Alpaca paper CLI command yet. Review semantic-target
-artifacts under the configured execution root:
+fake-client rehearsal command and the one-request paper command documented
+above. Review semantic-target artifacts under the configured execution root:
 
 ```text
 plans/

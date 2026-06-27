@@ -113,6 +113,7 @@ from quant.workflows import (
     run_finite_supervised_provider_loop,
     run_paper_signal_refresh_workflow,
     run_semantic_target_alpaca_paper_fake_rehearsal,
+    run_semantic_target_alpaca_paper_operator_request,
     run_supervised_provider_discovery_loop_operator_request,
     run_supervised_provider_discovery_operator_request,
     run_supervised_provider_operator_request,
@@ -734,6 +735,50 @@ def semantic_target_alpaca_paper_fake_rehearsal(
     typer.echo(f"Reconciliations: {verified.reconciliation_report_count}")
     typer.echo(f"Evidence files: {len(verified.evidence_paths)}")
     if not verified.passed:
+        raise typer.Exit(code=1)
+
+
+@semantic_target_app.command("alpaca-paper")
+def semantic_target_alpaca_paper(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Reviewed Alpaca paper request JSON to run once."),
+    ],
+    from_env: Annotated[
+        bool,
+        typer.Option(help="Load Alpaca paper credentials from QUANT_* env."),
+    ] = False,
+) -> None:
+    """Run one reviewed semantic-target request against Alpaca paper."""
+    if not from_env:
+        raise typer.BadParameter(
+            "--from-env is required for Alpaca paper credentials"
+        )
+    try:
+        config = _load_alpaca_paper_config_from_env()
+        result = run_semantic_target_alpaca_paper_operator_request(
+            request_path=request_path,
+            broker_client=AlpacaPaperBrokerClient(config=config),
+            evaluated_at=datetime.now(UTC),
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Execution plan: {result.plan.execution_plan_id}")
+    typer.echo(f"Status: {result.status.value}")
+    if result.plan.order_request is None:
+        typer.echo("Order: none")
+    else:
+        order = result.plan.order_request
+        typer.echo(
+            f"Order: {order.side.value} {order.quantity} {order.symbol}"
+        )
+    if result.reconciliation is None:
+        typer.echo("Reconciliation: not written")
+    else:
+        typer.echo(f"Reconciliation: {result.reconciliation.status.value}")
+        typer.echo(f"Differences: {len(result.reconciliation.differences)}")
+    if result.status != ExecutionPlanStatus.SATISFIED:
         raise typer.Exit(code=1)
 
 

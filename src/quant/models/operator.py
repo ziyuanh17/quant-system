@@ -136,6 +136,7 @@ class SemanticTargetAlpacaPaperOperatorRequest(FrozenModel):
     safety_config: TradingSafetyConfig
     output_root: str = Field(min_length=1)
     evaluated_at: AwareDatetime
+    valid_until: AwareDatetime
     alpaca_submission_enabled: Literal[True] = True
     allowed_symbol: str = Field(min_length=1)
     allowed_max_quantity: Decimal = Field(gt=0)
@@ -175,6 +176,8 @@ class SemanticTargetAlpacaPaperOperatorRequest(FrozenModel):
             raise ValueError(
                 "alpaca paper request requires enabled safety gate"
             )
+        if self.valid_until <= self.evaluated_at:
+            raise ValueError("alpaca paper request must expire after review")
         return self
 
 

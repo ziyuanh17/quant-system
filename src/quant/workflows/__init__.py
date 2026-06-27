@@ -80,6 +80,7 @@ from quant.workflows.semantic_target_alpaca_paper_rehearsal import (
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
     load_semantic_target_alpaca_paper_operator_request,
     run_semantic_target_alpaca_paper_fake_rehearsal,
+    run_semantic_target_alpaca_paper_operator_request,
     write_semantic_target_alpaca_paper_operator_request,
 )
 from quant.workflows.semantic_target_rehearsal import (
@@ -234,6 +235,7 @@ __all__ = [
     "SEMANTIC_TARGET_ALPACA_PAPER_REHEARSAL_POLICY",
     "load_and_verify_semantic_target_alpaca_paper_rehearsal",
     "load_semantic_target_alpaca_paper_operator_request",
+    "run_semantic_target_alpaca_paper_operator_request",
     "run_semantic_target_alpaca_paper_fake_rehearsal",
     "write_semantic_target_alpaca_paper_operator_request",
     "SemanticTargetWorkflowResult",

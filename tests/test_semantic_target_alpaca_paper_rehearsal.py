@@ -105,6 +105,7 @@ def test_alpaca_paper_request_requires_alpaca_paper_safety() -> None:
             ),
             output_root="output",
             evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+            valid_until=datetime(2026, 6, 26, 12, 30, tzinfo=UTC),
             alpaca_submission_enabled=True,
             allowed_symbol="AAPL",
             allowed_max_quantity=Decimal("2"),

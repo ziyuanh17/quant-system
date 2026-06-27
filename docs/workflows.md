@@ -175,14 +175,12 @@ proving one order, one fill, one reconciliation, final `AAPL +2`, and restart
 reuse without real Alpaca calls. See
 [semantic_target_alpaca_paper_fake_cli.md](semantic_target_alpaca_paper_fake_cli.md).
 
-The next semantic-target promotion design is a one-request real Alpaca paper
-CLI command. The proposed command would consume one reviewed request, verify
-all local artifacts before creating an Alpaca paper client, allow only the
-paper API calls needed for that request, and write request-scoped evidence. It
-would still exclude launchd, recurring scheduling, market-data research through
-Alpaca, non-paper Alpaca behavior, real-money trading, and automatic drift
-repair. See
-[semantic_target_alpaca_paper_cli_design.md](semantic_target_alpaca_paper_cli_design.md).
+The one-request real Alpaca paper CLI command is implemented in source as
+`quant semantic-target alpaca-paper`. It consumes one reviewed request, requires
+`--from-env`, verifies local artifacts before broker use, and writes
+request-scoped evidence through the existing restart-safe executor. The source
+stage was verified only with an injected fake paper client; no real Alpaca API
+call was made. See [semantic_target_alpaca_paper_cli.md](semantic_target_alpaca_paper_cli.md).
 
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
