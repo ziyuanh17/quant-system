@@ -1,6 +1,7 @@
 """Command-line interface for quant-system operations and research workflows."""
 
 import os
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated
@@ -102,6 +103,7 @@ from quant.workflows import (
     WorkflowRunFailed,
     inspect_activated_dry_run_operator_request,
     inspect_activated_semantic_paper_operator_request,
+    load_and_verify_semantic_target_alpaca_paper_rehearsal,
     prepare_momentum_semantic_paper_request,
     run_activated_dry_run_operator_request,
     run_activated_semantic_paper_operator_request,
@@ -110,6 +112,7 @@ from quant.workflows import (
     run_finite_autonomous_dry_run_loop,
     run_finite_supervised_provider_loop,
     run_paper_signal_refresh_workflow,
+    run_semantic_target_alpaca_paper_fake_rehearsal,
     run_supervised_provider_discovery_loop_operator_request,
     run_supervised_provider_discovery_operator_request,
     run_supervised_provider_operator_request,
@@ -127,6 +130,7 @@ dry_run_app = typer.Typer(no_args_is_help=True)
 live_app = typer.Typer(no_args_is_help=True)
 web_app = typer.Typer(no_args_is_help=True)
 semantic_paper_app = typer.Typer(no_args_is_help=True)
+semantic_target_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(paper_app, name="paper")
@@ -138,6 +142,7 @@ app.add_typer(dry_run_app, name="dry-run")
 app.add_typer(live_app, name="live")
 app.add_typer(web_app, name="web")
 app.add_typer(semantic_paper_app, name="semantic-paper")
+app.add_typer(semantic_target_app, name="semantic-target")
 
 
 @app.callback()
@@ -690,6 +695,45 @@ def semantic_paper_inspect_activated_target(
         typer.echo(f"Blocked because: {issue}")
     typer.echo("Inspection created no activation or execution artifacts.")
     if not inspection.valid_now:
+        raise typer.Exit(code=1)
+
+
+@semantic_target_app.command("alpaca-paper-fake-rehearsal")
+def semantic_target_alpaca_paper_fake_rehearsal(
+    rehearsal_id: Annotated[
+        str,
+        typer.Option(help="Safe ID for the fake Alpaca paper rehearsal."),
+    ] = "semantic-target-alpaca-paper-fake",
+    output_root: Annotated[
+        Path,
+        typer.Option(help="Directory for fake-client rehearsal evidence."),
+    ] = Path("data/semantic-target/alpaca-paper-fake-rehearsal"),
+) -> None:
+    """Run one fake-client semantic-target Alpaca paper rehearsal."""
+    try:
+        run_semantic_target_alpaca_paper_fake_rehearsal(
+            rehearsal_id=rehearsal_id,
+            output_root=output_root,
+            evaluated_at=datetime.now(UTC),
+        )
+        report_path = output_root / "reports" / f"{rehearsal_id}.json"
+        verified = load_and_verify_semantic_target_alpaca_paper_rehearsal(
+            report_path
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Report: {report_path}")
+    typer.echo(f"Passed: {'yes' if verified.passed else 'no'}")
+    typer.echo(f"First status: {verified.first_status.value}")
+    typer.echo(f"Second status: {verified.second_status.value}")
+    typer.echo(f"Execution plan: {verified.execution_plan_id}")
+    typer.echo(f"Orders: {verified.order_count}")
+    typer.echo(f"Fills: {verified.fill_count}")
+    typer.echo(f"Final position: {verified.final_position_quantity}")
+    typer.echo(f"Reconciliations: {verified.reconciliation_report_count}")
+    typer.echo(f"Evidence files: {len(verified.evidence_paths)}")
+    if not verified.passed:
         raise typer.Exit(code=1)
 
 

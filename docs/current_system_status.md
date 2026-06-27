@@ -581,6 +581,14 @@ recurring scheduling, market-data research through Alpaca, non-paper Alpaca
 behavior, real-money trading, and automatic drift repair. See
 [semantic_target_alpaca_paper_manual_runbook_design.md](semantic_target_alpaca_paper_manual_runbook_design.md).
 
+The CLI now includes `quant semantic-target alpaca-paper-fake-rehearsal`. The
+command runs the reviewed request model and existing Alpaca paper execution
+path through `FakeLiveBrokerClient`, writes verified evidence, and reports one
+durable order, one fill, one reconciliation, final position `AAPL +2`, and
+restart reuse. It does not source credentials, contact Alpaca, load launchd, or
+submit broker-network orders. See
+[semantic_target_alpaca_paper_fake_cli.md](semantic_target_alpaca_paper_fake_cli.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

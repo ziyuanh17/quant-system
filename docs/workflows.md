@@ -167,6 +167,13 @@ market-data research through Alpaca, non-paper Alpaca behavior, real-money
 trading, and automatic drift repair. See
 [semantic_target_alpaca_paper_manual_runbook_design.md](semantic_target_alpaca_paper_manual_runbook_design.md).
 
+The fake-client CLI boundary for semantic-target Alpaca paper passed. The
+command `quant semantic-target alpaca-paper-fake-rehearsal` exercises the
+reviewed request model and Alpaca paper execution path through a fake client,
+proving one order, one fill, one reconciliation, final `AAPL +2`, and restart
+reuse without real Alpaca calls. See
+[semantic_target_alpaca_paper_fake_cli.md](semantic_target_alpaca_paper_fake_cli.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
