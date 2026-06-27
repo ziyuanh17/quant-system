@@ -12,8 +12,17 @@ from quant.models.autonomous import (
     SupervisedDryRunServiceStatus,
 )
 from quant.models.base import FrozenModel
-from quant.models.execution import LiveAccountSnapshot, OrderSide, Position
-from quant.models.execution_lifecycle import ExecutionLifecyclePolicy
+from quant.models.execution import (
+    LiveAccountSnapshot,
+    OrderSide,
+    Position,
+    TradingMode,
+    TradingSafetyConfig,
+)
+from quant.models.execution_lifecycle import (
+    ExecutionLifecyclePolicy,
+    ExecutionPlanStatus,
+)
 from quant.models.targets import ResearchRiskPolicy
 
 
@@ -106,6 +115,94 @@ class ActivatedSemanticPaperOperatorRequest(FrozenModel):
         if len(set(paths)) != len(paths):
             raise ValueError("operator request artifact paths must be unique")
         return paths
+
+
+class SemanticTargetAlpacaPaperOperatorRequest(FrozenModel):
+    """Immutable reviewed request for one semantic-target Alpaca paper test."""
+
+    schema_version: Literal[1] = 1
+    request_id: str = Field(min_length=1)
+    contributor_set_path: str = Field(min_length=1)
+    contributor_set_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    strategy_decision_paths: tuple[str, ...] = Field(min_length=1)
+    strategy_decision_sha256s: tuple[str, ...] = Field(min_length=1)
+    portfolio_target_path: str = Field(min_length=1)
+    portfolio_target_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    risk_target_path: str = Field(min_length=1)
+    risk_target_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    risk_policy: ResearchRiskPolicy
+    execution_policy: ExecutionLifecyclePolicy
+    reference_price: float = Field(gt=0)
+    safety_config: TradingSafetyConfig
+    output_root: str = Field(min_length=1)
+    evaluated_at: AwareDatetime
+    alpaca_submission_enabled: Literal[True] = True
+    allowed_symbol: str = Field(min_length=1)
+    allowed_max_quantity: Decimal = Field(gt=0)
+    evidence_refs: tuple[str, ...] = ()
+
+    @field_validator("request_id")
+    @classmethod
+    def request_id_must_be_safe_path_component(cls, value: str) -> str:
+        if value in {".", ".."} or "/" in value or "\\" in value:
+            raise ValueError("alpaca paper request ID must be safe")
+        return value
+
+    @field_validator("strategy_decision_paths")
+    @classmethod
+    def strategy_paths_must_be_unique(
+        cls, paths: tuple[str, ...]
+    ) -> tuple[str, ...]:
+        if len(set(paths)) != len(paths):
+            raise ValueError("strategy decision paths must be unique")
+        return paths
+
+    @model_validator(mode="after")
+    def validate_alpaca_paper_boundary(self):
+        if len(self.strategy_decision_paths) != len(
+            self.strategy_decision_sha256s
+        ):
+            raise ValueError(
+                "strategy decision paths and hashes must have same length"
+            )
+        if self.safety_config.mode != TradingMode.LIVE:
+            raise ValueError("alpaca paper request requires live-shaped mode")
+        if self.safety_config.broker_name != "alpaca-paper":
+            raise ValueError(
+                "alpaca paper request requires alpaca-paper broker"
+            )
+        if not self.safety_config.live_trading_enabled:
+            raise ValueError(
+                "alpaca paper request requires enabled safety gate"
+            )
+        return self
+
+
+class SemanticTargetAlpacaPaperRehearsalReport(FrozenModel):
+    """Immutable fake-client rehearsal evidence for Alpaca paper requests."""
+
+    schema_version: Literal[1] = 1
+    rehearsal_id: str = Field(min_length=1)
+    request_path: str = Field(min_length=1)
+    request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    passed: bool
+    first_status: ExecutionPlanStatus
+    second_status: ExecutionPlanStatus
+    execution_plan_id: str = Field(min_length=1)
+    order_count: int = Field(ge=0)
+    fill_count: int = Field(ge=0)
+    final_position_quantity: Decimal
+    reconciliation_report_count: int = Field(ge=0)
+    evidence_paths: tuple[str, ...] = ()
+    evidence_sha256s: tuple[str, ...] = ()
+    prohibited_api_calls: tuple[str, ...] = ()
+    completed_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def evidence_paths_and_hashes_must_match(self):
+        if len(self.evidence_paths) != len(self.evidence_sha256s):
+            raise ValueError("evidence paths and hashes must have same length")
+        return self
 
 
 class ActivatedDryRunRequestInspection(FrozenModel):

@@ -565,6 +565,14 @@ launchd, recurring scheduling, market-data research through Alpaca, non-paper
 Alpaca behavior, real-money trading, and automatic drift repair. See
 [semantic_target_alpaca_paper_testing_boundary.md](semantic_target_alpaca_paper_testing_boundary.md).
 
+The source now includes a reviewed semantic-target Alpaca paper request model
+and fake-client rehearsal. The rehearsal writes reviewed target artifacts and a
+schema-versioned request, verifies content hashes, runs the existing
+`run_alpaca_semantic_target_paper` path twice through `FakeLiveBrokerClient`,
+and confirms one durable order, one fill, one reconciliation report, final
+position `AAPL +2`, and no duplicate submission on restart. See
+[semantic_target_alpaca_paper_fake_rehearsal.md](semantic_target_alpaca_paper_fake_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

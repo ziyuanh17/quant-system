@@ -75,6 +75,13 @@ from quant.workflows.semantic_target_activation import (
     rehearsal_report_sha256,
     write_semantic_target_activation_authorization,
 )
+from quant.workflows.semantic_target_alpaca_paper_rehearsal import (
+    SEMANTIC_TARGET_ALPACA_PAPER_REHEARSAL_POLICY,
+    load_and_verify_semantic_target_alpaca_paper_rehearsal,
+    load_semantic_target_alpaca_paper_operator_request,
+    run_semantic_target_alpaca_paper_fake_rehearsal,
+    write_semantic_target_alpaca_paper_operator_request,
+)
 from quant.workflows.semantic_target_rehearsal import (
     SEMANTIC_TARGET_REHEARSAL_POLICY,
     load_and_verify_semantic_target_rehearsal,
@@ -224,6 +231,11 @@ __all__ = [
     "load_semantic_target_activation_evaluation",
     "rehearsal_report_sha256",
     "write_semantic_target_activation_authorization",
+    "SEMANTIC_TARGET_ALPACA_PAPER_REHEARSAL_POLICY",
+    "load_and_verify_semantic_target_alpaca_paper_rehearsal",
+    "load_semantic_target_alpaca_paper_operator_request",
+    "run_semantic_target_alpaca_paper_fake_rehearsal",
+    "write_semantic_target_alpaca_paper_operator_request",
     "SemanticTargetWorkflowResult",
     "MomentumSemanticPaperRequestBundle",
     "prepare_momentum_semantic_paper_request",
