@@ -174,15 +174,16 @@ side discussions.
 | 154 | Activated Local Semantic-Paper Canary Rehearsal v1 | Done | Run one synthetic translated-momentum request through the actual local semantic-paper CLI twice, proving satisfied execution and no duplicate local paper order or fill. |
 | 155 | Momentum Semantic-Paper Request Generator v1 | Done | Add a local-only CLI generator that validates market data, translates the latest legacy momentum signal into a reviewed semantic-paper request bundle, and does not execute it. |
 | 156 | Momentum Semantic-Paper Request Rehearsal v1 | Done | Run one generated request from local AAPL market data through inspection and local semantic paper twice, proving satisfied restart behavior without Alpaca, scheduler, runtime, or broker-network exposure. |
-| 157 | Momentum Semantic-Paper Nonzero Request Rehearsal v1 | In Review | Run one generated buy request through inspection and local semantic paper twice, proving exactly one local-paper order and fill with restart reuse and no Alpaca, scheduler, runtime, or broker-network exposure. |
+| 157 | Momentum Semantic-Paper Nonzero Request Rehearsal v1 | Done | Run one generated buy request through inspection and local semantic paper twice, proving exactly one local-paper order and fill with restart reuse and no Alpaca, scheduler, runtime, or broker-network exposure. |
+| 158 | Semantic-Paper Runtime Copy Rehearsal Design v1 | In Review | Design a runtime-clone import/help-only rehearsal for the reviewed semantic-paper commands, excluding request generation, local paper execution, launchd, scheduler, Alpaca, and broker-network behavior. |
 
 ## Current Recommendation
 
-Review **Momentum Semantic-Paper Nonzero Request Rehearsal v1**, then decide
-whether the next stage should design a runtime-clone import/help rehearsal for
-the reviewed semantic-paper request and local-paper commands. Do not expose
-launchd, runtime deployment, recurring scheduling, Alpaca semantic targets, or
-broker-network submission as part of that work.
+Review **Semantic-Paper Runtime Copy Rehearsal Design v1**, then decide whether
+to execute the runtime-clone import/help-only rehearsal. Do not run request
+generation, local semantic paper, launchd, runtime deployment, recurring
+scheduling, Alpaca semantic targets, or broker-network submission as part of
+that work.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

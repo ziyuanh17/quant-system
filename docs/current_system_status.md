@@ -505,6 +505,13 @@ runs reused the same orchestration and reached `execution_completed` /
 position `+2`. See
 [momentum_semantic_paper_nonzero_request_rehearsal.md](momentum_semantic_paper_nonzero_request_rehearsal.md).
 
+The next reviewed design is a runtime-clone import/help-only rehearsal for the
+semantic-paper command family. It would verify that the reviewed source can be
+fast-forwarded into the runtime clone, imported, and asked for CLI help without
+generating requests, running local semantic paper, loading launchd, using
+credentials, contacting Alpaca, or touching broker-network paths. See
+[semantic_paper_runtime_copy_rehearsal_design.md](semantic_paper_runtime_copy_rehearsal_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

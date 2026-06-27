@@ -17,6 +17,8 @@ Start with these current, canonical documents:
   design for a no-workflow runtime-clone copy/import/help rehearsal.
 - [supervised_provider_discovery_loop_runtime_copy_rehearsal.md](supervised_provider_discovery_loop_runtime_copy_rehearsal.md):
   runtime-clone copy/import/help rehearsal evidence.
+- [semantic_paper_runtime_copy_rehearsal_design.md](semantic_paper_runtime_copy_rehearsal_design.md):
+  design for a semantic-paper runtime-clone import/help-only rehearsal.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

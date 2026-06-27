@@ -100,6 +100,13 @@ execution with exactly one local-paper order, one fill, and final AAPL
 local-paper position `+2`. See
 [momentum_semantic_paper_nonzero_request_rehearsal.md](momentum_semantic_paper_nonzero_request_rehearsal.md).
 
+The next semantic-paper promotion design is a runtime-clone import/help-only
+rehearsal. It would check package import and CLI help for the semantic-paper
+commands from the runtime clone, but it would not generate requests, inspect
+requests, run local paper, load launchd, use credentials, contact Alpaca, or
+touch broker-network paths. See
+[semantic_paper_runtime_copy_rehearsal_design.md](semantic_paper_runtime_copy_rehearsal_design.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
