@@ -557,6 +557,14 @@ zero orders and zero fills. The only runtime working-tree change is the
 expected untracked `data/semantic-target` evidence root. See
 [semantic_paper_manual_operator_run.md](semantic_paper_manual_operator_run.md).
 
+The next reviewed boundary is semantic-target Alpaca paper testing. The design
+allows only one reviewed paper-trade request and only the Alpaca paper API
+behavior needed for paper order submission, paper account/position checks,
+asset tradability checks, order/fill recovery, and reconciliation. It excludes
+launchd, recurring scheduling, market-data research through Alpaca, non-paper
+Alpaca behavior, real-money trading, and automatic drift repair. See
+[semantic_target_alpaca_paper_testing_boundary.md](semantic_target_alpaca_paper_testing_boundary.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

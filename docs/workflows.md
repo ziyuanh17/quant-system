@@ -144,6 +144,14 @@ request targeted flat AAPL and produced zero orders and zero fills while
 reusing the same orchestration and reconciliation evidence. See
 [semantic_paper_manual_operator_run.md](semantic_paper_manual_operator_run.md).
 
+The next semantic-target promotion boundary is Alpaca paper testing. The
+design allows only one reviewed paper-trade request and only the Alpaca paper
+API behavior needed for order submission, account/position checks, asset
+tradability checks, order/fill recovery, and reconciliation. It excludes
+launchd, recurring scheduling, market-data research through Alpaca, non-paper
+Alpaca behavior, real-money trading, and automatic drift repair. See
+[semantic_target_alpaca_paper_testing_boundary.md](semantic_target_alpaca_paper_testing_boundary.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

@@ -31,6 +31,8 @@ Start with these current, canonical documents:
   design for a one-request manual runtime semantic-paper local-data runbook.
 - [semantic_paper_manual_operator_run.md](semantic_paper_manual_operator_run.md):
   evidence for one manual runtime semantic-paper local-data run.
+- [semantic_target_alpaca_paper_testing_boundary.md](semantic_target_alpaca_paper_testing_boundary.md):
+  design boundary for one-request semantic-target Alpaca paper testing.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.
