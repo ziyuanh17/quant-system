@@ -659,6 +659,13 @@ constructing the broker client. This directly addresses the blocked preflight
 condition. See
 [semantic_target_alpaca_paper_market_session_guard.md](semantic_target_alpaca_paper_market_session_guard.md).
 
+The runtime-clone market-session guard rehearsal passed. On Saturday,
+June 27, 2026, `quant semantic-target alpaca-paper --from-env` exited before
+broker interaction with the closed-session error, runtime operational counts
+were unchanged, the future paper output root remained absent, and the Alpaca
+paper scheduler/plist remained absent. See
+[semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md](semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

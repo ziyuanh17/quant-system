@@ -232,6 +232,11 @@ regular US equity session is closed, it exits before loading paper credentials
 or constructing the broker client. See
 [semantic_target_alpaca_paper_market_session_guard.md](semantic_target_alpaca_paper_market_session_guard.md).
 
+The runtime-clone rehearsal of that guard passed. The command exited with the
+closed-session error on Saturday before broker interaction, with no paper
+output root created. See
+[semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md](semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

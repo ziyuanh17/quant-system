@@ -65,6 +65,9 @@ Start with these current, canonical documents:
 - [semantic_target_alpaca_paper_market_session_guard.md](semantic_target_alpaca_paper_market_session_guard.md):
   source evidence for the closed-session guard on the order-capable Alpaca
   paper command.
+- [semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md](semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md):
+  runtime evidence that the closed-session guard blocks before broker
+  interaction.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.
