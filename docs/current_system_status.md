@@ -673,6 +673,13 @@ session checks. It writes no execution artifacts and does not require
 credentials. See
 [semantic_target_alpaca_paper_request_inspection.md](semantic_target_alpaca_paper_request_inspection.md).
 
+The runtime-clone request-inspection rehearsal passed. The inspector ran
+against the prepared `/tmp` request and blocked before broker access because
+the request had expired and the regular US equity session was closed. Runtime
+operational counts were unchanged and the future paper output root remained
+absent. See
+[semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md](semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

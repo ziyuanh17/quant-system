@@ -243,6 +243,11 @@ checks local hashes, expiry, target bounds, and regular-session state before
 any order-capable command is considered. See
 [semantic_target_alpaca_paper_request_inspection.md](semantic_target_alpaca_paper_request_inspection.md).
 
+The runtime-clone inspection rehearsal passed. The inspector blocked the old
+prepared request because it was expired and the regular session was closed,
+without creating paper output or contacting Alpaca. See
+[semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md](semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

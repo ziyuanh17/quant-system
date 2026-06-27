@@ -196,13 +196,15 @@ side discussions.
 | 176 | Semantic-Target Alpaca Paper Manual Test Preflight v1 | In Review | Run fresh preflight for the first one-request manual Alpaca paper API test and block before broker interaction because the regular equity session was closed. |
 | 177 | Semantic-Target Alpaca Paper Market Session Guard v1 | Done | Add a source-level regular-session guard so the order-capable Alpaca paper command refuses closed-session queued market orders before broker construction. |
 | 178 | Semantic-Target Alpaca Paper Market Session Guard Runtime Rehearsal v1 | In Review | Rehearse the guard from the runtime clone, proving closed-session command execution stops before broker interaction and creates no paper output. |
-| 179 | Semantic-Target Alpaca Paper Request Inspection v1 | In Review | Add broker-free inspection for prepared Alpaca paper requests, checking hashes, expiry, bounds, and regular-session state without credentials or broker access. |
+| 179 | Semantic-Target Alpaca Paper Request Inspection v1 | Done | Add broker-free inspection for prepared Alpaca paper requests, checking hashes, expiry, bounds, and regular-session state without credentials or broker access. |
+| 180 | Semantic-Target Alpaca Paper Request Inspection Runtime Rehearsal v1 | In Review | Rehearse broker-free request inspection from the runtime clone, proving expired/closed-session blocking without paper output or Alpaca access. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Request Inspection v1**, then rehearse
-the inspector from the runtime clone against a prepared request. Do not source
-credentials, contact Alpaca, expose launchd, add recurring scheduling, permit
+Review **Semantic-Target Alpaca Paper Request Inspection Runtime Rehearsal
+v1**, then create a fresh near-term request during a regular US equity session,
+inspect it, and only then run the one-request manual Alpaca paper API test if
+all gates pass. Do not expose launchd, add recurring scheduling, permit
 non-paper Alpaca behavior, enable real-money trading, add automatic drift
 repair, or broaden the scope beyond one reviewed request.
 
