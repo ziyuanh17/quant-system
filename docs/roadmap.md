@@ -179,14 +179,15 @@ side discussions.
 | 159 | Semantic-Paper Runtime Copy Import Help Rehearsal v1 | Done | Fast-forward the clean runtime clone to reviewed source and verify package import plus semantic-paper CLI help only, without request generation, local paper execution, launchd, scheduler, Alpaca, or broker-network behavior. |
 | 160 | Semantic-Paper Runtime Command Rehearsal Design v1 | Done | Design a runtime-clone no-network actual-command rehearsal using synthetic reviewed inputs and `/tmp` evidence, excluding runtime data writes, launchd, scheduler, Alpaca, and broker-network behavior. |
 | 161 | Semantic-Paper Runtime Command Rehearsal v1 | Done | Run the reviewed semantic-paper CLI path from the runtime clone with synthetic `/tmp` inputs and evidence, proving one local-paper order/fill, restart reuse, clean runtime state, and no Alpaca, scheduler, or broker-network behavior. |
-| 162 | Semantic-Paper Manual Operator Runbook Design v1 | In Review | Design a one-request manual runtime runbook for reviewed local-data semantic paper, allowing only bounded runtime local-paper evidence and excluding launchd, scheduler, Alpaca, broker-network orders, and broker-network fills. |
+| 162 | Semantic-Paper Manual Operator Runbook Design v1 | Done | Design a one-request manual runtime runbook for reviewed local-data semantic paper, allowing only bounded runtime local-paper evidence and excluding launchd, scheduler, Alpaca, broker-network orders, and broker-network fills. |
+| 163 | Semantic-Paper Manual Operator Run v1 | In Review | Run one reviewed local-data semantic-paper request from the runtime clone, producing bounded runtime local-paper evidence while excluding launchd, scheduler, Alpaca, broker-network orders, and broker-network fills. |
 
 ## Current Recommendation
 
-Review **Semantic-Paper Manual Operator Runbook Design v1**, then decide
-whether to execute one manual runtime semantic-paper local-data run. Do not
-expose launchd, recurring scheduling, Alpaca semantic targets, broker-network
-orders, or broker-network fills as part of that work.
+Review **Semantic-Paper Manual Operator Run v1**, then design the semantic-target
+Alpaca paper testing boundary. Do not expose launchd, recurring scheduling,
+broker-network real-money trading, or non-paper Alpaca API behavior as part of
+that work.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

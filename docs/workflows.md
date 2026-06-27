@@ -137,6 +137,13 @@ broker-network orders, broker-network fills, credentials, and real-money
 trading. See
 [semantic_paper_manual_operator_runbook_design.md](semantic_paper_manual_operator_runbook_design.md).
 
+The first manual runtime semantic-paper local-data run passed. The runtime
+clone generated a reviewed local-data request from AAPL market bars, inspected
+it, and ran local semantic paper twice. The latest signal was `hold`, so the
+request targeted flat AAPL and produced zero orders and zero fills while
+reusing the same orchestration and reconciliation evidence. See
+[semantic_paper_manual_operator_run.md](semantic_paper_manual_operator_run.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

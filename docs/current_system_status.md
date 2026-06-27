@@ -546,6 +546,17 @@ excludes launchd, recurring scheduling, Alpaca semantic targets, broker-network
 orders, broker-network fills, credentials, and real-money trading. See
 [semantic_paper_manual_operator_runbook_design.md](semantic_paper_manual_operator_runbook_design.md).
 
+On June 26, 2026, the first manual runtime semantic-paper local-data run
+passed. The runtime clone at `2614ebc` used reviewed local AAPL market bars
+with hash `14889f58cb558119f521121ca3030ff267db1144721b9f82012138738b3fed77`.
+The latest momentum signal was `hold`, so the reviewed request targeted flat
+`AAPL` from an already-flat local-paper state. Inspection reported no intended
+order, and two local semantic-paper runs reused the same orchestration and
+reconciliation ID, reached `execution_completed` / `satisfied`, and produced
+zero orders and zero fills. The only runtime working-tree change is the
+expected untracked `data/semantic-target` evidence root. See
+[semantic_paper_manual_operator_run.md](semantic_paper_manual_operator_run.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
