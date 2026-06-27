@@ -27,6 +27,8 @@ Start with these current, canonical documents:
 - [semantic_paper_runtime_command_rehearsal.md](semantic_paper_runtime_command_rehearsal.md):
   evidence for the semantic-paper runtime-clone no-network actual-command
   rehearsal.
+- [semantic_paper_manual_operator_runbook_design.md](semantic_paper_manual_operator_runbook_design.md):
+  design for a one-request manual runtime semantic-paper local-data runbook.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

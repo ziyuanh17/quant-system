@@ -538,6 +538,14 @@ position `AAPL +2`. Runtime `data/semantic-target` remained absent, the runtime
 clone stayed clean, and the runtime `__pycache__` count stayed unchanged. See
 [semantic_paper_runtime_command_rehearsal.md](semantic_paper_runtime_command_rehearsal.md).
 
+The next reviewed design is a manual runtime semantic-paper operator runbook
+for one reviewed local-data request. Unlike the synthetic `/tmp` rehearsal, the
+future manual run may write bounded local-paper evidence under a reviewed
+runtime `data/semantic-target/manual-local-paper/...` root, but it still
+excludes launchd, recurring scheduling, Alpaca semantic targets, broker-network
+orders, broker-network fills, credentials, and real-money trading. See
+[semantic_paper_manual_operator_runbook_design.md](semantic_paper_manual_operator_runbook_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

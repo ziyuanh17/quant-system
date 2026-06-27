@@ -129,6 +129,14 @@ order, one fill, and final synthetic position `AAPL +2`, while the runtime
 clone stayed clean. See
 [semantic_paper_runtime_command_rehearsal.md](semantic_paper_runtime_command_rehearsal.md).
 
+The next semantic-paper promotion design is a one-request manual runtime
+operator runbook. It would allow a later approved run to prepare, inspect, and
+run one reviewed local-data request with bounded runtime local-paper evidence,
+while still excluding launchd, recurring scheduling, Alpaca semantic targets,
+broker-network orders, broker-network fills, credentials, and real-money
+trading. See
+[semantic_paper_manual_operator_runbook_design.md](semantic_paper_manual_operator_runbook_design.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
