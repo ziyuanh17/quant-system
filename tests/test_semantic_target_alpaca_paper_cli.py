@@ -1,6 +1,6 @@
 """Test semantic-target Alpaca paper fake-rehearsal CLI."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -77,6 +77,9 @@ def test_alpaca_paper_cli_runs_reviewed_request_with_injected_paper_client(
         "AlpacaPaperBrokerClient",
         lambda config: client,
     )
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
 
     result = CliRunner().invoke(
         app,
@@ -100,6 +103,43 @@ def test_alpaca_paper_cli_runs_reviewed_request_with_injected_paper_client(
     assert len(client.fills()) == 1
 
 
+def test_alpaca_paper_cli_blocks_when_regular_session_closed(
+    tmp_path, monkeypatch
+) -> None:
+    closed_session = datetime(2026, 6, 27, 16, tzinfo=UTC)
+    request_path = _reviewed_request_path(tmp_path, now=closed_session)
+    monkeypatch.setattr(quant.cli, "_current_utc", lambda: closed_session)
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: False
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "alpaca-paper",
+            "--request-path",
+            str(request_path),
+            "--from-env",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "regular US equity session is closed" in result.output
+
+
+def test_regular_us_equity_session_helper_handles_open_and_closed_times():
+    assert quant.cli._is_regular_us_equity_session(
+        datetime(2026, 6, 29, 15, tzinfo=UTC)
+    )
+    assert not quant.cli._is_regular_us_equity_session(
+        datetime(2026, 6, 27, 16, tzinfo=UTC)
+    )
+    assert not quant.cli._is_regular_us_equity_session(
+        datetime(2026, 12, 25, 15, tzinfo=UTC)
+    )
+
+
 def test_alpaca_paper_cli_requires_from_env(tmp_path) -> None:
     result = CliRunner().invoke(
         app,
@@ -115,12 +155,14 @@ def test_alpaca_paper_cli_requires_from_env(tmp_path) -> None:
     assert "--from-env is required" in result.output
 
 
-def _reviewed_request_path(tmp_path: Path) -> Path:
-    now = datetime.now(UTC)
+def _reviewed_request_path(
+    tmp_path: Path, *, now: datetime | None = None
+) -> Path:
+    current = now or datetime.now(UTC)
     run_semantic_target_alpaca_paper_fake_rehearsal(
         rehearsal_id="cli-real-surface",
         output_root=tmp_path / "source",
-        evaluated_at=now,
+        evaluated_at=current,
     )
     original_path = (
         tmp_path / "source" / "requests" / "cli-real-surface-request.json"
@@ -131,6 +173,7 @@ def _reviewed_request_path(tmp_path: Path) -> Path:
         update={
             "request_id": "cli-real-surface-live-request",
             "output_root": str(tmp_path / "operator-output"),
+            "valid_until": current + timedelta(hours=1),
         }
     )
     request_path = tmp_path / "reviewed-request.json"

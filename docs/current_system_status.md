@@ -652,6 +652,13 @@ outside the regular US equity session. The order-capable command was not run
 and no Alpaca API call was made. See
 [semantic_target_alpaca_paper_manual_test_preflight.md](semantic_target_alpaca_paper_manual_test_preflight.md).
 
+The source now includes a regular-session guard for
+`quant semantic-target alpaca-paper`. The command refuses to run when the
+regular US equity session is closed, before loading Alpaca paper credentials or
+constructing the broker client. This directly addresses the blocked preflight
+condition. See
+[semantic_target_alpaca_paper_market_session_guard.md](semantic_target_alpaca_paper_market_session_guard.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

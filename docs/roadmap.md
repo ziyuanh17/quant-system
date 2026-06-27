@@ -194,14 +194,16 @@ side discussions.
 | 174 | Semantic-Target Alpaca Paper Request Runtime Rehearsal v1 | In Review | Run the broker-free preparer from the runtime clone with synthetic local inputs, proving one validated request under `/tmp` and no credentials, broker access, or paper output. |
 | 175 | Semantic-Target Alpaca Paper Manual Test Design v1 | Done | Design the first one-request manual Alpaca paper API test with fresh preflight, paper-only API scope, restart rules, and evidence requirements. |
 | 176 | Semantic-Target Alpaca Paper Manual Test Preflight v1 | In Review | Run fresh preflight for the first one-request manual Alpaca paper API test and block before broker interaction because the regular equity session was closed. |
+| 177 | Semantic-Target Alpaca Paper Market Session Guard v1 | In Review | Add a source-level regular-session guard so the order-capable Alpaca paper command refuses closed-session queued market orders before broker construction. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Manual Test Preflight v1**, then rerun
-preflight during a regular US equity session with a fresh near-term request.
-Do not expose launchd, add recurring scheduling, permit non-paper Alpaca
-behavior, enable real-money trading, add automatic drift repair, or broaden
-the scope beyond one reviewed request.
+Review **Semantic-Target Alpaca Paper Market Session Guard v1**, then rehearse
+the guard from the runtime clone and rerun manual paper preflight during a
+regular US equity session with a fresh near-term request. Do not expose
+launchd, add recurring scheduling, permit non-paper Alpaca behavior, enable
+real-money trading, add automatic drift repair, or broaden the scope beyond one
+reviewed request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

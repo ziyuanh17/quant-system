@@ -1,10 +1,11 @@
 """Command-line interface for quant-system operations and research workflows."""
 
 import os
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import typer
@@ -755,12 +756,18 @@ def semantic_target_alpaca_paper(
         raise typer.BadParameter(
             "--from-env is required for Alpaca paper credentials"
         )
+    current_time = _current_utc()
+    if not _is_regular_us_equity_session(current_time):
+        raise typer.BadParameter(
+            "regular US equity session is closed; refusing to submit or "
+            "queue an Alpaca paper market order"
+        )
     try:
         config = _load_alpaca_paper_config_from_env()
         result = run_semantic_target_alpaca_paper_operator_request(
             request_path=request_path,
             broker_client=AlpacaPaperBrokerClient(config=config),
-            evaluated_at=datetime.now(UTC),
+            evaluated_at=current_time,
         )
     except (OSError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -3205,6 +3212,94 @@ def _required_env(name: str) -> str:
     if value is None or value == "":
         raise typer.BadParameter(f"{name} is missing")
     return value
+
+
+def _current_utc() -> datetime:
+    return datetime.now(UTC)
+
+
+def _is_regular_us_equity_session(moment: datetime) -> bool:
+    eastern = moment.astimezone(ZoneInfo("America/New_York"))
+    session_date = eastern.date()
+    if session_date.weekday() >= 5:
+        return False
+    if session_date in _us_equity_holidays(session_date.year):
+        return False
+    open_time = time(9, 30)
+    close_time = (
+        time(13, 0)
+        if session_date in _us_equity_early_closes(session_date.year)
+        else time(16, 0)
+    )
+    return open_time <= eastern.time() < close_time
+
+
+def _us_equity_holidays(year: int) -> set[date]:
+    return {
+        _observed_fixed_holiday(year, 1, 1),
+        _nth_weekday(year, 1, 0, 3),
+        _nth_weekday(year, 2, 0, 3),
+        _good_friday(year),
+        _last_weekday(year, 5, 0),
+        _observed_fixed_holiday(year, 6, 19),
+        _observed_fixed_holiday(year, 7, 4),
+        _nth_weekday(year, 9, 0, 1),
+        _nth_weekday(year, 11, 3, 4),
+        _observed_fixed_holiday(year, 12, 25),
+    }
+
+
+def _us_equity_early_closes(year: int) -> set[date]:
+    closes = {_nth_weekday(year, 11, 3, 4) + timedelta(days=1)}
+    christmas_eve = date(year, 12, 24)
+    if christmas_eve.weekday() < 5:
+        closes.add(christmas_eve)
+    july_fourth = date(year, 7, 4)
+    july_third = date(year, 7, 3)
+    if july_fourth.weekday() in {4, 5} and july_third.weekday() < 5:
+        closes.add(july_third)
+    return closes - _us_equity_holidays(year)
+
+
+def _observed_fixed_holiday(year: int, month: int, day: int) -> date:
+    holiday = date(year, month, day)
+    if holiday.weekday() == 5:
+        return holiday - timedelta(days=1)
+    if holiday.weekday() == 6:
+        return holiday + timedelta(days=1)
+    return holiday
+
+
+def _nth_weekday(year: int, month: int, weekday: int, n: int) -> date:
+    current = date(year, month, 1)
+    offset = (weekday - current.weekday()) % 7
+    return current + timedelta(days=offset + 7 * (n - 1))
+
+
+def _last_weekday(year: int, month: int, weekday: int) -> date:
+    if month == 12:
+        current = date(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        current = date(year, month + 1, 1) - timedelta(days=1)
+    return current - timedelta(days=(current.weekday() - weekday) % 7)
+
+
+def _good_friday(year: int) -> date:
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    line = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * line) // 451
+    month = (h + line - 7 * m + 114) // 31
+    day = ((h + line - 7 * m + 114) % 31) + 1
+    return date(year, month, day) - timedelta(days=2)
 
 
 def _initial_positions(

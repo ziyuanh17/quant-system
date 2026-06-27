@@ -227,6 +227,11 @@ the local time was outside the regular US equity session. The order-capable
 command was not run and no Alpaca API call was made. See
 [semantic_target_alpaca_paper_manual_test_preflight.md](semantic_target_alpaca_paper_manual_test_preflight.md).
 
+The Alpaca paper command now has a source-level regular-session guard. If the
+regular US equity session is closed, it exits before loading paper credentials
+or constructing the broker client. See
+[semantic_target_alpaca_paper_market_session_guard.md](semantic_target_alpaca_paper_market_session_guard.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
