@@ -607,6 +607,14 @@ directory snapshots without sourcing credentials, constructing the real Alpaca
 client, contacting Alpaca, or running an order-capable command. See
 [semantic_target_alpaca_paper_runtime_rehearsal_design.md](semantic_target_alpaca_paper_runtime_rehearsal_design.md).
 
+The no-network runtime-clone rehearsal passed. The runtime clone fast-forwarded
+to reviewed source `1232347`, `quant semantic-target alpaca-paper --help`
+worked from the runtime environment, the Alpaca paper launchd service and plist
+were absent, no Alpaca environment values were printed, and before/after
+runtime directory counts were unchanged around the help-only check. No Alpaca
+API call was made and no order-capable command was run. See
+[semantic_target_alpaca_paper_runtime_rehearsal.md](semantic_target_alpaca_paper_runtime_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

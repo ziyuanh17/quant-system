@@ -189,6 +189,13 @@ directory snapshots, while explicitly avoiding credentials, Alpaca API calls,
 paper orders, and order-capable command execution. See
 [semantic_target_alpaca_paper_runtime_rehearsal_design.md](semantic_target_alpaca_paper_runtime_rehearsal_design.md).
 
+The no-network runtime-clone rehearsal passed. The runtime clone fast-forwarded
+to reviewed source `1232347`, import/help checks for
+`quant semantic-target alpaca-paper` succeeded, scheduler and launchd plist
+checks remained absent, and runtime directory counts were unchanged around a
+help-only pass. See
+[semantic_target_alpaca_paper_runtime_rehearsal.md](semantic_target_alpaca_paper_runtime_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

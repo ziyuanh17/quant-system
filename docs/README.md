@@ -48,6 +48,8 @@ Start with these current, canonical documents:
 - [semantic_target_alpaca_paper_runtime_rehearsal_design.md](semantic_target_alpaca_paper_runtime_rehearsal_design.md):
   design for a no-network runtime-clone import/help/preflight rehearsal before
   a real Alpaca paper order test.
+- [semantic_target_alpaca_paper_runtime_rehearsal.md](semantic_target_alpaca_paper_runtime_rehearsal.md):
+  evidence for the no-network runtime-clone import/help/preflight rehearsal.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.
