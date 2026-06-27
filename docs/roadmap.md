@@ -187,14 +187,15 @@ side discussions.
 | 167 | Semantic-Target Alpaca Paper Fake CLI v1 | Done | Expose and rehearse a dedicated fake-client CLI for one semantic-target Alpaca paper request, proving the operator surface without real Alpaca calls, launchd, scheduler, or broker-network submission. |
 | 168 | Semantic-Target Alpaca Paper CLI Design v1 | Done | Design the future one-request real Alpaca paper CLI command, with reviewed-request preflight, paper-only API scope, request-scoped evidence, restart recovery, and no scheduler or real-money capability. |
 | 169 | Semantic-Target Alpaca Paper Source CLI v1 | In Review | Implement the one-request Alpaca paper CLI command behind fake-client tests, requiring reviewed-request preflight, `--from-env`, request-scoped evidence, and no scheduler or real-money capability. |
+| 170 | Semantic-Target Alpaca Paper Runtime Rehearsal Design v1 | In Review | Design the no-network runtime-clone import/help/preflight rehearsal for the Alpaca paper CLI before any real paper API call. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Source CLI v1**, then decide whether the
-next stage should run one manual runtime Alpaca paper rehearsal with a reviewed
-request and fresh scheduler/runtime evidence. Do not expose launchd, add
+Review **Semantic-Target Alpaca Paper Runtime Rehearsal Design v1**, then run
+the no-network runtime-clone import/help/preflight rehearsal. Do not source
+credentials, contact Alpaca, run an order-capable command, expose launchd, add
 recurring scheduling, permit non-paper Alpaca behavior, enable real-money
-trading, or add automatic drift repair as part of that review.
+trading, or add automatic drift repair as part of that rehearsal.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

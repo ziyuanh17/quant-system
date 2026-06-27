@@ -182,6 +182,13 @@ request-scoped evidence through the existing restart-safe executor. The source
 stage was verified only with an injected fake paper client; no real Alpaca API
 call was made. See [semantic_target_alpaca_paper_cli.md](semantic_target_alpaca_paper_cli.md).
 
+The next semantic-target promotion design is a no-network runtime-clone
+rehearsal for that command. It would verify source/runtime commits, CLI
+import/help visibility, scheduler absence, launchd plist absence, and runtime
+directory snapshots, while explicitly avoiding credentials, Alpaca API calls,
+paper orders, and order-capable command execution. See
+[semantic_target_alpaca_paper_runtime_rehearsal_design.md](semantic_target_alpaca_paper_runtime_rehearsal_design.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

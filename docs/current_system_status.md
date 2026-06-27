@@ -600,6 +600,13 @@ order, one fill, passing reconciliation, and satisfied execution. This stage
 made no real Alpaca API call and did not modify the runtime clone. See
 [semantic_target_alpaca_paper_cli.md](semantic_target_alpaca_paper_cli.md).
 
+The next reviewed design is a no-network runtime-clone rehearsal for the
+semantic-target Alpaca paper CLI. It checks source/runtime state, command
+import/help visibility, scheduler absence, launchd plist absence, and runtime
+directory snapshots without sourcing credentials, constructing the real Alpaca
+client, contacting Alpaca, or running an order-capable command. See
+[semantic_target_alpaca_paper_runtime_rehearsal_design.md](semantic_target_alpaca_paper_runtime_rehearsal_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

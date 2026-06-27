@@ -199,6 +199,8 @@ The future command must:
   pass;
 - call `run_alpaca_semantic_target_paper` with
   `alpaca_submission_enabled=True`;
+- require `--from-env` so credentials come from the operator environment, not
+  from the request artifact;
 - write evidence only under the reviewed output root;
 - exit nonzero for blocked or ambiguous outcomes.
 
@@ -290,4 +292,3 @@ Even an approved manual Alpaca paper test would not authorize:
 - real-money trading;
 - automatic drift repair;
 - processing more than one reviewed request.
-
