@@ -393,9 +393,11 @@ the paper account was created.
 
 ## Semantic-Target Review
 
-Semantic-target dry-run, local semantic paper, and Alpaca paper are exposed as
-Python APIs, not CLI commands. Review their artifacts under the configured
-execution root:
+Semantic-target dry-run and local semantic paper have dedicated reviewed CLI
+commands documented above. Semantic-target Alpaca paper currently has a
+fake-client rehearsal command and a design for a future real paper command;
+there is no reviewed real Alpaca paper CLI command yet. Review semantic-target
+artifacts under the configured execution root:
 
 ```text
 plans/
@@ -407,8 +409,8 @@ dry-run-observations/
 
 Do not manually edit lifecycle artifacts. A blocked or ambiguous event is
 durable evidence and must be understood before any recovery attempt. Do not
-connect the semantic-target Alpaca API to a CLI, wrapper, or scheduler without
-a separate review.
+connect the real semantic-target Alpaca paper API to a CLI, wrapper, or
+scheduler without a separate review.
 
 ## Web Console
 

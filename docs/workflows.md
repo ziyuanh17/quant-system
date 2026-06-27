@@ -4,9 +4,10 @@ Workflows compose existing commands into repeatable operational paths. They are
 where the system starts to behave like a server instead of a set of manual CLI
 steps.
 
-The workflows in this document are the legacy signal-oriented operational
-lane. The semantic-target lifecycle is currently API-only and is not called by
-these wrappers or schedulers.
+The workflows in this document are mostly the legacy signal-oriented
+operational lane. Semantic-target work is exposed only through the specific
+commands documented here; it is not called by the legacy wrappers or
+schedulers.
 
 The API-only controlled semantic-target orchestration persists strategy
 decisions and evaluations, contributor ownership, portfolio and risk targets,
@@ -173,6 +174,15 @@ reviewed request model and Alpaca paper execution path through a fake client,
 proving one order, one fill, one reconciliation, final `AAPL +2`, and restart
 reuse without real Alpaca calls. See
 [semantic_target_alpaca_paper_fake_cli.md](semantic_target_alpaca_paper_fake_cli.md).
+
+The next semantic-target promotion design is a one-request real Alpaca paper
+CLI command. The proposed command would consume one reviewed request, verify
+all local artifacts before creating an Alpaca paper client, allow only the
+paper API calls needed for that request, and write request-scoped evidence. It
+would still exclude launchd, recurring scheduling, market-data research through
+Alpaca, non-paper Alpaca behavior, real-money trading, and automatic drift
+repair. See
+[semantic_target_alpaca_paper_cli_design.md](semantic_target_alpaca_paper_cli_design.md).
 
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically

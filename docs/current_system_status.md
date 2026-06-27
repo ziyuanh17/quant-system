@@ -589,6 +589,15 @@ restart reuse. It does not source credentials, contact Alpaca, load launchd, or
 submit broker-network orders. See
 [semantic_target_alpaca_paper_fake_cli.md](semantic_target_alpaca_paper_fake_cli.md).
 
+The next reviewed design is a one-request real Alpaca paper CLI command. The
+proposed command would consume one reviewed semantic-target request, verify
+all local artifacts before creating an Alpaca paper client, submit only the
+approved paper target delta when all gates pass, and write request-scoped
+evidence. It still excludes launchd, recurring scheduling, market-data
+research through Alpaca, non-paper Alpaca behavior, real-money trading, and
+automatic drift repair. See
+[semantic_target_alpaca_paper_cli_design.md](semantic_target_alpaca_paper_cli_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
