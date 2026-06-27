@@ -680,6 +680,12 @@ operational counts were unchanged and the future paper output root remained
 absent. See
 [semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md](semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md).
 
+The next reviewed design is a broker-free evidence verifier for one-request
+Alpaca paper runs. It will read the prepared request, lifecycle events, orders,
+fills, snapshots, and reconciliation reports from local artifacts and decide
+whether the run satisfied the reviewed request. See
+[semantic_target_alpaca_paper_evidence_verifier_design.md](semantic_target_alpaca_paper_evidence_verifier_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

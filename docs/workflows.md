@@ -248,6 +248,12 @@ prepared request because it was expired and the regular session was closed,
 without creating paper output or contacting Alpaca. See
 [semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md](semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md).
 
+The next semantic-target promotion design is a broker-free evidence verifier
+for one-request Alpaca paper runs. It will mechanically check local lifecycle,
+order, fill, snapshot, and reconciliation artifacts before any broader paper
+workflow or automation. See
+[semantic_target_alpaca_paper_evidence_verifier_design.md](semantic_target_alpaca_paper_evidence_verifier_design.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
