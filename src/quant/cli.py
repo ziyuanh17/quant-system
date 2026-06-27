@@ -104,6 +104,7 @@ from quant.workflows import (
     WorkflowRunFailed,
     inspect_activated_dry_run_operator_request,
     inspect_activated_semantic_paper_operator_request,
+    inspect_semantic_target_alpaca_paper_operator_request,
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
     prepare_momentum_semantic_paper_request,
     prepare_semantic_target_alpaca_paper_request,
@@ -787,6 +788,48 @@ def semantic_target_alpaca_paper(
         typer.echo(f"Reconciliation: {result.reconciliation.status.value}")
         typer.echo(f"Differences: {len(result.reconciliation.differences)}")
     if result.status != ExecutionPlanStatus.SATISFIED:
+        raise typer.Exit(code=1)
+
+
+@semantic_target_app.command("inspect-alpaca-paper-request")
+def semantic_target_inspect_alpaca_paper_request(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Prepared Alpaca paper request JSON to inspect."),
+    ],
+) -> None:
+    """Inspect a prepared Alpaca paper request without broker access."""
+    current_time = _current_utc()
+    try:
+        inspection = inspect_semantic_target_alpaca_paper_operator_request(
+            request_path,
+            inspected_at=current_time,
+            market_session_open=_is_regular_us_equity_session(current_time),
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {inspection.request_id}")
+    typer.echo(f"Valid now: {'yes' if inspection.valid_now else 'no'}")
+    typer.echo(f"Summary: {inspection.summary}")
+    typer.echo(f"Symbol: {inspection.symbol}")
+    typer.echo(f"Approved target: {inspection.approved_target_quantity}")
+    typer.echo(f"Reference price: {inspection.reference_price:,.2f}")
+    typer.echo(f"Max quantity: {inspection.reviewed_max_quantity}")
+    if inspection.reviewed_max_notional is None:
+        typer.echo("Max notional: missing")
+    else:
+        typer.echo(f"Max notional: {inspection.reviewed_max_notional}")
+    typer.echo(f"Valid until: {inspection.valid_until.isoformat()}")
+    typer.echo(
+        "Regular session open: "
+        f"{'yes' if inspection.market_session_open else 'no'}"
+    )
+    typer.echo(f"Paper output root: {inspection.output_root}")
+    for issue in inspection.issues:
+        typer.echo(f"Blocked because: {issue}")
+    typer.echo("Inspection created no Alpaca or execution artifacts.")
+    if not inspection.valid_now:
         raise typer.Exit(code=1)
 
 

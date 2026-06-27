@@ -87,6 +87,25 @@ class SemanticTargetAlpacaPaperRequestBundle:
     valid_until: datetime
 
 
+@dataclass(frozen=True)
+class SemanticTargetAlpacaPaperRequestInspection:
+    """Read-only local preflight result for one Alpaca paper request."""
+
+    request_id: str
+    inspected_at: datetime
+    valid_now: bool
+    issues: tuple[str, ...]
+    symbol: str
+    approved_target_quantity: Decimal | None
+    reference_price: float
+    reviewed_max_quantity: Decimal
+    reviewed_max_notional: Decimal | None
+    valid_until: datetime
+    output_root: Path
+    market_session_open: bool
+    summary: str
+
+
 def write_semantic_target_alpaca_paper_operator_request(
     request: SemanticTargetAlpacaPaperOperatorRequest,
     output_root: Path,
@@ -103,6 +122,82 @@ def load_semantic_target_alpaca_paper_operator_request(
     """Load and validate one reviewed Alpaca paper operator request."""
     return SemanticTargetAlpacaPaperOperatorRequest.model_validate_json(
         path.read_text()
+    )
+
+
+def inspect_semantic_target_alpaca_paper_operator_request(
+    path: Path,
+    *,
+    inspected_at: datetime | None = None,
+    market_session_open: bool,
+) -> SemanticTargetAlpacaPaperRequestInspection:
+    """Inspect one Alpaca paper request without broker access."""
+    current_time = inspected_at or datetime.now(UTC)
+    request = load_semantic_target_alpaca_paper_operator_request(path)
+    issues: list[str] = []
+    try:
+        _verify_request_hashes(request)
+    except (OSError, ValueError) as exc:
+        issues.append(f"artifact hash verification failed: {exc}")
+
+    contributor_set = load_contributor_set(Path(request.contributor_set_path))
+    portfolio_target = load_portfolio_target_decision(
+        Path(request.portfolio_target_path)
+    )
+    risk_target = load_risk_target_decision(Path(request.risk_target_path))
+    decisions = tuple(
+        load_strategy_target_decision(Path(item))
+        for item in request.strategy_decision_paths
+    )
+
+    try:
+        _verify_request_scope(
+            request=request,
+            contributor_set=contributor_set,
+            portfolio_target=portfolio_target,
+            risk_target=risk_target,
+        )
+    except ValueError as exc:
+        issues.append(str(exc))
+
+    approved_target = risk_target.approved_target_value
+    if current_time > request.valid_until:
+        issues.append("alpaca paper request is expired")
+    if request.safety_config.max_order_notional is None:
+        issues.append("max_order_notional is missing")
+        max_notional = None
+    else:
+        max_notional = Decimal(str(request.safety_config.max_order_notional))
+    if approved_target is not None and max_notional is not None:
+        notional = abs(approved_target) * Decimal(str(request.reference_price))
+        if notional > max_notional:
+            issues.append("approved target notional exceeds maximum")
+    if not market_session_open:
+        issues.append("regular US equity session is closed")
+    decision_symbols = {item.symbol for item in decisions}
+    if decision_symbols != {request.allowed_symbol}:
+        issues.append("strategy decision symbols are outside request scope")
+
+    valid_now = not issues
+    summary = (
+        "ready for one Alpaca paper command"
+        if valid_now
+        else "blocked before Alpaca paper command"
+    )
+    return SemanticTargetAlpacaPaperRequestInspection(
+        request_id=request.request_id,
+        inspected_at=current_time,
+        valid_now=valid_now,
+        issues=tuple(dict.fromkeys(issues)),
+        symbol=request.allowed_symbol,
+        approved_target_quantity=approved_target,
+        reference_price=request.reference_price,
+        reviewed_max_quantity=request.allowed_max_quantity,
+        reviewed_max_notional=max_notional,
+        valid_until=request.valid_until,
+        output_root=Path(request.output_root),
+        market_session_open=market_session_open,
+        summary=summary,
     )
 
 

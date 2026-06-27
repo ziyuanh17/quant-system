@@ -666,6 +666,13 @@ were unchanged, the future paper output root remained absent, and the Alpaca
 paper scheduler/plist remained absent. See
 [semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md](semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md).
 
+The source now includes `quant semantic-target inspect-alpaca-paper-request`.
+It performs broker-free local preflight for a prepared Alpaca paper request,
+including hash, expiry, target scope, quantity/notional bounds, and regular
+session checks. It writes no execution artifacts and does not require
+credentials. See
+[semantic_target_alpaca_paper_request_inspection.md](semantic_target_alpaca_paper_request_inspection.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

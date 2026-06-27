@@ -1,9 +1,11 @@
 """Test broker-free semantic-target Alpaca paper request preparation."""
 
+from datetime import timedelta
 from pathlib import Path
 
 from typer.testing import CliRunner
 
+import quant.cli
 from quant.cli import app
 from quant.models.operator import SemanticTargetAlpacaPaperOperatorRequest
 
@@ -75,6 +77,87 @@ def test_prepare_alpaca_paper_request_from_local_semantic_paper_request(
     assert _request_path_from_output(second.output) == request_path
 
 
+def test_inspect_alpaca_paper_request_reports_ready_without_broker(
+    tmp_path, monkeypatch
+) -> None:
+    request_path = _prepare_alpaca_source_request(tmp_path)
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "inspect-alpaca-paper-request",
+            "--request-path",
+            str(request_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Valid now: yes" in result.output
+    assert "Approved target: 2" in result.output
+    assert "Regular session open: yes" in result.output
+    assert (
+        "Inspection created no Alpaca or execution artifacts."
+        in result.output
+    )
+
+
+def test_inspect_alpaca_paper_request_blocks_when_session_closed(
+    tmp_path, monkeypatch
+) -> None:
+    request_path = _prepare_alpaca_source_request(tmp_path)
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: False
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "inspect-alpaca-paper-request",
+            "--request-path",
+            str(request_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Valid now: no" in result.output
+    assert (
+        "Blocked because: regular US equity session is closed"
+        in result.output
+    )
+
+
+def test_inspect_alpaca_paper_request_blocks_when_expired(
+    tmp_path, monkeypatch
+) -> None:
+    request_path = _prepare_alpaca_source_request(tmp_path)
+    request = SemanticTargetAlpacaPaperOperatorRequest.model_validate_json(
+        request_path.read_text()
+    )
+    after_expiry = request.valid_until + timedelta(seconds=1)
+    monkeypatch.setattr(quant.cli, "_current_utc", lambda: after_expiry)
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "inspect-alpaca-paper-request",
+            "--request-path",
+            str(request_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Blocked because: alpaca paper request is expired" in result.output
+
+
 def test_prepare_alpaca_paper_request_rejects_quantity_above_bound(
     tmp_path,
 ) -> None:
@@ -112,6 +195,44 @@ def test_prepare_alpaca_paper_request_help_is_broker_free() -> None:
     assert "Prepare one reviewed Alpaca paper request" in result.output
     assert "scheduler" not in result.output.lower()
     assert "credential" not in result.output.lower()
+
+
+def test_inspect_alpaca_paper_request_help_is_broker_free() -> None:
+    result = CliRunner().invoke(
+        app,
+        ["semantic-target", "inspect-alpaca-paper-request", "--help"],
+    )
+
+    assert result.exit_code == 0
+    assert "without broker access" in result.output
+    assert "credential" not in result.output.lower()
+
+
+def _prepare_alpaca_source_request(tmp_path: Path) -> Path:
+    source_request_path = _prepare_local_source_request(tmp_path)
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "prepare-alpaca-paper-request",
+            "--request-id",
+            "alpaca-paper-request",
+            "--source-request-path",
+            str(source_request_path),
+            "--output-root",
+            str(tmp_path / "alpaca-inputs"),
+            "--paper-output-root",
+            str(tmp_path / "alpaca-output"),
+            "--max-order-notional",
+            "1000",
+            "--allowed-max-quantity",
+            "2",
+            "--valid-for-seconds",
+            "900",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    return _request_path_from_output(result.output)
 
 
 def _prepare_local_source_request(tmp_path: Path) -> Path:

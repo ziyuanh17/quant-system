@@ -237,6 +237,12 @@ closed-session error on Saturday before broker interaction, with no paper
 output root created. See
 [semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md](semantic_target_alpaca_paper_market_session_guard_runtime_rehearsal.md).
 
+Prepared Alpaca paper requests can now be inspected without broker access
+through `quant semantic-target inspect-alpaca-paper-request`. The inspection
+checks local hashes, expiry, target bounds, and regular-session state before
+any order-capable command is considered. See
+[semantic_target_alpaca_paper_request_inspection.md](semantic_target_alpaca_paper_request_inspection.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
