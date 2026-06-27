@@ -210,6 +210,12 @@ broker clients, Alpaca API calls, local paper, dry-run, launchd, and
 scheduler behavior. See
 [semantic_target_alpaca_paper_request_preparation.md](semantic_target_alpaca_paper_request_preparation.md).
 
+The runtime-clone request-preparation rehearsal passed using synthetic AAPL
+inputs under `/tmp`. It produced one validated Alpaca paper request and left
+the future paper output root absent, proving the order-capable paper command
+was not run. See
+[semantic_target_alpaca_paper_request_runtime_rehearsal.md](semantic_target_alpaca_paper_request_runtime_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

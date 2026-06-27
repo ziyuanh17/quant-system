@@ -55,6 +55,9 @@ Start with these current, canonical documents:
   semantic-target artifacts without broker access.
 - [semantic_target_alpaca_paper_request_preparation.md](semantic_target_alpaca_paper_request_preparation.md):
   source evidence for the broker-free Alpaca paper request preparer.
+- [semantic_target_alpaca_paper_request_runtime_rehearsal.md](semantic_target_alpaca_paper_request_runtime_rehearsal.md):
+  runtime evidence for broker-free Alpaca paper request preparation using
+  synthetic local inputs under `/tmp`.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

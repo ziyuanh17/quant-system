@@ -190,16 +190,16 @@ side discussions.
 | 170 | Semantic-Target Alpaca Paper Runtime Rehearsal Design v1 | Done | Design the no-network runtime-clone import/help/preflight rehearsal for the Alpaca paper CLI before any real paper API call. |
 | 171 | Semantic-Target Alpaca Paper Runtime Rehearsal v1 | In Review | Run the no-network runtime-clone import/help/preflight rehearsal, proving command visibility, scheduler absence, preserved runtime evidence, and zero Alpaca/order-capable behavior. |
 | 172 | Semantic-Target Alpaca Paper Request Preparation Design v1 | Done | Design a broker-free command that prepares one reviewed Alpaca paper request from existing semantic-target artifacts. |
-| 173 | Semantic-Target Alpaca Paper Request Preparation v1 | In Review | Implement the broker-free request preparer, converting one reviewed local semantic-paper request into bounded Alpaca paper request artifacts without credentials or broker access. |
+| 173 | Semantic-Target Alpaca Paper Request Preparation v1 | Done | Implement the broker-free request preparer, converting one reviewed local semantic-paper request into bounded Alpaca paper request artifacts without credentials or broker access. |
+| 174 | Semantic-Target Alpaca Paper Request Runtime Rehearsal v1 | In Review | Run the broker-free preparer from the runtime clone with synthetic local inputs, proving one validated request under `/tmp` and no credentials, broker access, or paper output. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Request Preparation v1**, then rehearse
-the preparer from the runtime clone with synthetic/local reviewed inputs. Do
-not source credentials, contact Alpaca, inspect paper account state, submit
-orders, expose launchd, add recurring scheduling, permit non-paper Alpaca
-behavior, enable real-money trading, or add automatic drift repair as part of
-that rehearsal.
+Review **Semantic-Target Alpaca Paper Request Runtime Rehearsal v1**, then
+prepare the first one-request manual Alpaca paper API test with fresh preflight
+evidence. Do not expose launchd, add recurring scheduling, permit non-paper
+Alpaca behavior, enable real-money trading, add automatic drift repair, or
+broaden the scope beyond one reviewed request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

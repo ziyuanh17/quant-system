@@ -630,6 +630,14 @@ verified without credentials, Alpaca calls, runtime changes, launchd, or
 scheduler behavior. See
 [semantic_target_alpaca_paper_request_preparation.md](semantic_target_alpaca_paper_request_preparation.md).
 
+The runtime-clone request-preparation rehearsal passed. The runtime clone
+fast-forwarded to `ddc6d9e`, generated a synthetic local semantic-paper request
+under `/tmp`, converted it into one Alpaca paper request under `/tmp`, validated
+the request model, and left the future paper output root absent. No credentials
+were sourced, no Alpaca client was constructed, no Alpaca API call was made, and
+no order-capable command was run. See
+[semantic_target_alpaca_paper_request_runtime_rehearsal.md](semantic_target_alpaca_paper_request_runtime_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
