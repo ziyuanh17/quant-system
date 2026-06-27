@@ -520,6 +520,24 @@ absent, no request generation or local semantic-paper command was run, and no
 new `__pycache__` directories were created. See
 [semantic_paper_runtime_copy_rehearsal.md](semantic_paper_runtime_copy_rehearsal.md).
 
+The next reviewed design is a runtime-clone no-network actual-command rehearsal
+for the semantic-paper command family. It would build deterministic synthetic
+market data under `/tmp`, generate one reviewed request under `/tmp`, inspect
+it, run local semantic paper twice with `/tmp` evidence, and verify exactly one
+local order and fill. It would not write runtime data, source credentials, load
+launchd, contact Alpaca, or touch broker-network paths. See
+[semantic_paper_runtime_command_rehearsal_design.md](semantic_paper_runtime_command_rehearsal_design.md).
+
+On June 26, 2026, that runtime-clone no-network actual-command rehearsal
+passed. From the clean runtime clone at `2614ebc`, deterministic synthetic AAPL
+data under `/tmp` produced a `buy` request for `AAPL +2`. Inspection reported
+an intended `BUY 2 AAPL` order. Running local semantic paper twice with `/tmp`
+activation and output evidence reused the same orchestration and reconciliation
+ID, leaving exactly one local-paper order, one fill, and final synthetic
+position `AAPL +2`. Runtime `data/semantic-target` remained absent, the runtime
+clone stayed clean, and the runtime `__pycache__` count stayed unchanged. See
+[semantic_paper_runtime_command_rehearsal.md](semantic_paper_runtime_command_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

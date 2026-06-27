@@ -113,6 +113,22 @@ semantic-paper CLI help displayed without creating semantic-target outputs,
 local-paper outputs, scheduler outputs, orders, fills, or working-tree changes.
 See [semantic_paper_runtime_copy_rehearsal.md](semantic_paper_runtime_copy_rehearsal.md).
 
+The next semantic-paper promotion design is a runtime-clone no-network
+actual-command rehearsal. It would generate deterministic synthetic inputs
+under `/tmp`, run the reviewed semantic-paper CLI path with all evidence under
+`/tmp`, and verify one local order/fill plus restart reuse. It would not write
+runtime data, source credentials, load launchd, contact Alpaca, or touch
+broker-network paths. See
+[semantic_paper_runtime_command_rehearsal_design.md](semantic_paper_runtime_command_rehearsal_design.md).
+
+The runtime-clone no-network actual-command rehearsal passed. The runtime clone
+generated a synthetic `BUY 2 AAPL` request under `/tmp`, inspected it, and ran
+local semantic paper twice with `/tmp` evidence. The two runs reused the same
+orchestration and reconciliation evidence and produced exactly one local-paper
+order, one fill, and final synthetic position `AAPL +2`, while the runtime
+clone stayed clean. See
+[semantic_paper_runtime_command_rehearsal.md](semantic_paper_runtime_command_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
