@@ -60,6 +60,8 @@ Start with these current, canonical documents:
   synthetic local inputs under `/tmp`.
 - [semantic_target_alpaca_paper_manual_test_design.md](semantic_target_alpaca_paper_manual_test_design.md):
   design for the first one-request manual Alpaca paper API test.
+- [semantic_target_alpaca_paper_manual_test_preflight.md](semantic_target_alpaca_paper_manual_test_preflight.md):
+  blocked preflight evidence for the first manual Alpaca paper API test.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

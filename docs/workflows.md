@@ -222,6 +222,11 @@ request, requires fresh preflight evidence, and requires a separate evidence
 document after the run. See
 [semantic_target_alpaca_paper_manual_test_design.md](semantic_target_alpaca_paper_manual_test_design.md).
 
+The first manual paper API preflight blocked before broker interaction because
+the local time was outside the regular US equity session. The order-capable
+command was not run and no Alpaca API call was made. See
+[semantic_target_alpaca_paper_manual_test_preflight.md](semantic_target_alpaca_paper_manual_test_preflight.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

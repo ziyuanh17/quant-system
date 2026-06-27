@@ -644,6 +644,14 @@ API, restart, pass, blocked, and evidence requirements before any broker
 interaction. See
 [semantic_target_alpaca_paper_manual_test_design.md](semantic_target_alpaca_paper_manual_test_design.md).
 
+The first manual Alpaca paper API preflight blocked before broker interaction.
+Credentials were present after sourcing runtime `.env`, the scheduler and
+launchd plist were absent, and the prepared request was still within its
+validity window, but local time was Friday, June 26, 2026 at 21:08 PDT,
+outside the regular US equity session. The order-capable command was not run
+and no Alpaca API call was made. See
+[semantic_target_alpaca_paper_manual_test_preflight.md](semantic_target_alpaca_paper_manual_test_preflight.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

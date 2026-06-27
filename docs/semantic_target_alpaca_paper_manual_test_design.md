@@ -61,6 +61,11 @@ shasum -a 256 <request-path>
 If the request has expired, was edited, or its target artifacts no longer match
 the request hashes, stop before sourcing credentials.
 
+The first paper test should run only during a regular US equity session. A
+market order submitted outside the session may remain queued and later fill
+outside the observed rehearsal window, creating exactly the working-order
+ambiguity this stage is meant to avoid.
+
 ## Fresh Preflight
 
 Capture the following immediately before any Alpaca API interaction:
@@ -114,6 +119,7 @@ Stop before sourcing credentials if:
 - target is fractional;
 - target exceeds the reviewed quantity or notional bound;
 - the command path is not the reviewed semantic-target Alpaca paper command.
+- the regular US equity session is closed for a market-order test.
 
 ## Command
 

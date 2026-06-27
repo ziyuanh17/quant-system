@@ -192,16 +192,16 @@ side discussions.
 | 172 | Semantic-Target Alpaca Paper Request Preparation Design v1 | Done | Design a broker-free command that prepares one reviewed Alpaca paper request from existing semantic-target artifacts. |
 | 173 | Semantic-Target Alpaca Paper Request Preparation v1 | Done | Implement the broker-free request preparer, converting one reviewed local semantic-paper request into bounded Alpaca paper request artifacts without credentials or broker access. |
 | 174 | Semantic-Target Alpaca Paper Request Runtime Rehearsal v1 | In Review | Run the broker-free preparer from the runtime clone with synthetic local inputs, proving one validated request under `/tmp` and no credentials, broker access, or paper output. |
-| 175 | Semantic-Target Alpaca Paper Manual Test Design v1 | In Review | Design the first one-request manual Alpaca paper API test with fresh preflight, paper-only API scope, restart rules, and evidence requirements. |
+| 175 | Semantic-Target Alpaca Paper Manual Test Design v1 | Done | Design the first one-request manual Alpaca paper API test with fresh preflight, paper-only API scope, restart rules, and evidence requirements. |
+| 176 | Semantic-Target Alpaca Paper Manual Test Preflight v1 | In Review | Run fresh preflight for the first one-request manual Alpaca paper API test and block before broker interaction because the regular equity session was closed. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Manual Test Design v1**, then decide
-whether to run the first one-request manual Alpaca paper API test with the
-prepared request and fresh preflight evidence. Do not expose launchd, add
-recurring scheduling, permit non-paper Alpaca behavior, enable real-money
-trading, add automatic drift repair, or broaden the scope beyond one reviewed
-request.
+Review **Semantic-Target Alpaca Paper Manual Test Preflight v1**, then rerun
+preflight during a regular US equity session with a fresh near-term request.
+Do not expose launchd, add recurring scheduling, permit non-paper Alpaca
+behavior, enable real-money trading, add automatic drift repair, or broaden
+the scope beyond one reviewed request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed
