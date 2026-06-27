@@ -496,6 +496,15 @@ and two local semantic-paper runs reused the same orchestration and reached
 `execution_completed` / `satisfied` with zero orders and zero fills. See
 [momentum_semantic_paper_request_rehearsal.md](momentum_semantic_paper_request_rehearsal.md).
 
+On June 26, 2026, the request generator also passed a nonzero local request
+rehearsal with temporary deterministic AAPL market data. The latest legacy
+momentum signal was `buy`, so the reviewed request targeted `AAPL +2`.
+Inspection reported an intended `BUY 2 AAPL` order. Two local semantic-paper
+runs reused the same orchestration and reached `execution_completed` /
+`satisfied`, leaving one local-paper order, one fill, and final AAPL local-paper
+position `+2`. See
+[momentum_semantic_paper_nonzero_request_rehearsal.md](momentum_semantic_paper_nonzero_request_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

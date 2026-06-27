@@ -93,6 +93,13 @@ local semantic-paper runs reached satisfied execution with zero orders and zero
 fills. See
 [momentum_semantic_paper_request_rehearsal.md](momentum_semantic_paper_request_rehearsal.md).
 
+A follow-up generated-request rehearsal used temporary deterministic AAPL
+market data that produced a latest `buy` signal. Inspection found an intended
+`BUY 2 AAPL` order, and two local semantic-paper runs reached satisfied
+execution with exactly one local-paper order, one fill, and final AAPL
+local-paper position `+2`. See
+[momentum_semantic_paper_nonzero_request_rehearsal.md](momentum_semantic_paper_nonzero_request_rehearsal.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an
