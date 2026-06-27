@@ -573,6 +573,14 @@ and confirms one durable order, one fill, one reconciliation report, final
 position `AAPL +2`, and no duplicate submission on restart. See
 [semantic_target_alpaca_paper_fake_rehearsal.md](semantic_target_alpaca_paper_fake_rehearsal.md).
 
+The next reviewed design is a manual runtime Alpaca paper runbook for one
+reviewed semantic-target request. It defines preflight gates, the intended
+dedicated one-request command shape, allowed paper API calls, evidence capture,
+pass criteria, and blocked outcome criteria. It explicitly excludes launchd,
+recurring scheduling, market-data research through Alpaca, non-paper Alpaca
+behavior, real-money trading, and automatic drift repair. See
+[semantic_target_alpaca_paper_manual_runbook_design.md](semantic_target_alpaca_paper_manual_runbook_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

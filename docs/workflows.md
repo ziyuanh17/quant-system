@@ -159,6 +159,14 @@ paper client, and proves one order, one fill, reconciliation-confirmed
 satisfaction, final `AAPL +2`, and no duplicate submission on restart. See
 [semantic_target_alpaca_paper_fake_rehearsal.md](semantic_target_alpaca_paper_fake_rehearsal.md).
 
+The next semantic-target promotion design is a manual runtime Alpaca paper
+runbook for one reviewed request. It defines preflight gates, the future
+dedicated command shape, allowed paper API calls, evidence capture, pass
+criteria, and blocked outcomes while excluding launchd, recurring scheduling,
+market-data research through Alpaca, non-paper Alpaca behavior, real-money
+trading, and automatic drift repair. See
+[semantic_target_alpaca_paper_manual_runbook_design.md](semantic_target_alpaca_paper_manual_runbook_design.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

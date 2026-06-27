@@ -182,14 +182,15 @@ side discussions.
 | 162 | Semantic-Paper Manual Operator Runbook Design v1 | Done | Design a one-request manual runtime runbook for reviewed local-data semantic paper, allowing only bounded runtime local-paper evidence and excluding launchd, scheduler, Alpaca, broker-network orders, and broker-network fills. |
 | 163 | Semantic-Paper Manual Operator Run v1 | Done | Run one reviewed local-data semantic-paper request from the runtime clone, producing bounded runtime local-paper evidence while excluding launchd, scheduler, Alpaca, broker-network orders, and broker-network fills. |
 | 164 | Semantic-Target Alpaca Paper Testing Boundary v1 | Done | Design the one-request semantic-target Alpaca paper testing boundary, allowing only paper-trade order/reconciliation API use and excluding launchd, scheduler, non-paper Alpaca behavior, and real-money trading. |
-| 165 | Semantic-Target Alpaca Paper Fake-Client Rehearsal v1 | In Review | Add a source-level reviewed-request model and fake-client rehearsal for one semantic-target Alpaca paper test, proving satisfaction, reconciliation, hash verification, and restart reuse without real Alpaca calls. |
+| 165 | Semantic-Target Alpaca Paper Fake-Client Rehearsal v1 | Done | Add a source-level reviewed-request model and fake-client rehearsal for one semantic-target Alpaca paper test, proving satisfaction, reconciliation, hash verification, and restart reuse without real Alpaca calls. |
+| 166 | Semantic-Target Alpaca Paper Manual Runbook Design v1 | In Review | Design a one-request manual runtime Alpaca paper test runbook for reviewed semantic targets, allowing only paper order/reconciliation API use and excluding launchd, scheduler, non-paper Alpaca behavior, and real-money trading. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Fake-Client Rehearsal v1**, then design a
-manual runtime Alpaca paper test runbook for one reviewed semantic-target
-request. Do not expose launchd, recurring scheduling, non-paper Alpaca
-behavior, or real-money trading as part of that work.
+Review **Semantic-Target Alpaca Paper Manual Runbook Design v1**, then implement
+the dedicated one-request semantic-target Alpaca paper operator boundary with a
+fake Alpaca client first. Do not expose launchd, recurring scheduling,
+non-paper Alpaca behavior, or real-money trading as part of that work.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed
