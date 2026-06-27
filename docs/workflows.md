@@ -202,6 +202,14 @@ portfolio/risk target artifacts needed by the Alpaca paper command, and write
 one reviewed request without broker access. See
 [semantic_target_alpaca_paper_request_preparation_design.md](semantic_target_alpaca_paper_request_preparation_design.md).
 
+The broker-free Alpaca paper request preparer is implemented in source as
+`quant semantic-target prepare-alpaca-paper-request`. It converts one reviewed
+local semantic-paper request into the portfolio, risk, and operator request
+artifacts needed by the Alpaca paper command, while avoiding credentials,
+broker clients, Alpaca API calls, local paper, dry-run, launchd, and
+scheduler behavior. See
+[semantic_target_alpaca_paper_request_preparation.md](semantic_target_alpaca_paper_request_preparation.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

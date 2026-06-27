@@ -622,6 +622,14 @@ the portfolio and risk targets, and write one
 contacting Alpaca, inspecting paper account state, or submitting orders. See
 [semantic_target_alpaca_paper_request_preparation_design.md](semantic_target_alpaca_paper_request_preparation_design.md).
 
+The source now includes `quant semantic-target prepare-alpaca-paper-request`.
+It consumes a reviewed local semantic-paper request, copies target inputs,
+generates portfolio and risk target artifacts, enforces reviewed quantity and
+notional bounds, and writes one Alpaca paper request. It is broker-free and was
+verified without credentials, Alpaca calls, runtime changes, launchd, or
+scheduler behavior. See
+[semantic_target_alpaca_paper_request_preparation.md](semantic_target_alpaca_paper_request_preparation.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

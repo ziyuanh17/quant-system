@@ -105,6 +105,7 @@ from quant.workflows import (
     inspect_activated_semantic_paper_operator_request,
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
     prepare_momentum_semantic_paper_request,
+    prepare_semantic_target_alpaca_paper_request,
     run_activated_dry_run_operator_request,
     run_activated_semantic_paper_operator_request,
     run_alpaca_paper_refresh_workflow,
@@ -780,6 +781,62 @@ def semantic_target_alpaca_paper(
         typer.echo(f"Differences: {len(result.reconciliation.differences)}")
     if result.status != ExecutionPlanStatus.SATISFIED:
         raise typer.Exit(code=1)
+
+
+@semantic_target_app.command("prepare-alpaca-paper-request")
+def semantic_target_prepare_alpaca_paper_request(
+    request_id: Annotated[
+        str,
+        typer.Option(help="Safe ID for the generated Alpaca paper request."),
+    ],
+    source_request_path: Annotated[
+        Path,
+        typer.Option(help="Reviewed local semantic-paper request JSON."),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option(help="Directory for prepared Alpaca paper inputs."),
+    ] = Path("data/semantic-target/alpaca-paper-requests"),
+    paper_output_root: Annotated[
+        Path,
+        typer.Option(help="Future output root for Alpaca paper evidence."),
+    ] = Path("data/semantic-target/alpaca-paper"),
+    max_order_notional: Annotated[
+        float,
+        typer.Option(help="Reviewed maximum notional for this request."),
+    ] = 1_000.0,
+    allowed_max_quantity: Annotated[
+        float,
+        typer.Option(help="Reviewed maximum absolute target quantity."),
+    ] = 1.0,
+    valid_for_seconds: Annotated[
+        int,
+        typer.Option(help="How long the prepared request remains valid."),
+    ] = 900,
+) -> None:
+    """Prepare one reviewed Alpaca paper request without broker access."""
+    try:
+        bundle = prepare_semantic_target_alpaca_paper_request(
+            request_id=request_id,
+            source_request_path=source_request_path,
+            output_root=output_root,
+            paper_output_root=paper_output_root / request_id,
+            max_order_notional=Decimal(str(max_order_notional)),
+            allowed_max_quantity=Decimal(str(allowed_max_quantity)),
+            valid_for_seconds=valid_for_seconds,
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {bundle.request_path}")
+    typer.echo(f"Source request: {bundle.source_request_path}")
+    typer.echo(f"Symbol: {bundle.symbol}")
+    typer.echo(f"Approved target: {bundle.approved_target_quantity}")
+    typer.echo(f"Reference price: {bundle.reference_price:,.2f}")
+    typer.echo(f"Max order notional: {bundle.max_order_notional}")
+    typer.echo(f"Valid until: {bundle.valid_until.isoformat()}")
+    typer.echo(f"Paper output root: {bundle.paper_output_root}")
+    typer.echo("Prepared only. No Alpaca API call was made.")
 
 
 @dry_run_app.command("autonomous-finite-loop")

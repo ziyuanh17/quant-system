@@ -2,6 +2,7 @@
 
 import json
 import os
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
@@ -29,6 +30,7 @@ from quant.models.execution_lifecycle import (
     ExecutionPlanStatus,
 )
 from quant.models.operator import (
+    ActivatedSemanticPaperOperatorRequest,
     SemanticTargetAlpacaPaperOperatorRequest,
     SemanticTargetAlpacaPaperRehearsalReport,
 )
@@ -56,10 +58,33 @@ from quant.research.target_artifacts import (
     write_risk_target_decision,
     write_strategy_target_decision,
 )
+from quant.workflows.activated_dry_run_operator import (
+    load_activated_semantic_paper_operator_request,
+)
 
 SEMANTIC_TARGET_ALPACA_PAPER_REHEARSAL_POLICY = (
     "semantic_target_alpaca_paper_fake_rehearsal_v1"
 )
+
+
+@dataclass(frozen=True)
+class SemanticTargetAlpacaPaperRequestBundle:
+    """Paths and summary for one prepared Alpaca paper request."""
+
+    request_path: Path
+    output_root: Path
+    paper_output_root: Path
+    contributor_set_path: Path
+    strategy_decision_paths: tuple[Path, ...]
+    strategy_evaluation_paths: tuple[Path, ...]
+    portfolio_target_path: Path
+    risk_target_path: Path
+    source_request_path: Path
+    symbol: str
+    approved_target_quantity: Decimal
+    reference_price: float
+    max_order_notional: Decimal
+    valid_until: datetime
 
 
 def write_semantic_target_alpaca_paper_operator_request(
@@ -78,6 +103,135 @@ def load_semantic_target_alpaca_paper_operator_request(
     """Load and validate one reviewed Alpaca paper operator request."""
     return SemanticTargetAlpacaPaperOperatorRequest.model_validate_json(
         path.read_text()
+    )
+
+
+def prepare_semantic_target_alpaca_paper_request(
+    *,
+    request_id: str,
+    source_request_path: Path,
+    output_root: Path,
+    paper_output_root: Path,
+    max_order_notional: Decimal,
+    allowed_max_quantity: Decimal,
+    valid_for_seconds: int,
+    evaluated_at: datetime | None = None,
+) -> SemanticTargetAlpacaPaperRequestBundle:
+    """Prepare one broker-free reviewed Alpaca paper request."""
+    _require_safe_component(request_id)
+    if max_order_notional <= 0:
+        raise ValueError("max_order_notional must be positive")
+    if allowed_max_quantity <= 0:
+        raise ValueError("allowed_max_quantity must be positive")
+    if valid_for_seconds <= 0:
+        raise ValueError("valid_for_seconds must be positive")
+
+    source = load_activated_semantic_paper_operator_request(
+        source_request_path
+    )
+    current_time = evaluated_at or source.evaluated_at
+    copied = _copy_source_request_artifacts(
+        source=source,
+        output_root=output_root / "inputs",
+    )
+    contributor_set = load_contributor_set(copied.contributor_set_path)
+    decisions = tuple(
+        load_strategy_target_decision(path)
+        for path in copied.strategy_decision_paths
+    )
+    portfolio_target = aggregate_strategy_targets(
+        portfolio_target_id=f"{request_id}-portfolio-target",
+        revision=1,
+        contributor_set=contributor_set,
+        decisions=decisions,
+        evaluated_at=current_time,
+        evidence_refs=(str(source_request_path),),
+    )
+    if portfolio_target.status.value != "aggregated":
+        raise ValueError(f"portfolio target blocked: {portfolio_target.reason}")
+    portfolio_target_path = _write_or_verify_portfolio_target_decision(
+        portfolio_target, output_root / "inputs" / "portfolio-targets"
+    )
+    risk_target = evaluate_research_risk_target(
+        risk_target_id=f"{request_id}-risk-target",
+        revision=1,
+        portfolio_target=portfolio_target,
+        policy=source.risk_policy,
+        evaluated_at=current_time,
+        evidence_refs=(str(portfolio_target_path), str(source_request_path)),
+    )
+    if risk_target.status.value != "approved":
+        raise ValueError(
+            "risk target rejected: " + "; ".join(risk_target.reasons)
+        )
+    if risk_target.approved_target_value is None:
+        raise ValueError("approved risk target is missing target quantity")
+    approved_target = risk_target.approved_target_value
+    if approved_target != approved_target.to_integral_value():
+        raise ValueError("Alpaca paper request requires whole-share target")
+    if abs(approved_target) > allowed_max_quantity:
+        raise ValueError("approved target exceeds allowed maximum quantity")
+    notional = abs(approved_target) * Decimal(str(source.reference_price))
+    if notional > max_order_notional:
+        raise ValueError("approved target notional exceeds maximum")
+    risk_target_path = _write_or_verify_risk_target_decision(
+        risk_target, output_root / "inputs" / "risk-targets"
+    )
+
+    request = SemanticTargetAlpacaPaperOperatorRequest(
+        request_id=request_id,
+        contributor_set_path=str(copied.contributor_set_path),
+        contributor_set_sha256=_file_sha256(copied.contributor_set_path),
+        strategy_decision_paths=tuple(
+            str(path) for path in copied.strategy_decision_paths
+        ),
+        strategy_decision_sha256s=tuple(
+            _file_sha256(path) for path in copied.strategy_decision_paths
+        ),
+        portfolio_target_path=str(portfolio_target_path),
+        portfolio_target_sha256=_file_sha256(portfolio_target_path),
+        risk_target_path=str(risk_target_path),
+        risk_target_sha256=_file_sha256(risk_target_path),
+        risk_policy=source.risk_policy,
+        execution_policy=source.execution_policy,
+        reference_price=source.reference_price,
+        safety_config=TradingSafetyConfig(
+            mode=TradingMode.LIVE,
+            live_trading_enabled=True,
+            live_trading_confirmation=LIVE_TRADING_CONFIRMATION,
+            max_order_notional=float(max_order_notional),
+            broker_name="alpaca-paper",
+            short_selling_policy=ShortSellingPolicy(),
+        ),
+        output_root=str(paper_output_root),
+        evaluated_at=current_time,
+        valid_until=current_time + timedelta(seconds=valid_for_seconds),
+        alpaca_submission_enabled=True,
+        allowed_symbol=contributor_set.symbol,
+        allowed_max_quantity=allowed_max_quantity,
+        evidence_refs=(
+            "prepared:semantic-target-alpaca-paper-request",
+            str(source_request_path),
+        ),
+    )
+    request_path = _write_or_verify_alpaca_paper_operator_request(
+        request, output_root / "inputs" / "requests"
+    )
+    return SemanticTargetAlpacaPaperRequestBundle(
+        request_path=request_path,
+        output_root=output_root,
+        paper_output_root=paper_output_root,
+        contributor_set_path=copied.contributor_set_path,
+        strategy_decision_paths=copied.strategy_decision_paths,
+        strategy_evaluation_paths=copied.strategy_evaluation_paths,
+        portfolio_target_path=portfolio_target_path,
+        risk_target_path=risk_target_path,
+        source_request_path=source_request_path,
+        symbol=contributor_set.symbol,
+        approved_target_quantity=approved_target,
+        reference_price=source.reference_price,
+        max_order_notional=max_order_notional,
+        valid_until=request.valid_until,
     )
 
 
@@ -423,6 +577,95 @@ def _verify_request_hashes(
         Path(request.portfolio_target_path), request.portfolio_target_sha256
     )
     _require_hash(Path(request.risk_target_path), request.risk_target_sha256)
+
+
+@dataclass(frozen=True)
+class _CopiedSourceArtifacts:
+    contributor_set_path: Path
+    strategy_decision_paths: tuple[Path, ...]
+    strategy_evaluation_paths: tuple[Path, ...]
+
+
+def _copy_source_request_artifacts(
+    *,
+    source: ActivatedSemanticPaperOperatorRequest,
+    output_root: Path,
+) -> _CopiedSourceArtifacts:
+    contributor_path = _copy_file(
+        Path(source.contributor_set_path),
+        output_root / "contributor-sets" / "source-contributor-set.json",
+    )
+    decision_paths = tuple(
+        _copy_file(
+            Path(path),
+            output_root / "strategy-targets" / f"{index}.json",
+        )
+        for index, path in enumerate(source.strategy_decision_paths)
+    )
+    evaluation_paths = tuple(
+        _copy_file(
+            Path(path),
+            output_root / "strategy-evaluations" / f"{index}.json",
+        )
+        for index, path in enumerate(source.strategy_evaluation_paths)
+    )
+    return _CopiedSourceArtifacts(
+        contributor_set_path=contributor_path,
+        strategy_decision_paths=decision_paths,
+        strategy_evaluation_paths=evaluation_paths,
+    )
+
+
+def _copy_file(source: Path, destination: Path) -> Path:
+    payload = source.read_bytes()
+    if destination.exists():
+        if destination.read_bytes() != payload:
+            raise FileExistsError(f"conflicting copied artifact: {destination}")
+        return destination
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    with os.fdopen(os.open(destination, flags, 0o644), "wb") as handle:
+        handle.write(payload)
+    return destination
+
+
+def _write_or_verify_portfolio_target_decision(
+    decision: PortfolioTargetDecision, output_root: Path
+) -> Path:
+    path = (
+        output_root
+        / decision.portfolio_target_id
+        / f"{decision.revision}.json"
+    )
+    if path.exists():
+        if load_portfolio_target_decision(path) != decision:
+            raise FileExistsError(f"conflicting portfolio target: {path}")
+        return path
+    return write_portfolio_target_decision(decision, output_root)
+
+
+def _write_or_verify_risk_target_decision(
+    decision: RiskTargetDecision, output_root: Path
+) -> Path:
+    path = output_root / decision.risk_target_id / f"{decision.revision}.json"
+    if path.exists():
+        if load_risk_target_decision(path) != decision:
+            raise FileExistsError(f"conflicting risk target: {path}")
+        return path
+    return write_risk_target_decision(decision, output_root)
+
+
+def _write_or_verify_alpaca_paper_operator_request(
+    request: SemanticTargetAlpacaPaperOperatorRequest, output_root: Path
+) -> Path:
+    path = output_root / f"{request.request_id}.json"
+    if path.exists():
+        if load_semantic_target_alpaca_paper_operator_request(path) != request:
+            raise FileExistsError(f"conflicting Alpaca paper request: {path}")
+        return path
+    return write_semantic_target_alpaca_paper_operator_request(
+        request, output_root
+    )
 
 
 def _verify_request_scope(
