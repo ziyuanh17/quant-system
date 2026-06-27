@@ -216,6 +216,12 @@ the future paper output root absent, proving the order-capable paper command
 was not run. See
 [semantic_target_alpaca_paper_request_runtime_rehearsal.md](semantic_target_alpaca_paper_request_runtime_rehearsal.md).
 
+The next semantic-target promotion design is the first one-request manual
+Alpaca paper API test. It allows only the paper API behavior needed for that
+request, requires fresh preflight evidence, and requires a separate evidence
+document after the run. See
+[semantic_target_alpaca_paper_manual_test_design.md](semantic_target_alpaca_paper_manual_test_design.md).
+
 The API-only autonomous dry-run workflow permits repeated broker-free runs
 under one bounded deployment authorization. Every attempt is atomically
 claimed and durably recorded. An expired or exceeded authorization, an

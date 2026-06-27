@@ -638,6 +638,12 @@ were sourced, no Alpaca client was constructed, no Alpaca API call was made, and
 no order-capable command was run. See
 [semantic_target_alpaca_paper_request_runtime_rehearsal.md](semantic_target_alpaca_paper_request_runtime_rehearsal.md).
 
+The next reviewed design is the first one-request manual Alpaca paper API test.
+It defines fresh runtime, scheduler, request-hash, environment, allowed paper
+API, restart, pass, blocked, and evidence requirements before any broker
+interaction. See
+[semantic_target_alpaca_paper_manual_test_design.md](semantic_target_alpaca_paper_manual_test_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
