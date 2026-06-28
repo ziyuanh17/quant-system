@@ -121,6 +121,7 @@ from quant.workflows import (
     run_supervised_provider_discovery_operator_request,
     run_supervised_provider_operator_request,
     verify_semantic_target_alpaca_paper_run,
+    write_semantic_target_alpaca_paper_run_verification_report,
 )
 
 app = typer.Typer(no_args_is_help=True)
@@ -910,10 +911,25 @@ def semantic_target_verify_alpaca_paper_run(
         Path,
         typer.Option(help="Alpaca paper request JSON whose run to verify."),
     ],
+    report_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="Optional immutable verification report path to write."
+        ),
+    ] = None,
 ) -> None:
     """Verify semantic-target Alpaca paper evidence without broker access."""
     try:
         verification = verify_semantic_target_alpaca_paper_run(request_path)
+        written_report_path = (
+            write_semantic_target_alpaca_paper_run_verification_report(
+                verification=verification,
+                request_path=request_path,
+                output_path=report_path,
+            )
+            if report_path is not None
+            else None
+        )
     except (OSError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
 
@@ -940,6 +956,10 @@ def semantic_target_verify_alpaca_paper_run(
         f"Reconciliations: {verification.reconciliation_report_count}"
     )
     typer.echo(f"Final position: {verification.final_position_quantity}")
+    if written_report_path is None:
+        typer.echo("Report: not written")
+    else:
+        typer.echo(f"Report: {written_report_path}")
     for issue in verification.issues:
         typer.echo(f"Blocked because: {issue}")
     typer.echo("Verification created no Alpaca or execution artifacts.")

@@ -12,6 +12,7 @@ from quant.execution import FakeLiveBrokerClient
 from quant.models.operator import (
     SemanticTargetAlpacaPaperOperatorRequest,
     SemanticTargetAlpacaPaperRehearsalReport,
+    SemanticTargetAlpacaPaperRunVerificationReport,
 )
 from quant.workflows import run_semantic_target_alpaca_paper_fake_rehearsal
 from quant.workflows.semantic_target_alpaca_paper_rehearsal import (
@@ -87,6 +88,37 @@ def test_alpaca_paper_run_verifier_cli_reads_fake_evidence(tmp_path) -> None:
         "Verification created no Alpaca or execution artifacts."
         in result.output
     )
+
+
+def test_alpaca_paper_run_verifier_cli_writes_report(tmp_path) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="cli-verify",
+        output_root=tmp_path / "source",
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+    report_path = tmp_path / "verification-report.json"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "verify-alpaca-paper-run",
+            "--request-path",
+            str(tmp_path / "source" / "requests" / "cli-verify-request.json"),
+            "--report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert f"Report: {report_path}" in result.output
+    report = SemanticTargetAlpacaPaperRunVerificationReport.model_validate_json(
+        report_path.read_text()
+    )
+    assert report.passed
+    assert report.request_id == "cli-verify-request"
+    assert report.order_count == 1
+    assert report.fill_count == 1
 
 
 def test_alpaca_paper_run_verifier_cli_blocks_bad_evidence(tmp_path) -> None:

@@ -707,6 +707,15 @@ the successful post-run verification path and a fail-closed verifier failure.
 This change adds no scheduler, launchd, non-paper Alpaca, or real-money
 capability.
 
+The standalone verifier can now optionally write one immutable
+schema-versioned verification report through `--report-path`. The report binds
+the verifier outcome to the reviewed request path and request SHA-256, then
+records lifecycle, order, fill, snapshot, reconciliation, final-status, and
+final-position evidence counts. Existing reports are not overwritten. A local
+fake-client rehearsal wrote a passing report with final status `satisfied`,
+four events, one order, one fill, five snapshots, one reconciliation, and final
+`AAPL +2`, without credentials or Alpaca access.
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

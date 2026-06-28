@@ -46,12 +46,52 @@ quant semantic-target verify-alpaca-paper-run \
   --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json
 ```
 
+Optionally write a durable verification report:
+
+```bash
+quant semantic-target verify-alpaca-paper-run \
+  --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json \
+  --report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
+```
+
 The command exits nonzero if any evidence check fails and prints each blocked
-reason. It creates no Alpaca or execution artifacts.
+reason. Without `--report-path`, it writes no files. With `--report-path`, it
+writes one schema-versioned verification report immutably; it still creates no
+Alpaca or execution artifacts.
 
 The order-capable `quant semantic-target alpaca-paper` command also invokes
 this verifier immediately after execution. A paper run that reports
 `satisfied` still fails the CLI if the durable evidence verifier fails.
+
+## Report Contract
+
+The report binds verification to a specific reviewed request:
+
+```text
+schema_version
+report_id
+request_id
+request_path
+request_sha256
+verified_at
+passed
+issues
+symbol
+approved_target_quantity
+output_root
+execution_plan_id
+final_status
+event_count
+order_count
+fill_count
+snapshot_count
+reconciliation_report_count
+final_position_quantity
+summary
+```
+
+Existing reports are never overwritten. Re-running verification should use a
+new report path if another observation is needed.
 
 ## Review Boundary
 

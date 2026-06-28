@@ -17,8 +17,10 @@ from quant.models.targets import ResearchRiskPolicy
 from quant.workflows import (
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
     load_semantic_target_alpaca_paper_operator_request,
+    load_semantic_target_alpaca_paper_run_verification_report,
     run_semantic_target_alpaca_paper_fake_rehearsal,
     verify_semantic_target_alpaca_paper_run,
+    write_semantic_target_alpaca_paper_run_verification_report,
 )
 
 
@@ -76,6 +78,46 @@ def test_alpaca_paper_run_verifier_accepts_rehearsal_evidence(
     assert verification.reconciliation_report_count == 1
     assert verification.final_position_quantity == Decimal("2")
     assert verification.issues == ()
+
+
+def test_alpaca_paper_run_verification_report_is_immutable(
+    tmp_path,
+) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="alpaca-paper-fake",
+        output_root=tmp_path,
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+    request_path = tmp_path / "requests" / "alpaca-paper-fake-request.json"
+    verification = verify_semantic_target_alpaca_paper_run(
+        request_path,
+        verified_at=datetime(2026, 6, 26, 12, 5, tzinfo=UTC),
+    )
+    report_path = tmp_path / "reports" / "verification.json"
+
+    written_path = write_semantic_target_alpaca_paper_run_verification_report(
+        verification=verification,
+        request_path=request_path,
+        output_path=report_path,
+    )
+    loaded = load_semantic_target_alpaca_paper_run_verification_report(
+        written_path
+    )
+
+    assert loaded.passed
+    assert loaded.request_id == "alpaca-paper-fake-request"
+    assert loaded.request_path == str(request_path)
+    assert loaded.event_count == 4
+    assert loaded.order_count == 1
+    assert loaded.fill_count == 1
+    assert loaded.reconciliation_report_count == 1
+
+    with pytest.raises(FileExistsError):
+        write_semantic_target_alpaca_paper_run_verification_report(
+            verification=verification,
+            request_path=request_path,
+            output_path=report_path,
+        )
 
 
 def test_alpaca_paper_run_verifier_blocks_missing_reconciliation(

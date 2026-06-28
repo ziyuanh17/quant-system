@@ -47,6 +47,24 @@ Final position: 2
 Verification created no Alpaca or execution artifacts.
 ```
 
+The durable report-writing path was rehearsed separately:
+
+```bash
+.venv/bin/quant semantic-target alpaca-paper-fake-rehearsal \
+  --rehearsal-id verifier-report-local \
+  --output-root data/semantic-target/alpaca-paper-verification-report/rehearsal
+
+.venv/bin/quant semantic-target verify-alpaca-paper-run \
+  --request-path data/semantic-target/alpaca-paper-verification-report/rehearsal/requests/verifier-report-local-request.json \
+  --report-path data/semantic-target/alpaca-paper-verification-report/reports/verifier-report-local-verification.json
+```
+
+The written report had schema version `1`, request id
+`verifier-report-local-request`, passed with zero issues, bound the request hash
+`e8eb69390675660288733d6d5607e0896a538089de43521130bd15c85f26e626`, and
+recorded final status `satisfied`, four lifecycle events, one order, one fill,
+five snapshots, one reconciliation report, and final `AAPL +2`.
+
 Evidence shape:
 
 - one reviewed request artifact;

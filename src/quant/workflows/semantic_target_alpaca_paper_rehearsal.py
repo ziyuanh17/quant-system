@@ -42,6 +42,7 @@ from quant.models.operator import (
     ActivatedSemanticPaperOperatorRequest,
     SemanticTargetAlpacaPaperOperatorRequest,
     SemanticTargetAlpacaPaperRehearsalReport,
+    SemanticTargetAlpacaPaperRunVerificationReport,
 )
 from quant.models.targets import (
     ContributorSet,
@@ -152,6 +153,29 @@ def load_semantic_target_alpaca_paper_operator_request(
 ) -> SemanticTargetAlpacaPaperOperatorRequest:
     """Load and validate one reviewed Alpaca paper operator request."""
     return SemanticTargetAlpacaPaperOperatorRequest.model_validate_json(
+        path.read_text()
+    )
+
+
+def write_semantic_target_alpaca_paper_run_verification_report(
+    *,
+    verification: SemanticTargetAlpacaPaperRunVerification,
+    request_path: Path,
+    output_path: Path,
+) -> Path:
+    """Write one immutable broker-free Alpaca paper verification report."""
+    report = _verification_report_for_result(
+        verification=verification,
+        request_path=request_path,
+    )
+    return _write_model_exclusive(output_path, report)
+
+
+def load_semantic_target_alpaca_paper_run_verification_report(
+    path: Path,
+) -> SemanticTargetAlpacaPaperRunVerificationReport:
+    """Load one persisted Alpaca paper run verification report."""
+    return SemanticTargetAlpacaPaperRunVerificationReport.model_validate_json(
         path.read_text()
     )
 
@@ -1007,6 +1031,36 @@ def _load_live_reconciliation_reports(
         for path in sorted(reconciliation_dir.rglob("*.json"))
     )
     return tuple(sorted(reports, key=lambda report: report.created_at))
+
+
+def _verification_report_for_result(
+    *,
+    verification: SemanticTargetAlpacaPaperRunVerification,
+    request_path: Path,
+) -> SemanticTargetAlpacaPaperRunVerificationReport:
+    return SemanticTargetAlpacaPaperRunVerificationReport(
+        report_id=f"{verification.request_id}-verification",
+        request_id=verification.request_id,
+        request_path=str(request_path),
+        request_sha256=_file_sha256(request_path),
+        verified_at=verification.verified_at,
+        passed=verification.passed,
+        issues=verification.issues,
+        symbol=verification.symbol,
+        approved_target_quantity=verification.approved_target_quantity,
+        output_root=str(verification.output_root),
+        execution_plan_id=verification.execution_plan_id,
+        final_status=verification.final_status,
+        event_count=verification.event_count,
+        order_count=verification.order_count,
+        fill_count=verification.fill_count,
+        snapshot_count=verification.snapshot_count,
+        reconciliation_report_count=(
+            verification.reconciliation_report_count
+        ),
+        final_position_quantity=verification.final_position_quantity,
+        summary=verification.summary,
+    )
 
 
 def _paper_run_artifact_paths(output_root: Path) -> tuple[Path, ...]:
