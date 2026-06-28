@@ -788,6 +788,20 @@ def semantic_target_alpaca_paper(
     else:
         typer.echo(f"Reconciliation: {result.reconciliation.status.value}")
         typer.echo(f"Differences: {len(result.reconciliation.differences)}")
+    try:
+        verification = verify_semantic_target_alpaca_paper_run(request_path)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(
+            f"post-run evidence verification failed: {exc}"
+        ) from exc
+    typer.echo(
+        "Evidence verification: "
+        f"{'passed' if verification.passed else 'failed'}"
+    )
+    for issue in verification.issues:
+        typer.echo(f"Evidence blocked because: {issue}")
+    if not verification.passed:
+        raise typer.Exit(code=1)
     if result.status != ExecutionPlanStatus.SATISFIED:
         raise typer.Exit(code=1)
 

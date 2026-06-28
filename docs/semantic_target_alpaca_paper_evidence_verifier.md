@@ -49,6 +49,10 @@ quant semantic-target verify-alpaca-paper-run \
 The command exits nonzero if any evidence check fails and prints each blocked
 reason. It creates no Alpaca or execution artifacts.
 
+The order-capable `quant semantic-target alpaca-paper` command also invokes
+this verifier immediately after execution. A paper run that reports
+`satisfied` still fails the CLI if the durable evidence verifier fails.
+
 ## Review Boundary
 
 This implementation does not broaden the paper-trading surface. The

@@ -1,6 +1,7 @@
 """Test semantic-target Alpaca paper fake-rehearsal CLI."""
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -13,6 +14,9 @@ from quant.models.operator import (
     SemanticTargetAlpacaPaperRehearsalReport,
 )
 from quant.workflows import run_semantic_target_alpaca_paper_fake_rehearsal
+from quant.workflows.semantic_target_alpaca_paper_rehearsal import (
+    SemanticTargetAlpacaPaperRunVerification,
+)
 
 
 def test_alpaca_paper_fake_rehearsal_cli_writes_verified_report(
@@ -162,11 +166,75 @@ def test_alpaca_paper_cli_runs_reviewed_request_with_injected_paper_client(
     assert "Status: satisfied" in result.output
     assert "Order: buy 2 AAPL" in result.output
     assert "Reconciliation: passed" in result.output
+    assert "Evidence verification: passed" in result.output
     assert (
         len(tuple((tmp_path / "operator-output" / "orders").rglob("*.json")))
         == 1
     )
     assert len(client.fills()) == 1
+
+
+def test_alpaca_paper_cli_blocks_when_post_run_verifier_fails(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    request_path = _reviewed_request_path(tmp_path)
+    client = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        broker_name="alpaca-paper",
+        account_id="acct-fake",
+        broker_environment="paper",
+    )
+
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        lambda config: client,
+    )
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+    monkeypatch.setattr(
+        quant.cli,
+        "verify_semantic_target_alpaca_paper_run",
+        lambda path: SemanticTargetAlpacaPaperRunVerification(
+            request_id="cli-real-surface-live-request",
+            verified_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+            passed=False,
+            issues=("synthetic verifier failure",),
+            symbol="AAPL",
+            approved_target_quantity=Decimal("2"),
+            output_root=tmp_path / "operator-output",
+            execution_plan_id="execution-fake-alpaca-paper-risk-target-r1",
+            final_status=quant.cli.ExecutionPlanStatus.SATISFIED,
+            event_count=4,
+            order_count=1,
+            fill_count=1,
+            snapshot_count=5,
+            reconciliation_report_count=1,
+            final_position_quantity=Decimal("2"),
+            summary="blocked semantic-target Alpaca paper evidence",
+        ),
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "alpaca-paper",
+            "--request-path",
+            str(request_path),
+            "--from-env",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Status: satisfied" in result.output
+    assert "Evidence verification: failed" in result.output
+    assert "synthetic verifier failure" in result.output
 
 
 def test_alpaca_paper_cli_blocks_when_regular_session_closed(

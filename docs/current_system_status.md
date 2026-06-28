@@ -699,6 +699,14 @@ constructed, no broker API call was made, and no runtime, launchd, scheduler,
 non-paper Alpaca, or real-money path was touched. See
 [semantic_target_alpaca_paper_evidence_verifier_rehearsal.md](semantic_target_alpaca_paper_evidence_verifier_rehearsal.md).
 
+The order-capable `quant semantic-target alpaca-paper` command now runs the
+same broker-free evidence verifier immediately after execution. A satisfied
+paper execution is not enough for CLI success unless the durable local
+evidence also verifies. Source tests inject a fake paper client and prove both
+the successful post-run verification path and a fail-closed verifier failure.
+This change adds no scheduler, launchd, non-paper Alpaca, or real-money
+capability.
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

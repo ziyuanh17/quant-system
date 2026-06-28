@@ -405,7 +405,9 @@ This command is broker-connected and may submit one Alpaca paper order when
 all request, safety, target, lifecycle, and reconciliation gates pass. Use it
 only with a reviewed request and paper credentials in the environment. It does
 not expose local-paper, dry-run, real-money, scheduler, launchd, or mode
-selection.
+selection. After execution it automatically runs broker-free evidence
+verification against the local artifacts it produced; the command exits
+nonzero if that verification fails.
 
 Verify one completed semantic-target Alpaca paper run from local evidence:
 
