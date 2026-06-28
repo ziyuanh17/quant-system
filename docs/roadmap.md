@@ -198,12 +198,15 @@ side discussions.
 | 178 | Semantic-Target Alpaca Paper Market Session Guard Runtime Rehearsal v1 | In Review | Rehearse the guard from the runtime clone, proving closed-session command execution stops before broker interaction and creates no paper output. |
 | 179 | Semantic-Target Alpaca Paper Request Inspection v1 | Done | Add broker-free inspection for prepared Alpaca paper requests, checking hashes, expiry, bounds, and regular-session state without credentials or broker access. |
 | 180 | Semantic-Target Alpaca Paper Request Inspection Runtime Rehearsal v1 | In Review | Rehearse broker-free request inspection from the runtime clone, proving expired/closed-session blocking without paper output or Alpaca access. |
-| 181 | Semantic-Target Alpaca Paper Evidence Verifier Design v1 | In Review | Design a broker-free verifier for one-request Alpaca paper run evidence before any broader paper automation. |
+| 181 | Semantic-Target Alpaca Paper Evidence Verifier Design v1 | Done | Design a broker-free verifier for one-request Alpaca paper run evidence before any broader paper automation. |
+| 182 | Semantic-Target Alpaca Paper Evidence Verifier v1 | Done | Add a read-only verifier and CLI for completed one-request Alpaca paper evidence, checking lifecycle, order, fill, snapshot, and reconciliation artifacts without broker access. |
+| 183 | Semantic-Target Alpaca Paper Evidence Verifier Rehearsal v1 | In Review | Rehearse the verifier against fake-client Alpaca paper evidence, proving satisfied lifecycle, one order, one fill, passing reconciliation, and zero Alpaca access. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Evidence Verifier Design v1**, then
-implement the broker-free verifier against fake-client evidence. Do not expose
+Review **Semantic-Target Alpaca Paper Evidence Verifier Rehearsal v1**, then
+decide whether to run one fresh, market-session, reviewed semantic-target
+Alpaca paper test with the verifier before and after execution. Do not expose
 launchd, add recurring scheduling, permit non-paper Alpaca behavior, enable
 real-money trading, add automatic drift repair, or broaden the scope beyond one
 reviewed request.

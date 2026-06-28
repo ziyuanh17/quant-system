@@ -407,12 +407,26 @@ only with a reviewed request and paper credentials in the environment. It does
 not expose local-paper, dry-run, real-money, scheduler, launchd, or mode
 selection.
 
+Verify one completed semantic-target Alpaca paper run from local evidence:
+
+```bash
+quant semantic-target verify-alpaca-paper-run \
+  --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json
+```
+
+This verifier is broker-free. It reads the reviewed request, lifecycle events,
+order and fill records, snapshots, and reconciliation reports, then exits
+nonzero if the completed run did not satisfy the approved target exactly once.
+It does not load credentials, contact Alpaca, submit orders, or write execution
+artifacts.
+
 ## Semantic-Target Review
 
 Semantic-target dry-run and local semantic paper have dedicated reviewed CLI
 commands documented above. Semantic-target Alpaca paper currently has a
-fake-client rehearsal command and the one-request paper command documented
-above. Review semantic-target artifacts under the configured execution root:
+fake-client rehearsal command, the one-request paper command, and the
+broker-free evidence verifier documented above. Review semantic-target
+artifacts under the configured execution root:
 
 ```text
 plans/

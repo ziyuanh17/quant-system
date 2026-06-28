@@ -1,0 +1,64 @@
+# Semantic-Target Alpaca Paper Evidence Verifier Rehearsal
+
+This rehearsal produced fake-client Alpaca paper evidence and then verified it
+with the broker-free evidence verifier.
+
+Commands run from the development workspace:
+
+```bash
+.venv/bin/quant semantic-target alpaca-paper-fake-rehearsal \
+  --rehearsal-id verifier-local \
+  --output-root data/semantic-target/alpaca-paper-evidence-verifier/rehearsal
+
+.venv/bin/quant semantic-target verify-alpaca-paper-run \
+  --request-path data/semantic-target/alpaca-paper-evidence-verifier/rehearsal/requests/verifier-local-request.json
+```
+
+The fake-client rehearsal passed:
+
+```text
+Passed: yes
+First status: satisfied
+Second status: satisfied
+Execution plan: execution-fake-alpaca-paper-risk-target-r1
+Orders: 1
+Fills: 1
+Final position: 2
+Reconciliations: 1
+Evidence files: 18
+```
+
+The broker-free verifier then passed:
+
+```text
+Request: verifier-local-request
+Passed: yes
+Summary: verified semantic-target Alpaca paper run
+Symbol: AAPL
+Approved target: 2
+Execution plan: execution-fake-alpaca-paper-risk-target-r1
+Final status: satisfied
+Events: 4
+Orders: 1
+Fills: 1
+Snapshots: 5
+Reconciliations: 1
+Final position: 2
+Verification created no Alpaca or execution artifacts.
+```
+
+Evidence shape:
+
+- one reviewed request artifact;
+- one fake-client rehearsal report;
+- one execution plan;
+- four append-only lifecycle events;
+- one order artifact;
+- one fill artifact;
+- five account snapshots;
+- one passed reconciliation report.
+
+No Alpaca credentials were sourced. No Alpaca client was constructed. No
+broker API call was made. No order-capable command was run against a real
+paper account. No launchd, scheduler, runtime clone, non-paper Alpaca, or
+real-money path was touched.

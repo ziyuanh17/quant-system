@@ -18,9 +18,18 @@ from quant.execution import (
     AlpacaSemanticTargetRunResult,
     FakeLiveBrokerClient,
     LiveBrokerClient,
+    current_execution_status,
+    execution_plan_path,
+    latest_live_account_snapshot,
+    load_execution_events,
+    load_execution_plan,
+    load_live_fill_records,
+    load_live_order_records,
     run_alpaca_semantic_target_paper,
 )
 from quant.models.execution import (
+    LiveReconciliationReport,
+    LiveReconciliationStatus,
     ShortSellingPolicy,
     TradingMode,
     TradingSafetyConfig,
@@ -103,6 +112,28 @@ class SemanticTargetAlpacaPaperRequestInspection:
     valid_until: datetime
     output_root: Path
     market_session_open: bool
+    summary: str
+
+
+@dataclass(frozen=True)
+class SemanticTargetAlpacaPaperRunVerification:
+    """Read-only verification of one semantic-target Alpaca paper run."""
+
+    request_id: str
+    verified_at: datetime
+    passed: bool
+    issues: tuple[str, ...]
+    symbol: str
+    approved_target_quantity: Decimal | None
+    output_root: Path
+    execution_plan_id: str | None
+    final_status: ExecutionPlanStatus | None
+    event_count: int
+    order_count: int
+    fill_count: int
+    snapshot_count: int
+    reconciliation_report_count: int
+    final_position_quantity: Decimal | None
     summary: str
 
 
@@ -198,6 +229,160 @@ def inspect_semantic_target_alpaca_paper_operator_request(
         output_root=Path(request.output_root),
         market_session_open=market_session_open,
         summary=summary,
+    )
+
+
+def verify_semantic_target_alpaca_paper_run(
+    path: Path,
+    *,
+    verified_at: datetime | None = None,
+) -> SemanticTargetAlpacaPaperRunVerification:
+    """Verify one completed semantic-target Alpaca paper run from artifacts."""
+    current_time = verified_at or datetime.now(UTC)
+    request = load_semantic_target_alpaca_paper_operator_request(path)
+    issues: list[str] = []
+    contributor_set: ContributorSet | None = None
+    portfolio_target: PortfolioTargetDecision | None = None
+    risk_target: RiskTargetDecision | None = None
+    decisions: tuple[StrategyTargetDecision, ...] = ()
+    try:
+        _verify_request_hashes(request)
+        contributor_set = load_contributor_set(
+            Path(request.contributor_set_path)
+        )
+        portfolio_target = load_portfolio_target_decision(
+            Path(request.portfolio_target_path)
+        )
+        risk_target = load_risk_target_decision(Path(request.risk_target_path))
+        decisions = tuple(
+            load_strategy_target_decision(Path(item))
+            for item in request.strategy_decision_paths
+        )
+        _verify_request_scope(
+            request=request,
+            contributor_set=contributor_set,
+            portfolio_target=portfolio_target,
+            risk_target=risk_target,
+        )
+    except (OSError, ValueError) as exc:
+        issues.append(f"request validation failed: {exc}")
+
+    output_root = Path(request.output_root)
+    if not output_root.exists():
+        issues.append("paper output root is missing")
+    decision_symbols = {item.symbol for item in decisions}
+    if decisions and decision_symbols != {request.allowed_symbol}:
+        issues.append("strategy decision symbols are outside request scope")
+
+    approved_target = (
+        risk_target.approved_target_value if risk_target is not None else None
+    )
+    plan_id: str | None = None
+    final_status: ExecutionPlanStatus | None = None
+    event_count = 0
+    orders = ()
+    fills = ()
+    snapshots = ()
+    reconciliations: tuple[LiveReconciliationReport, ...] = ()
+    final_quantity: Decimal | None = None
+
+    if risk_target is not None:
+        plan_path = execution_plan_path(
+            output_root / "lifecycle",
+            risk_target.risk_target_id,
+            risk_target.revision,
+        )
+        try:
+            plan = load_execution_plan(plan_path)
+            plan_id = plan.execution_plan_id
+            final_status = current_execution_status(
+                plan, output_root / "lifecycle"
+            )
+            events = load_execution_events(
+                output_root / "lifecycle", plan.execution_plan_id
+            )
+            event_count = len(events)
+            if any(event.occurred_at > request.valid_until for event in events):
+                issues.append(
+                    "execution lifecycle continued after request expiration"
+                )
+            if final_status != ExecutionPlanStatus.SATISFIED:
+                issues.append(
+                    "execution lifecycle is not satisfied: "
+                    f"{final_status.value}"
+                )
+            if plan.symbol != request.allowed_symbol:
+                issues.append("execution plan symbol is outside request scope")
+            if approved_target is not None and Decimal(
+                plan.target_quantity
+            ) != approved_target:
+                issues.append("execution plan target differs from risk target")
+        except (OSError, ValueError) as exc:
+            issues.append(f"execution lifecycle verification failed: {exc}")
+
+    try:
+        orders = load_live_order_records(output_root / "orders")
+        fills = load_live_fill_records(output_root / "fills")
+        snapshots = tuple(sorted((output_root / "snapshots").glob("*.json")))
+        reconciliations = _load_live_reconciliation_reports(
+            output_root / "reconciliations"
+        )
+    except (OSError, ValueError) as exc:
+        issues.append(f"paper evidence loading failed: {exc}")
+
+    if len(orders) != 1:
+        issues.append(
+            f"expected exactly one order artifact, found {len(orders)}"
+        )
+    if len(fills) != 1:
+        issues.append(f"expected exactly one fill artifact, found {len(fills)}")
+    if not reconciliations:
+        issues.append("expected at least one reconciliation report")
+    elif reconciliations[-1].status != LiveReconciliationStatus.PASSED:
+        issues.append(
+            "latest reconciliation report is not passed: "
+            f"{reconciliations[-1].status.value}"
+        )
+
+    snapshot = latest_live_account_snapshot(output_root / "snapshots")
+    if snapshot is not None:
+        final_quantity = Decimal("0")
+        for position in snapshot.positions:
+            if position.symbol == request.allowed_symbol:
+                final_quantity = Decimal(str(position.quantity))
+                break
+    if approved_target is not None and final_quantity != approved_target:
+        issues.append("final broker snapshot position differs from risk target")
+
+    for artifact_path in _paper_run_artifact_paths(output_root):
+        if not _is_relative_to(artifact_path, output_root):
+            issues.append(
+                f"paper evidence path is outside output root: {artifact_path}"
+            )
+
+    deduped_issues = tuple(dict.fromkeys(issues))
+    passed = not deduped_issues
+    return SemanticTargetAlpacaPaperRunVerification(
+        request_id=request.request_id,
+        verified_at=current_time,
+        passed=passed,
+        issues=deduped_issues,
+        symbol=request.allowed_symbol,
+        approved_target_quantity=approved_target,
+        output_root=output_root,
+        execution_plan_id=plan_id,
+        final_status=final_status,
+        event_count=event_count,
+        order_count=len(orders),
+        fill_count=len(fills),
+        snapshot_count=len(snapshots),
+        reconciliation_report_count=len(reconciliations),
+        final_position_quantity=final_quantity,
+        summary=(
+            "verified semantic-target Alpaca paper run"
+            if passed
+            else "blocked semantic-target Alpaca paper evidence"
+        ),
     )
 
 
@@ -812,6 +997,41 @@ def _evidence_paths(output_root: Path) -> tuple[Path, ...]:
             if path.is_file() and "reports" not in path.parts
         )
     )
+
+
+def _load_live_reconciliation_reports(
+    reconciliation_dir: Path,
+) -> tuple[LiveReconciliationReport, ...]:
+    reports = tuple(
+        LiveReconciliationReport.model_validate_json(path.read_text())
+        for path in sorted(reconciliation_dir.rglob("*.json"))
+    )
+    return tuple(sorted(reports, key=lambda report: report.created_at))
+
+
+def _paper_run_artifact_paths(output_root: Path) -> tuple[Path, ...]:
+    return tuple(
+        sorted(
+            path
+            for directory in (
+                output_root / "lifecycle",
+                output_root / "orders",
+                output_root / "fills",
+                output_root / "snapshots",
+                output_root / "reconciliations",
+                output_root / "requests",
+            )
+            for path in directory.rglob("*.json")
+        )
+    )
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
 
 
 def _write_model_exclusive(path: Path, model: BaseModel) -> Path:

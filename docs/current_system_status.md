@@ -92,7 +92,8 @@ Checked-in semantic-target capabilities include:
   one-cycle request files into one exact finite manifest with immutable
   completed or blocked evidence, without running the loop;
 - opt-in Alpaca semantic-target paper API integration with explicit activation,
-  final operational risk checks, and recovery by deterministic client order ID.
+  final operational risk checks, recovery by deterministic client order ID, and
+  broker-free completed-run evidence verification.
 
 Most semantic-target orchestration remains API-only. The reviewed CLI
 surfaces are limited to the documented dry-run, local semantic-paper, fake
@@ -680,11 +681,23 @@ operational counts were unchanged and the future paper output root remained
 absent. See
 [semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md](semantic_target_alpaca_paper_request_inspection_runtime_rehearsal.md).
 
-The next reviewed design is a broker-free evidence verifier for one-request
-Alpaca paper runs. It will read the prepared request, lifecycle events, orders,
-fills, snapshots, and reconciliation reports from local artifacts and decide
-whether the run satisfied the reviewed request. See
-[semantic_target_alpaca_paper_evidence_verifier_design.md](semantic_target_alpaca_paper_evidence_verifier_design.md).
+The source now includes
+`quant semantic-target verify-alpaca-paper-run`. The command is broker-free:
+it reads one reviewed Alpaca paper request plus local lifecycle, order, fill,
+snapshot, and reconciliation artifacts, then fails closed unless the completed
+run satisfied the approved risk target exactly once. Request expiry still
+blocks new submission, but old completed evidence remains verifiable; the
+verifier checks that recorded lifecycle events happened before the request
+expired. See
+[semantic_target_alpaca_paper_evidence_verifier.md](semantic_target_alpaca_paper_evidence_verifier.md).
+
+The local verifier rehearsal passed against fake-client Alpaca paper evidence.
+It verified a satisfied lifecycle with four append-only events, exactly one
+order, one fill, five snapshots, one passed reconciliation report, and final
+`AAPL +2` position. No credentials were sourced, no Alpaca client was
+constructed, no broker API call was made, and no runtime, launchd, scheduler,
+non-paper Alpaca, or real-money path was touched. See
+[semantic_target_alpaca_paper_evidence_verifier_rehearsal.md](semantic_target_alpaca_paper_evidence_verifier_rehearsal.md).
 
 ## Safety And Activation Boundary
 

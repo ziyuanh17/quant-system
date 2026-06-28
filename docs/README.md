@@ -75,6 +75,11 @@ Start with these current, canonical documents:
   request.
 - [semantic_target_alpaca_paper_evidence_verifier_design.md](semantic_target_alpaca_paper_evidence_verifier_design.md):
   design for a broker-free verifier of one-request Alpaca paper run evidence.
+- [semantic_target_alpaca_paper_evidence_verifier.md](semantic_target_alpaca_paper_evidence_verifier.md):
+  source evidence for broker-free verification of completed Alpaca paper run
+  artifacts.
+- [semantic_target_alpaca_paper_evidence_verifier_rehearsal.md](semantic_target_alpaca_paper_evidence_verifier_rehearsal.md):
+  local fake-client rehearsal evidence for the Alpaca paper run verifier.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

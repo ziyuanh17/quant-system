@@ -18,6 +18,7 @@ from quant.workflows import (
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
     load_semantic_target_alpaca_paper_operator_request,
     run_semantic_target_alpaca_paper_fake_rehearsal,
+    verify_semantic_target_alpaca_paper_run,
 )
 
 
@@ -52,6 +53,73 @@ def test_fake_alpaca_paper_rehearsal_reaches_satisfaction_once(
     assert request.safety_config.broker_name == "alpaca-paper"
     assert request.allowed_symbol == "AAPL"
     assert request.allowed_max_quantity == 2
+
+
+def test_alpaca_paper_run_verifier_accepts_rehearsal_evidence(
+    tmp_path,
+) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="alpaca-paper-fake",
+        output_root=tmp_path,
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+
+    verification = verify_semantic_target_alpaca_paper_run(
+        tmp_path / "requests" / "alpaca-paper-fake-request.json",
+        verified_at=datetime(2026, 6, 26, 12, 5, tzinfo=UTC),
+    )
+
+    assert verification.passed
+    assert verification.final_status == ExecutionPlanStatus.SATISFIED
+    assert verification.order_count == 1
+    assert verification.fill_count == 1
+    assert verification.reconciliation_report_count == 1
+    assert verification.final_position_quantity == Decimal("2")
+    assert verification.issues == ()
+
+
+def test_alpaca_paper_run_verifier_blocks_missing_reconciliation(
+    tmp_path,
+) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="alpaca-paper-fake",
+        output_root=tmp_path,
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+    reconciliation_path = next(
+        (tmp_path / "output" / "reconciliations").rglob("*.json")
+    )
+    reconciliation_path.unlink()
+
+    verification = verify_semantic_target_alpaca_paper_run(
+        tmp_path / "requests" / "alpaca-paper-fake-request.json",
+        verified_at=datetime(2026, 6, 26, 12, 5, tzinfo=UTC),
+    )
+
+    assert not verification.passed
+    assert "expected at least one reconciliation report" in verification.issues
+
+
+def test_alpaca_paper_run_verifier_blocks_tampered_request_input(
+    tmp_path,
+) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="alpaca-paper-fake",
+        output_root=tmp_path,
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+    risk_target_path = next(
+        (tmp_path / "inputs" / "risk-targets").rglob("*.json")
+    )
+    risk_target_path.write_text(risk_target_path.read_text() + "\n")
+
+    verification = verify_semantic_target_alpaca_paper_run(
+        tmp_path / "requests" / "alpaca-paper-fake-request.json",
+        verified_at=datetime(2026, 6, 26, 12, 5, tzinfo=UTC),
+    )
+
+    assert not verification.passed
+    assert any("hash mismatch" in issue for issue in verification.issues)
 
 
 def test_fake_alpaca_paper_rehearsal_detects_tampered_evidence(

@@ -1,0 +1,62 @@
+# Semantic-Target Alpaca Paper Evidence Verifier
+
+This stage adds a broker-free verifier for one completed semantic-target
+Alpaca paper run. It is a read-only evidence check. It does not load Alpaca
+credentials, construct an Alpaca client, submit orders, refresh broker state,
+start launchd, or connect the semantic-target path to a recurring scheduler.
+
+The verifier answers one question:
+
+```text
+Did this local Alpaca paper evidence satisfy the reviewed request exactly once?
+```
+
+It reads the reviewed request and local artifacts under the request output
+root:
+
+- contributor set, strategy target decisions, portfolio target, and risk target
+- execution plan and append-only lifecycle events
+- local order and fill records
+- local account snapshots
+- reconciliation reports
+
+The pass criteria are intentionally strict:
+
+- request-bound input hashes still match;
+- all target artifacts remain inside the allowed request scope;
+- the execution lifecycle reaches `satisfied`;
+- lifecycle events occur before the request validity window closes;
+- the execution plan target equals the approved risk target;
+- exactly one order artifact exists;
+- exactly one fill artifact exists;
+- at least one reconciliation report exists;
+- the latest reconciliation report is `passed`;
+- the latest account snapshot position equals the approved target;
+- all paper evidence paths stay under the request output root.
+
+Request expiry is not treated as a failure for completed evidence by itself.
+Expiry blocks a new submission. Old evidence must remain verifiable later, so
+the verifier instead checks that the recorded lifecycle events happened before
+the request expired.
+
+## CLI
+
+```bash
+quant semantic-target verify-alpaca-paper-run \
+  --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json
+```
+
+The command exits nonzero if any evidence check fails and prints each blocked
+reason. It creates no Alpaca or execution artifacts.
+
+## Review Boundary
+
+This implementation does not broaden the paper-trading surface. The
+order-capable command remains `quant semantic-target alpaca-paper`; this
+verifier only reviews the files that command or the fake-client rehearsal has
+already produced.
+
+Future stages may use this verifier before and after a tightly reviewed
+one-request Alpaca paper test. It should not be used as permission to enable
+scheduling, automatic drift repair, non-paper Alpaca behavior, or real-money
+trading.

@@ -120,6 +120,7 @@ from quant.workflows import (
     run_supervised_provider_discovery_loop_operator_request,
     run_supervised_provider_discovery_operator_request,
     run_supervised_provider_operator_request,
+    verify_semantic_target_alpaca_paper_run,
 )
 
 app = typer.Typer(no_args_is_help=True)
@@ -887,6 +888,49 @@ def semantic_target_prepare_alpaca_paper_request(
     typer.echo(f"Valid until: {bundle.valid_until.isoformat()}")
     typer.echo(f"Paper output root: {bundle.paper_output_root}")
     typer.echo("Prepared only. No Alpaca API call was made.")
+
+
+@semantic_target_app.command("verify-alpaca-paper-run")
+def semantic_target_verify_alpaca_paper_run(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Alpaca paper request JSON whose run to verify."),
+    ],
+) -> None:
+    """Verify semantic-target Alpaca paper evidence without broker access."""
+    try:
+        verification = verify_semantic_target_alpaca_paper_run(request_path)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {verification.request_id}")
+    typer.echo(f"Passed: {'yes' if verification.passed else 'no'}")
+    typer.echo(f"Summary: {verification.summary}")
+    typer.echo(f"Symbol: {verification.symbol}")
+    typer.echo(f"Approved target: {verification.approved_target_quantity}")
+    typer.echo(f"Output root: {verification.output_root}")
+    typer.echo(f"Execution plan: {verification.execution_plan_id}")
+    typer.echo(
+        "Final status: "
+        + (
+            verification.final_status.value
+            if verification.final_status is not None
+            else "missing"
+        )
+    )
+    typer.echo(f"Events: {verification.event_count}")
+    typer.echo(f"Orders: {verification.order_count}")
+    typer.echo(f"Fills: {verification.fill_count}")
+    typer.echo(f"Snapshots: {verification.snapshot_count}")
+    typer.echo(
+        f"Reconciliations: {verification.reconciliation_report_count}"
+    )
+    typer.echo(f"Final position: {verification.final_position_quantity}")
+    for issue in verification.issues:
+        typer.echo(f"Blocked because: {issue}")
+    typer.echo("Verification created no Alpaca or execution artifacts.")
+    if not verification.passed:
+        raise typer.Exit(code=1)
 
 
 @dry_run_app.command("autonomous-finite-loop")

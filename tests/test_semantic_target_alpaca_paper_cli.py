@@ -57,6 +57,72 @@ def test_alpaca_paper_fake_rehearsal_help_is_fake_client_only() -> None:
     assert "credential" not in result.output.lower()
 
 
+def test_alpaca_paper_run_verifier_cli_reads_fake_evidence(tmp_path) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="cli-verify",
+        output_root=tmp_path / "source",
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "verify-alpaca-paper-run",
+            "--request-path",
+            str(tmp_path / "source" / "requests" / "cli-verify-request.json"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Passed: yes" in result.output
+    assert "Final status: satisfied" in result.output
+    assert "Orders: 1" in result.output
+    assert "Fills: 1" in result.output
+    assert (
+        "Verification created no Alpaca or execution artifacts."
+        in result.output
+    )
+
+
+def test_alpaca_paper_run_verifier_cli_blocks_bad_evidence(tmp_path) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="cli-verify",
+        output_root=tmp_path / "source",
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+    reconciliation_path = next(
+        (tmp_path / "source" / "output" / "reconciliations").rglob("*.json")
+    )
+    reconciliation_path.unlink()
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "verify-alpaca-paper-run",
+            "--request-path",
+            str(tmp_path / "source" / "requests" / "cli-verify-request.json"),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Passed: no" in result.output
+    assert "expected at least one reconciliation report" in result.output
+
+
+def test_alpaca_paper_run_verifier_help_is_broker_free() -> None:
+    result = CliRunner().invoke(
+        app,
+        ["semantic-target", "verify-alpaca-paper-run", "--help"],
+    )
+
+    assert result.exit_code == 0
+    assert "without broker access" in result.output
+    assert "credential" not in result.output.lower()
+    assert "scheduler" not in result.output.lower()
+
+
 def test_alpaca_paper_cli_runs_reviewed_request_with_injected_paper_client(
     tmp_path,
     monkeypatch,
