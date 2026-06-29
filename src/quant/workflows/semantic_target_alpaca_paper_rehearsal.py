@@ -275,6 +275,8 @@ def load_and_verify_semantic_target_alpaca_paper_readiness_report(
     *,
     request_path: Path,
     verification_report_path: Path | None,
+    evaluated_at: datetime | None = None,
+    max_age_seconds: int | None = None,
 ) -> SemanticTargetAlpacaPaperReadinessReport:
     """Load one readiness report and verify it matches the intended run."""
     report = load_semantic_target_alpaca_paper_readiness_report(path)
@@ -295,6 +297,15 @@ def load_and_verify_semantic_target_alpaca_paper_readiness_report(
         raise ValueError(
             "readiness report planned verification path does not match"
         )
+    if max_age_seconds is not None:
+        if max_age_seconds <= 0:
+            raise ValueError("readiness report max age must be positive")
+        current_time = evaluated_at or datetime.now(UTC)
+        age = current_time - report.evaluated_at
+        if age < timedelta(0):
+            raise ValueError("readiness report is from the future")
+        if age > timedelta(seconds=max_age_seconds):
+            raise ValueError("readiness report is too old")
     return report
 
 

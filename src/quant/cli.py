@@ -768,6 +768,15 @@ def semantic_target_alpaca_paper(
         Path | None,
         typer.Option(help="Optional broker-free readiness report to require."),
     ] = None,
+    max_readiness_age_seconds: Annotated[
+        int,
+        typer.Option(
+            help=(
+                "Maximum age for a supplied readiness report before broker "
+                "construction."
+            )
+        ),
+    ] = 900,
 ) -> None:
     """Run one reviewed semantic-target request against Alpaca paper."""
     if not from_env:
@@ -779,6 +788,7 @@ def semantic_target_alpaca_paper(
         and verification_report_path.exists()
     ):
         raise typer.BadParameter("verification report path already exists")
+    current_time = _current_utc()
     if readiness_report_path is not None:
         try:
             readiness_report = (
@@ -786,13 +796,14 @@ def semantic_target_alpaca_paper(
                     readiness_report_path,
                     request_path=request_path,
                     verification_report_path=verification_report_path,
+                    evaluated_at=current_time,
+                    max_age_seconds=max_readiness_age_seconds,
                 )
             )
         except (OSError, ValueError) as exc:
             raise typer.BadParameter(str(exc)) from exc
     else:
         readiness_report = None
-    current_time = _current_utc()
     if not _is_regular_us_equity_session(current_time):
         raise typer.BadParameter(
             "regular US equity session is closed; refusing to submit or "

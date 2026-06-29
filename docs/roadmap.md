@@ -207,20 +207,21 @@ side discussions.
 | 187 | Semantic-Target Alpaca Paper Readiness Preflight v1 | Done | Add and rehearse an immutable broker-free readiness report for one reviewed Alpaca paper test, checking request validity, market session, credential presence, and planned verification report path. |
 | 188 | Semantic-Target Alpaca Paper Inline Verification Report v1 | Done | Let the order-capable one-request Alpaca paper command write the immutable verification report after post-run evidence verification, while refusing existing report paths before broker construction. |
 | 189 | Semantic-Target Alpaca Paper Readiness Consumption v1 | Done | Let the order-capable one-request Alpaca paper command require a matching ready preflight report before broker construction. |
+| 190 | Semantic-Target Alpaca Paper Readiness Freshness v1 | In Review | Require supplied Alpaca paper readiness reports to be recent before broker construction, with broker-free tests for stale and invalid freshness gates. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Readiness Consumption v1**, then decide
+Review **Semantic-Target Alpaca Paper Readiness Freshness v1**, then decide
 whether to run one fresh, market-session, reviewed semantic-target Alpaca paper
 test. The order-capable command now verifies its own durable evidence after
 execution and can write its immutable review artifact in the same command,
 while refusing report collisions before broker construction. The saved report
 can be independently verified later, and the broker-free preflight can write
 readiness evidence before the order-capable run. The order-capable run can now
-require that exact readiness report before broker construction. Do not expose
-launchd, add recurring scheduling, permit non-paper Alpaca behavior, enable
-real-money trading, add automatic drift repair, or broaden the scope beyond one
-reviewed request.
+require that exact readiness report and reject stale readiness evidence before
+broker construction. Do not expose launchd, add recurring scheduling, permit
+non-paper Alpaca behavior, enable real-money trading, add automatic drift
+repair, or broaden the scope beyond one reviewed request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

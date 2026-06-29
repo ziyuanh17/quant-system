@@ -29,12 +29,18 @@ quant semantic-target alpaca-paper \
   --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json \
   --from-env \
   --readiness-report-path data/semantic-target/alpaca-paper-readiness/reviewed-request-preflight.json \
+  --max-readiness-age-seconds 900 \
   --verification-report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
 ```
 
 When supplied, the command verifies that the readiness report is ready, has no
 issues, matches the exact request path and request SHA-256, and names the same
-planned verification report path before constructing the broker client.
+planned verification report path before constructing the broker client. It also
+requires the report to be recent. By default, a supplied readiness report must
+be no older than 900 seconds at the moment the order-capable command starts.
+This keeps readiness evidence tied to the current market session, credentials,
+request validity, and planned output path instead of making an old report act
+like permanent approval.
 
 ## Rehearsal
 

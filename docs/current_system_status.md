@@ -745,9 +745,12 @@ The order-capable `quant semantic-target alpaca-paper` command can now consume
 that readiness report through `--readiness-report-path`. When supplied, the
 command verifies that the report is ready, has no issues, matches the exact
 request path and request SHA-256, and names the same planned verification
-report path before constructing the broker client. Source tests prove the
-matching-readiness path with a fake paper client and prove mismatched readiness
-blocks before broker construction.
+report path before constructing the broker client. The command also requires
+the report to be recent before broker construction. The default freshness
+window is 900 seconds, configurable through `--max-readiness-age-seconds`.
+Source tests prove the matching-readiness path with a fake paper client,
+mismatched readiness blocking, stale-readiness blocking, and invalid freshness
+configuration blocking before broker construction.
 
 ## Safety And Activation Boundary
 

@@ -400,6 +400,7 @@ quant semantic-target alpaca-paper \
   --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json \
   --from-env \
   --readiness-report-path data/semantic-target/alpaca-paper-readiness/reviewed-request-preflight.json \
+  --max-readiness-age-seconds 900 \
   --verification-report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
 ```
 
@@ -413,7 +414,10 @@ nonzero if that verification fails. If a verification report path is supplied,
 the path must not already exist; the command checks this before constructing
 the broker client. If a readiness report path is supplied, the command checks
 that the report is ready, binds to the exact request hash, and names the same
-planned verification report path before constructing the broker client.
+planned verification report path before constructing the broker client. It also
+requires the readiness report to be fresh. The default freshness window is 900
+seconds; use `--max-readiness-age-seconds` to make that window explicit for a
+reviewed rehearsal.
 
 Verify one completed semantic-target Alpaca paper run from local evidence:
 

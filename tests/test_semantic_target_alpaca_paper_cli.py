@@ -445,6 +445,122 @@ def test_alpaca_paper_cli_blocks_mismatched_readiness_before_broker(
     assert "planned verification path does not match" in result.output
 
 
+def test_alpaca_paper_cli_blocks_stale_readiness_before_broker(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    preflight_time = datetime(2026, 6, 29, 15, tzinfo=UTC)
+    run_time = preflight_time + timedelta(minutes=16)
+    request_path = _reviewed_request_path(tmp_path, now=preflight_time)
+    readiness_report_path = tmp_path / "readiness.json"
+    verification_report_path = tmp_path / "post-run-verification.json"
+
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(quant.cli, "_current_utc", lambda: preflight_time)
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+    preflight = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "preflight-alpaca-paper-test",
+            "--request-path",
+            str(request_path),
+            "--report-path",
+            str(readiness_report_path),
+            "--planned-verification-report-path",
+            str(verification_report_path),
+        ],
+    )
+    assert preflight.exit_code == 0, preflight.output
+    monkeypatch.setattr(quant.cli, "_current_utc", lambda: run_time)
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        lambda config: (_ for _ in ()).throw(
+            AssertionError("broker client should not be constructed")
+        ),
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "alpaca-paper",
+            "--request-path",
+            str(request_path),
+            "--from-env",
+            "--readiness-report-path",
+            str(readiness_report_path),
+            "--verification-report-path",
+            str(verification_report_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "readiness report is too old" in result.output
+
+
+def test_alpaca_paper_cli_rejects_invalid_readiness_age_before_broker(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    request_path = _reviewed_request_path(tmp_path)
+    readiness_report_path = tmp_path / "readiness.json"
+    verification_report_path = tmp_path / "post-run-verification.json"
+
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+    preflight = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "preflight-alpaca-paper-test",
+            "--request-path",
+            str(request_path),
+            "--report-path",
+            str(readiness_report_path),
+            "--planned-verification-report-path",
+            str(verification_report_path),
+        ],
+    )
+    assert preflight.exit_code == 0, preflight.output
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        lambda config: (_ for _ in ()).throw(
+            AssertionError("broker client should not be constructed")
+        ),
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "alpaca-paper",
+            "--request-path",
+            str(request_path),
+            "--from-env",
+            "--readiness-report-path",
+            str(readiness_report_path),
+            "--verification-report-path",
+            str(verification_report_path),
+            "--max-readiness-age-seconds",
+            "0",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "readiness report max age must be positive" in result.output
+
+
 def test_alpaca_paper_cli_blocks_existing_report_before_broker(
     tmp_path,
     monkeypatch,
