@@ -716,6 +716,13 @@ fake-client rehearsal wrote a passing report with final status `satisfied`,
 four events, one order, one fill, five snapshots, one reconciliation, and final
 `AAPL +2`, without credentials or Alpaca access.
 
+Persisted verification reports can now be checked later with
+`quant semantic-target verify-alpaca-paper-report`. That command reloads the
+report, verifies the bound request hash, rejects failed reports or reports with
+issues, and creates no Alpaca or execution artifacts. A fake-client rehearsal
+proved the saved-report check against a passing report with final status
+`satisfied`, one order, one fill, one reconciliation, and final position `2`.
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

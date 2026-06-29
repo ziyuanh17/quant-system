@@ -93,6 +93,17 @@ summary
 Existing reports are never overwritten. Re-running verification should use a
 new report path if another observation is needed.
 
+Verify a persisted report later:
+
+```bash
+quant semantic-target verify-alpaca-paper-report \
+  --report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
+```
+
+This command reloads the report, checks that the bound request file still
+matches `request_sha256`, and rejects failed reports or reports with issues. It
+does not contact Alpaca or write execution artifacts.
+
 ## Review Boundary
 
 This implementation does not broaden the paper-trading surface. The

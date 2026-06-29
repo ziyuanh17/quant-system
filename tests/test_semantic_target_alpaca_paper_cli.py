@@ -121,6 +121,80 @@ def test_alpaca_paper_run_verifier_cli_writes_report(tmp_path) -> None:
     assert report.fill_count == 1
 
 
+def test_alpaca_paper_report_verifier_cli_reads_report(tmp_path) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="cli-verify",
+        output_root=tmp_path / "source",
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+    report_path = tmp_path / "verification-report.json"
+    write_result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "verify-alpaca-paper-run",
+            "--request-path",
+            str(tmp_path / "source" / "requests" / "cli-verify-request.json"),
+            "--report-path",
+            str(report_path),
+        ],
+    )
+    assert write_result.exit_code == 0
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "verify-alpaca-paper-report",
+            "--report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Passed: yes" in result.output
+    assert "Final status: satisfied" in result.output
+    assert "Report verification created no Alpaca" in result.output
+
+
+def test_alpaca_paper_report_verifier_cli_blocks_tampered_request(
+    tmp_path,
+) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="cli-verify",
+        output_root=tmp_path / "source",
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+    request_path = tmp_path / "source" / "requests" / "cli-verify-request.json"
+    report_path = tmp_path / "verification-report.json"
+    write_result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "verify-alpaca-paper-run",
+            "--request-path",
+            str(request_path),
+            "--report-path",
+            str(report_path),
+        ],
+    )
+    assert write_result.exit_code == 0
+    request_path.write_text(request_path.read_text() + "\n")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "verify-alpaca-paper-report",
+            "--report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "hash mismatch" in result.output
+
+
 def test_alpaca_paper_run_verifier_cli_blocks_bad_evidence(tmp_path) -> None:
     run_semantic_target_alpaca_paper_fake_rehearsal(
         rehearsal_id="cli-verify",

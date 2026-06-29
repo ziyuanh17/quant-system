@@ -16,6 +16,7 @@ from quant.models.operator import SemanticTargetAlpacaPaperOperatorRequest
 from quant.models.targets import ResearchRiskPolicy
 from quant.workflows import (
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
+    load_and_verify_semantic_target_alpaca_paper_run_verification_report,
     load_semantic_target_alpaca_paper_operator_request,
     load_semantic_target_alpaca_paper_run_verification_report,
     run_semantic_target_alpaca_paper_fake_rehearsal,
@@ -112,11 +113,45 @@ def test_alpaca_paper_run_verification_report_is_immutable(
     assert loaded.fill_count == 1
     assert loaded.reconciliation_report_count == 1
 
+    verified_report = (
+        load_and_verify_semantic_target_alpaca_paper_run_verification_report(
+            written_path
+        )
+    )
+    assert verified_report == loaded
+
     with pytest.raises(FileExistsError):
         write_semantic_target_alpaca_paper_run_verification_report(
             verification=verification,
             request_path=request_path,
             output_path=report_path,
+        )
+
+
+def test_alpaca_paper_run_verification_report_detects_tampered_request(
+    tmp_path,
+) -> None:
+    run_semantic_target_alpaca_paper_fake_rehearsal(
+        rehearsal_id="alpaca-paper-fake",
+        output_root=tmp_path,
+        evaluated_at=datetime(2026, 6, 26, 12, tzinfo=UTC),
+    )
+    request_path = tmp_path / "requests" / "alpaca-paper-fake-request.json"
+    verification = verify_semantic_target_alpaca_paper_run(
+        request_path,
+        verified_at=datetime(2026, 6, 26, 12, 5, tzinfo=UTC),
+    )
+    report_path = tmp_path / "reports" / "verification.json"
+    write_semantic_target_alpaca_paper_run_verification_report(
+        verification=verification,
+        request_path=request_path,
+        output_path=report_path,
+    )
+    request_path.write_text(request_path.read_text() + "\n")
+
+    with pytest.raises(ValueError, match="hash mismatch"):
+        load_and_verify_semantic_target_alpaca_paper_run_verification_report(
+            report_path
         )
 
 

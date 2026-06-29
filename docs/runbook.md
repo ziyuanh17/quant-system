@@ -419,11 +419,19 @@ quant semantic-target verify-alpaca-paper-run \
 Add `--report-path .../verification.json` when a durable review artifact is
 needed. Existing report files are not overwritten.
 
+Verify an existing report:
+
+```bash
+quant semantic-target verify-alpaca-paper-report \
+  --report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
+```
+
 This verifier is broker-free. It reads the reviewed request, lifecycle events,
 order and fill records, snapshots, and reconciliation reports, then exits
 nonzero if the completed run did not satisfy the approved target exactly once.
 It does not load credentials, contact Alpaca, submit orders, or write execution
 artifacts. A report path writes only a verifier report, not execution evidence.
+Report verification checks the saved request hash and rejects failed reports.
 
 ## Semantic-Target Review
 

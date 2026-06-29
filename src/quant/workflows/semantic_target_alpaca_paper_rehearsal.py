@@ -180,6 +180,19 @@ def load_semantic_target_alpaca_paper_run_verification_report(
     )
 
 
+def load_and_verify_semantic_target_alpaca_paper_run_verification_report(
+    path: Path,
+) -> SemanticTargetAlpacaPaperRunVerificationReport:
+    """Load one Alpaca paper verification report and verify its request hash."""
+    report = load_semantic_target_alpaca_paper_run_verification_report(path)
+    _require_hash(Path(report.request_path), report.request_sha256)
+    if not report.passed:
+        raise ValueError("Alpaca paper verification report did not pass")
+    if report.issues:
+        raise ValueError("Alpaca paper verification report contains issues")
+    return report
+
+
 def inspect_semantic_target_alpaca_paper_operator_request(
     path: Path,
     *,

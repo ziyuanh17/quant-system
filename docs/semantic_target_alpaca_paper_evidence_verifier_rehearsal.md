@@ -65,6 +65,26 @@ The written report had schema version `1`, request id
 recorded final status `satisfied`, four lifecycle events, one order, one fill,
 five snapshots, one reconciliation report, and final `AAPL +2`.
 
+The persisted-report verifier was rehearsed with fake-client evidence:
+
+```bash
+.venv/bin/quant semantic-target alpaca-paper-fake-rehearsal \
+  --rehearsal-id report-verify-local \
+  --output-root data/semantic-target/alpaca-paper-report-verifier/rehearsal
+
+.venv/bin/quant semantic-target verify-alpaca-paper-run \
+  --request-path data/semantic-target/alpaca-paper-report-verifier/rehearsal/requests/report-verify-local-request.json \
+  --report-path data/semantic-target/alpaca-paper-report-verifier/reports/report-verify-local-verification.json
+
+.venv/bin/quant semantic-target verify-alpaca-paper-report \
+  --report-path data/semantic-target/alpaca-paper-report-verifier/reports/report-verify-local-verification.json
+```
+
+The final report check passed, confirmed request id
+`report-verify-local-request`, final status `satisfied`, one order, one fill,
+one reconciliation, and final position `2`. It created no Alpaca or execution
+artifacts.
+
 Evidence shape:
 
 - one reviewed request artifact;

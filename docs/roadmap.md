@@ -203,16 +203,18 @@ side discussions.
 | 183 | Semantic-Target Alpaca Paper Evidence Verifier Rehearsal v1 | In Review | Rehearse the verifier against fake-client Alpaca paper evidence, proving satisfied lifecycle, one order, one fill, passing reconciliation, and zero Alpaca access. |
 | 184 | Semantic-Target Alpaca Paper Post-Run Verification v1 | Done | Require the order-capable one-request Alpaca paper command to run broker-free evidence verification after execution and fail closed if durable evidence does not pass. |
 | 185 | Semantic-Target Alpaca Paper Verification Report v1 | Done | Add an optional immutable verification report artifact for broker-free Alpaca paper run verification and rehearse it against fake-client evidence. |
+| 186 | Semantic-Target Alpaca Paper Report Verification v1 | Done | Add and rehearse broker-free verification for persisted Alpaca paper verification reports, including request-hash validation and fail-closed report status checks. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Verification Report v1**, then decide
+Review **Semantic-Target Alpaca Paper Report Verification v1**, then decide
 whether to run one fresh, market-session, reviewed semantic-target Alpaca paper
 test. The order-capable command now verifies its own durable evidence after
-execution, and the standalone verifier can write an immutable review artifact.
-Do not expose launchd, add recurring scheduling, permit non-paper Alpaca
-behavior, enable real-money trading, add automatic drift repair, or broaden the
-scope beyond one reviewed request.
+execution, the standalone verifier can write an immutable review artifact, and
+the saved report can be independently verified later. Do not expose launchd,
+add recurring scheduling, permit non-paper Alpaca behavior, enable real-money
+trading, add automatic drift repair, or broaden the scope beyond one reviewed
+request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

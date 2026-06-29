@@ -106,6 +106,7 @@ from quant.workflows import (
     inspect_activated_semantic_paper_operator_request,
     inspect_semantic_target_alpaca_paper_operator_request,
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
+    load_and_verify_semantic_target_alpaca_paper_run_verification_report,
     prepare_momentum_semantic_paper_request,
     prepare_semantic_target_alpaca_paper_request,
     run_activated_dry_run_operator_request,
@@ -965,6 +966,39 @@ def semantic_target_verify_alpaca_paper_run(
     typer.echo("Verification created no Alpaca or execution artifacts.")
     if not verification.passed:
         raise typer.Exit(code=1)
+
+
+@semantic_target_app.command("verify-alpaca-paper-report")
+def semantic_target_verify_alpaca_paper_report(
+    report_path: Annotated[
+        Path,
+        typer.Option(help="Persisted Alpaca paper verification report JSON."),
+    ],
+) -> None:
+    """Verify a persisted Alpaca paper report without broker access."""
+    try:
+        report = (
+            load_and_verify_semantic_target_alpaca_paper_run_verification_report(
+                report_path
+            )
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Report: {report_path}")
+    typer.echo(f"Request: {report.request_id}")
+    typer.echo(f"Passed: {'yes' if report.passed else 'no'}")
+    typer.echo(f"Summary: {report.summary}")
+    typer.echo(f"Symbol: {report.symbol}")
+    final_status = (
+        report.final_status.value if report.final_status else "missing"
+    )
+    typer.echo(f"Final status: {final_status}")
+    typer.echo(f"Orders: {report.order_count}")
+    typer.echo(f"Fills: {report.fill_count}")
+    typer.echo(f"Reconciliations: {report.reconciliation_report_count}")
+    typer.echo(f"Final position: {report.final_position_quantity}")
+    typer.echo("Report verification created no Alpaca or execution artifacts.")
 
 
 @dry_run_app.command("autonomous-finite-loop")
