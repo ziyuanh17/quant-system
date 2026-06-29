@@ -83,6 +83,9 @@ Start with these current, canonical documents:
 - [semantic_target_alpaca_paper_readiness_preflight.md](semantic_target_alpaca_paper_readiness_preflight.md):
   source and rehearsal evidence for broker-free readiness reports and freshness
   checks before one reviewed Alpaca paper test.
+- [semantic_target_alpaca_paper_readiness_freshness.md](semantic_target_alpaca_paper_readiness_freshness.md):
+  evidence for the freshness gate applied when consuming Alpaca paper readiness
+  reports before broker construction.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

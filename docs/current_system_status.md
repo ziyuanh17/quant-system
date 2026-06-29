@@ -750,7 +750,8 @@ the report to be recent before broker construction. The default freshness
 window is 900 seconds, configurable through `--max-readiness-age-seconds`.
 Source tests prove the matching-readiness path with a fake paper client,
 mismatched readiness blocking, stale-readiness blocking, and invalid freshness
-configuration blocking before broker construction.
+configuration blocking before broker construction. See
+[semantic_target_alpaca_paper_readiness_freshness.md](semantic_target_alpaca_paper_readiness_freshness.md).
 
 ## Safety And Activation Boundary
 
