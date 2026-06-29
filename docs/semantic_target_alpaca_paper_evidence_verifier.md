@@ -61,7 +61,10 @@ Alpaca or execution artifacts.
 
 The order-capable `quant semantic-target alpaca-paper` command also invokes
 this verifier immediately after execution. A paper run that reports
-`satisfied` still fails the CLI if the durable evidence verifier fails.
+`satisfied` still fails the CLI if the durable evidence verifier fails. The
+order-capable command can also write the immutable verification report through
+`--verification-report-path`; it refuses an existing report path before broker
+construction.
 
 ## Report Contract
 

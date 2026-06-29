@@ -280,6 +280,94 @@ def test_alpaca_paper_cli_runs_reviewed_request_with_injected_paper_client(
     assert len(client.fills()) == 1
 
 
+def test_alpaca_paper_cli_writes_post_run_verification_report(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    request_path = _reviewed_request_path(tmp_path)
+    report_path = tmp_path / "post-run-verification.json"
+    client = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        broker_name="alpaca-paper",
+        account_id="acct-fake",
+        broker_environment="paper",
+    )
+
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        lambda config: client,
+    )
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "alpaca-paper",
+            "--request-path",
+            str(request_path),
+            "--from-env",
+            "--verification-report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert f"Evidence report: {report_path}" in result.output
+    report = SemanticTargetAlpacaPaperRunVerificationReport.model_validate_json(
+        report_path.read_text()
+    )
+    assert report.passed
+    assert report.request_id == "cli-real-surface-live-request"
+    assert report.order_count == 1
+    assert report.fill_count == 1
+
+
+def test_alpaca_paper_cli_blocks_existing_report_before_broker(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    request_path = _reviewed_request_path(tmp_path)
+    report_path = tmp_path / "post-run-verification.json"
+    report_path.write_text("{}\n")
+
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        lambda config: (_ for _ in ()).throw(
+            AssertionError("broker client should not be constructed")
+        ),
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "alpaca-paper",
+            "--request-path",
+            str(request_path),
+            "--from-env",
+            "--verification-report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "verification report path already exists" in result.output
+
+
 def test_alpaca_paper_cli_blocks_when_post_run_verifier_fails(
     tmp_path,
     monkeypatch,

@@ -707,6 +707,13 @@ the successful post-run verification path and a fail-closed verifier failure.
 This change adds no scheduler, launchd, non-paper Alpaca, or real-money
 capability.
 
+The order-capable command also accepts `--verification-report-path`. When
+provided, the path must not already exist, and the command checks that before
+constructing the broker client. After successful post-run verification, it
+writes the immutable verification report itself. Source tests inject a fake
+paper client to prove report writing and prove that an existing report path
+blocks before broker construction.
+
 The standalone verifier can now optionally write one immutable
 schema-versioned verification report through `--report-path`. The report binds
 the verifier outcome to the reviewed request path and request SHA-256, then

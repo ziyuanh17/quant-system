@@ -398,7 +398,8 @@ Run one reviewed semantic-target request against Alpaca paper:
 ```bash
 quant semantic-target alpaca-paper \
   --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json \
-  --from-env
+  --from-env \
+  --verification-report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
 ```
 
 This command is broker-connected and may submit one Alpaca paper order when
@@ -407,7 +408,9 @@ only with a reviewed request and paper credentials in the environment. It does
 not expose local-paper, dry-run, real-money, scheduler, launchd, or mode
 selection. After execution it automatically runs broker-free evidence
 verification against the local artifacts it produced; the command exits
-nonzero if that verification fails.
+nonzero if that verification fails. If a verification report path is supplied,
+the path must not already exist; the command checks this before constructing
+the broker client.
 
 Verify one completed semantic-target Alpaca paper run from local evidence:
 

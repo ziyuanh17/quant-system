@@ -757,12 +757,23 @@ def semantic_target_alpaca_paper(
         bool,
         typer.Option(help="Load Alpaca paper credentials from QUANT_* env."),
     ] = False,
+    verification_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="Optional immutable post-run verification report path."
+        ),
+    ] = None,
 ) -> None:
     """Run one reviewed semantic-target request against Alpaca paper."""
     if not from_env:
         raise typer.BadParameter(
             "--from-env is required for Alpaca paper credentials"
         )
+    if (
+        verification_report_path is not None
+        and verification_report_path.exists()
+    ):
+        raise typer.BadParameter("verification report path already exists")
     current_time = _current_utc()
     if not _is_regular_us_equity_session(current_time):
         raise typer.BadParameter(
@@ -795,6 +806,15 @@ def semantic_target_alpaca_paper(
         typer.echo(f"Differences: {len(result.reconciliation.differences)}")
     try:
         verification = verify_semantic_target_alpaca_paper_run(request_path)
+        written_report_path = (
+            write_semantic_target_alpaca_paper_run_verification_report(
+                verification=verification,
+                request_path=request_path,
+                output_path=verification_report_path,
+            )
+            if verification_report_path is not None
+            else None
+        )
     except (OSError, ValueError) as exc:
         raise typer.BadParameter(
             f"post-run evidence verification failed: {exc}"
@@ -805,6 +825,10 @@ def semantic_target_alpaca_paper(
     )
     for issue in verification.issues:
         typer.echo(f"Evidence blocked because: {issue}")
+    if written_report_path is None:
+        typer.echo("Evidence report: not written")
+    else:
+        typer.echo(f"Evidence report: {written_report_path}")
     if not verification.passed:
         raise typer.Exit(code=1)
     if result.status != ExecutionPlanStatus.SATISFIED:
