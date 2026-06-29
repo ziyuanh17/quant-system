@@ -7,7 +7,10 @@ from typer.testing import CliRunner
 
 import quant.cli
 from quant.cli import app
-from quant.models.operator import SemanticTargetAlpacaPaperOperatorRequest
+from quant.models.operator import (
+    SemanticTargetAlpacaPaperOperatorRequest,
+    SemanticTargetAlpacaPaperReadinessReport,
+)
 
 
 def test_prepare_alpaca_paper_request_from_local_semantic_paper_request(
@@ -158,6 +161,121 @@ def test_inspect_alpaca_paper_request_blocks_when_expired(
     assert "Blocked because: alpaca paper request is expired" in result.output
 
 
+def test_preflight_alpaca_paper_test_writes_ready_report(
+    tmp_path, monkeypatch
+) -> None:
+    request_path = _prepare_alpaca_source_request(tmp_path)
+    report_path = tmp_path / "readiness.json"
+    planned_verification_report_path = tmp_path / "verification.json"
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "preflight-alpaca-paper-test",
+            "--request-path",
+            str(request_path),
+            "--report-path",
+            str(report_path),
+            "--planned-verification-report-path",
+            str(planned_verification_report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Ready: yes" in result.output
+    assert "Credential environment present: yes" in result.output
+    assert (
+        "Preflight created no Alpaca or execution artifacts."
+        in result.output
+    )
+    report = SemanticTargetAlpacaPaperReadinessReport.model_validate_json(
+        report_path.read_text()
+    )
+    assert report.ready
+    assert report.request_id == "alpaca-paper-request"
+    assert report.credentials_present
+    assert report.market_session_open
+    assert (
+        report.planned_verification_report_path
+        == str(planned_verification_report_path)
+    )
+
+
+def test_preflight_alpaca_paper_test_blocks_missing_credentials_and_session(
+    tmp_path, monkeypatch
+) -> None:
+    request_path = _prepare_alpaca_source_request(tmp_path)
+    report_path = tmp_path / "readiness.json"
+    monkeypatch.delenv("QUANT_ALPACA_PAPER_API_KEY", raising=False)
+    monkeypatch.delenv("QUANT_ALPACA_PAPER_SECRET_KEY", raising=False)
+    monkeypatch.delenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", raising=False)
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: False
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "preflight-alpaca-paper-test",
+            "--request-path",
+            str(request_path),
+            "--report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Ready: no" in result.output
+    assert "regular US equity session is closed" in result.output
+    assert "credential environment is incomplete" in result.output
+    report = SemanticTargetAlpacaPaperReadinessReport.model_validate_json(
+        report_path.read_text()
+    )
+    assert not report.ready
+    assert not report.credentials_present
+    assert not report.market_session_open
+
+
+def test_preflight_alpaca_paper_test_blocks_existing_verification_report(
+    tmp_path, monkeypatch
+) -> None:
+    request_path = _prepare_alpaca_source_request(tmp_path)
+    report_path = tmp_path / "readiness.json"
+    planned_verification_report_path = tmp_path / "verification.json"
+    planned_verification_report_path.write_text("{}\n")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "preflight-alpaca-paper-test",
+            "--request-path",
+            str(request_path),
+            "--report-path",
+            str(report_path),
+            "--planned-verification-report-path",
+            str(planned_verification_report_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "planned verification report path already exists" in result.output
+
+
 def test_prepare_alpaca_paper_request_rejects_quantity_above_bound(
     tmp_path,
 ) -> None:
@@ -206,6 +324,17 @@ def test_inspect_alpaca_paper_request_help_is_broker_free() -> None:
     assert result.exit_code == 0
     assert "without broker access" in result.output
     assert "credential" not in result.output.lower()
+
+
+def test_preflight_alpaca_paper_test_help_is_broker_free() -> None:
+    result = CliRunner().invoke(
+        app,
+        ["semantic-target", "preflight-alpaca-paper-test", "--help"],
+    )
+
+    assert result.exit_code == 0
+    assert "readiness evidence" in result.output
+    assert "without broker access" not in result.output.lower()
 
 
 def _prepare_alpaca_source_request(tmp_path: Path) -> Path:

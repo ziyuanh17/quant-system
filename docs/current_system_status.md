@@ -723,6 +723,17 @@ issues, and creates no Alpaca or execution artifacts. A fake-client rehearsal
 proved the saved-report check against a passing report with final status
 `satisfied`, one order, one fill, one reconciliation, and final position `2`.
 
+The source now includes
+`quant semantic-target preflight-alpaca-paper-test`. It writes an immutable,
+broker-free readiness report for one reviewed semantic-target Alpaca paper
+test. The report checks local request validity, regular-session state, Alpaca
+paper credential presence, and the planned verification-report path without
+constructing an Alpaca client or contacting Alpaca. A closed-session rehearsal
+with fake credential values wrote a blocked report showing credentials present,
+regular session closed, target `AAPL +2`, and no Alpaca or execution artifacts.
+See
+[semantic_target_alpaca_paper_readiness_preflight.md](semantic_target_alpaca_paper_readiness_preflight.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

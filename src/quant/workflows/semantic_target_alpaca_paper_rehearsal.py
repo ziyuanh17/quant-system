@@ -41,6 +41,7 @@ from quant.models.execution_lifecycle import (
 from quant.models.operator import (
     ActivatedSemanticPaperOperatorRequest,
     SemanticTargetAlpacaPaperOperatorRequest,
+    SemanticTargetAlpacaPaperReadinessReport,
     SemanticTargetAlpacaPaperRehearsalReport,
     SemanticTargetAlpacaPaperRunVerificationReport,
 )
@@ -138,6 +139,13 @@ class SemanticTargetAlpacaPaperRunVerification:
     summary: str
 
 
+ALPACA_PAPER_REQUIRED_ENV_NAMES = (
+    "QUANT_ALPACA_PAPER_API_KEY",
+    "QUANT_ALPACA_PAPER_SECRET_KEY",
+    "QUANT_ALPACA_PAPER_ACCOUNT_ID",
+)
+
+
 def write_semantic_target_alpaca_paper_operator_request(
     request: SemanticTargetAlpacaPaperOperatorRequest,
     output_root: Path,
@@ -191,6 +199,75 @@ def load_and_verify_semantic_target_alpaca_paper_run_verification_report(
     if report.issues:
         raise ValueError("Alpaca paper verification report contains issues")
     return report
+
+
+def evaluate_semantic_target_alpaca_paper_readiness(
+    *,
+    request_path: Path,
+    evaluated_at: datetime,
+    market_session_open: bool,
+    credentials_present: bool,
+    planned_verification_report_path: Path | None = None,
+) -> SemanticTargetAlpacaPaperReadinessReport:
+    """Evaluate broker-free readiness for one Alpaca paper test."""
+    inspection = inspect_semantic_target_alpaca_paper_operator_request(
+        request_path,
+        inspected_at=evaluated_at,
+        market_session_open=market_session_open,
+    )
+    issues = list(inspection.issues)
+    if not credentials_present:
+        issues.append("Alpaca paper credential environment is incomplete")
+    if (
+        planned_verification_report_path is not None
+        and planned_verification_report_path.exists()
+    ):
+        issues.append("planned verification report path already exists")
+    deduped_issues = tuple(dict.fromkeys(issues))
+    ready = not deduped_issues
+    return SemanticTargetAlpacaPaperReadinessReport(
+        report_id=f"{inspection.request_id}-readiness",
+        request_id=inspection.request_id,
+        request_path=str(request_path),
+        request_sha256=_file_sha256(request_path),
+        evaluated_at=evaluated_at,
+        ready=ready,
+        issues=deduped_issues,
+        symbol=inspection.symbol,
+        approved_target_quantity=inspection.approved_target_quantity,
+        valid_until=inspection.valid_until,
+        paper_output_root=str(inspection.output_root),
+        market_session_open=market_session_open,
+        credentials_present=credentials_present,
+        required_env_names=ALPACA_PAPER_REQUIRED_ENV_NAMES,
+        planned_verification_report_path=(
+            str(planned_verification_report_path)
+            if planned_verification_report_path is not None
+            else None
+        ),
+        summary=(
+            "ready for one Alpaca paper test"
+            if ready
+            else "blocked before Alpaca paper test"
+        ),
+    )
+
+
+def write_semantic_target_alpaca_paper_readiness_report(
+    report: SemanticTargetAlpacaPaperReadinessReport,
+    output_path: Path,
+) -> Path:
+    """Write one immutable broker-free Alpaca paper readiness report."""
+    return _write_model_exclusive(output_path, report)
+
+
+def load_semantic_target_alpaca_paper_readiness_report(
+    path: Path,
+) -> SemanticTargetAlpacaPaperReadinessReport:
+    """Load one broker-free Alpaca paper readiness report."""
+    return SemanticTargetAlpacaPaperReadinessReport.model_validate_json(
+        path.read_text()
+    )
 
 
 def inspect_semantic_target_alpaca_paper_operator_request(

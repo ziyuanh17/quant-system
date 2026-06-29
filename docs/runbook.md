@@ -433,6 +433,19 @@ It does not load credentials, contact Alpaca, submit orders, or write execution
 artifacts. A report path writes only a verifier report, not execution evidence.
 Report verification checks the saved request hash and rejects failed reports.
 
+Write broker-free readiness evidence before a one-request paper test:
+
+```bash
+quant semantic-target preflight-alpaca-paper-test \
+  --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json \
+  --report-path data/semantic-target/alpaca-paper-readiness/reviewed-request-preflight.json \
+  --planned-verification-report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
+```
+
+This checks request validity, regular-session state, credential presence, and
+the future verification report path without constructing an Alpaca client or
+contacting Alpaca.
+
 ## Semantic-Target Review
 
 Semantic-target dry-run and local semantic paper have dedicated reviewed CLI

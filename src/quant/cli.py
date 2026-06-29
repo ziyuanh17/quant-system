@@ -101,7 +101,9 @@ from quant.strategies import (
     MomentumStrategy,
 )
 from quant.workflows import (
+    ALPACA_PAPER_REQUIRED_ENV_NAMES,
     WorkflowRunFailed,
+    evaluate_semantic_target_alpaca_paper_readiness,
     inspect_activated_dry_run_operator_request,
     inspect_activated_semantic_paper_operator_request,
     inspect_semantic_target_alpaca_paper_operator_request,
@@ -122,6 +124,7 @@ from quant.workflows import (
     run_supervised_provider_discovery_operator_request,
     run_supervised_provider_operator_request,
     verify_semantic_target_alpaca_paper_run,
+    write_semantic_target_alpaca_paper_readiness_report,
     write_semantic_target_alpaca_paper_run_verification_report,
 )
 
@@ -999,6 +1002,70 @@ def semantic_target_verify_alpaca_paper_report(
     typer.echo(f"Reconciliations: {report.reconciliation_report_count}")
     typer.echo(f"Final position: {report.final_position_quantity}")
     typer.echo("Report verification created no Alpaca or execution artifacts.")
+
+
+@semantic_target_app.command("preflight-alpaca-paper-test")
+def semantic_target_preflight_alpaca_paper_test(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Prepared Alpaca paper request JSON to preflight."),
+    ],
+    report_path: Annotated[
+        Path,
+        typer.Option(help="Immutable readiness report path to write."),
+    ],
+    planned_verification_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="Future verification report path expected after execution."
+        ),
+    ] = None,
+) -> None:
+    """Write broker-free readiness evidence for one Alpaca paper test."""
+    current_time = _current_utc()
+    try:
+        report = evaluate_semantic_target_alpaca_paper_readiness(
+            request_path=request_path,
+            evaluated_at=current_time,
+            market_session_open=_is_regular_us_equity_session(current_time),
+            credentials_present=_alpaca_paper_credentials_present(),
+            planned_verification_report_path=planned_verification_report_path,
+        )
+        written_path = write_semantic_target_alpaca_paper_readiness_report(
+            report,
+            report_path,
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Report: {written_path}")
+    typer.echo(f"Request: {report.request_id}")
+    typer.echo(f"Ready: {'yes' if report.ready else 'no'}")
+    typer.echo(f"Summary: {report.summary}")
+    typer.echo(f"Symbol: {report.symbol}")
+    typer.echo(f"Approved target: {report.approved_target_quantity}")
+    typer.echo(f"Valid until: {report.valid_until.isoformat()}")
+    typer.echo(
+        "Regular session open: "
+        f"{'yes' if report.market_session_open else 'no'}"
+    )
+    typer.echo(
+        "Credential environment present: "
+        f"{'yes' if report.credentials_present else 'no'}"
+    )
+    typer.echo(f"Paper output root: {report.paper_output_root}")
+    if report.planned_verification_report_path is None:
+        typer.echo("Planned verification report: not set")
+    else:
+        typer.echo(
+            "Planned verification report: "
+            f"{report.planned_verification_report_path}"
+        )
+    for issue in report.issues:
+        typer.echo(f"Blocked because: {issue}")
+    typer.echo("Preflight created no Alpaca or execution artifacts.")
+    if not report.ready:
+        raise typer.Exit(code=1)
 
 
 @dry_run_app.command("autonomous-finite-loop")
@@ -3360,6 +3427,10 @@ def _load_alpaca_paper_config_from_env() -> AlpacaPaperConfig:
         account_id=account_id,
         url_override=url_override or None,
     )
+
+
+def _alpaca_paper_credentials_present() -> bool:
+    return all(os.environ.get(name) for name in ALPACA_PAPER_REQUIRED_ENV_NAMES)
 
 
 def _required_env(name: str) -> str:

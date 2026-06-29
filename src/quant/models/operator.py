@@ -233,6 +233,28 @@ class SemanticTargetAlpacaPaperRunVerificationReport(FrozenModel):
     summary: str = Field(min_length=1)
 
 
+class SemanticTargetAlpacaPaperReadinessReport(FrozenModel):
+    """Immutable broker-free readiness evidence for one Alpaca paper test."""
+
+    schema_version: Literal[1] = 1
+    report_id: str = Field(min_length=1)
+    request_id: str = Field(min_length=1)
+    request_path: str = Field(min_length=1)
+    request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    evaluated_at: AwareDatetime
+    ready: bool
+    issues: tuple[str, ...] = ()
+    symbol: str = Field(min_length=1)
+    approved_target_quantity: Decimal | None = None
+    valid_until: AwareDatetime
+    paper_output_root: str = Field(min_length=1)
+    market_session_open: bool
+    credentials_present: bool
+    required_env_names: tuple[str, ...] = Field(min_length=1)
+    planned_verification_report_path: str | None = None
+    summary: str = Field(min_length=1)
+
+
 class ActivatedDryRunRequestInspection(FrozenModel):
     """Read-only explanation of one activated dry-run operator request."""
 
