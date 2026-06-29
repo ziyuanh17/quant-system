@@ -270,6 +270,34 @@ def load_semantic_target_alpaca_paper_readiness_report(
     )
 
 
+def load_and_verify_semantic_target_alpaca_paper_readiness_report(
+    path: Path,
+    *,
+    request_path: Path,
+    verification_report_path: Path | None,
+) -> SemanticTargetAlpacaPaperReadinessReport:
+    """Load one readiness report and verify it matches the intended run."""
+    report = load_semantic_target_alpaca_paper_readiness_report(path)
+    if report.request_path != str(request_path):
+        raise ValueError("readiness report references another request path")
+    _require_hash(request_path, report.request_sha256)
+    if not report.ready:
+        raise ValueError("readiness report is not ready")
+    if report.issues:
+        raise ValueError("readiness report contains issues")
+    planned = report.planned_verification_report_path
+    requested = (
+        str(verification_report_path)
+        if verification_report_path is not None
+        else None
+    )
+    if planned != requested:
+        raise ValueError(
+            "readiness report planned verification path does not match"
+        )
+    return report
+
+
 def inspect_semantic_target_alpaca_paper_operator_request(
     path: Path,
     *,

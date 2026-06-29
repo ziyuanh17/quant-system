@@ -22,6 +22,20 @@ It does not load Alpaca credentials into an `AlpacaPaperConfig`, construct an
 Alpaca client, contact Alpaca, submit orders, write execution artifacts, load
 launchd, or start a scheduler.
 
+The order-capable command can require this report:
+
+```bash
+quant semantic-target alpaca-paper \
+  --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json \
+  --from-env \
+  --readiness-report-path data/semantic-target/alpaca-paper-readiness/reviewed-request-preflight.json \
+  --verification-report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
+```
+
+When supplied, the command verifies that the readiness report is ready, has no
+issues, matches the exact request path and request SHA-256, and names the same
+planned verification report path before constructing the broker client.
+
 ## Rehearsal
 
 At local time Sunday, June 28, 2026 23:57 PDT, the broker-free readiness path

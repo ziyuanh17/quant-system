@@ -107,6 +107,7 @@ from quant.workflows import (
     inspect_activated_dry_run_operator_request,
     inspect_activated_semantic_paper_operator_request,
     inspect_semantic_target_alpaca_paper_operator_request,
+    load_and_verify_semantic_target_alpaca_paper_readiness_report,
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
     load_and_verify_semantic_target_alpaca_paper_run_verification_report,
     prepare_momentum_semantic_paper_request,
@@ -763,6 +764,10 @@ def semantic_target_alpaca_paper(
             help="Optional immutable post-run verification report path."
         ),
     ] = None,
+    readiness_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Optional broker-free readiness report to require."),
+    ] = None,
 ) -> None:
     """Run one reviewed semantic-target request against Alpaca paper."""
     if not from_env:
@@ -774,6 +779,19 @@ def semantic_target_alpaca_paper(
         and verification_report_path.exists()
     ):
         raise typer.BadParameter("verification report path already exists")
+    if readiness_report_path is not None:
+        try:
+            readiness_report = (
+                load_and_verify_semantic_target_alpaca_paper_readiness_report(
+                    readiness_report_path,
+                    request_path=request_path,
+                    verification_report_path=verification_report_path,
+                )
+            )
+        except (OSError, ValueError) as exc:
+            raise typer.BadParameter(str(exc)) from exc
+    else:
+        readiness_report = None
     current_time = _current_utc()
     if not _is_regular_us_equity_session(current_time):
         raise typer.BadParameter(
@@ -791,6 +809,10 @@ def semantic_target_alpaca_paper(
         raise typer.BadParameter(str(exc)) from exc
 
     typer.echo(f"Execution plan: {result.plan.execution_plan_id}")
+    if readiness_report is None:
+        typer.echo("Readiness report: not supplied")
+    else:
+        typer.echo(f"Readiness report: {readiness_report_path}")
     typer.echo(f"Status: {result.status.value}")
     if result.plan.order_request is None:
         typer.echo("Order: none")

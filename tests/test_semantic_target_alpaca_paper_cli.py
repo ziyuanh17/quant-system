@@ -329,6 +329,122 @@ def test_alpaca_paper_cli_writes_post_run_verification_report(
     assert report.fill_count == 1
 
 
+def test_alpaca_paper_cli_accepts_matching_readiness_report(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    request_path = _reviewed_request_path(tmp_path)
+    readiness_report_path = tmp_path / "readiness.json"
+    verification_report_path = tmp_path / "post-run-verification.json"
+    client = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        broker_name="alpaca-paper",
+        account_id="acct-fake",
+        broker_environment="paper",
+    )
+
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+    preflight = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "preflight-alpaca-paper-test",
+            "--request-path",
+            str(request_path),
+            "--report-path",
+            str(readiness_report_path),
+            "--planned-verification-report-path",
+            str(verification_report_path),
+        ],
+    )
+    assert preflight.exit_code == 0, preflight.output
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        lambda config: client,
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "alpaca-paper",
+            "--request-path",
+            str(request_path),
+            "--from-env",
+            "--readiness-report-path",
+            str(readiness_report_path),
+            "--verification-report-path",
+            str(verification_report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert f"Readiness report: {readiness_report_path}" in result.output
+    assert f"Evidence report: {verification_report_path}" in result.output
+
+
+def test_alpaca_paper_cli_blocks_mismatched_readiness_before_broker(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    request_path = _reviewed_request_path(tmp_path)
+    readiness_report_path = tmp_path / "readiness.json"
+    planned_verification_report_path = tmp_path / "planned.json"
+    actual_verification_report_path = tmp_path / "actual.json"
+
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_API_KEY", "paper-key")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_SECRET_KEY", "paper-secret")
+    monkeypatch.setenv("QUANT_ALPACA_PAPER_ACCOUNT_ID", "acct-fake")
+    monkeypatch.setattr(
+        quant.cli, "_is_regular_us_equity_session", lambda moment: True
+    )
+    preflight = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "preflight-alpaca-paper-test",
+            "--request-path",
+            str(request_path),
+            "--report-path",
+            str(readiness_report_path),
+            "--planned-verification-report-path",
+            str(planned_verification_report_path),
+        ],
+    )
+    assert preflight.exit_code == 0, preflight.output
+    monkeypatch.setattr(
+        quant.cli,
+        "AlpacaPaperBrokerClient",
+        lambda config: (_ for _ in ()).throw(
+            AssertionError("broker client should not be constructed")
+        ),
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-target",
+            "alpaca-paper",
+            "--request-path",
+            str(request_path),
+            "--from-env",
+            "--readiness-report-path",
+            str(readiness_report_path),
+            "--verification-report-path",
+            str(actual_verification_report_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "planned verification path does not match" in result.output
+
+
 def test_alpaca_paper_cli_blocks_existing_report_before_broker(
     tmp_path,
     monkeypatch,

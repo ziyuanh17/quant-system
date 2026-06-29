@@ -399,6 +399,7 @@ Run one reviewed semantic-target request against Alpaca paper:
 quant semantic-target alpaca-paper \
   --request-path data/semantic-target/alpaca-paper-requests/inputs/requests/reviewed-request.json \
   --from-env \
+  --readiness-report-path data/semantic-target/alpaca-paper-readiness/reviewed-request-preflight.json \
   --verification-report-path data/semantic-target/alpaca-paper-verifications/reviewed-request-verification.json
 ```
 
@@ -410,7 +411,9 @@ selection. After execution it automatically runs broker-free evidence
 verification against the local artifacts it produced; the command exits
 nonzero if that verification fails. If a verification report path is supplied,
 the path must not already exist; the command checks this before constructing
-the broker client.
+the broker client. If a readiness report path is supplied, the command checks
+that the report is ready, binds to the exact request hash, and names the same
+planned verification report path before constructing the broker client.
 
 Verify one completed semantic-target Alpaca paper run from local evidence:
 

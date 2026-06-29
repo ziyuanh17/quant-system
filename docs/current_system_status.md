@@ -741,6 +741,14 @@ regular session closed, target `AAPL +2`, and no Alpaca or execution artifacts.
 See
 [semantic_target_alpaca_paper_readiness_preflight.md](semantic_target_alpaca_paper_readiness_preflight.md).
 
+The order-capable `quant semantic-target alpaca-paper` command can now consume
+that readiness report through `--readiness-report-path`. When supplied, the
+command verifies that the report is ready, has no issues, matches the exact
+request path and request SHA-256, and names the same planned verification
+report path before constructing the broker client. Source tests prove the
+matching-readiness path with a fake paper client and prove mismatched readiness
+blocks before broker construction.
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
