@@ -777,6 +777,14 @@ submission until explicit close/open reversal lifecycle support is implemented.
 This preserves the architectural requirement that reversals are semantically
 distinct from ordinary same-side target adjustments.
 
+The source also includes a broker-free transition planner for target quantity
+changes. It returns one order leg for same-side adjustments, flattening, and
+covering, and two explicit legs for cross-zero reversals such as `-1 -> +2` or
+`+2 -> -1`. This is a semantic contract only; the durable `ExecutionPlan`
+artifact remains single-order, and Alpaca paper reversal execution remains
+blocked before broker submission. See
+[semantic_target_reversal_lifecycle_design.md](semantic_target_reversal_lifecycle_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

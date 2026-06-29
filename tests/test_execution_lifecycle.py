@@ -22,10 +22,12 @@ from quant.execution import (
     load_execution_events,
     load_execution_plan,
     observe_execution_drift,
+    plan_target_transition_orders,
     reconcile_live_state,
     recover_execution_submission,
     refresh_submitted_execution,
     submit_execution_plan,
+    target_transition_crosses_zero,
 )
 from quant.models.execution import (
     LiveOrderRecord,
@@ -33,6 +35,7 @@ from quant.models.execution import (
     LiveReconciliationReport,
     LiveReconciliationStatus,
     OrderRequest,
+    OrderSide,
     Position,
     TradingMode,
     TradingSafetyCheck,
@@ -105,6 +108,43 @@ def test_distinct_risk_target_revisions_claim_distinct_plans(tmp_path) -> None:
     assert first.execution_plan_id == "execution-risk-1-r1"
     assert second.execution_plan_id == "execution-risk-1-r2"
     assert first.client_order_id != second.client_order_id
+
+
+@pytest.mark.parametrize(
+    ("current", "target", "expected"),
+    [
+        (0, 2, ((OrderSide.BUY, 2),)),
+        (1, 3, ((OrderSide.BUY, 2),)),
+        (3, 1, ((OrderSide.SELL, 2),)),
+        (3, 0, ((OrderSide.SELL, 3),)),
+        (-3, 0, ((OrderSide.BUY, 3),)),
+        (-1, -3, ((OrderSide.SELL, 2),)),
+        (-3, -1, ((OrderSide.BUY, 2),)),
+        (-1, 2, ((OrderSide.BUY, 1), (OrderSide.BUY, 2))),
+        (2, -1, ((OrderSide.SELL, 2), (OrderSide.SELL, 1))),
+    ],
+)
+def test_target_transition_planner_preserves_reversal_legs(
+    current: int,
+    target: int,
+    expected: tuple[tuple[OrderSide, int], ...],
+) -> None:
+    orders = plan_target_transition_orders(
+        symbol="AAPL",
+        current_quantity=current,
+        target_quantity=target,
+    )
+
+    assert tuple((order.side, order.quantity) for order in orders) == expected
+    assert all(order.symbol == "AAPL" for order in orders)
+
+
+def test_target_transition_planner_detects_only_cross_zero_reversal() -> None:
+    assert target_transition_crosses_zero(-1, 2)
+    assert target_transition_crosses_zero(2, -1)
+    assert not target_transition_crosses_zero(0, 2)
+    assert not target_transition_crosses_zero(-2, 0)
+    assert not target_transition_crosses_zero(1, 3)
 
 
 def test_v1_execution_plan_artifact_fails_closed(tmp_path) -> None:

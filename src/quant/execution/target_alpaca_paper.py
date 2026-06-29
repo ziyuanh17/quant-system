@@ -26,6 +26,7 @@ from quant.execution.target_lifecycle import (
     recover_execution_submission,
     refresh_submitted_execution,
     submit_execution_plan,
+    target_transition_crosses_zero,
 )
 from quant.models.execution import (
     LiveOrderRecord,
@@ -238,7 +239,10 @@ def _operational_risk_reasons(
     if request is None:
         return ()
     reasons: list[str] = []
-    if plan.current_quantity * plan.target_quantity < 0:
+    if target_transition_crosses_zero(
+        plan.current_quantity,
+        plan.target_quantity,
+    ):
         reasons.append(
             "cross-zero reversal requires explicit close/open execution plan"
         )

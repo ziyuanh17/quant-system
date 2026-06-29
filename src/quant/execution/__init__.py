@@ -112,9 +112,11 @@ from quant.execution.target_lifecycle import (
     claim_execution_plan,
     confirm_execution_satisfaction,
     observe_execution_drift,
+    plan_target_transition_orders,
     recover_execution_submission,
     refresh_submitted_execution,
     submit_execution_plan,
+    target_transition_crosses_zero,
     validate_pre_submission,
 )
 from quant.execution.target_paper import (
@@ -169,6 +171,7 @@ __all__ = [
     "execute_latest_signal_dry_run",
     "execution_plan_path",
     "plan_target_position_order",
+    "plan_target_transition_orders",
     "load_paper_broker_state",
     "latest_live_account_snapshot",
     "load_live_fill_records",
@@ -198,6 +201,7 @@ __all__ = [
     "run_alpaca_semantic_target_paper",
     "save_paper_broker_state",
     "submit_execution_plan",
+    "target_transition_crosses_zero",
     "validate_pre_submission",
     "write_dry_run_order_record",
     "write_live_account_snapshot",

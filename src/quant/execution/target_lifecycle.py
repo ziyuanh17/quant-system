@@ -158,6 +158,59 @@ def claim_execution_plan(
     return plan
 
 
+def plan_target_transition_orders(
+    *,
+    symbol: str,
+    current_quantity: int,
+    target_quantity: int,
+) -> tuple[OrderRequest, ...]:
+    """Return semantic order legs needed to move current to target quantity."""
+    if current_quantity == target_quantity:
+        return ()
+    if not _crosses_zero(current_quantity, target_quantity):
+        delta = target_quantity - current_quantity
+        return (
+            OrderRequest(
+                symbol=symbol,
+                side=OrderSide.BUY if delta > 0 else OrderSide.SELL,
+                quantity=abs(delta),
+            ),
+        )
+    if current_quantity < 0 < target_quantity:
+        return (
+            OrderRequest(
+                symbol=symbol,
+                side=OrderSide.BUY,
+                quantity=abs(current_quantity),
+            ),
+            OrderRequest(
+                symbol=symbol,
+                side=OrderSide.BUY,
+                quantity=target_quantity,
+            ),
+        )
+    return (
+        OrderRequest(
+            symbol=symbol,
+            side=OrderSide.SELL,
+            quantity=current_quantity,
+        ),
+        OrderRequest(
+            symbol=symbol,
+            side=OrderSide.SELL,
+            quantity=abs(target_quantity),
+        ),
+    )
+
+
+def target_transition_crosses_zero(
+    current_quantity: int,
+    target_quantity: int,
+) -> bool:
+    """Return whether a target transition reverses exposure direction."""
+    return _crosses_zero(current_quantity, target_quantity)
+
+
 def submit_execution_plan(
     *,
     plan: ExecutionPlan,
@@ -789,6 +842,10 @@ def _position_quantity(account: LiveAccountSnapshot, symbol: str) -> int:
         ),
         0,
     )
+
+
+def _crosses_zero(current_quantity: int, target_quantity: int) -> bool:
+    return current_quantity * target_quantity < 0
 
 
 def _require_lifecycle_policy(policy: ExecutionLifecyclePolicy) -> None:
