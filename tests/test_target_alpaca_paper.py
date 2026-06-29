@@ -19,6 +19,7 @@ from quant.models.execution import (
     LiveFillRecord,
     LiveOrderRecord,
     OrderRequest,
+    Position,
     ShortSellingPolicy,
     TradingMode,
     TradingSafetyCheck,
@@ -86,6 +87,28 @@ def test_alpaca_semantic_target_blocks_short_when_disabled(tmp_path) -> None:
 
     assert result.status == ExecutionPlanStatus.BLOCKED
     assert client.fills() == ()
+
+
+def test_alpaca_semantic_target_blocks_cross_zero_reversal_until_split(
+    tmp_path,
+) -> None:
+    source = _source(target_value=Decimal("2"))
+    client = _client(
+        positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-1,
+                average_price=100,
+                last_price=100,
+            ),
+        )
+    )
+
+    result = _run(source, client, tmp_path)
+
+    assert result.status == ExecutionPlanStatus.BLOCKED
+    assert client.fills() == ()
+    assert client.account_snapshot().positions[0].quantity == -1
 
 
 def test_alpaca_semantic_target_recovers_ambiguous_submission(
@@ -243,12 +266,16 @@ def _run(
     )
 
 
-def _client() -> FakeLiveBrokerClient:
+def _client(
+    *,
+    positions: tuple[Position, ...] = (),
+) -> FakeLiveBrokerClient:
     return FakeLiveBrokerClient(
         initial_cash=1_000,
         broker_name="alpaca-paper",
         account_id="acct-1",
         broker_environment="paper",
+        positions=positions,
     )
 
 

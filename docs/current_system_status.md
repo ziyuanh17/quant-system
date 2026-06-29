@@ -761,6 +761,22 @@ the readiness report, freshness gate, and immutable post-run verification
 report. It does not authorize launchd, recurring scheduling, request discovery,
 non-paper Alpaca behavior, real-money trading, or automatic drift repair.
 
+On June 29, 2026, one market-session semantic-target Alpaca paper request was
+run from the reviewed source workspace with runtime credentials sourced only
+for Alpaca paper access. The command reached the broker path but exited with a
+durable `ambiguous` lifecycle state before any order, fill, or reconciliation
+artifact was written. The account already held `AAPL=-1`; the reviewed target
+was `AAPL=+2`, so the plan attempted a cross-zero reversal with one `BUY 3`
+order. Alpaca paper rejected the request with an insufficient-quantity error,
+the post-run verifier wrote a failed immutable verification report, and no
+second order attempt was made. See
+[semantic_target_fresh_market_session_alpaca_paper_execution.md](semantic_target_fresh_market_session_alpaca_paper_execution.md).
+
+The source now blocks cross-zero Alpaca paper reversals before broker
+submission until explicit close/open reversal lifecycle support is implemented.
+This preserves the architectural requirement that reversals are semantically
+distinct from ordinary same-side target adjustments.
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

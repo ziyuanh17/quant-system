@@ -208,17 +208,21 @@ side discussions.
 | 188 | Semantic-Target Alpaca Paper Inline Verification Report v1 | Done | Let the order-capable one-request Alpaca paper command write the immutable verification report after post-run evidence verification, while refusing existing report paths before broker construction. |
 | 189 | Semantic-Target Alpaca Paper Readiness Consumption v1 | Done | Let the order-capable one-request Alpaca paper command require a matching ready preflight report before broker construction. |
 | 190 | Semantic-Target Alpaca Paper Readiness Freshness v1 | Done | Require supplied Alpaca paper readiness reports to be recent before broker construction, with broker-free tests for stale and invalid freshness gates. |
-| 191 | Semantic-Target Fresh Market-Session Alpaca Paper Test Runbook v1 | In Review | Document the exact one-request market-session Alpaca paper test procedure using preflight, readiness freshness, paper-only API scope, post-run verification, and immutable evidence review. |
-| 192 | Semantic-Target Fresh Market-Session Alpaca Paper Execution v1 | Planned | During a regular US equity session, run one fresh reviewed semantic-target Alpaca paper request and preserve the readiness, broker, reconciliation, and verification evidence. |
+| 191 | Semantic-Target Fresh Market-Session Alpaca Paper Test Runbook v1 | Done | Document the exact one-request market-session Alpaca paper test procedure using preflight, readiness freshness, paper-only API scope, post-run verification, and immutable evidence review. |
+| 192 | Semantic-Target Fresh Market-Session Alpaca Paper Execution v1 | Done | Ran one fresh reviewed semantic-target Alpaca paper request during market hours, preserving readiness, broker snapshot, ambiguous lifecycle, and failed verification evidence without retrying. |
+| 193 | Semantic-Target Alpaca Paper Cross-Zero Reversal Guard v1 | In Review | Block Alpaca paper target transitions that cross from short to long or long to short before broker submission until explicit close/open lifecycle support exists. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Fresh Market-Session Alpaca Paper Test Runbook v1**.
-The next executable step is one fresh market-session Alpaca paper request using
-a newly generated readiness report, the default readiness freshness gate, and
-an immutable post-run verification report. Do not expose launchd, add recurring
-scheduling, permit non-paper Alpaca behavior, enable real-money trading, add
-automatic drift repair, or broaden the scope beyond one reviewed request.
+Review **Semantic-Target Alpaca Paper Cross-Zero Reversal Guard v1**. The
+market-session paper test reached Alpaca paper but produced a durable
+ambiguous outcome because the account was short `AAPL=-1` and the reviewed
+target was long `AAPL=+2`, creating a cross-zero `BUY 3` transition. The next
+design step is explicit close/open reversal lifecycle support, or a separate
+same-side/flattening paper test that does not cross zero. Do not expose
+launchd, add recurring scheduling, permit non-paper Alpaca behavior, enable
+real-money trading, add automatic drift repair, or broaden the scope beyond
+one reviewed request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

@@ -238,6 +238,11 @@ def _operational_risk_reasons(
     if request is None:
         return ()
     reasons: list[str] = []
+    if plan.current_quantity * plan.target_quantity < 0:
+        reasons.append(
+            "cross-zero reversal requires explicit close/open execution plan"
+        )
+        return tuple(reasons)
     if (
         safety_config.max_order_notional is not None
         and request.quantity * reference_price
