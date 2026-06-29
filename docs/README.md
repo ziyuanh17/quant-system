@@ -86,6 +86,9 @@ Start with these current, canonical documents:
 - [semantic_target_alpaca_paper_readiness_freshness.md](semantic_target_alpaca_paper_readiness_freshness.md):
   evidence for the freshness gate applied when consuming Alpaca paper readiness
   reports before broker construction.
+- [semantic_target_fresh_market_session_alpaca_paper_test.md](semantic_target_fresh_market_session_alpaca_paper_test.md):
+  current runbook for the next one-request semantic-target Alpaca paper test
+  during a regular market session.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

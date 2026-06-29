@@ -753,6 +753,14 @@ mismatched readiness blocking, stale-readiness blocking, and invalid freshness
 configuration blocking before broker construction. See
 [semantic_target_alpaca_paper_readiness_freshness.md](semantic_target_alpaca_paper_readiness_freshness.md).
 
+The current runbook for the next broker-connected semantic-target paper test
+is
+[semantic_target_fresh_market_session_alpaca_paper_test.md](semantic_target_fresh_market_session_alpaca_paper_test.md).
+It allows only one fresh, reviewed, market-session Alpaca paper request using
+the readiness report, freshness gate, and immutable post-run verification
+report. It does not authorize launchd, recurring scheduling, request discovery,
+non-paper Alpaca behavior, real-money trading, or automatic drift repair.
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
