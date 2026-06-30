@@ -95,6 +95,9 @@ Start with these current, canonical documents:
 - [semantic_target_reversal_lifecycle_design.md](semantic_target_reversal_lifecycle_design.md):
   design for explicit close/open lifecycle semantics for target transitions
   that cross zero.
+- [semantic_target_durable_transition_plan.md](semantic_target_durable_transition_plan.md):
+  implemented broker-free durable transition plan artifacts for semantic target
+  transitions, including cross-zero close/open legs.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

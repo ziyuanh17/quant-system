@@ -14,6 +14,7 @@ from quant.models.execution_lifecycle import (
     ExecutionEvent,
     ExecutionPlan,
     ExecutionPlanStatus,
+    ExecutionTransitionPlan,
 )
 from quant.operations import FileLock
 
@@ -90,6 +91,31 @@ def execution_plan_path(
 
 def load_execution_plan(path: Path) -> ExecutionPlan:
     return ExecutionPlan.model_validate_json(path.read_text())
+
+
+def write_execution_transition_plan(
+    transition: ExecutionTransitionPlan,
+    artifact_root: Path,
+) -> Path:
+    """Write one immutable semantic transition plan."""
+    path = execution_transition_plan_path(
+        artifact_root,
+        transition.execution_plan_id,
+    )
+    _write_model_exclusive(path, transition)
+    return path
+
+
+def execution_transition_plan_path(
+    artifact_root: Path,
+    execution_plan_id: str,
+) -> Path:
+    _require_safe_component(execution_plan_id)
+    return artifact_root / "transition-plans" / f"{execution_plan_id}.json"
+
+
+def load_execution_transition_plan(path: Path) -> ExecutionTransitionPlan:
+    return ExecutionTransitionPlan.model_validate_json(path.read_text())
 
 
 def append_execution_event(

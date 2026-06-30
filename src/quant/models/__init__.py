@@ -82,6 +82,8 @@ from quant.models.execution_lifecycle import (
     ExecutionLifecyclePolicy,
     ExecutionPlan,
     ExecutionPlanStatus,
+    ExecutionTransitionLeg,
+    ExecutionTransitionPlan,
 )
 from quant.models.features import (
     FeatureArtifactPaths,
@@ -347,4 +349,6 @@ __all__ = [
     "ExecutionLifecyclePolicy",
     "ExecutionPlan",
     "ExecutionPlanStatus",
+    "ExecutionTransitionLeg",
+    "ExecutionTransitionPlan",
 ]

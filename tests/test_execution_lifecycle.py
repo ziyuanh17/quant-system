@@ -14,13 +14,16 @@ from quant.execution import (
     SINGLE_MARKET_ORDER_POLICY,
     FakeLiveBrokerClient,
     LiveBrokerAdapter,
+    build_execution_transition_plan,
     claim_execution_plan,
     confirm_execution_satisfaction,
     current_execution_status,
     execution_plan_path,
+    execution_transition_plan_path,
     load_execution_drift_observation,
     load_execution_events,
     load_execution_plan,
+    load_execution_transition_plan,
     observe_execution_drift,
     plan_target_transition_orders,
     reconcile_live_state,
@@ -28,6 +31,7 @@ from quant.execution import (
     refresh_submitted_execution,
     submit_execution_plan,
     target_transition_crosses_zero,
+    write_execution_transition_plan,
 )
 from quant.models.execution import (
     LiveOrderRecord,
@@ -145,6 +149,96 @@ def test_target_transition_planner_detects_only_cross_zero_reversal() -> None:
     assert not target_transition_crosses_zero(0, 2)
     assert not target_transition_crosses_zero(-2, 0)
     assert not target_transition_crosses_zero(1, 3)
+
+
+def test_execution_transition_plan_records_reversal_legs(tmp_path) -> None:
+    source = _source(target_value=Decimal("2"))
+    broker = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-1,
+                average_price=100,
+                last_price=100,
+            ),
+        ),
+    )
+    plan = _claim(source, broker, tmp_path)
+
+    transition = build_execution_transition_plan(
+        plan=plan,
+        created_at=_now(),
+    )
+    path = write_execution_transition_plan(transition, tmp_path)
+    loaded = load_execution_transition_plan(path)
+
+    assert path == execution_transition_plan_path(
+        tmp_path,
+        plan.execution_plan_id,
+    )
+    assert loaded == transition
+    assert loaded.transition_plan_id == f"transition-{plan.execution_plan_id}"
+    assert [(leg.semantic, leg.client_order_id) for leg in loaded.legs] == [
+        ("close_short", f"{plan.client_order_id}-leg-1"),
+        ("open_long", f"{plan.client_order_id}-leg-2"),
+    ]
+    assert [
+        (leg.order_request.side, leg.order_request.quantity)
+        for leg in loaded.legs
+    ] == [(OrderSide.BUY, 1), (OrderSide.BUY, 2)]
+    assert [
+        (leg.required_start_quantity, leg.required_end_quantity)
+        for leg in loaded.legs
+    ] == [(-1, 0), (0, 2)]
+
+
+def test_execution_transition_plan_write_is_immutable(tmp_path) -> None:
+    source = _source()
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+    plan = _claim(source, broker, tmp_path)
+    transition = build_execution_transition_plan(
+        plan=plan,
+        created_at=_now(),
+    )
+
+    write_execution_transition_plan(transition, tmp_path)
+
+    with pytest.raises(FileExistsError):
+        write_execution_transition_plan(transition, tmp_path)
+
+
+def test_execution_transition_plan_schema_fails_closed(tmp_path) -> None:
+    source = _source()
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+    plan = _claim(source, broker, tmp_path)
+    transition = build_execution_transition_plan(
+        plan=plan,
+        created_at=_now(),
+    )
+    path = write_execution_transition_plan(transition, tmp_path)
+    payload = json.loads(path.read_text())
+    payload["schema_version"] = 1
+    legacy_path = tmp_path / "legacy-transition.json"
+    legacy_path.write_text(json.dumps(payload))
+
+    with pytest.raises(ValidationError, match="schema_version"):
+        load_execution_transition_plan(legacy_path)
+
+
+def test_execution_transition_plan_allows_satisfied_noop(tmp_path) -> None:
+    source = _source(target_value=Decimal("0"))
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+    plan = _claim(source, broker, tmp_path)
+
+    transition = build_execution_transition_plan(
+        plan=plan,
+        created_at=_now(),
+    )
+
+    assert transition.current_quantity == 0
+    assert transition.target_quantity == 0
+    assert transition.legs == ()
 
 
 def test_v1_execution_plan_artifact_fails_closed(tmp_path) -> None:

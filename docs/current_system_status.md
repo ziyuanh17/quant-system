@@ -785,6 +785,13 @@ artifact remains single-order, and Alpaca paper reversal execution remains
 blocked before broker submission. See
 [semantic_target_reversal_lifecycle_design.md](semantic_target_reversal_lifecycle_design.md).
 
+The source now persists broker-free `ExecutionTransitionPlan` artifacts under
+`transition-plans/`. These artifacts bind one execution plan to deterministic
+transition legs, including required start/end quantities and per-leg client
+order IDs. They are immutable and schema-versioned. They still do not authorize
+or perform broker-connected multi-leg execution. See
+[semantic_target_durable_transition_plan.md](semantic_target_durable_transition_plan.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

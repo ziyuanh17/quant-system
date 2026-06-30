@@ -31,6 +31,8 @@ from quant.models.execution_lifecycle import (
     ExecutionLifecyclePolicy,
     ExecutionPlan,
     ExecutionPlanStatus,
+    ExecutionTransitionLeg,
+    ExecutionTransitionPlan,
 )
 from quant.models.targets import (
     ContributorSet,
@@ -209,6 +211,57 @@ def target_transition_crosses_zero(
 ) -> bool:
     """Return whether a target transition reverses exposure direction."""
     return _crosses_zero(current_quantity, target_quantity)
+
+
+def build_execution_transition_plan(
+    *,
+    plan: ExecutionPlan,
+    created_at: datetime,
+    evidence_refs: tuple[str, ...] = (),
+) -> ExecutionTransitionPlan:
+    """Build a durable semantic transition plan from one execution plan."""
+    orders = plan_target_transition_orders(
+        symbol=plan.symbol,
+        current_quantity=plan.current_quantity,
+        target_quantity=plan.target_quantity,
+    )
+    current_quantity = plan.current_quantity
+    legs: list[ExecutionTransitionLeg] = []
+    for leg_index, order in enumerate(orders, start=1):
+        end_quantity = (
+            current_quantity + order.quantity
+            if order.side == OrderSide.BUY
+            else current_quantity - order.quantity
+        )
+        semantic = _transition_leg_semantic(
+            current_quantity,
+            end_quantity,
+        )
+        legs.append(
+            ExecutionTransitionLeg(
+                leg_id=f"{plan.execution_plan_id}-leg-{leg_index}",
+                leg_index=leg_index,
+                semantic=semantic,
+                order_request=order,
+                required_start_quantity=current_quantity,
+                required_end_quantity=end_quantity,
+                client_order_id=f"{plan.client_order_id}-leg-{leg_index}",
+            )
+        )
+        current_quantity = end_quantity
+    return ExecutionTransitionPlan(
+        transition_plan_id=f"transition-{plan.execution_plan_id}",
+        execution_plan_id=plan.execution_plan_id,
+        risk_target_id=plan.risk_target_id,
+        risk_target_revision=plan.risk_target_revision,
+        symbol=plan.symbol,
+        current_quantity=plan.current_quantity,
+        target_quantity=plan.target_quantity,
+        legs=tuple(legs),
+        created_at=created_at,
+        reason="semantic target transition planned before broker execution",
+        evidence_refs=evidence_refs,
+    )
 
 
 def submit_execution_plan(
@@ -846,6 +899,27 @@ def _position_quantity(account: LiveAccountSnapshot, symbol: str) -> int:
 
 def _crosses_zero(current_quantity: int, target_quantity: int) -> bool:
     return current_quantity * target_quantity < 0
+
+
+def _transition_leg_semantic(
+    start_quantity: int,
+    end_quantity: int,
+) -> str:
+    if start_quantity < 0 and end_quantity == 0:
+        return "close_short"
+    if start_quantity > 0 and end_quantity == 0:
+        return "close_long"
+    if start_quantity == 0 and end_quantity > 0:
+        return "open_long"
+    if start_quantity == 0 and end_quantity < 0:
+        return "open_short"
+    if start_quantity > 0 and end_quantity > start_quantity:
+        return "increase_long"
+    if start_quantity > 0:
+        return "reduce_long"
+    if start_quantity < 0 and end_quantity < start_quantity:
+        return "increase_short"
+    return "reduce_short"
 
 
 def _require_lifecycle_policy(policy: ExecutionLifecyclePolicy) -> None:

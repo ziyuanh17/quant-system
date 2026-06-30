@@ -211,21 +211,23 @@ side discussions.
 | 191 | Semantic-Target Fresh Market-Session Alpaca Paper Test Runbook v1 | Done | Document the exact one-request market-session Alpaca paper test procedure using preflight, readiness freshness, paper-only API scope, post-run verification, and immutable evidence review. |
 | 192 | Semantic-Target Fresh Market-Session Alpaca Paper Execution v1 | Done | Ran one fresh reviewed semantic-target Alpaca paper request during market hours, preserving readiness, broker snapshot, ambiguous lifecycle, and failed verification evidence without retrying. |
 | 193 | Semantic-Target Alpaca Paper Cross-Zero Reversal Guard v1 | Done | Block Alpaca paper target transitions that cross from short to long or long to short before broker submission until explicit close/open lifecycle support exists. |
-| 194 | Semantic-Target Reversal Transition Planner v1 | In Review | Add a broker-free transition planner that preserves explicit close/open legs for cross-zero target reversals without changing durable execution artifacts. |
-| 195 | Semantic-Target Durable Multi-Leg Reversal Lifecycle v1 | Planned | Design and implement schema-versioned durable multi-leg execution artifacts with per-leg recovery, reconciliation, and blocked/ambiguous states before broker exposure. |
+| 194 | Semantic-Target Reversal Transition Planner v1 | Done | Add a broker-free transition planner that preserves explicit close/open legs for cross-zero target reversals without changing durable execution artifacts. |
+| 195 | Semantic-Target Durable Transition Plan Artifacts v1 | In Review | Add immutable schema-versioned transition-plan artifacts with deterministic close/open legs and per-leg client order IDs, without broker-connected multi-leg execution. |
+| 196 | Semantic-Target Durable Multi-Leg Reversal Lifecycle v1 | Planned | Design and implement per-leg recovery, reconciliation, and blocked/ambiguous state transitions before broker exposure. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Reversal Transition Planner v1**. The market-session
-paper test reached Alpaca paper but produced a durable ambiguous outcome
-because the account was short `AAPL=-1` and the reviewed target was long
-`AAPL=+2`, creating a cross-zero transition. The source now blocks broker
-submission for that case and has a broker-free planner that preserves explicit
-close/open legs. The next design step is durable multi-leg lifecycle artifacts,
-or a separate same-side/flattening paper test that does not cross zero. Do not
-expose launchd, add recurring scheduling, permit non-paper Alpaca behavior,
-enable real-money trading, add automatic drift repair, or broaden the scope
-beyond one reviewed request.
+Review **Semantic-Target Durable Transition Plan Artifacts v1**. The
+market-session paper test reached Alpaca paper but produced a durable
+ambiguous outcome because the account was short `AAPL=-1` and the reviewed
+target was long `AAPL=+2`, creating a cross-zero transition. The source now
+blocks broker submission for that case, has a broker-free planner that
+preserves explicit close/open legs, and can persist immutable transition-plan
+artifacts with per-leg client order IDs. The next design step is per-leg
+lifecycle events, recovery, reconciliation, and blocked/ambiguous state
+transitions before broker exposure. Do not expose launchd, add recurring
+scheduling, permit non-paper Alpaca behavior, enable real-money trading, add
+automatic drift repair, or broaden the scope beyond one reviewed request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

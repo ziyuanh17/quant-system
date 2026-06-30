@@ -104,6 +104,74 @@ class ExecutionPlan(FrozenModel):
         return self
 
 
+class ExecutionTransitionLeg(FrozenModel):
+    """One semantic leg in a target quantity transition."""
+
+    schema_version: Literal[2] = EXECUTION_LIFECYCLE_SCHEMA_VERSION
+    leg_id: str = Field(min_length=1)
+    leg_index: int = Field(ge=1)
+    semantic: str = Field(min_length=1)
+    order_request: OrderRequest
+    required_start_quantity: int
+    required_end_quantity: int
+    client_order_id: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_leg_delta(self) -> "ExecutionTransitionLeg":
+        delta = self.required_end_quantity - self.required_start_quantity
+        if delta == 0:
+            raise ValueError("transition leg must change quantity")
+        expected_side = OrderSide.BUY if delta > 0 else OrderSide.SELL
+        if (
+            self.order_request.side != expected_side
+            or self.order_request.quantity != abs(delta)
+        ):
+            raise ValueError("transition leg order must match leg delta")
+        return self
+
+
+class ExecutionTransitionPlan(FrozenModel):
+    """Immutable semantic transition plan for one execution plan."""
+
+    schema_version: Literal[2] = EXECUTION_LIFECYCLE_SCHEMA_VERSION
+    transition_plan_id: str = Field(min_length=1)
+    execution_plan_id: str = Field(min_length=1)
+    risk_target_id: str = Field(min_length=1)
+    risk_target_revision: int = Field(ge=1)
+    symbol: str = Field(min_length=1)
+    current_quantity: int
+    target_quantity: int
+    legs: tuple[ExecutionTransitionLeg, ...]
+    created_at: datetime
+    reason: str = Field(min_length=1)
+    evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_transition_chain(self) -> "ExecutionTransitionPlan":
+        if self.current_quantity == self.target_quantity:
+            if self.legs:
+                raise ValueError("satisfied transition must not have legs")
+            return self
+        if not self.legs:
+            raise ValueError("unsatisfied transition requires legs")
+        expected_start = self.current_quantity
+        seen_client_ids: set[str] = set()
+        for expected_index, leg in enumerate(self.legs, start=1):
+            if leg.leg_index != expected_index:
+                raise ValueError("transition leg indexes must be contiguous")
+            if leg.order_request.symbol != self.symbol:
+                raise ValueError("transition leg symbol differs from plan")
+            if leg.required_start_quantity != expected_start:
+                raise ValueError("transition leg chain is not contiguous")
+            if leg.client_order_id in seen_client_ids:
+                raise ValueError("transition leg client order IDs must differ")
+            seen_client_ids.add(leg.client_order_id)
+            expected_start = leg.required_end_quantity
+        if expected_start != self.target_quantity:
+            raise ValueError("transition legs do not reach target quantity")
+        return self
+
+
 class ExecutionEvent(FrozenModel):
     """One immutable lifecycle transition."""
 
