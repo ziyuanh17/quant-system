@@ -114,6 +114,7 @@ from quant.workflows import (
     prepare_semantic_target_alpaca_paper_request,
     run_activated_dry_run_operator_request,
     run_activated_semantic_paper_operator_request,
+    run_activated_semantic_paper_transition_operator_request,
     run_alpaca_paper_refresh_workflow,
     run_dry_run_refresh_workflow,
     run_finite_autonomous_dry_run_loop,
@@ -564,6 +565,39 @@ def semantic_paper_activated_target(
         record.status != SemanticTargetWorkflowStatus.EXECUTION_COMPLETED
         or record.execution_status != ExecutionPlanStatus.SATISFIED
     ):
+        raise typer.Exit(code=1)
+
+
+@semantic_paper_app.command("transition-target")
+def semantic_paper_transition_target(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Reviewed local semantic-paper transition request."),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option(help="Directory for local transition evidence."),
+    ] = Path("data/semantic-target/local-paper-transition"),
+) -> None:
+    """Run one reviewed local target through explicit paper transition legs."""
+    try:
+        result = run_activated_semantic_paper_transition_operator_request(
+            request_path=request_path,
+            output_root=output_root,
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    transition = result.transition_result
+    typer.echo(f"Request: {result.request_artifact_path}")
+    typer.echo(f"Execution plan: {transition.plan.execution_plan_id}")
+    typer.echo(f"Transition plan: {transition.transition.transition_plan_id}")
+    typer.echo(f"Execution status: {transition.status.value}")
+    leg_statuses = ", ".join(status.value for status in transition.leg_statuses)
+    typer.echo(f"Leg statuses: {leg_statuses or 'none'}")
+    typer.echo(f"Reconciliations: {len(transition.reconciliations)}")
+    typer.echo(f"Evidence root: {output_root / 'semantic-paper-transition'}")
+    if transition.status != ExecutionPlanStatus.SATISFIED:
         raise typer.Exit(code=1)
 
 

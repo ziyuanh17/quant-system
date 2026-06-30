@@ -108,6 +108,9 @@ Start with these current, canonical documents:
 - [semantic_target_semantic_paper_transition_bridge.md](semantic_target_semantic_paper_transition_bridge.md):
   implemented the local semantic-paper bridge from durable transition plans to
   explicit close/open paper legs, without Alpaca exposure.
+- [semantic_target_local_transition_operator_rehearsal.md](semantic_target_local_transition_operator_rehearsal.md):
+  implemented the reviewed local CLI boundary for invoking semantic-paper
+  transition legs from checked request artifacts.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

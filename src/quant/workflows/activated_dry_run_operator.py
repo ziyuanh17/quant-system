@@ -11,7 +11,9 @@ from quant.execution import (
     ACCOUNT_WIDE_EXACT_RECONCILIATION_POLICY,
     DETECT_ONLY_DRIFT_POLICY,
     SINGLE_MARKET_ORDER_POLICY,
+    run_semantic_target_paper_transition,
 )
+from quant.execution.target_paper import SemanticPaperTransitionRunResult
 from quant.models.activation import (
     SemanticTargetActivationAuthorization,
     SemanticTargetActivationScope,
@@ -67,6 +69,12 @@ class ActivatedDryRunOperatorResult:
 class ActivatedSemanticPaperOperatorResult:
     request_artifact_path: Path
     activated_workflow: ActivatedSemanticTargetWorkflowResult
+
+
+@dataclass(frozen=True)
+class ActivatedSemanticPaperTransitionOperatorResult:
+    request_artifact_path: Path
+    transition_result: SemanticPaperTransitionRunResult
 
 
 def inspect_activated_dry_run_operator_request(
@@ -435,17 +443,7 @@ def run_activated_semantic_paper_operator_request(
     activation_rehearsal_path = Path(
         request.activation_consumption_rehearsal_report_path
     )
-    activation_rehearsal = load_and_verify_activation_consumption_rehearsal(
-        activation_rehearsal_path
-    )
-    if (
-        not activation_rehearsal.passed
-        or rehearsal_report_sha256(Path(request.rehearsal_report_path))
-        != activation_rehearsal.base_rehearsal_report_sha256
-    ):
-        raise ValueError(
-            "operator request does not match passing activation rehearsal"
-        )
+    _verify_paper_request_activation_evidence(request)
     authorization = SemanticTargetActivationAuthorization.model_validate_json(
         Path(request.authorization_path).read_text()
     )
@@ -487,6 +485,76 @@ def run_activated_semantic_paper_operator_request(
     return ActivatedSemanticPaperOperatorResult(
         request_artifact_path=request_artifact_path,
         activated_workflow=result,
+    )
+
+
+def run_activated_semantic_paper_transition_operator_request(
+    *,
+    request_path: Path,
+    output_root: Path,
+) -> ActivatedSemanticPaperTransitionOperatorResult:
+    """Run one reviewed local semantic-paper request through transition legs."""
+    request = load_activated_semantic_paper_operator_request(request_path)
+    request_artifact_path = _persist_or_verify_paper_request(
+        request, output_root
+    )
+    _verify_paper_request_activation_evidence(request)
+    contributor_set = load_contributor_set(Path(request.contributor_set_path))
+    strategy_decisions = tuple(
+        load_strategy_target_decision(Path(path))
+        for path in request.strategy_decision_paths
+    )
+    evaluations = tuple(
+        load_strategy_evaluation(Path(path))
+        for path in request.strategy_evaluation_paths
+    )
+    evaluation_issues = _strategy_evaluation_issues(
+        contributor_set, strategy_decisions, evaluations
+    )
+    if evaluation_issues:
+        raise ValueError("; ".join(evaluation_issues))
+    portfolio_target = aggregate_strategy_targets(
+        portfolio_target_id=request.portfolio_target_id,
+        revision=request.portfolio_target_revision,
+        contributor_set=contributor_set,
+        decisions=strategy_decisions,
+        evaluated_at=request.evaluated_at,
+    )
+    risk_target = evaluate_research_risk_target(
+        risk_target_id=request.risk_target_id,
+        revision=request.risk_target_revision,
+        portfolio_target=portfolio_target,
+        policy=request.risk_policy,
+        evaluated_at=request.evaluated_at,
+    )
+    transition_root = output_root / "semantic-paper-transition"
+    transition_result = run_semantic_target_paper_transition(
+        risk_target=risk_target,
+        portfolio_target=portfolio_target,
+        contributor_set=contributor_set,
+        strategy_decisions=strategy_decisions,
+        risk_policy=request.risk_policy,
+        policy=request.execution_policy,
+        reference_price=request.reference_price,
+        safety_check=_allowed_paper_check(),
+        state_path=transition_root / "state.json",
+        artifact_root=transition_root / "lifecycle",
+        order_output_dir=transition_root / "orders",
+        fill_output_dir=transition_root / "fills",
+        snapshot_output_dir=transition_root / "snapshots",
+        reconciliation_output_dir=transition_root / "reconciliations",
+        initial_cash=request.initial_cash,
+        initial_positions=request.initial_positions,
+        evaluated_at=request.evaluated_at,
+        evidence_refs=(
+            *request.evidence_refs,
+            str(request_artifact_path),
+            str(request.activation_consumption_rehearsal_report_path),
+        ),
+    )
+    return ActivatedSemanticPaperTransitionOperatorResult(
+        request_artifact_path=request_artifact_path,
+        transition_result=transition_result,
     )
 
 
@@ -550,6 +618,25 @@ def _persist_or_verify_paper_request(
         return path
     _write_model_exclusive(path, request)
     return path
+
+
+def _verify_paper_request_activation_evidence(
+    request: ActivatedSemanticPaperOperatorRequest,
+) -> None:
+    activation_rehearsal_path = Path(
+        request.activation_consumption_rehearsal_report_path
+    )
+    activation_rehearsal = load_and_verify_activation_consumption_rehearsal(
+        activation_rehearsal_path
+    )
+    if (
+        not activation_rehearsal.passed
+        or rehearsal_report_sha256(Path(request.rehearsal_report_path))
+        != activation_rehearsal.base_rehearsal_report_sha256
+    ):
+        raise ValueError(
+            "operator request does not match passing activation rehearsal"
+        )
 
 
 def _allowed_dry_run_check() -> TradingSafetyCheck:

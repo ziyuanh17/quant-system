@@ -823,6 +823,21 @@ unchanged and still uses the single-order lifecycle. Alpaca paper cross-zero
 reversals remain blocked. See
 [semantic_target_semantic_paper_transition_bridge.md](semantic_target_semantic_paper_transition_bridge.md).
 
+The source now exposes the transition bridge through a reviewed local CLI
+boundary:
+
+```text
+quant semantic-paper transition-target --request-path <reviewed-request.json>
+```
+
+The command consumes a checked `ActivatedSemanticPaperOperatorRequest`, verifies
+the referenced activation-consumption rehearsal evidence, hardcodes local paper
+safety, writes evidence under `semantic-paper-transition/`, and has no mode,
+broker, Alpaca, scheduler, or runtime selector. The existing
+`quant semantic-paper activated-target` command remains unchanged and continues
+to use the older single-order semantic-paper path. See
+[semantic_target_local_transition_operator_rehearsal.md](semantic_target_local_transition_operator_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

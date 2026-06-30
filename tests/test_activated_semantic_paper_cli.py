@@ -118,6 +118,56 @@ def test_activated_semantic_paper_cli_has_no_alpaca_or_scheduler_selector(
     assert "scheduler" not in result.output.lower()
 
 
+def test_semantic_paper_transition_cli_runs_reversal_as_legs(
+    tmp_path,
+) -> None:
+    request_path = _request_path(
+        tmp_path,
+        target_value=Decimal("3"),
+        initial_positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-2,
+                average_price=100,
+                last_price=100,
+            ),
+        ),
+    )
+    args = _transition_command_args(tmp_path, request_path)
+
+    first = CliRunner().invoke(app, args)
+    second = CliRunner().invoke(app, args)
+
+    assert first.exit_code == 0
+    assert second.exit_code == 0
+    assert "Execution status: satisfied" in first.output
+    assert "Leg statuses: reconciled, reconciled" in first.output
+    output_root = tmp_path / "transition-output"
+    state = SemanticPaperBrokerState.model_validate_json(
+        (
+            output_root / "semantic-paper-transition" / "state.json"
+        ).read_text()
+    )
+    assert state.positions[0].quantity == 3
+    assert [order.request.quantity for order in state.orders] == [2, 3]
+    assert len(state.fills) == 2
+
+
+def test_semantic_paper_transition_cli_has_no_alpaca_or_scheduler_selector(
+    tmp_path,
+) -> None:
+    del tmp_path
+
+    result = CliRunner().invoke(
+        app, ["semantic-paper", "transition-target", "--help"]
+    )
+
+    assert result.exit_code == 0
+    assert "--mode" not in result.output
+    assert "alpaca" not in result.output.lower()
+    assert "scheduler" not in result.output.lower()
+
+
 def _command_args(root: Path, request_path: Path) -> list[str]:
     return [
         "semantic-paper",
@@ -128,6 +178,17 @@ def _command_args(root: Path, request_path: Path) -> list[str]:
         str(root / "activation"),
         "--output-root",
         str(root / "output"),
+    ]
+
+
+def _transition_command_args(root: Path, request_path: Path) -> list[str]:
+    return [
+        "semantic-paper",
+        "transition-target",
+        "--request-path",
+        str(request_path),
+        "--output-root",
+        str(root / "transition-output"),
     ]
 
 
@@ -144,6 +205,15 @@ def _request_path(
     root: Path,
     *,
     valid_until: datetime | None = None,
+    target_value: Decimal = Decimal("2"),
+    initial_positions: tuple[Position, ...] = (
+        Position(
+            symbol="AAPL",
+            quantity=0,
+            average_price=0,
+            last_price=100,
+        ),
+    ),
 ) -> Path:
     inputs = root / "inputs"
     activation_rehearsal_root = inputs / "activation-rehearsal"
@@ -198,7 +268,7 @@ def _request_path(
         strategy_version="2",
         symbol="AAPL",
         unit=TargetUnit.SHARES,
-        target_value=Decimal("2"),
+        target_value=target_value,
         sizing_policy_version="fixed_shares_v1",
         input_data_id="operator-input-bars",
         generated_at=_now(),
@@ -252,14 +322,7 @@ def _request_path(
         ),
         reference_price=100,
         initial_cash=1_000,
-        initial_positions=(
-            Position(
-                symbol="AAPL",
-                quantity=0,
-                average_price=0,
-                last_price=100,
-            ),
-        ),
+        initial_positions=initial_positions,
         evaluated_at=_now(),
         evidence_refs=("operator-review:test",),
     )
