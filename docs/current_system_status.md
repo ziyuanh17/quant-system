@@ -800,6 +800,18 @@ transitions, monotonic timestamps, leg identity, and broker-order identity.
 This remains broker-free infrastructure. See
 [semantic_target_transition_leg_events.md](semantic_target_transition_leg_events.md).
 
+The source now includes a broker-free fake multi-leg transition runner. It
+uses `FakeLiveBrokerClient` only, processes durable transition legs in order,
+requires each prior leg to be reconciled before the next starts, skips already
+reconciled legs on restart, blocks before fake submission if the broker
+position no longer matches the leg start quantity, and writes live-shaped fake
+orders, fills, snapshots, reconciliation reports, and leg events. The fake
+broker can now rehearse BUY orders that cover a short position, which allows a
+no-network `AAPL=-1 -> AAPL=+2` transition to prove `close_short` then
+`open_long` without touching Alpaca. This still does not enable semantic-target
+Alpaca paper reversal execution. See
+[semantic_target_fake_multi_leg_reversal_runner.md](semantic_target_fake_multi_leg_reversal_runner.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

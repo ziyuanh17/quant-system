@@ -1,18 +1,24 @@
 """Plan and execute restart-safe semantic-target transitions."""
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
+from quant.execution.artifacts import write_live_reconciliation_report
 from quant.execution.lifecycle_artifacts import (
     append_execution_event,
+    append_execution_leg_event,
     claim_execution_plan_exclusive,
+    current_execution_leg_status,
     current_execution_status,
     load_execution_events,
     write_broker_lookup_evidence,
     write_execution_drift_observation,
 )
+from quant.execution.live_broker import LiveBrokerAdapter, LiveBrokerClient
+from quant.execution.reconciliation import reconcile_live_state
 from quant.models.execution import (
     LiveAccountSnapshot,
     LiveOrderRecord,
@@ -28,6 +34,7 @@ from quant.models.execution_lifecycle import (
     BrokerOrderLookupEvidence,
     ExecutionDriftObservation,
     ExecutionDriftStatus,
+    ExecutionLegStatus,
     ExecutionLifecyclePolicy,
     ExecutionPlan,
     ExecutionPlanStatus,
@@ -52,6 +59,15 @@ from quant.research.portfolio_targets import (
 SINGLE_MARKET_ORDER_POLICY = "single_market_order_v1"
 ACCOUNT_WIDE_EXACT_RECONCILIATION_POLICY = "account_wide_exact_v1"
 DETECT_ONLY_DRIFT_POLICY = "detect_only_v1"
+
+
+@dataclass(frozen=True)
+class MultiLegTransitionRunResult:
+    """Summary of one broker-free multi-leg transition run."""
+
+    transition: ExecutionTransitionPlan
+    leg_statuses: tuple[ExecutionLegStatus, ...]
+    reconciliations: tuple[LiveReconciliationReport, ...]
 
 
 class ExecutionLifecycleBroker(Protocol):
@@ -261,6 +277,195 @@ def build_execution_transition_plan(
         created_at=created_at,
         reason="semantic target transition planned before broker execution",
         evidence_refs=evidence_refs,
+    )
+
+
+def run_fake_multi_leg_transition(
+    *,
+    transition: ExecutionTransitionPlan,
+    broker_client: LiveBrokerClient,
+    artifact_root: Path,
+    order_output_dir: Path,
+    fill_output_dir: Path,
+    snapshot_output_dir: Path,
+    reconciliation_output_dir: Path,
+    reference_price: float,
+    safety_check: TradingSafetyCheck,
+    evaluated_at: datetime,
+) -> MultiLegTransitionRunResult:
+    """Run transition legs through a fake broker with per-leg reconciliation."""
+    adapter = LiveBrokerAdapter(
+        client=broker_client,
+        order_output_dir=order_output_dir,
+        fill_output_dir=fill_output_dir,
+        snapshot_output_dir=snapshot_output_dir,
+    )
+    reconciliations: list[LiveReconciliationReport] = []
+    for index, leg in enumerate(transition.legs):
+        prior_unreconciled = [
+            prior.leg_id
+            for prior in transition.legs[:index]
+            if current_execution_leg_status(
+                transition,
+                artifact_root,
+                prior.leg_id,
+            )
+            != ExecutionLegStatus.RECONCILED
+        ]
+        if prior_unreconciled:
+            _append_leg_block(
+                transition=transition,
+                artifact_root=artifact_root,
+                leg_id=leg.leg_id,
+                occurred_at=evaluated_at,
+                reason="prior transition leg is not reconciled",
+            )
+            break
+        status = current_execution_leg_status(
+            transition,
+            artifact_root,
+            leg.leg_id,
+        )
+        if status == ExecutionLegStatus.RECONCILED:
+            continue
+        if status != ExecutionLegStatus.PLANNED:
+            break
+        start_snapshot = adapter.account_snapshot()
+        if _position_quantity(start_snapshot, transition.symbol) != (
+            leg.required_start_quantity
+        ):
+            _append_leg_block(
+                transition=transition,
+                artifact_root=artifact_root,
+                leg_id=leg.leg_id,
+                occurred_at=evaluated_at,
+                reason="broker position does not match leg start quantity",
+            )
+            break
+        if adapter.has_open_orders():
+            _append_leg_block(
+                transition=transition,
+                artifact_root=artifact_root,
+                leg_id=leg.leg_id,
+                occurred_at=evaluated_at,
+                reason="working broker orders block transition leg",
+            )
+            break
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.SUBMISSION_PENDING,
+            occurred_at=evaluated_at,
+            reason="transition leg submission intent recorded",
+        )
+        try:
+            order = adapter.submit_market_order(
+                leg.order_request,
+                reference_price=reference_price,
+                client_order_id=leg.client_order_id,
+                safety_check=safety_check,
+            )
+        except Exception as exc:
+            append_execution_leg_event(
+                transition=transition,
+                artifact_root=artifact_root,
+                leg_id=leg.leg_id,
+                new_status=ExecutionLegStatus.AMBIGUOUS,
+                occurred_at=evaluated_at,
+                reason=f"transition leg submission outcome is ambiguous: {exc}",
+            )
+            break
+        broker_order_ids = (_broker_order_key(order),)
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.SUBMITTED,
+            occurred_at=evaluated_at,
+            reason="transition leg order submitted",
+            evidence_refs=(order.id,),
+            broker_order_ids=broker_order_ids,
+        )
+        if order.status == LiveOrderStatus.REJECTED:
+            append_execution_leg_event(
+                transition=transition,
+                artifact_root=artifact_root,
+                leg_id=leg.leg_id,
+                new_status=ExecutionLegStatus.REJECTED,
+                occurred_at=evaluated_at,
+                reason=order.rejection_reason or "transition leg rejected",
+                evidence_refs=(order.id,),
+                broker_order_ids=broker_order_ids,
+            )
+            break
+        if order.status == LiveOrderStatus.CANCELLED:
+            append_execution_leg_event(
+                transition=transition,
+                artifact_root=artifact_root,
+                leg_id=leg.leg_id,
+                new_status=ExecutionLegStatus.CANCELLED,
+                occurred_at=evaluated_at,
+                reason="transition leg cancelled",
+                evidence_refs=(order.id,),
+                broker_order_ids=broker_order_ids,
+            )
+            break
+        if order.status != LiveOrderStatus.FILLED:
+            break
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.FILLED,
+            occurred_at=evaluated_at,
+            reason="transition leg order filled",
+            evidence_refs=(order.id,),
+            broker_order_ids=broker_order_ids,
+        )
+        adapter.account_snapshot()
+        reconciliation = reconcile_live_state(
+            client=broker_client,
+            order_records_dir=order_output_dir,
+            fill_records_dir=fill_output_dir,
+            snapshot_records_dir=snapshot_output_dir,
+        )
+        reconciliations.append(reconciliation)
+        write_live_reconciliation_report(
+            reconciliation,
+            reconciliation_output_dir
+            / transition.transition_plan_id
+            / leg.leg_id
+            / f"{reconciliation.id}.json",
+        )
+        if not reconciliation.passed:
+            break
+        end_snapshot = broker_client.account_snapshot()
+        if _position_quantity(end_snapshot, transition.symbol) != (
+            leg.required_end_quantity
+        ):
+            break
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.RECONCILED,
+            occurred_at=evaluated_at,
+            reason="transition leg reconciled to required end quantity",
+            evidence_refs=(reconciliation.id,),
+            broker_order_ids=broker_order_ids,
+        )
+    return MultiLegTransitionRunResult(
+        transition=transition,
+        leg_statuses=tuple(
+            current_execution_leg_status(
+                transition,
+                artifact_root,
+                leg.leg_id,
+            )
+            for leg in transition.legs
+        ),
+        reconciliations=tuple(reconciliations),
     )
 
 
@@ -920,6 +1125,32 @@ def _transition_leg_semantic(
     if start_quantity < 0 and end_quantity < start_quantity:
         return "increase_short"
     return "reduce_short"
+
+
+def _append_leg_block(
+    *,
+    transition: ExecutionTransitionPlan,
+    artifact_root: Path,
+    leg_id: str,
+    occurred_at: datetime,
+    reason: str,
+) -> None:
+    status = current_execution_leg_status(transition, artifact_root, leg_id)
+    if status in {
+        ExecutionLegStatus.BLOCKED,
+        ExecutionLegStatus.REJECTED,
+        ExecutionLegStatus.CANCELLED,
+        ExecutionLegStatus.RECONCILED,
+    }:
+        return
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=artifact_root,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.BLOCKED,
+        occurred_at=occurred_at,
+        reason=reason,
+    )
 
 
 def _require_lifecycle_policy(policy: ExecutionLifecyclePolicy) -> None:

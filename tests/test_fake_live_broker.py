@@ -115,6 +115,59 @@ def test_fake_live_broker_sells_existing_position() -> None:
     assert snapshot.positions[0].last_price == 110
 
 
+def test_fake_live_broker_buy_can_cover_short_position() -> None:
+    client = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-1,
+                average_price=90,
+                last_price=100,
+            ),
+        ),
+    )
+
+    record = client.submit_market_order(
+        OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=1),
+        reference_price=100,
+        client_order_id="cover-short",
+        safety_check=_allowed_live_check(),
+    )
+    snapshot = client.account_snapshot()
+
+    assert record.status == LiveOrderStatus.FILLED
+    assert snapshot.cash == 900
+    assert snapshot.positions == ()
+
+
+def test_fake_live_broker_buy_can_cover_short_and_open_long() -> None:
+    client = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-1,
+                average_price=90,
+                last_price=100,
+            ),
+        ),
+    )
+
+    record = client.submit_market_order(
+        OrderRequest(symbol="AAPL", side=OrderSide.BUY, quantity=3),
+        reference_price=100,
+        client_order_id="cover-and-open",
+        safety_check=_allowed_live_check(),
+    )
+    snapshot = client.account_snapshot()
+
+    assert record.status == LiveOrderStatus.FILLED
+    assert snapshot.cash == 700
+    assert snapshot.positions[0].quantity == 2
+    assert snapshot.positions[0].average_price == 100
+
+
 def test_fake_live_broker_requires_allowed_live_check() -> None:
     client = FakeLiveBrokerClient(initial_cash=1_000)
 

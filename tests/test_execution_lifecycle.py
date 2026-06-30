@@ -27,11 +27,13 @@ from quant.execution import (
     load_execution_leg_events,
     load_execution_plan,
     load_execution_transition_plan,
+    load_live_order_records,
     observe_execution_drift,
     plan_target_transition_orders,
     reconcile_live_state,
     recover_execution_submission,
     refresh_submitted_execution,
+    run_fake_multi_leg_transition,
     submit_execution_plan,
     target_transition_crosses_zero,
     write_execution_transition_plan,
@@ -395,6 +397,128 @@ def test_execution_leg_events_detect_tampered_status_chain(tmp_path) -> None:
             transition.transition_plan_id,
             leg_id,
         )
+
+
+def test_fake_multi_leg_transition_reconciles_short_to_long_reversal(
+    tmp_path,
+) -> None:
+    transition = _write_reversal_transition(tmp_path)
+    broker = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-1,
+                average_price=100,
+                last_price=100,
+            ),
+        ),
+    )
+
+    result = run_fake_multi_leg_transition(
+        transition=transition,
+        broker_client=broker,
+        artifact_root=tmp_path,
+        order_output_dir=tmp_path / "orders",
+        fill_output_dir=tmp_path / "fills",
+        snapshot_output_dir=tmp_path / "snapshots",
+        reconciliation_output_dir=tmp_path / "reconciliations",
+        reference_price=100,
+        safety_check=_live_check(),
+        evaluated_at=_now(),
+    )
+
+    assert result.leg_statuses == (
+        ExecutionLegStatus.RECONCILED,
+        ExecutionLegStatus.RECONCILED,
+    )
+    assert all(
+        reconciliation.passed for reconciliation in result.reconciliations
+    )
+    assert [
+        position.quantity for position in broker.account_snapshot().positions
+    ] == [2]
+    assert [
+        order.client_order_id
+        for order in load_live_order_records(tmp_path / "orders")
+    ] == [
+        transition.legs[0].client_order_id,
+        transition.legs[1].client_order_id,
+    ]
+    assert len(tuple((tmp_path / "reconciliations").rglob("*.json"))) == 2
+
+
+def test_fake_multi_leg_transition_restart_skips_reconciled_legs(
+    tmp_path,
+) -> None:
+    transition = _write_reversal_transition(tmp_path)
+    broker = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-1,
+                average_price=100,
+                last_price=100,
+            ),
+        ),
+    )
+
+    first = run_fake_multi_leg_transition(
+        transition=transition,
+        broker_client=broker,
+        artifact_root=tmp_path,
+        order_output_dir=tmp_path / "orders",
+        fill_output_dir=tmp_path / "fills",
+        snapshot_output_dir=tmp_path / "snapshots",
+        reconciliation_output_dir=tmp_path / "reconciliations",
+        reference_price=100,
+        safety_check=_live_check(),
+        evaluated_at=_now(),
+    )
+    second = run_fake_multi_leg_transition(
+        transition=transition,
+        broker_client=broker,
+        artifact_root=tmp_path,
+        order_output_dir=tmp_path / "orders",
+        fill_output_dir=tmp_path / "fills",
+        snapshot_output_dir=tmp_path / "snapshots",
+        reconciliation_output_dir=tmp_path / "reconciliations",
+        reference_price=100,
+        safety_check=_live_check(),
+        evaluated_at=_now() + timedelta(seconds=10),
+    )
+
+    assert first.leg_statuses == second.leg_statuses
+    assert len(load_live_order_records(tmp_path / "orders")) == 2
+    assert len(broker.fills()) == 2
+
+
+def test_fake_multi_leg_transition_blocks_on_start_quantity_mismatch(
+    tmp_path,
+) -> None:
+    transition = _write_reversal_transition(tmp_path)
+    broker = FakeLiveBrokerClient(initial_cash=1_000)
+
+    result = run_fake_multi_leg_transition(
+        transition=transition,
+        broker_client=broker,
+        artifact_root=tmp_path,
+        order_output_dir=tmp_path / "orders",
+        fill_output_dir=tmp_path / "fills",
+        snapshot_output_dir=tmp_path / "snapshots",
+        reconciliation_output_dir=tmp_path / "reconciliations",
+        reference_price=100,
+        safety_check=_live_check(),
+        evaluated_at=_now(),
+    )
+
+    assert result.leg_statuses == (
+        ExecutionLegStatus.BLOCKED,
+        ExecutionLegStatus.PLANNED,
+    )
+    assert load_live_order_records(tmp_path / "orders") == ()
+    assert broker.fills() == ()
 
 
 def test_v1_execution_plan_artifact_fails_closed(tmp_path) -> None:
@@ -1133,6 +1257,10 @@ def _lookup_order(
         safety_check=TradingSafetyCheck(mode=TradingMode.LIVE, allowed=True),
         status=status,
     )
+
+
+def _live_check() -> TradingSafetyCheck:
+    return TradingSafetyCheck(mode=TradingMode.LIVE, allowed=True)
 
 
 def _submit(

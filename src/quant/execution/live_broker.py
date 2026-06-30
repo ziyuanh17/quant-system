@@ -260,7 +260,11 @@ class FakeLiveBrokerClient:
     def _apply_fill(self, fill: LiveFillRecord) -> None:
         if fill.side == OrderSide.BUY:
             self._cash -= fill.notional + fill.commission
-            self._positions[fill.symbol] = self._buy_position(fill)
+            position = self._buy_position(fill)
+            if position is None:
+                self._positions.pop(fill.symbol, None)
+            else:
+                self._positions[fill.symbol] = position
             return
 
         self._cash += fill.notional - fill.commission
@@ -276,12 +280,29 @@ class FakeLiveBrokerClient:
             last_price=fill.price,
         )
 
-    def _buy_position(self, fill: LiveFillRecord) -> Position:
+    def _buy_position(self, fill: LiveFillRecord) -> Position | None:
         existing = self._positions.get(fill.symbol)
         if existing is None:
             return Position(
                 symbol=fill.symbol,
                 quantity=fill.quantity,
+                average_price=fill.price,
+                last_price=fill.price,
+            )
+        if existing.quantity < 0:
+            remaining_quantity = existing.quantity + fill.quantity
+            if remaining_quantity < 0:
+                return Position(
+                    symbol=fill.symbol,
+                    quantity=remaining_quantity,
+                    average_price=existing.average_price,
+                    last_price=fill.price,
+                )
+            if remaining_quantity == 0:
+                return None
+            return Position(
+                symbol=fill.symbol,
+                quantity=remaining_quantity,
                 average_price=fill.price,
                 last_price=fill.price,
             )
