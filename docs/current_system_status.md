@@ -792,6 +792,14 @@ order IDs. They are immutable and schema-versioned. They still do not authorize
 or perform broker-connected multi-leg execution. See
 [semantic_target_durable_transition_plan.md](semantic_target_durable_transition_plan.md).
 
+The source also persists append-only `ExecutionLegEvent` streams under
+`leg-events/`. These events track each transition leg from planned through
+submission, terminal fill/rejection/cancellation/ambiguity, block, and
+reconciliation. Event loading validates sequence continuity, allowed status
+transitions, monotonic timestamps, leg identity, and broker-order identity.
+This remains broker-free infrastructure. See
+[semantic_target_transition_leg_events.md](semantic_target_transition_leg_events.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

@@ -12,8 +12,11 @@ from quant.models.execution_lifecycle import (
     ExecutionDriftObservation,
     ExecutionDryRunObservation,
     ExecutionEvent,
+    ExecutionLegEvent,
+    ExecutionLegStatus,
     ExecutionPlan,
     ExecutionPlanStatus,
+    ExecutionTransitionLeg,
     ExecutionTransitionPlan,
 )
 from quant.operations import FileLock
@@ -47,6 +50,35 @@ _ALLOWED_TRANSITIONS: dict[ExecutionPlanStatus, set[ExecutionPlanStatus]] = {
     ExecutionPlanStatus.CANCELLED: set(),
     ExecutionPlanStatus.BLOCKED: set(),
     ExecutionPlanStatus.SATISFIED: set(),
+}
+
+_ALLOWED_LEG_TRANSITIONS: dict[ExecutionLegStatus, set[ExecutionLegStatus]] = {
+    ExecutionLegStatus.PLANNED: {
+        ExecutionLegStatus.SUBMISSION_PENDING,
+        ExecutionLegStatus.BLOCKED,
+    },
+    ExecutionLegStatus.SUBMISSION_PENDING: {
+        ExecutionLegStatus.SUBMITTED,
+        ExecutionLegStatus.AMBIGUOUS,
+        ExecutionLegStatus.BLOCKED,
+    },
+    ExecutionLegStatus.SUBMITTED: {
+        ExecutionLegStatus.FILLED,
+        ExecutionLegStatus.REJECTED,
+        ExecutionLegStatus.CANCELLED,
+        ExecutionLegStatus.AMBIGUOUS,
+    },
+    ExecutionLegStatus.AMBIGUOUS: {
+        ExecutionLegStatus.SUBMITTED,
+        ExecutionLegStatus.BLOCKED,
+    },
+    ExecutionLegStatus.FILLED: {
+        ExecutionLegStatus.RECONCILED,
+    },
+    ExecutionLegStatus.REJECTED: set(),
+    ExecutionLegStatus.CANCELLED: set(),
+    ExecutionLegStatus.BLOCKED: set(),
+    ExecutionLegStatus.RECONCILED: set(),
 }
 
 
@@ -116,6 +148,163 @@ def execution_transition_plan_path(
 
 def load_execution_transition_plan(path: Path) -> ExecutionTransitionPlan:
     return ExecutionTransitionPlan.model_validate_json(path.read_text())
+
+
+def append_execution_leg_event(
+    *,
+    transition: ExecutionTransitionPlan,
+    artifact_root: Path,
+    leg_id: str,
+    new_status: ExecutionLegStatus,
+    occurred_at: datetime,
+    reason: str,
+    evidence_refs: tuple[str, ...] = (),
+    broker_order_ids: tuple[str, ...] = (),
+) -> ExecutionLegEvent:
+    """Append one immutable transition-leg lifecycle event."""
+    _require_safe_component(transition.transition_plan_id)
+    _require_safe_component(leg_id)
+    leg = _transition_leg(transition, leg_id)
+    lock_path = (
+        artifact_root
+        / "locks"
+        / f"{transition.transition_plan_id}-{leg_id}-events.lock"
+    )
+    with FileLock(
+        path=lock_path,
+        lock_name=f"execution-leg-events:{transition.transition_plan_id}:{leg_id}",
+        stale_after_seconds=300,
+    ):
+        events = load_execution_leg_events(
+            artifact_root,
+            transition.transition_plan_id,
+            leg_id,
+        )
+        previous_status = (
+            events[-1].new_status if events else ExecutionLegStatus.PLANNED
+        )
+        previous_time = (
+            events[-1].occurred_at if events else transition.created_at
+        )
+        if occurred_at < previous_time:
+            raise ValueError("execution leg event timestamps must be monotonic")
+        if new_status not in _ALLOWED_LEG_TRANSITIONS[previous_status]:
+            raise ValueError(
+                f"invalid execution leg transition: "
+                f"{previous_status.value} -> {new_status.value}"
+            )
+        submitted_broker_order_id = _submitted_leg_broker_order_id(events)
+        if (
+            submitted_broker_order_id is not None
+            and broker_order_ids
+            and any(
+                broker_order_id != submitted_broker_order_id
+                for broker_order_id in broker_order_ids
+            )
+        ):
+            raise ValueError(
+                "execution leg event references another broker order"
+            )
+        sequence = len(events) + 1
+        event = ExecutionLegEvent(
+            event_id=(
+                f"{transition.transition_plan_id}:{leg_id}:{sequence:06d}"
+            ),
+            transition_plan_id=transition.transition_plan_id,
+            execution_plan_id=transition.execution_plan_id,
+            leg_id=leg.leg_id,
+            leg_index=leg.leg_index,
+            sequence=sequence,
+            previous_status=previous_status,
+            new_status=new_status,
+            occurred_at=occurred_at,
+            reason=reason,
+            evidence_refs=evidence_refs,
+            broker_order_ids=broker_order_ids,
+        )
+        path = _leg_event_dir(
+            artifact_root,
+            transition.transition_plan_id,
+            leg_id,
+        ) / f"{sequence:06d}.json"
+        _write_model_exclusive(path, event)
+    return event
+
+
+def load_execution_leg_events(
+    artifact_root: Path,
+    transition_plan_id: str,
+    leg_id: str,
+) -> tuple[ExecutionLegEvent, ...]:
+    """Load and validate append-only transition-leg events."""
+    events = tuple(
+        ExecutionLegEvent.model_validate_json(path.read_text())
+        for path in sorted(
+            _leg_event_dir(artifact_root, transition_plan_id, leg_id).glob(
+                "*.json"
+            )
+        )
+    )
+    submitted_broker_order_id: str | None = None
+    for expected_sequence, event in enumerate(events, start=1):
+        if event.sequence != expected_sequence:
+            raise ValueError("execution leg event sequence is not contiguous")
+        if event.transition_plan_id != transition_plan_id:
+            raise ValueError("execution leg event references another plan")
+        if event.leg_id != leg_id:
+            raise ValueError("execution leg event references another leg")
+        if expected_sequence == 1:
+            if event.previous_status != ExecutionLegStatus.PLANNED:
+                raise ValueError(
+                    "first execution leg event must follow planned"
+                )
+        else:
+            previous = events[expected_sequence - 2]
+            if event.previous_status != previous.new_status:
+                raise ValueError("execution leg event status chain is invalid")
+            if event.occurred_at < previous.occurred_at:
+                raise ValueError(
+                    "execution leg event timestamps are not monotonic"
+                )
+        if event.new_status not in _ALLOWED_LEG_TRANSITIONS[
+            event.previous_status
+        ]:
+            raise ValueError("execution leg event transition is invalid")
+        if event.new_status == ExecutionLegStatus.SUBMITTED:
+            broker_order_id = event.broker_order_ids[0]
+            if (
+                submitted_broker_order_id is not None
+                and broker_order_id != submitted_broker_order_id
+            ):
+                raise ValueError("submitted leg broker order identity changed")
+            submitted_broker_order_id = broker_order_id
+        if (
+            submitted_broker_order_id is not None
+            and event.broker_order_ids
+            and any(
+                broker_order_id != submitted_broker_order_id
+                for broker_order_id in event.broker_order_ids
+            )
+        ):
+            raise ValueError(
+                "execution leg event references another broker order"
+            )
+    return events
+
+
+def current_execution_leg_status(
+    transition: ExecutionTransitionPlan,
+    artifact_root: Path,
+    leg_id: str,
+) -> ExecutionLegStatus:
+    """Return the current append-only status for one transition leg."""
+    _transition_leg(transition, leg_id)
+    events = load_execution_leg_events(
+        artifact_root,
+        transition.transition_plan_id,
+        leg_id,
+    )
+    return events[-1].new_status if events else ExecutionLegStatus.PLANNED
 
 
 def append_execution_event(
@@ -300,6 +489,35 @@ def load_execution_dry_run_observation(
 def _event_dir(artifact_root: Path, execution_plan_id: str) -> Path:
     _require_safe_component(execution_plan_id)
     return artifact_root / "events" / execution_plan_id
+
+
+def _leg_event_dir(
+    artifact_root: Path,
+    transition_plan_id: str,
+    leg_id: str,
+) -> Path:
+    _require_safe_component(transition_plan_id)
+    _require_safe_component(leg_id)
+    return artifact_root / "leg-events" / transition_plan_id / leg_id
+
+
+def _transition_leg(
+    transition: ExecutionTransitionPlan,
+    leg_id: str,
+) -> ExecutionTransitionLeg:
+    for leg in transition.legs:
+        if leg.leg_id == leg_id:
+            return leg
+    raise ValueError("transition plan does not contain leg")
+
+
+def _submitted_leg_broker_order_id(
+    events: tuple[ExecutionLegEvent, ...],
+) -> str | None:
+    for event in events:
+        if event.new_status == ExecutionLegStatus.SUBMITTED:
+            return event.broker_order_ids[0]
+    return None
 
 
 def _require_safe_component(value: str) -> None:

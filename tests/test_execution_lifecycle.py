@@ -14,14 +14,17 @@ from quant.execution import (
     SINGLE_MARKET_ORDER_POLICY,
     FakeLiveBrokerClient,
     LiveBrokerAdapter,
+    append_execution_leg_event,
     build_execution_transition_plan,
     claim_execution_plan,
     confirm_execution_satisfaction,
+    current_execution_leg_status,
     current_execution_status,
     execution_plan_path,
     execution_transition_plan_path,
     load_execution_drift_observation,
     load_execution_events,
+    load_execution_leg_events,
     load_execution_plan,
     load_execution_transition_plan,
     observe_execution_drift,
@@ -47,6 +50,7 @@ from quant.models.execution import (
 from quant.models.execution_lifecycle import (
     BrokerLookupOutcome,
     ExecutionDriftStatus,
+    ExecutionLegStatus,
     ExecutionLifecyclePolicy,
     ExecutionPlan,
     ExecutionPlanStatus,
@@ -239,6 +243,158 @@ def test_execution_transition_plan_allows_satisfied_noop(tmp_path) -> None:
     assert transition.current_quantity == 0
     assert transition.target_quantity == 0
     assert transition.legs == ()
+
+
+def test_execution_leg_events_append_and_report_current_status(
+    tmp_path,
+) -> None:
+    transition = _write_reversal_transition(tmp_path)
+    leg_id = transition.legs[0].leg_id
+
+    assert (
+        current_execution_leg_status(transition, tmp_path, leg_id)
+        == ExecutionLegStatus.PLANNED
+    )
+
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=tmp_path,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.SUBMISSION_PENDING,
+        occurred_at=_now(),
+        reason="leg submission intent recorded",
+    )
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=tmp_path,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.SUBMITTED,
+        occurred_at=_now() + timedelta(seconds=1),
+        reason="leg order submitted",
+        broker_order_ids=("broker-leg-1",),
+    )
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=tmp_path,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.FILLED,
+        occurred_at=_now() + timedelta(seconds=2),
+        reason="leg order filled",
+        broker_order_ids=("broker-leg-1",),
+    )
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=tmp_path,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.RECONCILED,
+        occurred_at=_now() + timedelta(seconds=3),
+        reason="leg position reconciled",
+        broker_order_ids=("broker-leg-1",),
+    )
+
+    assert [
+        event.new_status
+        for event in load_execution_leg_events(
+            tmp_path,
+            transition.transition_plan_id,
+            leg_id,
+        )
+    ] == [
+        ExecutionLegStatus.SUBMISSION_PENDING,
+        ExecutionLegStatus.SUBMITTED,
+        ExecutionLegStatus.FILLED,
+        ExecutionLegStatus.RECONCILED,
+    ]
+    assert (
+        current_execution_leg_status(transition, tmp_path, leg_id)
+        == ExecutionLegStatus.RECONCILED
+    )
+
+
+def test_execution_leg_events_reject_invalid_transition(tmp_path) -> None:
+    transition = _write_reversal_transition(tmp_path)
+    leg_id = transition.legs[0].leg_id
+
+    with pytest.raises(ValueError, match="invalid execution leg transition"):
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=tmp_path,
+            leg_id=leg_id,
+            new_status=ExecutionLegStatus.FILLED,
+            occurred_at=_now(),
+            reason="cannot fill before submission",
+        )
+
+
+def test_execution_leg_events_reject_broker_order_id_swap(tmp_path) -> None:
+    transition = _write_reversal_transition(tmp_path)
+    leg_id = transition.legs[0].leg_id
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=tmp_path,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.SUBMISSION_PENDING,
+        occurred_at=_now(),
+        reason="leg submission intent recorded",
+    )
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=tmp_path,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.SUBMITTED,
+        occurred_at=_now() + timedelta(seconds=1),
+        reason="leg order submitted",
+        broker_order_ids=("broker-leg-1",),
+    )
+
+    with pytest.raises(ValueError, match="another broker order"):
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=tmp_path,
+            leg_id=leg_id,
+            new_status=ExecutionLegStatus.FILLED,
+            occurred_at=_now() + timedelta(seconds=2),
+            reason="conflicting leg fill",
+            broker_order_ids=("broker-leg-2",),
+        )
+
+
+def test_execution_leg_events_detect_tampered_status_chain(tmp_path) -> None:
+    transition = _write_reversal_transition(tmp_path)
+    leg_id = transition.legs[0].leg_id
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=tmp_path,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.SUBMISSION_PENDING,
+        occurred_at=_now(),
+        reason="leg submission intent recorded",
+    )
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=tmp_path,
+        leg_id=leg_id,
+        new_status=ExecutionLegStatus.BLOCKED,
+        occurred_at=_now() + timedelta(seconds=1),
+        reason="leg blocked before broker order",
+    )
+    second_path = (
+        tmp_path
+        / "leg-events"
+        / transition.transition_plan_id
+        / leg_id
+        / "000002.json"
+    )
+    payload = json.loads(second_path.read_text())
+    payload["previous_status"] = ExecutionLegStatus.SUBMITTED.value
+    second_path.write_text(json.dumps(payload))
+
+    with pytest.raises(ValueError, match="status chain"):
+        load_execution_leg_events(
+            tmp_path,
+            transition.transition_plan_id,
+            leg_id,
+        )
 
 
 def test_v1_execution_plan_artifact_fails_closed(tmp_path) -> None:
@@ -1024,6 +1180,28 @@ def _claim(source, broker, artifact_root):
         artifact_root=artifact_root,
         created_at=_now(),
     )
+
+
+def _write_reversal_transition(tmp_path):
+    source = _source(target_value=Decimal("2"))
+    broker = FakeLiveBrokerClient(
+        initial_cash=1_000,
+        positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-1,
+                average_price=100,
+                last_price=100,
+            ),
+        ),
+    )
+    plan = _claim(source, broker, tmp_path)
+    transition = build_execution_transition_plan(
+        plan=plan,
+        created_at=_now(),
+    )
+    write_execution_transition_plan(transition, tmp_path)
+    return transition
 
 
 def _source(

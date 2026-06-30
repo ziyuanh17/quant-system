@@ -98,6 +98,9 @@ Start with these current, canonical documents:
 - [semantic_target_durable_transition_plan.md](semantic_target_durable_transition_plan.md):
   implemented broker-free durable transition plan artifacts for semantic target
   transitions, including cross-zero close/open legs.
+- [semantic_target_transition_leg_events.md](semantic_target_transition_leg_events.md):
+  implemented append-only per-leg lifecycle events for durable transition
+  plans, still broker-free.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

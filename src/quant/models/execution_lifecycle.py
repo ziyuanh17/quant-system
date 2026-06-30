@@ -49,6 +49,18 @@ class ExecutionDryRunStatus(StrEnum):
     BLOCKED = "blocked"
 
 
+class ExecutionLegStatus(StrEnum):
+    PLANNED = "planned"
+    SUBMISSION_PENDING = "submission_pending"
+    SUBMITTED = "submitted"
+    FILLED = "filled"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+    AMBIGUOUS = "ambiguous"
+    BLOCKED = "blocked"
+    RECONCILED = "reconciled"
+
+
 class ExecutionLifecyclePolicy(FrozenModel):
     execution_policy_version: str = Field(min_length=1)
     reconciliation_policy_version: str = Field(min_length=1)
@@ -194,6 +206,37 @@ class ExecutionEvent(FrozenModel):
         ):
             raise ValueError(
                 "submitted execution events require one broker order ID"
+            )
+        return self
+
+
+class ExecutionLegEvent(FrozenModel):
+    """One immutable lifecycle transition for a transition-plan leg."""
+
+    schema_version: Literal[2] = EXECUTION_LIFECYCLE_SCHEMA_VERSION
+    event_id: str = Field(min_length=1)
+    transition_plan_id: str = Field(min_length=1)
+    execution_plan_id: str = Field(min_length=1)
+    leg_id: str = Field(min_length=1)
+    leg_index: int = Field(ge=1)
+    sequence: int = Field(ge=1)
+    previous_status: ExecutionLegStatus
+    new_status: ExecutionLegStatus
+    occurred_at: datetime
+    reason: str = Field(min_length=1)
+    evidence_refs: tuple[str, ...] = ()
+    broker_order_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def submitted_leg_event_requires_broker_order(
+        self,
+    ) -> "ExecutionLegEvent":
+        if (
+            self.new_status == ExecutionLegStatus.SUBMITTED
+            and len(self.broker_order_ids) != 1
+        ):
+            raise ValueError(
+                "submitted leg events require one broker order ID"
             )
         return self
 
