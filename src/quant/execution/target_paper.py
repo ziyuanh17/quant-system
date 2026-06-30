@@ -7,9 +7,14 @@ from typing import Protocol
 
 from quant.execution.artifacts import write_live_reconciliation_report
 from quant.execution.lifecycle_artifacts import (
+    append_execution_event,
+    current_execution_leg_status,
     current_execution_status,
     execution_plan_path,
+    execution_transition_plan_path,
     load_execution_plan,
+    load_execution_transition_plan,
+    write_execution_transition_plan,
 )
 from quant.execution.reconciliation import reconcile_live_state
 from quant.execution.semantic_paper import (
@@ -17,11 +22,14 @@ from quant.execution.semantic_paper import (
     SemanticPaperBrokerClient,
 )
 from quant.execution.target_lifecycle import (
+    build_execution_transition_plan,
     claim_execution_plan,
     confirm_execution_satisfaction,
     recover_execution_submission,
     refresh_submitted_execution,
+    run_multi_leg_transition,
     submit_execution_plan,
+    validate_pre_submission,
 )
 from quant.models.execution import (
     LiveReconciliationReport,
@@ -30,9 +38,11 @@ from quant.models.execution import (
     TradingSafetyCheck,
 )
 from quant.models.execution_lifecycle import (
+    ExecutionLegStatus,
     ExecutionLifecyclePolicy,
     ExecutionPlan,
     ExecutionPlanStatus,
+    ExecutionTransitionPlan,
 )
 from quant.models.targets import (
     ContributorSet,
@@ -49,6 +59,15 @@ class SemanticPaperRunResult:
     plan: ExecutionPlan
     status: ExecutionPlanStatus
     reconciliation: LiveReconciliationReport | None
+
+
+@dataclass(frozen=True)
+class SemanticPaperTransitionRunResult:
+    plan: ExecutionPlan
+    transition: ExecutionTransitionPlan
+    status: ExecutionPlanStatus
+    leg_statuses: tuple[ExecutionLegStatus, ...]
+    reconciliations: tuple[LiveReconciliationReport, ...]
 
 
 class SemanticPaperReconciliationRunner(Protocol):
@@ -179,6 +198,189 @@ def run_semantic_target_paper(
         return SemanticPaperRunResult(plan, status, reconciliation)
 
 
+def run_semantic_target_paper_transition(
+    *,
+    risk_target: RiskTargetDecision,
+    portfolio_target: PortfolioTargetDecision,
+    contributor_set: ContributorSet,
+    strategy_decisions: tuple[StrategyTargetDecision, ...],
+    risk_policy: ResearchRiskPolicy,
+    policy: ExecutionLifecyclePolicy,
+    reference_price: float,
+    safety_check: TradingSafetyCheck,
+    state_path: Path,
+    artifact_root: Path,
+    order_output_dir: Path,
+    fill_output_dir: Path,
+    snapshot_output_dir: Path,
+    reconciliation_output_dir: Path,
+    initial_cash: float,
+    evaluated_at: datetime,
+    initial_positions: tuple[Position, ...] = (),
+    evidence_refs: tuple[str, ...] = (),
+) -> SemanticPaperTransitionRunResult:
+    """Run one semantic paper target through explicit transition legs."""
+    client = SemanticPaperBrokerClient(
+        state_path=state_path,
+        initial_cash=initial_cash,
+        initial_positions=initial_positions,
+    )
+    adapter = SemanticPaperBrokerAdapter(
+        client=client,
+        order_output_dir=order_output_dir,
+        fill_output_dir=fill_output_dir,
+        snapshot_output_dir=snapshot_output_dir,
+    )
+    account = adapter.account_snapshot()
+    try:
+        plan = claim_execution_plan(
+            risk_target=risk_target,
+            portfolio_target=portfolio_target,
+            contributor_set=contributor_set,
+            account=account,
+            policy=policy,
+            artifact_root=artifact_root,
+            created_at=evaluated_at,
+            evidence_refs=evidence_refs,
+        )
+    except FileExistsError:
+        plan = load_execution_plan(
+            execution_plan_path(
+                artifact_root,
+                risk_target.risk_target_id,
+                risk_target.revision,
+            )
+        )
+    try:
+        transition_path = write_execution_transition_plan(
+            build_execution_transition_plan(
+                plan=plan,
+                created_at=evaluated_at,
+                evidence_refs=evidence_refs,
+            ),
+            artifact_root,
+        )
+        transition = load_execution_transition_plan(transition_path)
+    except FileExistsError:
+        transition = load_execution_transition_plan(
+            execution_transition_plan_path(
+                artifact_root,
+                plan.execution_plan_id,
+            )
+        )
+
+    with FileLock(
+        path=artifact_root
+        / "locks"
+        / f"{plan.execution_plan_id}-semantic-paper-transition.lock",
+        lock_name=f"semantic-paper-transition:{plan.execution_plan_id}",
+        stale_after_seconds=300,
+    ):
+        if current_execution_status(plan, artifact_root) == (
+            ExecutionPlanStatus.SATISFIED
+        ):
+            return SemanticPaperTransitionRunResult(
+                plan=plan,
+                transition=transition,
+                status=ExecutionPlanStatus.SATISFIED,
+                leg_statuses=_transition_leg_statuses(
+                    transition,
+                    artifact_root,
+                ),
+                reconciliations=(),
+            )
+        if current_execution_status(plan, artifact_root) in {
+            ExecutionPlanStatus.BLOCKED,
+            ExecutionPlanStatus.REJECTED,
+            ExecutionPlanStatus.CANCELLED,
+            ExecutionPlanStatus.AMBIGUOUS,
+        }:
+            return SemanticPaperTransitionRunResult(
+                plan=plan,
+                transition=transition,
+                status=current_execution_status(plan, artifact_root),
+                leg_statuses=_transition_leg_statuses(
+                    transition,
+                    artifact_root,
+                ),
+                reconciliations=(),
+            )
+        leg_statuses = _transition_leg_statuses(transition, artifact_root)
+        if all(
+            status == ExecutionLegStatus.PLANNED for status in leg_statuses
+        ):
+            reasons = validate_pre_submission(
+                plan=plan,
+                risk_target=risk_target,
+                portfolio_target=portfolio_target,
+                contributor_set=contributor_set,
+                strategy_decisions=strategy_decisions,
+                risk_policy=risk_policy,
+                broker=adapter,
+                reference_price=reference_price,
+                safety_check=safety_check,
+                evaluated_at=evaluated_at,
+                expected_trading_mode=TradingMode.PAPER,
+            )
+            if reasons:
+                append_execution_event(
+                    plan=plan,
+                    artifact_root=artifact_root,
+                    new_status=ExecutionPlanStatus.BLOCKED,
+                    occurred_at=evaluated_at,
+                    reason="; ".join(reasons),
+                )
+                return SemanticPaperTransitionRunResult(
+                    plan=plan,
+                    transition=transition,
+                    status=ExecutionPlanStatus.BLOCKED,
+                    leg_statuses=leg_statuses,
+                    reconciliations=(),
+                )
+        if not transition.legs:
+            _mark_transition_plan_satisfied(
+                plan=plan,
+                artifact_root=artifact_root,
+                evaluated_at=evaluated_at,
+                reason="semantic paper transition already at target",
+            )
+            return SemanticPaperTransitionRunResult(
+                plan=plan,
+                transition=transition,
+                status=ExecutionPlanStatus.SATISFIED,
+                leg_statuses=(),
+                reconciliations=(),
+            )
+        result = run_multi_leg_transition(
+            transition=transition,
+            broker=adapter,
+            reconciliation_client=client,
+            artifact_root=artifact_root,
+            order_output_dir=order_output_dir,
+            fill_output_dir=fill_output_dir,
+            snapshot_output_dir=snapshot_output_dir,
+            reconciliation_output_dir=reconciliation_output_dir,
+            reference_price=reference_price,
+            safety_check=safety_check,
+            evaluated_at=evaluated_at,
+        )
+        status = _transition_execution_status(result.leg_statuses)
+        if status == ExecutionPlanStatus.SATISFIED:
+            _mark_transition_plan_satisfied(
+                plan=plan,
+                artifact_root=artifact_root,
+                evaluated_at=evaluated_at,
+                reason="semantic paper transition legs reconciled",
+            )
+        return SemanticPaperTransitionRunResult(
+            plan=plan,
+            transition=transition,
+            status=status,
+            leg_statuses=result.leg_statuses,
+            reconciliations=result.reconciliations,
+        )
+
+
 def _advance_execution(
     *,
     plan: ExecutionPlan,
@@ -244,3 +446,62 @@ def _materialize_order_evidence(
             "semantic paper reconciliation requires one planned order"
         )
     adapter.refresh_order_record(orders[0])
+
+
+def _transition_execution_status(
+    leg_statuses: tuple[ExecutionLegStatus, ...],
+) -> ExecutionPlanStatus:
+    if all(status == ExecutionLegStatus.RECONCILED for status in leg_statuses):
+        return ExecutionPlanStatus.SATISFIED
+    if any(status == ExecutionLegStatus.BLOCKED for status in leg_statuses):
+        return ExecutionPlanStatus.BLOCKED
+    if any(status == ExecutionLegStatus.AMBIGUOUS for status in leg_statuses):
+        return ExecutionPlanStatus.AMBIGUOUS
+    if any(status == ExecutionLegStatus.REJECTED for status in leg_statuses):
+        return ExecutionPlanStatus.REJECTED
+    if any(status == ExecutionLegStatus.CANCELLED for status in leg_statuses):
+        return ExecutionPlanStatus.CANCELLED
+    if any(status == ExecutionLegStatus.FILLED for status in leg_statuses):
+        return ExecutionPlanStatus.FILLED
+    if any(status == ExecutionLegStatus.SUBMITTED for status in leg_statuses):
+        return ExecutionPlanStatus.SUBMITTED
+    if any(
+        status == ExecutionLegStatus.SUBMISSION_PENDING
+        for status in leg_statuses
+    ):
+        return ExecutionPlanStatus.SUBMISSION_PENDING
+    return ExecutionPlanStatus.PLANNED
+
+
+def _mark_transition_plan_satisfied(
+    *,
+    plan: ExecutionPlan,
+    artifact_root: Path,
+    evaluated_at: datetime,
+    reason: str,
+) -> None:
+    if current_execution_status(plan, artifact_root) == (
+        ExecutionPlanStatus.SATISFIED
+    ):
+        return
+    append_execution_event(
+        plan=plan,
+        artifact_root=artifact_root,
+        new_status=ExecutionPlanStatus.SATISFIED,
+        occurred_at=evaluated_at,
+        reason=reason,
+    )
+
+
+def _transition_leg_statuses(
+    transition: ExecutionTransitionPlan,
+    artifact_root: Path,
+) -> tuple[ExecutionLegStatus, ...]:
+    return tuple(
+        current_execution_leg_status(
+            transition,
+            artifact_root,
+            leg.leg_id,
+        )
+        for leg in transition.legs
+    )

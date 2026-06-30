@@ -812,6 +812,17 @@ no-network `AAPL=-1 -> AAPL=+2` transition to prove `close_short` then
 Alpaca paper reversal execution. See
 [semantic_target_fake_multi_leg_reversal_runner.md](semantic_target_fake_multi_leg_reversal_runner.md).
 
+The source also includes an additive local semantic-paper transition bridge.
+`run_semantic_target_paper_transition(...)` creates or loads the existing
+execution plan, persists the immutable transition plan, runs the normal
+pre-submission validation gate with paper safety mode, executes each transition
+leg through the on-disk `SemanticPaperBrokerAdapter`, writes live-shaped local
+paper evidence, and marks the parent execution plan satisfied only after all
+legs reconcile. The older `run_semantic_target_paper(...)` path remains
+unchanged and still uses the single-order lifecycle. Alpaca paper cross-zero
+reversals remain blocked. See
+[semantic_target_semantic_paper_transition_bridge.md](semantic_target_semantic_paper_transition_bridge.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

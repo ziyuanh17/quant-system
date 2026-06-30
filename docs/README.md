@@ -105,6 +105,9 @@ Start with these current, canonical documents:
   implemented the no-network fake broker runner for multi-leg target
   reversals, including per-leg reconciliation gates and restart no-duplicate
   coverage.
+- [semantic_target_semantic_paper_transition_bridge.md](semantic_target_semantic_paper_transition_bridge.md):
+  implemented the local semantic-paper bridge from durable transition plans to
+  explicit close/open paper legs, without Alpaca exposure.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

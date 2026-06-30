@@ -300,6 +300,36 @@ def run_fake_multi_leg_transition(
         fill_output_dir=fill_output_dir,
         snapshot_output_dir=snapshot_output_dir,
     )
+    return run_multi_leg_transition(
+        transition=transition,
+        broker=adapter,
+        reconciliation_client=broker_client,
+        artifact_root=artifact_root,
+        order_output_dir=order_output_dir,
+        fill_output_dir=fill_output_dir,
+        snapshot_output_dir=snapshot_output_dir,
+        reconciliation_output_dir=reconciliation_output_dir,
+        reference_price=reference_price,
+        safety_check=safety_check,
+        evaluated_at=evaluated_at,
+    )
+
+
+def run_multi_leg_transition(
+    *,
+    transition: ExecutionTransitionPlan,
+    broker: ExecutionLifecycleBroker,
+    reconciliation_client: LiveBrokerClient,
+    artifact_root: Path,
+    order_output_dir: Path,
+    fill_output_dir: Path,
+    snapshot_output_dir: Path,
+    reconciliation_output_dir: Path,
+    reference_price: float,
+    safety_check: TradingSafetyCheck,
+    evaluated_at: datetime,
+) -> MultiLegTransitionRunResult:
+    """Run transition legs through one broker with per-leg reconciliation."""
     reconciliations: list[LiveReconciliationReport] = []
     for index, leg in enumerate(transition.legs):
         prior_unreconciled = [
@@ -330,7 +360,7 @@ def run_fake_multi_leg_transition(
             continue
         if status != ExecutionLegStatus.PLANNED:
             break
-        start_snapshot = adapter.account_snapshot()
+        start_snapshot = broker.account_snapshot()
         if _position_quantity(start_snapshot, transition.symbol) != (
             leg.required_start_quantity
         ):
@@ -342,7 +372,7 @@ def run_fake_multi_leg_transition(
                 reason="broker position does not match leg start quantity",
             )
             break
-        if adapter.has_open_orders():
+        if broker.has_open_orders():
             _append_leg_block(
                 transition=transition,
                 artifact_root=artifact_root,
@@ -360,7 +390,7 @@ def run_fake_multi_leg_transition(
             reason="transition leg submission intent recorded",
         )
         try:
-            order = adapter.submit_market_order(
+            order = broker.submit_market_order(
                 leg.order_request,
                 reference_price=reference_price,
                 client_order_id=leg.client_order_id,
@@ -423,9 +453,9 @@ def run_fake_multi_leg_transition(
             evidence_refs=(order.id,),
             broker_order_ids=broker_order_ids,
         )
-        adapter.account_snapshot()
+        broker.account_snapshot()
         reconciliation = reconcile_live_state(
-            client=broker_client,
+            client=reconciliation_client,
             order_records_dir=order_output_dir,
             fill_records_dir=fill_output_dir,
             snapshot_records_dir=snapshot_output_dir,
@@ -440,7 +470,7 @@ def run_fake_multi_leg_transition(
         )
         if not reconciliation.passed:
             break
-        end_snapshot = broker_client.account_snapshot()
+        end_snapshot = reconciliation_client.account_snapshot()
         if _position_quantity(end_snapshot, transition.symbol) != (
             leg.required_end_quantity
         ):

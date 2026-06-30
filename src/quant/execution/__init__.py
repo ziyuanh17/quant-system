@@ -131,7 +131,9 @@ from quant.execution.target_lifecycle import (
 from quant.execution.target_paper import (
     SemanticPaperReconciliationRunner,
     SemanticPaperRunResult,
+    SemanticPaperTransitionRunResult,
     run_semantic_target_paper,
+    run_semantic_target_paper_transition,
 )
 
 __all__ = [
@@ -163,6 +165,7 @@ __all__ = [
     "SemanticPaperBrokerClient",
     "SemanticPaperRunResult",
     "SemanticPaperReconciliationRunner",
+    "SemanticPaperTransitionRunResult",
     "append_execution_event",
     "append_execution_leg_event",
     "check_order_risk",
@@ -214,6 +217,7 @@ __all__ = [
     "run_semantic_target_dry_run",
     "run_fake_multi_leg_transition",
     "run_semantic_target_paper",
+    "run_semantic_target_paper_transition",
     "run_alpaca_paper_order_rehearsal",
     "run_alpaca_semantic_target_paper",
     "save_paper_broker_state",

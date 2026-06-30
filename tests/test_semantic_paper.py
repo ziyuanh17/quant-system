@@ -16,6 +16,7 @@ from quant.execution import (
     current_execution_status,
     load_execution_events,
     run_semantic_target_paper,
+    run_semantic_target_paper_transition,
 )
 from quant.models.execution import (
     LiveOrderStatus,
@@ -27,6 +28,7 @@ from quant.models.execution import (
     TradingSafetyCheck,
 )
 from quant.models.execution_lifecycle import (
+    ExecutionLegStatus,
     ExecutionLifecyclePolicy,
     ExecutionPlanStatus,
 )
@@ -208,6 +210,58 @@ def test_semantic_paper_workflow_executes_target_reversal(tmp_path) -> None:
     assert len(tuple((tmp_path / "reconciliations").rglob("*.json"))) == 2
 
 
+def test_semantic_paper_transition_bridge_executes_reversal_as_legs(
+    tmp_path,
+) -> None:
+    first = _run_transition(
+        _source(target_value=Decimal("-2"), revision=1),
+        tmp_path,
+    )
+    second = _run_transition(
+        _source(target_value=Decimal("3"), revision=2),
+        tmp_path,
+    )
+
+    assert first.status == ExecutionPlanStatus.SATISFIED
+    assert second.status == ExecutionPlanStatus.SATISFIED
+    assert [leg.semantic for leg in second.transition.legs] == [
+        "close_short",
+        "open_long",
+    ]
+    assert second.leg_statuses == (
+        ExecutionLegStatus.RECONCILED,
+        ExecutionLegStatus.RECONCILED,
+    )
+    state = SemanticPaperBrokerState.model_validate_json(
+        (tmp_path / "state.json").read_text()
+    )
+    assert state.positions[0].quantity == 3
+    assert [
+        order.request.quantity for order in state.orders
+    ] == [2, 2, 3]
+    assert len(state.fills) == 3
+    assert len(second.reconciliations) == 2
+
+
+def test_semantic_paper_transition_bridge_restart_skips_done_legs(
+    tmp_path,
+) -> None:
+    _run_transition(_source(target_value=Decimal("-2"), revision=1), tmp_path)
+    source = _source(target_value=Decimal("3"), revision=2)
+
+    first = _run_transition(source, tmp_path)
+    second = _run_transition(source, tmp_path)
+
+    assert first.status == ExecutionPlanStatus.SATISFIED
+    assert second.status == ExecutionPlanStatus.SATISFIED
+    state = SemanticPaperBrokerState.model_validate_json(
+        (tmp_path / "state.json").read_text()
+    )
+    assert len(state.orders) == 3
+    assert len(state.fills) == 3
+    assert second.reconciliations == ()
+
+
 def test_semantic_paper_workflow_satisfies_matching_target_without_order(
     tmp_path,
 ) -> None:
@@ -339,6 +393,37 @@ def _run(
         source
     )
     return run_semantic_target_paper(
+        risk_target=risk_target,
+        portfolio_target=portfolio_target,
+        contributor_set=contributor_set,
+        strategy_decisions=decisions,
+        risk_policy=risk_policy,
+        policy=_policy(),
+        reference_price=100,
+        safety_check=_paper_check(),
+        state_path=root / "state.json",
+        artifact_root=root / "lifecycle",
+        order_output_dir=root / "orders",
+        fill_output_dir=root / "fills",
+        snapshot_output_dir=root / "snapshots",
+        reconciliation_output_dir=root / "reconciliations",
+        initial_cash=initial_cash,
+        initial_positions=initial_positions,
+        evaluated_at=_now(),
+    )
+
+
+def _run_transition(
+    source,
+    root,
+    *,
+    initial_cash: float = 1_000,
+    initial_positions: tuple[Position, ...] = (),
+):
+    contributor_set, decisions, portfolio_target, risk_policy, risk_target = (
+        source
+    )
+    return run_semantic_target_paper_transition(
         risk_target=risk_target,
         portfolio_target=portfolio_target,
         contributor_set=contributor_set,
