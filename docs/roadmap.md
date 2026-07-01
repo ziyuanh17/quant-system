@@ -216,12 +216,13 @@ side discussions.
 | 196 | Semantic-Target Transition Leg Events v1 | Done | Add append-only per-leg lifecycle events with allowed transitions, monotonic timestamps, and broker-order identity validation, still broker-free. |
 | 197 | Semantic-Target Fake Multi-Leg Reversal Runner v1 | Done | Execute transition legs through a fake broker with per-leg reconciliation gates, restart recovery, and no Alpaca exposure. |
 | 198 | Semantic-Target Semantic-Paper Transition Bridge v1 | Done | Add an additive local semantic-paper bridge from durable transition plans to explicit close/open paper legs before any Alpaca reversal exposure. |
-| 199 | Semantic-Target Local Transition Operator Rehearsal v1 | In Review | Design and rehearse a reviewed local operator boundary for invoking semantic-paper transition plans from checked request artifacts. |
-| 200 | Semantic-Target Transition Operator Evidence Verifier v1 | Planned | Add a durable verifier for local transition-operator evidence before any runtime or Alpaca reversal promotion. |
+| 199 | Semantic-Target Local Transition Operator Rehearsal v1 | Done | Design and rehearse a reviewed local operator boundary for invoking semantic-paper transition plans from checked request artifacts. |
+| 200 | Semantic-Target Transition Operator Evidence Verifier v1 | In Review | Add a durable verifier for local transition-operator evidence before any runtime or Alpaca reversal promotion. |
+| 201 | Semantic-Target Transition Operator Runtime Command Rehearsal v1 | Planned | Rehearse the local transition operator and verifier from the runtime clone with synthetic reviewed inputs and no Alpaca exposure. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Local Transition Operator Rehearsal v1**. The
+Review **Semantic-Target Transition Operator Evidence Verifier v1**. The
 market-session paper test reached Alpaca paper but produced a durable ambiguous
 outcome because the account was short `AAPL=-1` and the reviewed target was
 long `AAPL=+2`, creating a cross-zero transition. The source now blocks broker
@@ -233,11 +234,13 @@ explicit close/open paper orders with per-leg reconciliation and restart
 no-duplicate coverage. The source now exposes that bridge through
 `quant semantic-paper transition-target`, a reviewed local CLI boundary that
 consumes a checked request artifact and writes local transition evidence
-without Alpaca, scheduler, runtime, or mode selectors. The next design step is
-a transition-operator evidence verifier so later promotion can consume a
-durable pass/fail report. Do not expose launchd, add recurring scheduling,
-permit non-paper Alpaca behavior, enable real-money trading, add automatic
-drift repair, or broaden the scope beyond one reviewed request.
+without Alpaca, scheduler, runtime, or mode selectors. The source now also has
+a read-only verifier and immutable report for that local transition evidence,
+including request-hash binding and final-position checks. The next design step
+is a runtime-clone command rehearsal for the transition operator plus verifier
+using synthetic reviewed inputs. Do not expose launchd, add recurring
+scheduling, permit non-paper Alpaca behavior, enable real-money trading, add
+automatic drift repair, or broaden the scope beyond one reviewed request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

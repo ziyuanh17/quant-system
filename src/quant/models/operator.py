@@ -233,6 +233,33 @@ class SemanticTargetAlpacaPaperRunVerificationReport(FrozenModel):
     summary: str = Field(min_length=1)
 
 
+class SemanticPaperTransitionVerificationReport(FrozenModel):
+    """Immutable evidence from one local transition-operator verifier."""
+
+    schema_version: Literal[1] = 1
+    report_id: str = Field(min_length=1)
+    request_id: str = Field(min_length=1)
+    request_path: str = Field(min_length=1)
+    request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    verified_at: AwareDatetime
+    passed: bool
+    issues: tuple[str, ...] = ()
+    symbol: str = Field(min_length=1)
+    approved_target_quantity: Decimal | None = None
+    output_root: str = Field(min_length=1)
+    execution_plan_id: str | None = None
+    transition_plan_id: str | None = None
+    final_status: ExecutionPlanStatus | None = None
+    transition_leg_count: int = Field(ge=0)
+    reconciled_leg_count: int = Field(ge=0)
+    order_count: int = Field(ge=0)
+    fill_count: int = Field(ge=0)
+    snapshot_count: int = Field(ge=0)
+    reconciliation_report_count: int = Field(ge=0)
+    final_position_quantity: Decimal | None = None
+    summary: str = Field(min_length=1)
+
+
 class SemanticTargetAlpacaPaperReadinessReport(FrozenModel):
     """Immutable broker-free readiness evidence for one Alpaca paper test."""
 

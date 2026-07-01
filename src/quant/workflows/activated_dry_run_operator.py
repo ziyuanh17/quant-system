@@ -5,12 +5,24 @@ import os
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from hashlib import sha256
 from pathlib import Path
+
+from pydantic import BaseModel
 
 from quant.execution import (
     ACCOUNT_WIDE_EXACT_RECONCILIATION_POLICY,
     DETECT_ONLY_DRIFT_POLICY,
     SINGLE_MARKET_ORDER_POLICY,
+    current_execution_leg_status,
+    current_execution_status,
+    execution_plan_path,
+    execution_transition_plan_path,
+    latest_live_account_snapshot,
+    load_execution_plan,
+    load_execution_transition_plan,
+    load_live_fill_records,
+    load_live_order_records,
     run_semantic_target_paper_transition,
 )
 from quant.execution.target_paper import SemanticPaperTransitionRunResult
@@ -18,12 +30,23 @@ from quant.models.activation import (
     SemanticTargetActivationAuthorization,
     SemanticTargetActivationScope,
 )
-from quant.models.execution import OrderSide, TradingMode, TradingSafetyCheck
+from quant.models.execution import (
+    LiveReconciliationReport,
+    LiveReconciliationStatus,
+    OrderSide,
+    TradingMode,
+    TradingSafetyCheck,
+)
+from quant.models.execution_lifecycle import (
+    ExecutionLegStatus,
+    ExecutionPlanStatus,
+)
 from quant.models.operator import (
     ActivatedDryRunOperatorRequest,
     ActivatedDryRunRequestInspection,
     ActivatedSemanticPaperOperatorRequest,
     ActivatedSemanticPaperRequestInspection,
+    SemanticPaperTransitionVerificationReport,
 )
 from quant.models.targets import (
     ContributorSet,
@@ -75,6 +98,28 @@ class ActivatedSemanticPaperOperatorResult:
 class ActivatedSemanticPaperTransitionOperatorResult:
     request_artifact_path: Path
     transition_result: SemanticPaperTransitionRunResult
+
+
+@dataclass(frozen=True)
+class SemanticPaperTransitionVerification:
+    request_id: str
+    verified_at: datetime
+    passed: bool
+    issues: tuple[str, ...]
+    symbol: str
+    approved_target_quantity: Decimal | None
+    output_root: Path
+    execution_plan_id: str | None
+    transition_plan_id: str | None
+    final_status: ExecutionPlanStatus | None
+    transition_leg_count: int
+    reconciled_leg_count: int
+    order_count: int
+    fill_count: int
+    snapshot_count: int
+    reconciliation_report_count: int
+    final_position_quantity: Decimal | None
+    summary: str
 
 
 def inspect_activated_dry_run_operator_request(
@@ -558,6 +603,248 @@ def run_activated_semantic_paper_transition_operator_request(
     )
 
 
+def verify_semantic_paper_transition_operator_evidence(
+    *,
+    request_path: Path,
+    output_root: Path,
+    verified_at: datetime | None = None,
+) -> SemanticPaperTransitionVerification:
+    """Verify local semantic-paper transition evidence without executing."""
+    current_time = verified_at or datetime.now(UTC)
+    request = load_activated_semantic_paper_operator_request(request_path)
+    issues: list[str] = []
+    contributor_set: ContributorSet | None = None
+    risk_target_value: Decimal | None = None
+
+    try:
+        _verify_paper_request_activation_evidence(request)
+        persisted = (
+            output_root
+            / "operator-requests"
+            / f"{request.request_id}.json"
+        )
+        if not persisted.exists():
+            issues.append("preserved operator request is missing")
+        elif (
+            load_activated_semantic_paper_operator_request(persisted)
+            != request
+        ):
+            issues.append("preserved operator request differs from input")
+        contributor_set = load_contributor_set(
+            Path(request.contributor_set_path)
+        )
+        decisions = tuple(
+            load_strategy_target_decision(Path(path))
+            for path in request.strategy_decision_paths
+        )
+        evaluations = tuple(
+            load_strategy_evaluation(Path(path))
+            for path in request.strategy_evaluation_paths
+        )
+        evaluation_issues = _strategy_evaluation_issues(
+            contributor_set, decisions, evaluations
+        )
+        issues.extend(evaluation_issues)
+        portfolio_target = aggregate_strategy_targets(
+            portfolio_target_id=request.portfolio_target_id,
+            revision=request.portfolio_target_revision,
+            contributor_set=contributor_set,
+            decisions=decisions,
+            evaluated_at=request.evaluated_at,
+        )
+        risk_target = evaluate_research_risk_target(
+            risk_target_id=request.risk_target_id,
+            revision=request.risk_target_revision,
+            portfolio_target=portfolio_target,
+            policy=request.risk_policy,
+            evaluated_at=request.evaluated_at,
+        )
+        risk_target_value = risk_target.approved_target_value
+        if risk_target.status != RiskTargetStatus.APPROVED:
+            issues.extend(risk_target.reasons)
+    except (OSError, ValueError) as exc:
+        issues.append(f"request validation failed: {exc}")
+
+    transition_root = output_root / "semantic-paper-transition"
+    lifecycle_root = transition_root / "lifecycle"
+    plan_id: str | None = None
+    transition_plan_id: str | None = None
+    final_status: ExecutionPlanStatus | None = None
+    leg_count = 0
+    reconciled_leg_count = 0
+    orders = ()
+    fills = ()
+    snapshots = tuple(sorted((transition_root / "snapshots").glob("*.json")))
+    reconciliations: tuple[LiveReconciliationReport, ...] = ()
+    final_quantity: Decimal | None = None
+
+    try:
+        plan = load_execution_plan(
+            execution_plan_path(
+                lifecycle_root,
+                request.risk_target_id,
+                request.risk_target_revision,
+            )
+        )
+        plan_id = plan.execution_plan_id
+        final_status = current_execution_status(plan, lifecycle_root)
+        if final_status != ExecutionPlanStatus.SATISFIED:
+            issues.append(
+                "transition execution plan is not satisfied: "
+                f"{final_status.value}"
+            )
+        transition = load_execution_transition_plan(
+            execution_transition_plan_path(
+                lifecycle_root,
+                plan.execution_plan_id,
+            )
+        )
+        transition_plan_id = transition.transition_plan_id
+        leg_count = len(transition.legs)
+        for leg in transition.legs:
+            status = current_execution_leg_status(
+                transition,
+                lifecycle_root,
+                leg.leg_id,
+            )
+            if status == ExecutionLegStatus.RECONCILED:
+                reconciled_leg_count += 1
+            else:
+                issues.append(
+                    f"transition leg {leg.leg_id} is not reconciled: "
+                    f"{status.value}"
+                )
+        if risk_target_value is not None and Decimal(plan.target_quantity) != (
+            risk_target_value
+        ):
+            issues.append("execution plan target differs from risk target")
+    except (OSError, ValueError) as exc:
+        issues.append(f"transition lifecycle verification failed: {exc}")
+
+    try:
+        orders = load_live_order_records(transition_root / "orders")
+        fills = load_live_fill_records(transition_root / "fills")
+        reconciliations = _load_live_reconciliation_reports(
+            transition_root / "reconciliations"
+        )
+    except (OSError, ValueError) as exc:
+        issues.append(f"transition evidence loading failed: {exc}")
+
+    if len(orders) != leg_count:
+        issues.append(
+            f"expected {leg_count} order artifacts, found {len(orders)}"
+        )
+    if len(fills) != leg_count:
+        issues.append(
+            f"expected {leg_count} fill artifacts, found {len(fills)}"
+        )
+    if len(reconciliations) != leg_count:
+        issues.append(
+            "expected one reconciliation report per transition leg, found "
+            f"{len(reconciliations)}"
+        )
+    elif any(
+        report.status != LiveReconciliationStatus.PASSED
+        for report in reconciliations
+    ):
+        issues.append("one or more reconciliation reports did not pass")
+
+    snapshot = latest_live_account_snapshot(transition_root / "snapshots")
+    if snapshot is not None:
+        final_quantity = Decimal("0")
+        symbol = contributor_set.symbol if contributor_set else ""
+        for position in snapshot.positions:
+            if position.symbol == symbol:
+                final_quantity = Decimal(str(position.quantity))
+                break
+    if risk_target_value is not None and final_quantity != risk_target_value:
+        issues.append("final local paper position differs from risk target")
+
+    deduped_issues = tuple(dict.fromkeys(issues))
+    passed = not deduped_issues
+    return SemanticPaperTransitionVerification(
+        request_id=request.request_id,
+        verified_at=current_time,
+        passed=passed,
+        issues=deduped_issues,
+        symbol=contributor_set.symbol if contributor_set else "unknown",
+        approved_target_quantity=risk_target_value,
+        output_root=output_root,
+        execution_plan_id=plan_id,
+        transition_plan_id=transition_plan_id,
+        final_status=final_status,
+        transition_leg_count=leg_count,
+        reconciled_leg_count=reconciled_leg_count,
+        order_count=len(orders),
+        fill_count=len(fills),
+        snapshot_count=len(snapshots),
+        reconciliation_report_count=len(reconciliations),
+        final_position_quantity=final_quantity,
+        summary=(
+            "verified local semantic-paper transition evidence"
+            if passed
+            else "blocked local semantic-paper transition evidence"
+        ),
+    )
+
+
+def write_semantic_paper_transition_verification_report(
+    *,
+    verification: SemanticPaperTransitionVerification,
+    request_path: Path,
+    output_path: Path,
+) -> Path:
+    """Write one immutable local transition verification report."""
+    report = SemanticPaperTransitionVerificationReport(
+        report_id=f"{verification.request_id}-transition-verification",
+        request_id=verification.request_id,
+        request_path=str(request_path),
+        request_sha256=_file_sha256(request_path),
+        verified_at=verification.verified_at,
+        passed=verification.passed,
+        issues=verification.issues,
+        symbol=verification.symbol,
+        approved_target_quantity=verification.approved_target_quantity,
+        output_root=str(verification.output_root),
+        execution_plan_id=verification.execution_plan_id,
+        transition_plan_id=verification.transition_plan_id,
+        final_status=verification.final_status,
+        transition_leg_count=verification.transition_leg_count,
+        reconciled_leg_count=verification.reconciled_leg_count,
+        order_count=verification.order_count,
+        fill_count=verification.fill_count,
+        snapshot_count=verification.snapshot_count,
+        reconciliation_report_count=verification.reconciliation_report_count,
+        final_position_quantity=verification.final_position_quantity,
+        summary=verification.summary,
+    )
+    _write_model_exclusive(output_path, report)
+    return output_path
+
+
+def load_semantic_paper_transition_verification_report(
+    path: Path,
+) -> SemanticPaperTransitionVerificationReport:
+    """Load one local transition verification report."""
+    return SemanticPaperTransitionVerificationReport.model_validate_json(
+        path.read_text()
+    )
+
+
+def load_and_verify_semantic_paper_transition_verification_report(
+    path: Path,
+) -> SemanticPaperTransitionVerificationReport:
+    """Load a passing local transition report and verify its request hash."""
+    report = load_semantic_paper_transition_verification_report(path)
+    if _file_sha256(Path(report.request_path)) != report.request_sha256:
+        raise ValueError("local transition verification request hash changed")
+    if not report.passed:
+        raise ValueError("local transition verification report did not pass")
+    if report.issues:
+        raise ValueError("local transition verification report contains issues")
+    return report
+
+
 def load_activated_dry_run_operator_request(
     path: Path,
 ) -> ActivatedDryRunOperatorRequest:
@@ -736,11 +1023,28 @@ def _inspection_summary(
     )
 
 
+def _load_live_reconciliation_reports(
+    root: Path,
+) -> tuple[LiveReconciliationReport, ...]:
+    reports = []
+    for path in sorted(root.rglob("*.json")):
+        reports.append(
+            LiveReconciliationReport.model_validate_json(path.read_text())
+        )
+    return tuple(sorted(reports, key=lambda report: report.created_at))
+
+
+def _file_sha256(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _write_model_exclusive(
     path: Path,
-    request: (
-        ActivatedDryRunOperatorRequest | ActivatedSemanticPaperOperatorRequest
-    ),
+    request: BaseModel,
 ) -> None:
     payload = (
         json.dumps(request.model_dump(mode="json"), indent=2, sort_keys=True)

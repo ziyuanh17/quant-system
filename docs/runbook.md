@@ -61,6 +61,35 @@ quant semantic-paper inspect-activated-target \
   --request-path reviewed/activated-semantic-paper-request.json
 ```
 
+Run one reviewed request through explicit local transition legs:
+
+```bash
+quant semantic-paper transition-target \
+  --request-path reviewed/activated-semantic-paper-request.json \
+  --output-root data/semantic-target/local-paper-transition
+```
+
+This command is local-only. It consumes the reviewed request, verifies the
+referenced rehearsal evidence, hardcodes local paper safety, and writes
+explicit transition-leg evidence under `semantic-paper-transition/`. It has no
+mode, Alpaca, scheduler, runtime, or broker-network selector.
+
+Verify the transition evidence without executing anything:
+
+```bash
+quant semantic-paper verify-transition-target \
+  --request-path reviewed/activated-semantic-paper-request.json \
+  --output-root data/semantic-target/local-paper-transition \
+  --report-path reports/local-transition-verification.json
+```
+
+Verify a persisted transition report:
+
+```bash
+quant semantic-paper verify-transition-report \
+  --report-path reports/local-transition-verification.json
+```
+
 Run an exact finite list of independently fresh supervised-provider requests:
 
 ```bash

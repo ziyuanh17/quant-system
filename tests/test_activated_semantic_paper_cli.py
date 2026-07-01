@@ -37,6 +37,7 @@ from quant.research.target_artifacts import (
 from quant.workflows import (
     SEMANTIC_TARGET_ORCHESTRATION_POLICY,
     SEMANTIC_TARGET_REHEARSAL_POLICY,
+    load_semantic_paper_transition_verification_report,
     rehearsal_report_sha256,
     run_activation_consumption_local_rehearsal,
     write_activated_semantic_paper_operator_request,
@@ -166,6 +167,113 @@ def test_semantic_paper_transition_cli_has_no_alpaca_or_scheduler_selector(
     assert "--mode" not in result.output
     assert "alpaca" not in result.output.lower()
     assert "scheduler" not in result.output.lower()
+
+
+def test_semantic_paper_transition_verifier_writes_and_reads_report(
+    tmp_path,
+) -> None:
+    request_path = _request_path(
+        tmp_path,
+        target_value=Decimal("3"),
+        initial_positions=(
+            Position(
+                symbol="AAPL",
+                quantity=-2,
+                average_price=100,
+                last_price=100,
+            ),
+        ),
+    )
+    transition_args = _transition_command_args(tmp_path, request_path)
+    report_path = tmp_path / "reports" / "transition-verification.json"
+
+    run_result = CliRunner().invoke(app, transition_args)
+    verify_result = CliRunner().invoke(
+        app,
+        [
+            "semantic-paper",
+            "verify-transition-target",
+            "--request-path",
+            str(request_path),
+            "--output-root",
+            str(tmp_path / "transition-output"),
+            "--report-path",
+            str(report_path),
+        ],
+    )
+    report_result = CliRunner().invoke(
+        app,
+        [
+            "semantic-paper",
+            "verify-transition-report",
+            "--report-path",
+            str(report_path),
+        ],
+    )
+
+    assert run_result.exit_code == 0
+    assert verify_result.exit_code == 0
+    assert report_result.exit_code == 0
+    assert "Passed: yes" in verify_result.output
+    assert "Legs: 2/2" in verify_result.output
+    report = load_semantic_paper_transition_verification_report(report_path)
+    assert report.passed
+    assert report.transition_leg_count == 2
+    assert report.reconciled_leg_count == 2
+    assert report.order_count == 2
+    assert report.fill_count == 2
+    assert report.reconciliation_report_count == 2
+    assert report.final_position_quantity == Decimal("3")
+
+
+def test_semantic_paper_transition_report_blocks_tampered_request(
+    tmp_path,
+) -> None:
+    request_path = _request_path(tmp_path)
+    report_path = tmp_path / "reports" / "transition-verification.json"
+    assert (
+        CliRunner()
+        .invoke(app, _transition_command_args(tmp_path, request_path))
+        .exit_code
+        == 0
+    )
+    assert (
+        CliRunner()
+        .invoke(
+            app,
+            [
+                "semantic-paper",
+                "verify-transition-target",
+                "--request-path",
+                str(request_path),
+                "--output-root",
+                str(tmp_path / "transition-output"),
+                "--report-path",
+                str(report_path),
+            ],
+        )
+        .exit_code
+        == 0
+    )
+    request_path.write_text(
+        request_path.read_text().replace(
+            "operator-review:test",
+            "operator-review:tampered",
+        )
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "semantic-paper",
+            "verify-transition-report",
+            "--report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "request hash changed" in result.output
 
 
 def _command_args(root: Path, request_path: Path) -> list[str]:

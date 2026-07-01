@@ -838,6 +838,20 @@ broker, Alpaca, scheduler, or runtime selector. The existing
 to use the older single-order semantic-paper path. See
 [semantic_target_local_transition_operator_rehearsal.md](semantic_target_local_transition_operator_rehearsal.md).
 
+The transition operator now has a read-only evidence verifier:
+
+```text
+quant semantic-paper verify-transition-target --request-path <reviewed-request.json>
+```
+
+It verifies the preserved request, activation rehearsal evidence, satisfied
+execution plan, durable transition plan, reconciled legs, local order/fill
+counts, passing reconciliation reports, and final local paper position. It can
+write an immutable verification report bound to the reviewed request SHA-256,
+and `quant semantic-paper verify-transition-report` rejects the report if the
+request is later changed. See
+[semantic_target_transition_operator_evidence_verifier.md](semantic_target_transition_operator_evidence_verifier.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

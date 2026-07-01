@@ -107,6 +107,7 @@ from quant.workflows import (
     inspect_activated_dry_run_operator_request,
     inspect_activated_semantic_paper_operator_request,
     inspect_semantic_target_alpaca_paper_operator_request,
+    load_and_verify_semantic_paper_transition_verification_report,
     load_and_verify_semantic_target_alpaca_paper_readiness_report,
     load_and_verify_semantic_target_alpaca_paper_rehearsal,
     load_and_verify_semantic_target_alpaca_paper_run_verification_report,
@@ -125,7 +126,9 @@ from quant.workflows import (
     run_supervised_provider_discovery_loop_operator_request,
     run_supervised_provider_discovery_operator_request,
     run_supervised_provider_operator_request,
+    verify_semantic_paper_transition_operator_evidence,
     verify_semantic_target_alpaca_paper_run,
+    write_semantic_paper_transition_verification_report,
     write_semantic_target_alpaca_paper_readiness_report,
     write_semantic_target_alpaca_paper_run_verification_report,
 )
@@ -599,6 +602,89 @@ def semantic_paper_transition_target(
     typer.echo(f"Evidence root: {output_root / 'semantic-paper-transition'}")
     if transition.status != ExecutionPlanStatus.SATISFIED:
         raise typer.Exit(code=1)
+
+
+@semantic_paper_app.command("verify-transition-target")
+def semantic_paper_verify_transition_target(
+    request_path: Annotated[
+        Path,
+        typer.Option(help="Reviewed local semantic-paper transition request."),
+    ],
+    output_root: Annotated[
+        Path,
+        typer.Option(help="Directory containing local transition evidence."),
+    ] = Path("data/semantic-target/local-paper-transition"),
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Optional immutable verification report path."),
+    ] = None,
+) -> None:
+    """Verify local transition evidence without executing or broker access."""
+    try:
+        verification = verify_semantic_paper_transition_operator_evidence(
+            request_path=request_path,
+            output_root=output_root,
+        )
+        if report_path is not None:
+            write_semantic_paper_transition_verification_report(
+                verification=verification,
+                request_path=request_path,
+                output_path=report_path,
+            )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Request: {verification.request_id}")
+    typer.echo(f"Passed: {'yes' if verification.passed else 'no'}")
+    typer.echo(f"Summary: {verification.summary}")
+    typer.echo(f"Execution plan: {verification.execution_plan_id or 'missing'}")
+    typer.echo(
+        f"Transition plan: {verification.transition_plan_id or 'missing'}"
+    )
+    final_status = (
+        verification.final_status.value
+        if verification.final_status is not None
+        else "missing"
+    )
+    typer.echo(f"Final status: {final_status}")
+    typer.echo(
+        "Legs: "
+        f"{verification.reconciled_leg_count}/"
+        f"{verification.transition_leg_count}"
+    )
+    typer.echo(f"Orders: {verification.order_count}")
+    typer.echo(f"Fills: {verification.fill_count}")
+    typer.echo(f"Reconciliations: {verification.reconciliation_report_count}")
+    typer.echo(
+        f"Final position: {verification.final_position_quantity or 'missing'}"
+    )
+    if report_path is not None:
+        typer.echo(f"Report: {report_path}")
+    typer.echo("Verification created no execution artifacts.")
+    if not verification.passed:
+        raise typer.Exit(code=1)
+
+
+@semantic_paper_app.command("verify-transition-report")
+def semantic_paper_verify_transition_report(
+    report_path: Annotated[
+        Path,
+        typer.Option(help="Persisted local transition verification report."),
+    ],
+) -> None:
+    """Verify a persisted local transition report."""
+    try:
+        report = load_and_verify_semantic_paper_transition_verification_report(
+            report_path
+        )
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"Report: {report_path}")
+    typer.echo(f"Request: {report.request_id}")
+    typer.echo(f"Passed: {'yes' if report.passed else 'no'}")
+    typer.echo(f"Summary: {report.summary}")
+    typer.echo(f"Transition plan: {report.transition_plan_id or 'missing'}")
 
 
 @semantic_paper_app.command("prepare-momentum-request")
