@@ -117,6 +117,10 @@ Start with these current, canonical documents:
 - [semantic_target_transition_operator_runtime_command_rehearsal.md](semantic_target_transition_operator_runtime_command_rehearsal.md):
   runtime-clone command rehearsal evidence for the local transition operator
   and verifier with synthetic reviewed inputs.
+- [semantic_target_alpaca_paper_transition_exposure_design.md](semantic_target_alpaca_paper_transition_exposure_design.md):
+  design for the future Alpaca paper transition boundary, keeping real Alpaca
+  reversal submission disabled until a broker-free fake-client rehearsal proves
+  the legged lifecycle.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

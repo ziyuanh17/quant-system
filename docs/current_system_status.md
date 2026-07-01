@@ -865,6 +865,19 @@ untracked runtime semantic-target evidence was preserved in
 `stash@{0}: codex-runtime-transition-rehearsal-prep`. See
 [semantic_target_transition_operator_runtime_command_rehearsal.md](semantic_target_transition_operator_runtime_command_rehearsal.md).
 
+The current review item is the Alpaca paper transition exposure design. It
+keeps the existing real Alpaca cross-zero guard in place and specifies the
+future paper-only code doorway for explicit transition legs. That future path
+must use deterministic per-leg client order IDs, recover each leg by Alpaca
+client-order lookup, block leg 2 until leg 1 is terminal and reconciled, require
+fresh request/readiness/safety evidence before every leg, and treat ambiguous
+broker lookup or reconciliation as a durable block rather than a reason to
+resubmit. This stage did not submit Alpaca paper orders, source credentials,
+touch the runtime clone, load launchd, or expose scheduler behavior. The next
+implementation should be a broker-free fake-client Alpaca-shaped transition
+rehearsal before any real Alpaca reversal test. See
+[semantic_target_alpaca_paper_transition_exposure_design.md](semantic_target_alpaca_paper_transition_exposure_design.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
