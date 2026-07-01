@@ -114,6 +114,9 @@ Start with these current, canonical documents:
 - [semantic_target_transition_operator_evidence_verifier.md](semantic_target_transition_operator_evidence_verifier.md):
   implemented the read-only verifier and immutable report for local
   transition-operator evidence.
+- [semantic_target_transition_operator_runtime_command_rehearsal.md](semantic_target_transition_operator_runtime_command_rehearsal.md):
+  runtime-clone command rehearsal evidence for the local transition operator
+  and verifier with synthetic reviewed inputs.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

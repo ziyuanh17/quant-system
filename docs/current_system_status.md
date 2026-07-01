@@ -852,6 +852,19 @@ and `quant semantic-paper verify-transition-report` rejects the report if the
 request is later changed. See
 [semantic_target_transition_operator_evidence_verifier.md](semantic_target_transition_operator_evidence_verifier.md).
 
+On June 30, 2026, the transition operator and verifier were rehearsed from the
+runtime clone with deterministic synthetic inputs rooted under `/tmp`. The
+runtime clone was temporarily switched to reviewed commit `daf0cd4` on
+`codex/semantic-paper-infra`, ran `transition-target` twice for a synthetic
+`AAPL=-2 -> AAPL=+3` request, verified the evidence, verified the persisted
+report, and was restored to `main`. The run produced two local paper orders
+(`BUY 2`, `BUY 3`), two fills, two reconciled transition legs, final synthetic
+position `AAPL=+3`, and a passing immutable verifier report. Runtime
+`data/semantic-target` remained absent during the rehearsal; pre-existing
+untracked runtime semantic-target evidence was preserved in
+`stash@{0}: codex-runtime-transition-rehearsal-prep`. See
+[semantic_target_transition_operator_runtime_command_rehearsal.md](semantic_target_transition_operator_runtime_command_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.
