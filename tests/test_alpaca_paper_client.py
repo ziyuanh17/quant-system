@@ -1,15 +1,23 @@
 """Test alpaca paper client behavior and safety invariants."""
 
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
 
+from quant.execution import (
+    LiveBrokerAdapter,
+    append_execution_leg_event,
+    current_execution_leg_status,
+    load_live_order_records,
+)
 from quant.execution.alpaca_paper import (
     AlpacaPaperBrokerClient,
     AlpacaPaperConfig,
 )
 from quant.execution.alpaca_sdk import AlpacaTradingSdk
+from quant.execution.target_lifecycle import run_multi_leg_transition
 from quant.models.execution import (
     LiveOrderRecord,
     LiveOrderStatus,
@@ -17,6 +25,11 @@ from quant.models.execution import (
     OrderSide,
     TradingMode,
     TradingSafetyCheck,
+)
+from quant.models.execution_lifecycle import (
+    ExecutionLegStatus,
+    ExecutionTransitionLeg,
+    ExecutionTransitionPlan,
 )
 
 
@@ -437,6 +450,147 @@ def test_alpaca_paper_client_lookup_requires_durable_context() -> None:
         client.orders_by_client_order_id("unknown")
 
 
+def test_alpaca_shaped_transition_recovers_leg_by_client_id(
+    tmp_path,
+) -> None:
+    trading_client = TransitionFakeTradingClient(
+        api_key="unused",
+        secret_key="unused",
+        paper=True,
+        initial_quantity=-1,
+    )
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=trading_client,
+        sdk=_fake_sdk(),
+    )
+    adapter = LiveBrokerAdapter(
+        client=client,
+        order_output_dir=tmp_path / "orders",
+        fill_output_dir=tmp_path / "fills",
+        snapshot_output_dir=tmp_path / "snapshots",
+    )
+    transition = _short_to_long_transition()
+
+    first = run_multi_leg_transition(
+        transition=transition,
+        broker=_SubmitThenRaiseOnce(adapter),
+        reconciliation_client=client,
+        artifact_root=tmp_path / "lifecycle",
+        order_output_dir=tmp_path / "orders",
+        fill_output_dir=tmp_path / "fills",
+        snapshot_output_dir=tmp_path / "snapshots",
+        reconciliation_output_dir=tmp_path / "reconciliations",
+        reference_price=100,
+        safety_check=_allowed_live_check(),
+        evaluated_at=_now(),
+    )
+    second = run_multi_leg_transition(
+        transition=transition,
+        broker=adapter,
+        reconciliation_client=client,
+        artifact_root=tmp_path / "lifecycle",
+        order_output_dir=tmp_path / "orders",
+        fill_output_dir=tmp_path / "fills",
+        snapshot_output_dir=tmp_path / "snapshots",
+        reconciliation_output_dir=tmp_path / "reconciliations",
+        reference_price=100,
+        safety_check=_allowed_live_check(),
+        evaluated_at=_now(),
+    )
+
+    assert first.leg_statuses == (
+        ExecutionLegStatus.AMBIGUOUS,
+        ExecutionLegStatus.PLANNED,
+    )
+    assert second.leg_statuses == (
+        ExecutionLegStatus.RECONCILED,
+        ExecutionLegStatus.RECONCILED,
+    )
+    assert trading_client.get_order_by_client_id_calls == [
+        transition.legs[0].client_order_id
+    ]
+    assert [
+        order.client_order_id
+        for order in load_live_order_records(tmp_path / "orders")
+    ] == [
+        transition.legs[0].client_order_id,
+        transition.legs[1].client_order_id,
+    ]
+    assert trading_client.submitted_client_order_ids == [
+        transition.legs[0].client_order_id,
+        transition.legs[1].client_order_id,
+    ]
+    assert client.account_snapshot().positions[0].quantity == 2
+
+
+def test_alpaca_shaped_transition_blocks_ambiguous_lookup_without_resubmit(
+    tmp_path,
+) -> None:
+    trading_client = TransitionFakeTradingClient(
+        api_key="unused",
+        secret_key="unused",
+        paper=True,
+        initial_quantity=-1,
+    )
+    client = AlpacaPaperBrokerClient(
+        config=AlpacaPaperConfig(
+            api_key="paper-key",
+            secret_key="paper-secret",
+            account_id="acct-1",
+        ),
+        trading_client=trading_client,
+        sdk=_fake_sdk(),
+    )
+    transition = _short_to_long_transition()
+    artifact_root = tmp_path / "lifecycle"
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=artifact_root,
+        leg_id=transition.legs[0].leg_id,
+        new_status=ExecutionLegStatus.SUBMISSION_PENDING,
+        occurred_at=_now(),
+        reason="test submission intent",
+    )
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=artifact_root,
+        leg_id=transition.legs[0].leg_id,
+        new_status=ExecutionLegStatus.AMBIGUOUS,
+        occurred_at=_now(),
+        reason="test ambiguous submission",
+    )
+
+    result = run_multi_leg_transition(
+        transition=transition,
+        broker=LiveBrokerAdapter(client=client),
+        reconciliation_client=client,
+        artifact_root=artifact_root,
+        order_output_dir=tmp_path / "orders",
+        fill_output_dir=tmp_path / "fills",
+        snapshot_output_dir=tmp_path / "snapshots",
+        reconciliation_output_dir=tmp_path / "reconciliations",
+        reference_price=100,
+        safety_check=_allowed_live_check(),
+        evaluated_at=_now(),
+    )
+
+    assert result.leg_statuses == (
+        ExecutionLegStatus.BLOCKED,
+        ExecutionLegStatus.PLANNED,
+    )
+    assert trading_client.submitted_orders == []
+    assert current_execution_leg_status(
+        transition,
+        artifact_root,
+        transition.legs[0].leg_id,
+    ) == ExecutionLegStatus.BLOCKED
+
+
 class FakeEnum:
     def __init__(self, value: str) -> None:
         self.value = value
@@ -526,6 +680,91 @@ class FakeTradingClient:
         return self.assets[symbol_or_asset_id]
 
 
+class TransitionFakeTradingClient(FakeTradingClient):
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        secret_key: str,
+        paper: bool,
+        initial_quantity: int,
+    ) -> None:
+        super().__init__(
+            api_key=api_key,
+            secret_key=secret_key,
+            paper=paper,
+        )
+        self.quantity = initial_quantity
+        self.submitted_client_order_ids: list[str] = []
+        self._sync_positions()
+
+    def submit_order(self, order_data: object) -> object:
+        order = super().submit_order(order_data)
+        if not isinstance(order_data, FakeMarketOrder):
+            raise TypeError("expected FakeMarketOrder")
+        self.submitted_client_order_ids.append(
+            order_data.kwargs["client_order_id"]
+        )
+        side = order_data.kwargs["side"].value
+        qty = int(order_data.kwargs["qty"])
+        if side == "buy":
+            self.quantity += qty
+        else:
+            self.quantity -= qty
+        self._sync_positions()
+        return order
+
+    def _sync_positions(self) -> None:
+        if self.quantity == 0:
+            self.positions = []
+            return
+        self.positions = [
+            SimpleNamespace(
+                symbol="AAPL",
+                qty=str(self.quantity),
+                avg_entry_price="100",
+                current_price="100",
+            )
+        ]
+
+
+class _SubmitThenRaiseOnce:
+    def __init__(self, delegate: LiveBrokerAdapter) -> None:
+        self.delegate = delegate
+        self.raised = False
+
+    def submit_market_order(
+        self,
+        request: OrderRequest,
+        *,
+        reference_price: float,
+        client_order_id: str,
+        safety_check: TradingSafetyCheck,
+    ) -> LiveOrderRecord:
+        order = self.delegate.submit_market_order(
+            request,
+            reference_price=reference_price,
+            client_order_id=client_order_id,
+            safety_check=safety_check,
+        )
+        if not self.raised:
+            self.raised = True
+            raise RuntimeError("lost response after Alpaca accepted leg")
+        return order
+
+    def account_snapshot(self):
+        return self.delegate.account_snapshot()
+
+    def has_open_orders(self) -> bool:
+        return self.delegate.has_open_orders()
+
+    def orders_by_client_order_id(
+        self,
+        client_order_id: str,
+    ) -> tuple[LiveOrderRecord, ...]:
+        return self.delegate.orders_by_client_order_id(client_order_id)
+
+
 def _fake_sdk() -> AlpacaTradingSdk:
     return AlpacaTradingSdk(
         TradingClient=FakeTradingClient,
@@ -537,3 +776,49 @@ def _fake_sdk() -> AlpacaTradingSdk:
 
 def _allowed_live_check() -> TradingSafetyCheck:
     return TradingSafetyCheck(mode=TradingMode.LIVE, allowed=True)
+
+
+def _short_to_long_transition() -> ExecutionTransitionPlan:
+    return ExecutionTransitionPlan(
+        transition_plan_id="transition-execution-risk-1-r1",
+        execution_plan_id="execution-risk-1-r1",
+        risk_target_id="risk-1",
+        risk_target_revision=1,
+        symbol="AAPL",
+        current_quantity=-1,
+        target_quantity=2,
+        legs=(
+            ExecutionTransitionLeg(
+                leg_id="execution-risk-1-r1-leg-1",
+                leg_index=1,
+                semantic="close_short",
+                order_request=OrderRequest(
+                    symbol="AAPL",
+                    side=OrderSide.BUY,
+                    quantity=1,
+                ),
+                required_start_quantity=-1,
+                required_end_quantity=0,
+                client_order_id="target-risk-1-r1-leg-1",
+            ),
+            ExecutionTransitionLeg(
+                leg_id="execution-risk-1-r1-leg-2",
+                leg_index=2,
+                semantic="open_long",
+                order_request=OrderRequest(
+                    symbol="AAPL",
+                    side=OrderSide.BUY,
+                    quantity=2,
+                ),
+                required_start_quantity=0,
+                required_end_quantity=2,
+                client_order_id="target-risk-1-r1-leg-2",
+            ),
+        ),
+        created_at=_now(),
+        reason="test transition",
+    )
+
+
+def _now() -> datetime:
+    return datetime(2026, 7, 1, 12, tzinfo=UTC)

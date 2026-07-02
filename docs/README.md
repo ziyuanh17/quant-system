@@ -121,6 +121,9 @@ Start with these current, canonical documents:
   design for the future Alpaca paper transition boundary, keeping real Alpaca
   reversal submission disabled until a broker-free fake-client rehearsal proves
   the legged lifecycle.
+- [semantic_target_alpaca_paper_fake_client_transition_rehearsal.md](semantic_target_alpaca_paper_fake_client_transition_rehearsal.md):
+  source-level fake-client rehearsal for Alpaca-shaped per-leg transition
+  recovery, still without real Alpaca reversal exposure.
 - [supervised_provider_discovery_loop_runtime_command_rehearsal_design.md](supervised_provider_discovery_loop_runtime_command_rehearsal_design.md):
   design for a no-network runtime-clone actual-command rehearsal with
   synthetic reviewed inputs.

@@ -382,7 +382,12 @@ class LiveBrokerAdapter:
             raise RuntimeError(
                 "broker client does not provide deterministic order lookup"
             )
-        return cast(tuple[LiveOrderRecord, ...], lookup(client_order_id))
+        orders = cast(tuple[LiveOrderRecord, ...], lookup(client_order_id))
+        if self._order_output_dir is not None:
+            for order in orders:
+                write_live_order_record(order, self._order_output_dir)
+        self._write_new_fills()
+        return orders
 
     def fills(self) -> tuple[LiveFillRecord, ...]:
         fills = self._client.fills()

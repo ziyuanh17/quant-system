@@ -219,12 +219,13 @@ side discussions.
 | 199 | Semantic-Target Local Transition Operator Rehearsal v1 | Done | Design and rehearse a reviewed local operator boundary for invoking semantic-paper transition plans from checked request artifacts. |
 | 200 | Semantic-Target Transition Operator Evidence Verifier v1 | Done | Add a durable verifier for local transition-operator evidence before any runtime or Alpaca reversal promotion. |
 | 201 | Semantic-Target Transition Operator Runtime Command Rehearsal v1 | Done | Rehearse the local transition operator and verifier from the runtime clone with synthetic reviewed inputs and no Alpaca exposure. |
-| 202 | Semantic-Target Alpaca Paper Transition Exposure Design v1 | In Review | Design the paper-specific transition exposure boundary for Alpaca without submitting reversal legs. |
-| 203 | Semantic-Target Alpaca Paper Fake-Client Transition Rehearsal v1 | Planned | Rehearse Alpaca-shaped per-leg transition execution with a fake client before any real Alpaca reversal exposure. |
+| 202 | Semantic-Target Alpaca Paper Transition Exposure Design v1 | Done | Design the paper-specific transition exposure boundary for Alpaca without submitting reversal legs. |
+| 203 | Semantic-Target Alpaca Paper Fake-Client Transition Rehearsal v1 | In Review | Rehearse Alpaca-shaped per-leg transition execution with a fake client before any real Alpaca reversal exposure. |
+| 204 | Semantic-Target Alpaca Paper Transition Evidence Verifier v1 | Planned | Add a read-only verifier for Alpaca-shaped transition evidence before any real Alpaca reversal test. |
 
 ## Current Recommendation
 
-Review **Semantic-Target Alpaca Paper Transition Exposure Design v1**. The
+Review **Semantic-Target Alpaca Paper Fake-Client Transition Rehearsal v1**. The
 market-session paper test reached Alpaca paper but produced a durable ambiguous
 outcome because the account was short `AAPL=-1` and the reviewed target was
 long `AAPL=+2`, creating a cross-zero transition. The source now blocks broker
@@ -232,13 +233,17 @@ submission for that case, has a broker-free planner, persists immutable
 transition plans, records append-only per-leg lifecycle events, rehearses
 short-to-long reversal legs through a no-network fake broker, exposes a local
 transition CLI and verifier, and has runtime-clone evidence proving restart
-reuse without Alpaca exposure. The current design maps that proven local
-lifecycle to a future Alpaca paper boundary while keeping real Alpaca reversal
-submission disabled. The next implementation step should be an Alpaca-shaped
-fake-client transition rehearsal with per-leg recovery and verification before
-any real Alpaca paper transition test. Do not expose launchd, add recurring
-scheduling, permit non-paper Alpaca behavior, enable real-money trading, add
-automatic drift repair, or broaden the scope beyond one reviewed request.
+reuse without Alpaca exposure. The latest source-level rehearsal runs the
+generic legged transition lifecycle through the real Alpaca paper wrapper with
+fake Alpaca-shaped trading objects. It proves crash-after-accept recovery by
+per-leg client order ID, no duplicate first-leg submission on restart,
+reconciled close/open progression, and fail-closed blocking when ambiguous
+broker lookup is unavailable. The real Alpaca cross-zero guard remains in
+place. The next step should add a read-only verifier for Alpaca-shaped
+transition evidence before any real Alpaca paper reversal test. Do not expose
+launchd, add recurring scheduling, permit non-paper Alpaca behavior, enable
+real-money trading, add automatic drift repair, or broaden the scope beyond one
+reviewed request.
 
 The legacy signal-oriented Alpaca paper workflow remains separate and
 order-capable. Historical scheduler and broker observations must be refreshed

@@ -878,6 +878,21 @@ implementation should be a broker-free fake-client Alpaca-shaped transition
 rehearsal before any real Alpaca reversal test. See
 [semantic_target_alpaca_paper_transition_exposure_design.md](semantic_target_alpaca_paper_transition_exposure_design.md).
 
+The source now includes the Alpaca-shaped fake-client transition rehearsal. The
+generic multi-leg transition runner can recover a `submission_pending` or
+`ambiguous` transition leg by deterministic client order ID, refresh a submitted
+leg by the same lookup, and block without resubmission when lookup is
+unavailable, not found, or conflicting. `LiveBrokerAdapter` now materializes
+orders and fills recovered by client-order lookup so reconciliation can audit
+recovered broker truth. Tests run the real Alpaca paper wrapper against a fake
+Alpaca-shaped trading client for `AAPL=-1 -> AAPL=+2`, proving first-leg
+crash-after-accept recovery, no duplicate first-leg submission, close/open
+reconciliation, final `AAPL=+2`, and fail-closed blocking for ambiguous lookup
+without broker context. This did not contact Alpaca or enable real Alpaca
+reversal submission. The next review item should be a read-only verifier for
+Alpaca-shaped transition evidence. See
+[semantic_target_alpaca_paper_fake_client_transition_rehearsal.md](semantic_target_alpaca_paper_fake_client_transition_rehearsal.md).
+
 ## Safety And Activation Boundary
 
 - No source capability implies permission to submit an order.

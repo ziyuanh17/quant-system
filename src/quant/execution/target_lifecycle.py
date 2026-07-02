@@ -14,6 +14,7 @@ from quant.execution.lifecycle_artifacts import (
     current_execution_leg_status,
     current_execution_status,
     load_execution_events,
+    load_execution_leg_events,
     write_broker_lookup_evidence,
     write_execution_drift_observation,
 )
@@ -358,101 +359,131 @@ def run_multi_leg_transition(
         )
         if status == ExecutionLegStatus.RECONCILED:
             continue
-        if status != ExecutionLegStatus.PLANNED:
-            break
-        start_snapshot = broker.account_snapshot()
-        if _position_quantity(start_snapshot, transition.symbol) != (
-            leg.required_start_quantity
-        ):
-            _append_leg_block(
+        if status in {
+            ExecutionLegStatus.SUBMISSION_PENDING,
+            ExecutionLegStatus.AMBIGUOUS,
+        }:
+            _recover_transition_leg_submission(
                 transition=transition,
+                leg=leg,
+                broker=broker,
                 artifact_root=artifact_root,
-                leg_id=leg.leg_id,
-                occurred_at=evaluated_at,
-                reason="broker position does not match leg start quantity",
+                evaluated_at=evaluated_at,
             )
-            break
-        if broker.has_open_orders():
-            _append_leg_block(
+            status = current_execution_leg_status(
+                transition,
+                artifact_root,
+                leg.leg_id,
+            )
+        if status == ExecutionLegStatus.SUBMITTED:
+            _refresh_transition_leg_submission(
                 transition=transition,
+                leg=leg,
+                broker=broker,
                 artifact_root=artifact_root,
-                leg_id=leg.leg_id,
-                occurred_at=evaluated_at,
-                reason="working broker orders block transition leg",
+                evaluated_at=evaluated_at,
             )
+            status = current_execution_leg_status(
+                transition,
+                artifact_root,
+                leg.leg_id,
+            )
+        if status in {
+            ExecutionLegStatus.BLOCKED,
+            ExecutionLegStatus.REJECTED,
+            ExecutionLegStatus.CANCELLED,
+            ExecutionLegStatus.AMBIGUOUS,
+        }:
             break
-        append_execution_leg_event(
-            transition=transition,
-            artifact_root=artifact_root,
-            leg_id=leg.leg_id,
-            new_status=ExecutionLegStatus.SUBMISSION_PENDING,
-            occurred_at=evaluated_at,
-            reason="transition leg submission intent recorded",
-        )
-        try:
-            order = broker.submit_market_order(
-                leg.order_request,
-                reference_price=reference_price,
-                client_order_id=leg.client_order_id,
-                safety_check=safety_check,
-            )
-        except Exception as exc:
+        if status not in {
+            ExecutionLegStatus.PLANNED,
+            ExecutionLegStatus.FILLED,
+        }:
+            break
+        if status == ExecutionLegStatus.PLANNED:
+            start_snapshot = broker.account_snapshot()
+            if _position_quantity(start_snapshot, transition.symbol) != (
+                leg.required_start_quantity
+            ):
+                _append_leg_block(
+                    transition=transition,
+                    artifact_root=artifact_root,
+                    leg_id=leg.leg_id,
+                    occurred_at=evaluated_at,
+                    reason="broker position does not match leg start quantity",
+                )
+                break
+            if broker.has_open_orders():
+                _append_leg_block(
+                    transition=transition,
+                    artifact_root=artifact_root,
+                    leg_id=leg.leg_id,
+                    occurred_at=evaluated_at,
+                    reason="working broker orders block transition leg",
+                )
+                break
             append_execution_leg_event(
                 transition=transition,
                 artifact_root=artifact_root,
                 leg_id=leg.leg_id,
-                new_status=ExecutionLegStatus.AMBIGUOUS,
+                new_status=ExecutionLegStatus.SUBMISSION_PENDING,
                 occurred_at=evaluated_at,
-                reason=f"transition leg submission outcome is ambiguous: {exc}",
+                reason="transition leg submission intent recorded",
             )
-            break
-        broker_order_ids = (_broker_order_key(order),)
-        append_execution_leg_event(
-            transition=transition,
-            artifact_root=artifact_root,
-            leg_id=leg.leg_id,
-            new_status=ExecutionLegStatus.SUBMITTED,
-            occurred_at=evaluated_at,
-            reason="transition leg order submitted",
-            evidence_refs=(order.id,),
-            broker_order_ids=broker_order_ids,
-        )
-        if order.status == LiveOrderStatus.REJECTED:
+            try:
+                order = broker.submit_market_order(
+                    leg.order_request,
+                    reference_price=reference_price,
+                    client_order_id=leg.client_order_id,
+                    safety_check=safety_check,
+                )
+            except Exception as exc:
+                append_execution_leg_event(
+                    transition=transition,
+                    artifact_root=artifact_root,
+                    leg_id=leg.leg_id,
+                    new_status=ExecutionLegStatus.AMBIGUOUS,
+                    occurred_at=evaluated_at,
+                    reason=(
+                        "transition leg submission outcome is ambiguous: "
+                        f"{exc}"
+                    ),
+                )
+                break
+            broker_order_ids = (_broker_order_key(order),)
             append_execution_leg_event(
                 transition=transition,
                 artifact_root=artifact_root,
                 leg_id=leg.leg_id,
-                new_status=ExecutionLegStatus.REJECTED,
+                new_status=ExecutionLegStatus.SUBMITTED,
                 occurred_at=evaluated_at,
-                reason=order.rejection_reason or "transition leg rejected",
+                reason="transition leg order submitted",
                 evidence_refs=(order.id,),
                 broker_order_ids=broker_order_ids,
             )
-            break
-        if order.status == LiveOrderStatus.CANCELLED:
-            append_execution_leg_event(
+            _record_terminal_leg_order_status(
                 transition=transition,
+                leg=leg,
+                order=order,
                 artifact_root=artifact_root,
-                leg_id=leg.leg_id,
-                new_status=ExecutionLegStatus.CANCELLED,
                 occurred_at=evaluated_at,
-                reason="transition leg cancelled",
-                evidence_refs=(order.id,),
-                broker_order_ids=broker_order_ids,
             )
+            status = current_execution_leg_status(
+                transition,
+                artifact_root,
+                leg.leg_id,
+            )
+        if status == ExecutionLegStatus.REJECTED:
             break
-        if order.status != LiveOrderStatus.FILLED:
+        if status == ExecutionLegStatus.CANCELLED:
             break
-        append_execution_leg_event(
-            transition=transition,
-            artifact_root=artifact_root,
-            leg_id=leg.leg_id,
-            new_status=ExecutionLegStatus.FILLED,
-            occurred_at=evaluated_at,
-            reason="transition leg order filled",
-            evidence_refs=(order.id,),
-            broker_order_ids=broker_order_ids,
-        )
+        if status != ExecutionLegStatus.FILLED:
+            break
+        broker_order_ids = (_submitted_leg_broker_order_id(
+            transition,
+            artifact_root,
+            leg.leg_id,
+        ),)
         broker.account_snapshot()
         reconciliation = reconcile_live_state(
             client=reconciliation_client,
@@ -697,6 +728,105 @@ def refresh_submitted_execution(
 
     _record_terminal_order_status(
         plan=plan,
+        order=found_order,
+        artifact_root=artifact_root,
+        occurred_at=evaluated_at,
+    )
+    return evidence
+
+
+def _recover_transition_leg_submission(
+    *,
+    transition: ExecutionTransitionPlan,
+    leg: ExecutionTransitionLeg,
+    broker: ExecutionLifecycleBroker,
+    artifact_root: Path,
+    evaluated_at: datetime,
+) -> BrokerOrderLookupEvidence:
+    evidence, found_order = _lookup_transition_leg_order(
+        transition=transition,
+        leg=leg,
+        broker=broker,
+        evaluated_at=evaluated_at,
+    )
+    evidence_path = write_broker_lookup_evidence(evidence, artifact_root)
+    refs = (str(evidence_path),)
+    if evidence.outcome != BrokerLookupOutcome.FOUND:
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.BLOCKED,
+            occurred_at=evaluated_at,
+            reason=(
+                f"transition leg recovery blocked: "
+                f"{evidence.outcome.value}; automatic resubmission is "
+                "prohibited"
+            ),
+            evidence_refs=refs,
+        )
+        return evidence
+    if found_order is None:
+        raise ValueError("found leg lookup evidence is missing its order")
+    append_execution_leg_event(
+        transition=transition,
+        artifact_root=artifact_root,
+        leg_id=leg.leg_id,
+        new_status=ExecutionLegStatus.SUBMITTED,
+        occurred_at=evaluated_at,
+        reason="transition leg state recovered from broker lookup",
+        evidence_refs=refs + (found_order.id,),
+        broker_order_ids=(_broker_order_key(found_order),),
+    )
+    _record_terminal_leg_order_status(
+        transition=transition,
+        leg=leg,
+        order=found_order,
+        artifact_root=artifact_root,
+        occurred_at=evaluated_at,
+    )
+    return evidence
+
+
+def _refresh_transition_leg_submission(
+    *,
+    transition: ExecutionTransitionPlan,
+    leg: ExecutionTransitionLeg,
+    broker: ExecutionLifecycleBroker,
+    artifact_root: Path,
+    evaluated_at: datetime,
+) -> BrokerOrderLookupEvidence:
+    expected_broker_order_id = _submitted_leg_broker_order_id(
+        transition,
+        artifact_root,
+        leg.leg_id,
+    )
+    evidence, found_order = _lookup_transition_leg_order(
+        transition=transition,
+        leg=leg,
+        broker=broker,
+        evaluated_at=evaluated_at,
+        expected_broker_order_id=expected_broker_order_id,
+    )
+    evidence_path = write_broker_lookup_evidence(evidence, artifact_root)
+    refs = (str(evidence_path),)
+    if found_order is None:
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.AMBIGUOUS,
+            occurred_at=evaluated_at,
+            reason=(
+                f"transition leg refresh is ambiguous: "
+                f"{evidence.outcome.value}"
+            ),
+            evidence_refs=refs,
+        )
+        return evidence
+    _record_terminal_leg_order_status(
+        transition=transition,
+        leg=leg,
         order=found_order,
         artifact_root=artifact_root,
         occurred_at=evaluated_at,
@@ -1072,6 +1202,106 @@ def _lookup_plan_order(
     )
 
 
+def _lookup_transition_leg_order(
+    *,
+    transition: ExecutionTransitionPlan,
+    leg: ExecutionTransitionLeg,
+    broker: ExecutionLifecycleBroker,
+    evaluated_at: datetime,
+    expected_broker_order_id: str | None = None,
+) -> tuple[BrokerOrderLookupEvidence, LiveOrderRecord | None]:
+    try:
+        orders = broker.orders_by_client_order_id(leg.client_order_id)
+    except Exception as exc:
+        return (
+            _lookup_leg_evidence(
+                transition=transition,
+                leg=leg,
+                outcome=BrokerLookupOutcome.UNAVAILABLE,
+                orders=(),
+                evaluated_at=evaluated_at,
+                reason=f"broker lookup unavailable: {exc}",
+            ),
+            None,
+        )
+    identity_results = tuple(
+        _leg_order_identity_result(leg, order, expected_broker_order_id)
+        for order in orders
+    )
+    if len(orders) == 1 and identity_results == ("match",):
+        outcome = BrokerLookupOutcome.FOUND
+        reason = "broker order found by transition leg client order ID"
+        found_order = orders[0]
+    elif not orders:
+        outcome = BrokerLookupOutcome.NOT_FOUND
+        reason = "broker lookup proved no visible matching transition leg"
+        found_order = None
+    else:
+        outcome = BrokerLookupOutcome.CONFLICTING
+        reason = "broker lookup returned conflicting transition leg orders"
+        found_order = None
+    return (
+        _lookup_leg_evidence(
+            transition=transition,
+            leg=leg,
+            outcome=outcome,
+            orders=orders,
+            evaluated_at=evaluated_at,
+            reason=reason,
+            order_identity_results=identity_results,
+        ),
+        found_order,
+    )
+
+
+def _lookup_leg_evidence(
+    *,
+    transition: ExecutionTransitionPlan,
+    leg: ExecutionTransitionLeg,
+    outcome: BrokerLookupOutcome,
+    orders: tuple[LiveOrderRecord, ...],
+    evaluated_at: datetime,
+    reason: str,
+    order_identity_results: tuple[str, ...] | None = None,
+) -> BrokerOrderLookupEvidence:
+    return BrokerOrderLookupEvidence(
+        evidence_id=(
+            f"{transition.transition_plan_id}:{leg.leg_id}:"
+            f"{evaluated_at.isoformat()}"
+        ),
+        execution_plan_id=transition.execution_plan_id,
+        client_order_id=leg.client_order_id,
+        outcome=outcome,
+        order_record_ids=tuple(order.id for order in orders),
+        broker_order_ids=tuple(
+            order.broker_order_id or order.client_order_id for order in orders
+        ),
+        order_statuses=tuple(order.status for order in orders),
+        order_identity_results=order_identity_results
+        if order_identity_results is not None
+        else tuple(_leg_order_identity_result(leg, order) for order in orders),
+        occurred_at=evaluated_at,
+        reason=reason,
+    )
+
+
+def _leg_order_identity_result(
+    leg: ExecutionTransitionLeg,
+    order: LiveOrderRecord,
+    expected_broker_order_id: str | None = None,
+) -> str:
+    if order.client_order_id != leg.client_order_id:
+        return "client order ID differs"
+    if order.request != leg.order_request:
+        return "order request differs"
+    if (
+        expected_broker_order_id is not None
+        and _broker_order_key(order) != expected_broker_order_id
+    ):
+        return "broker order ID differs"
+    return "match"
+
+
 def _submitted_broker_order_id(
     plan: ExecutionPlan,
     artifact_root: Path,
@@ -1086,6 +1316,71 @@ def _submitted_broker_order_id(
     if not submitted_events or len(submitted_events[-1].broker_order_ids) != 1:
         raise ValueError("submitted execution lacks one broker order identity")
     return submitted_events[-1].broker_order_ids[0]
+
+
+def _submitted_leg_broker_order_id(
+    transition: ExecutionTransitionPlan,
+    artifact_root: Path,
+    leg_id: str,
+) -> str:
+    submitted_events = tuple(
+        event
+        for event in load_execution_leg_events(
+            artifact_root,
+            transition.transition_plan_id,
+            leg_id,
+        )
+        if event.new_status == ExecutionLegStatus.SUBMITTED
+    )
+    if not submitted_events or len(submitted_events[-1].broker_order_ids) != 1:
+        raise ValueError("submitted transition leg lacks broker order identity")
+    return submitted_events[-1].broker_order_ids[0]
+
+
+def _record_terminal_leg_order_status(
+    *,
+    transition: ExecutionTransitionPlan,
+    leg: ExecutionTransitionLeg,
+    order: LiveOrderRecord,
+    artifact_root: Path,
+    occurred_at: datetime,
+) -> None:
+    broker_order_ids = (_broker_order_key(order),)
+    if order.status == LiveOrderStatus.REJECTED:
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.REJECTED,
+            occurred_at=occurred_at,
+            reason=order.rejection_reason or "transition leg rejected",
+            evidence_refs=(order.id,),
+            broker_order_ids=broker_order_ids,
+        )
+        return
+    if order.status == LiveOrderStatus.CANCELLED:
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.CANCELLED,
+            occurred_at=occurred_at,
+            reason="transition leg cancelled",
+            evidence_refs=(order.id,),
+            broker_order_ids=broker_order_ids,
+        )
+        return
+    if order.status == LiveOrderStatus.FILLED:
+        append_execution_leg_event(
+            transition=transition,
+            artifact_root=artifact_root,
+            leg_id=leg.leg_id,
+            new_status=ExecutionLegStatus.FILLED,
+            occurred_at=occurred_at,
+            reason="transition leg order filled",
+            evidence_refs=(order.id,),
+            broker_order_ids=broker_order_ids,
+        )
 
 
 def _broker_order_key(order: LiveOrderRecord) -> str:
